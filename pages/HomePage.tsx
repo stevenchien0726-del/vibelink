@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import StoryRow from '@/components/home/sections/story/StoryRow'
 import FeedGrid from '@/components/home/sections/feed/FeedGrid'
+import SideProfileMenu from '@/components/home/ui/layout/SideProfileMenu'
 
 type FeedMode = '1x1' | '2x2' | '3x3'
 
 type UploadMenuItem = {
   id: string
   label: string
-  icon: string
+  icon: React.ReactNode
 }
 
 type PostItem = {
@@ -27,9 +28,9 @@ type StoryItem = {
 }
 
 const uploadMenuItems: UploadMenuItem[] = [
-  { id: 'post', label: '貼文', icon: '📝' },
-  { id: 'video', label: '短影片', icon: '🎬' },
-  { id: 'album', label: '配對牆相片集', icon: '🖼️' },
+  { id: 'post', label: '貼文', icon: <PostUploadIcon /> },
+  { id: 'video', label: '短影片', icon: <VideoUploadIcon /> },
+  { id: 'album', label: '配對牆相片集', icon: <AlbumUploadIcon /> },
 ]
 
 const mockPosts: PostItem[] = [
@@ -272,22 +273,24 @@ function handleNextStoryPage() {
           </button>
 
           {isUploadOpen && (
-            <div className="absolute top-[56px] left-0 z-[50] w-[172px] rounded-[14px] border-[1.5px] border-[#d58be7] bg-[#f6eff7] p-[10px] shadow-[0_12px_30px_rgba(0,0,0,0.1)]">
-              <div className="px-1 pb-2 pt-[2px] text-[13px] font-semibold text-[#666]">
-                上傳內容
-              </div>
-
+            <div className="fixed top-[68px] left-1/2 z-[120] w-[260px] max-w-[260px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[25px] py-[30px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+              <div className="pb-3 text-center text-[16px] font-semibold text-[#666]">
+  上傳內容
+</div>
+              
               {uploadMenuItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="flex w-full items-center gap-[10px] rounded-[10px] bg-transparent px-[8px] py-[10px] text-left text-[14px] text-[#222] hover:bg-[#222]/10"
-                >
-                  <span className="inline-block w-[18px] text-center">
-                    {item.icon}
-                  </span>
-                  <span>{item.label}</span>
-                </button>
+  <button
+    key={item.id}
+    type="button"
+    className="flex w-full items-center justify-center gap-[25px] rounded-[14px] px-[20px] py-[20px] text-[20px] font-medium text-[#222] hover:bg-[#222]/10"
+  >
+  <div className="flex items-center gap-[10px]">
+    <span className="flex h-[24px] w-[24px] items-center justify-center">
+      {item.icon}
+    </span>
+    <span className="text-center">{item.label}</span>
+  </div>
+</button>
               ))}
             </div>
           )}
@@ -508,60 +511,21 @@ function handleNextStoryPage() {
       </AnimatePresence>
 
       {isProfileOpen && (
-        <>
-          <button
-            type="button"
-            aria-label="Close profile drawer"
-            onClick={() => setIsProfileOpen(false)}
-            className="absolute inset-0 z-[49] bg-[rgba(0,0,0,0.14)]"
-          />
+  <>
+    <motion.button
+  type="button"
+  aria-label="關閉側邊選單"
+  className="fixed top-0 left-1/2 z-[140] h-full w-full max-w-[430px] -translate-x-1/2 bg-[rgba(0,0,0,0.14)]"
+  onClick={() => setIsProfileOpen(false)}
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  transition={{ duration: 0.2, ease: "easeOut" }}
+/>
 
-          <aside
-            ref={drawerRef}
-            className="absolute left-0 top-0 z-[50] flex h-full w-[72%] max-w-[310px] flex-col overflow-y-auto bg-white shadow-[10px_0_30px_rgba(0,0,0,0.08)]"
-          >
-            <div className="border-b border-[#a6a6a6] px-4 pb-2 pt-[18px]">
-              <div className="mb-[14px] flex items-center gap-2">
-                <div className="grid h-10 w-10 place-items-center rounded-full border border-[#ececec] bg-[#f4f4f4] text-[#222]">
-                  <UserAvatarIcon />
-                </div>
-                <span className="text-[14px] font-medium text-[#222]">
-                  個人檔案
-                </span>
-              </div>
-
-              <div className="mb-[14px] flex items-center gap-2">
-                <div className="grid h-10 w-10 place-items-center text-[#222]">
-                  <AccountIcon />
-                </div>
-                <span className="text-[14px] font-medium text-[#222]">
-                  我的帳號
-                </span>
-              </div>
-
-              <div className="mb-1 mt-1 flex w-fit max-w-full items-center gap-2 rounded-full bg-[#ededed] px-[10px] py-0">
-                <span className="text-[15px] text-[#333]">Right now</span>
-                <span className="text-[15px] text-[#333]">開放中</span>
-                <div className="ml-1 flex h-[22px] w-[42px] items-center justify-end rounded-full bg-[#d190e9] p-[3px]">
-                  <div className="h-4 w-4 rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.14)]" />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-[8px] px-4 pb-6 pt-[20px]">
-              <DrawerMenuItem icon={<ActivityIcon />} label="動態" />
-              <DrawerMenuItem icon={<BellIcon />} label="通知" />
-              <DrawerMenuItem icon={<StarIcon />} label="Vibe 會員" />
-              <DrawerMenuItem icon={<BlockIcon />} label="封鎖名單" />
-              <DrawerMenuItem icon={<ClockIcon />} label="瀏覽紀錄" />
-              <DrawerMenuItem icon={<TicketIcon />} label="票券 / 優惠" />
-              <DrawerMenuItem icon={<HubIcon />} label="Vibe Hub" />
-              <DrawerMenuItem icon={<MegaphoneIcon />} label="活動公告" />
-              <DrawerMenuItem icon={<SettingIcon />} label="設定" />
-            </div>
-          </aside>
-        </>
-      )}
+    <SideProfileMenu onClose={() => setIsProfileOpen(false)} />
+  </>
+)}
       
     </div>
   )
@@ -801,6 +765,65 @@ function MegaphoneIcon() {
         strokeWidth="1.8"
         strokeLinejoin="round"
       />
+    </svg>
+  )
+}
+
+function PostUploadIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M8 5h8M12 5v14M5 12h14"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function VideoUploadIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect
+        x="4"
+        y="6"
+        width="11"
+        height="12"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M15 10l5-3v10l-5-3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function AlbumUploadIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect
+        x="4"
+        y="5"
+        width="16"
+        height="14"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M8 14l2.5-2.5 2.5 2.5 3.5-3.5 3.5 3.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="9" cy="9" r="1.2" fill="currentColor" />
     </svg>
   )
 }
