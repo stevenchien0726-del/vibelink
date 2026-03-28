@@ -1,4 +1,4 @@
-import type { LayoutMode } from "../../HomePage";
+import type { LayoutMode } from '@/pages/HomePage';
 
 type FeedLayoutCapsuleProps = {
   layout: LayoutMode;
