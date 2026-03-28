@@ -1,4 +1,4 @@
-import type { LayoutMode } from '@/pages/HomePage';
+type LayoutMode = '1x1' | '2x2' | '3x3';
 
 type FeedLayoutCapsuleProps = {
   layout: LayoutMode;
