@@ -107,11 +107,8 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
       {/* Overlays */}
       {isPeopleLibraryOpen && (
         <PeopleLibraryPage
-          onClose={() => setIsPeopleLibraryOpen(false)}
-          onOpenFolder={(folderId) => {
-            console.log('open folder:', folderId)
-          }}
-        />
+  onClose={() => setIsPeopleLibraryOpen(false)}
+/>
       )}
 
       {isFriendInviteOpen && (
