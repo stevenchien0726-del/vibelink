@@ -129,34 +129,52 @@ function FolderPreview({
   onOpenProfile,
 }: {
   onOpenFolder: () => void
-  onOpenProfile: (id: string) => void
+  onOpenProfile: (userId: string) => void
 }) {
   return (
-    <div className="relative flex h-full w-full items-center justify-center">
-      {/* 大頭像 */}
-      <button
-        onClick={() => onOpenProfile('u1')}
-        className="absolute left-[22%] top-[22%] h-[46px] w-[46px] rounded-full bg-[#c88ad8]"
-      />
-      <button
-        onClick={() => onOpenProfile('u2')}
-        className="absolute right-[22%] top-[22%] h-[46px] w-[46px] rounded-full bg-[#c88ad8]"
-      />
-      <button
-        onClick={() => onOpenProfile('u3')}
-        className="absolute left-[22%] bottom-[22%] h-[46px] w-[46px] rounded-full bg-[#c88ad8]"
-      />
+    <div className="grid w-full grid-cols-[1fr_1fr] items-center gap-4">
+      <div className="flex flex-col items-center gap-5">
+        <button
+          type="button"
+          onClick={() => onOpenProfile('user-1')}
+          className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
+          aria-label="Open user 1 profile"
+        >
+          <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
+        </button>
 
-      {/* 小 icon（進資料夾） */}
-      <button
-        onClick={onOpenFolder}
-        className="absolute right-[22%] bottom-[22%] grid grid-cols-2 gap-[4px]"
-      >
-        <span className="h-[10px] w-[10px] rounded-full bg-[#c88ad8]" />
-        <span className="h-[10px] w-[10px] rounded-full bg-[#c88ad8]" />
-        <span className="h-[10px] w-[10px] rounded-full bg-[#c88ad8]" />
-        <span className="h-[10px] w-[10px] rounded-full bg-[#c88ad8]" />
-      </button>
+        <button
+          type="button"
+          onClick={() => onOpenProfile('user-2')}
+          className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
+          aria-label="Open user 2 profile"
+        >
+          <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
+        </button>
+      </div>
+
+      <div className="flex flex-col items-center gap-5">
+        <button
+          type="button"
+          onClick={() => onOpenProfile('user-3')}
+          className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
+          aria-label="Open user 3 profile"
+        >
+          <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenFolder}
+          className="grid grid-cols-2 gap-[8px] bg-transparent p-0 transition-transform active:scale-95"
+          aria-label="Open folder"
+        >
+          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+        </button>
+      </div>
     </div>
   )
 }
