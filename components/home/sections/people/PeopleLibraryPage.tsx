@@ -2,14 +2,7 @@
 
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import {
-  Search,
-  House,
-  Bot,
-  MessageSquare,
-  SquareUserRound,
-  Tv,
-} from 'lucide-react'
+import { Search } from 'lucide-react'
 import PeopleFolderPage from './PeopleFolderPage'
 
 type FolderItem = {
@@ -19,6 +12,7 @@ type FolderItem = {
 }
 
 type PeopleLibraryPageProps = {
+  query?: string
   onClose: () => void
 }
 
@@ -26,7 +20,7 @@ const folders: FolderItem[] = [
   { id: 'recent', label: '最近追蹤', emoji: '🆕' },
   { id: 'favorite', label: '我的最愛', emoji: '✨' },
   { id: 'mutual-follow', label: '互相關注中', emoji: '🔁' },
-  { id: 'more-interaction', label: '較常互動', emoji: '🗨️' },
+  { id: 'more-interaction', label: '較常互動', emoji: '💬' },
   { id: 'less-interaction', label: '較少互動', emoji: '💤' },
   { id: 'might-care', label: '你可能在意', emoji: '👀' },
 ]
@@ -36,7 +30,7 @@ function getFolderName(id: string) {
     recent: '🆕 最近追蹤',
     favorite: '✨ 我的最愛',
     'mutual-follow': '🔁 互相關注中',
-    'more-interaction': '🗨️ 較常互動',
+    'more-interaction': '💬 較常互動',
     'less-interaction': '💤 較少互動',
     'might-care': '👀 你可能在意',
   }
@@ -45,6 +39,7 @@ function getFolderName(id: string) {
 }
 
 export default function PeopleLibraryPage({
+  query,
   onClose,
 }: PeopleLibraryPageProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
@@ -60,7 +55,7 @@ export default function PeopleLibraryPage({
       >
         <motion.div
           className="relative min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f3f3f3]"
-          initial={{ scale: 0.9, opacity: 0, y: 24 }}
+          initial={{ scale: 0.92, opacity: 0, y: 24 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.94, opacity: 0, y: 12 }}
           transition={{
@@ -68,12 +63,17 @@ export default function PeopleLibraryPage({
             ease: [0.22, 1, 0.36, 1],
           }}
         >
-          <div className="px-4 pt-2 pb-[120px]">
-            {/* top bar */}
+          {/* 主內容 */}
+          <div className="px-4 pt-3 pb-[100px]">
+
+            {/* 🔍 Top Bar */}
             <div className="mb-4 flex items-center gap-3 pt-2">
               <div className="flex h-[36px] flex-1 items-center rounded-full bg-[#d9d9d9] px-4 text-[#222]">
                 <Search size={18} strokeWidth={2.2} />
-                <span className="ml-2 text-[15px]">People Library</span>
+
+                <span className="ml-2 truncate text-[15px]">
+                  {query || 'People Library'}
+                </span>
               </div>
 
               <button
@@ -85,7 +85,7 @@ export default function PeopleLibraryPage({
               </button>
             </div>
 
-            {/* folder grid */}
+            {/* 📁 Folder Grid */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-5">
               {folders.map((folder) => (
                 <div key={folder.id} className="flex flex-col items-center">
@@ -107,7 +107,7 @@ export default function PeopleLibraryPage({
             </div>
           </div>
 
-          {/* second layer */}
+          {/* 📂 第二層（資料夾展開） */}
           <AnimatePresence>
             {selectedFolder && (
               <PeopleFolderPage
@@ -122,57 +122,41 @@ export default function PeopleLibraryPage({
   )
 }
 
+/* Folder Preview UI */
+
 function FolderPreview({
   onOpenFolder,
   onOpenProfile,
 }: {
   onOpenFolder: () => void
-  onOpenProfile: (userId: string) => void
+  onOpenProfile: (id: string) => void
 }) {
   return (
-    <div className="grid w-full grid-cols-[1fr_1fr] items-center gap-4">
-      <div className="flex flex-col items-center gap-5">
-        <button
-          type="button"
-          onClick={() => onOpenProfile('user-1')}
-          className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
-          aria-label="Open user 1 profile"
-        >
-          <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
-        </button>
+    <div className="relative flex h-full w-full items-center justify-center">
+      {/* 大頭像 */}
+      <button
+        onClick={() => onOpenProfile('u1')}
+        className="absolute left-[22%] top-[22%] h-[46px] w-[46px] rounded-full bg-[#c88ad8]"
+      />
+      <button
+        onClick={() => onOpenProfile('u2')}
+        className="absolute right-[22%] top-[22%] h-[46px] w-[46px] rounded-full bg-[#c88ad8]"
+      />
+      <button
+        onClick={() => onOpenProfile('u3')}
+        className="absolute left-[22%] bottom-[22%] h-[46px] w-[46px] rounded-full bg-[#c88ad8]"
+      />
 
-        <button
-          type="button"
-          onClick={() => onOpenProfile('user-2')}
-          className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
-          aria-label="Open user 2 profile"
-        >
-          <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
-        </button>
-      </div>
-
-      <div className="flex flex-col items-center gap-5">
-        <button
-          type="button"
-          onClick={() => onOpenProfile('user-3')}
-          className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
-          aria-label="Open user 3 profile"
-        >
-          <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
-        </button>
-
-        <button
-          type="button"
-          onClick={onOpenFolder}
-          className="grid grid-cols-2 gap-[8px] bg-transparent p-0 transition-transform active:scale-95"
-          aria-label="Open folder"
-        >
-          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-        </button>
-      </div>
+      {/* 小 icon（進資料夾） */}
+      <button
+        onClick={onOpenFolder}
+        className="absolute right-[22%] bottom-[22%] grid grid-cols-2 gap-[4px]"
+      >
+        <span className="h-[10px] w-[10px] rounded-full bg-[#c88ad8]" />
+        <span className="h-[10px] w-[10px] rounded-full bg-[#c88ad8]" />
+        <span className="h-[10px] w-[10px] rounded-full bg-[#c88ad8]" />
+        <span className="h-[10px] w-[10px] rounded-full bg-[#c88ad8]" />
+      </button>
     </div>
   )
 }
