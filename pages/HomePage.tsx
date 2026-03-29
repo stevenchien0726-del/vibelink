@@ -104,6 +104,7 @@ const storyPagesMap: Record<string, { title: string; bg: string }[]> = {
 export default function HomePage() {
   const [feedMode, setFeedMode] = useState<FeedMode>('1x1')
   const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [isTopMenuOpen, setIsTopMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [selectedStory, setSelectedStory] = useState<StoryItem | null>(null)
   const [storyPage, setStoryPage] = useState(0)
@@ -113,6 +114,7 @@ export default function HomePage() {
 
   const uploadRef = useRef<HTMLDivElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
+  const topMenuRef = useRef<HTMLDivElement>(null)
 
   function handleCycleFeedMode() {
     setFeedMode((prev) => {
@@ -206,6 +208,10 @@ function handleNextStoryPage() {
         setIsUploadOpen(false)
       }
 
+      if (topMenuRef.current && !topMenuRef.current.contains(target)) {
+  setIsTopMenuOpen(false)
+}
+
       if (
         isProfileOpen &&
         drawerRef.current &&
@@ -272,39 +278,109 @@ function handleNextStoryPage() {
             <PlusIcon />
           </button>
 
-          {isUploadOpen && (
-            <div className="fixed top-[68px] left-1/2 z-[120] w-[260px] max-w-[260px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[25px] py-[30px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
-              <div className="pb-3 text-center text-[16px] font-semibold text-[#666]">
-  上傳內容
-</div>
-              
-              {uploadMenuItems.map((item) => (
-  <button
-    key={item.id}
-    type="button"
-    className="flex w-full items-center justify-center gap-[25px] rounded-[14px] px-[20px] py-[20px] text-[20px] font-medium text-[#222] hover:bg-[#222]/10"
-  >
-  <div className="flex items-center gap-[10px]">
-    <span className="flex h-[24px] w-[24px] items-center justify-center">
-      {item.icon}
-    </span>
-    <span className="text-center">{item.label}</span>
-  </div>
-</button>
-              ))}
+          <AnimatePresence>
+  {isUploadOpen && (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.72, y: -18 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.78, y: -12 }}
+      transition={{
+        type: 'spring',
+        stiffness: 380,
+        damping: 28,
+        mass: 0.9,
+      }}
+      style={{ originX: 0.08, originY: 0 }}
+      className="fixed top-[68px] left-1/2 z-[120] w-[300px] max-w-[300px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[25px] py-[30px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+    >
+      <div className="pb-5 text-center text-[20px] font-semibold text-[#666]">
+        上傳內容
+      </div>
+
+      <div className="flex flex-col gap-[14px]">
+        {uploadMenuItems.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className="flex w-full items-center justify-center rounded-[16px] px-[24px] py-[25px] text-[25px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
+          >
+            <div className="flex items-center gap-[12px]">
+              <span className="flex h-[34px] w-[34px] items-center justify-center">
+                {item.icon}
+              </span>
+              <span className="text-center">{item.label}</span>
             </div>
-          )}
+          </button>
+        ))}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
         </div>
 
-        <button
-          type="button"
-          className="flex min-w-0 items-center justify-center gap-[3px] bg-transparent"
-        >
-          <span className="text-[18px] font-medium tracking-[-0.2px] text-[#c16bf0]">
-            Vibelink
-          </span>
-          <ChevronDownIcon />
-        </button>
+        <div className="relative flex justify-center" ref={topMenuRef}>
+  <button
+    type="button"
+    onClick={() => setIsTopMenuOpen((prev) => !prev)}
+    className="flex min-w-0 items-center justify-center gap-[4px] bg-transparent"
+  >
+    <span className="text-[20px] font-medium tracking-[-0.2px] text-[#c16bf0]">
+      Vibelink
+    </span>
+
+    <motion.span
+      animate={{ rotate: isTopMenuOpen ? 180 : 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="flex items-center justify-center"
+    >
+      <ChevronDownIcon />
+    </motion.span>
+  </button>
+
+  <AnimatePresence>
+    {isTopMenuOpen && (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.72, y: -16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.78, y: -10 }}
+        transition={{
+          type: 'spring',
+          stiffness: 380,
+          damping: 28,
+          mass: 0.9,
+        }}
+        style={{ originX: 0.5, originY: 0 }}
+        className="absolute top-[52px] left-1/2 z-[130] w-[250px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[24px] py-[24px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+      >
+        <div className="flex flex-col gap-[14px]">
+          <button
+            type="button"
+            className="flex w-full items-center justify-center rounded-[16px] px-[20px] py-[22px] text-[25px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
+          >
+            <div className="flex items-center gap-[12px]">
+              <span className="flex h-[34px] w-[34px] items-center justify-center">
+                <FollowingIcon />
+              </span>
+              <span>追蹤中</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="flex w-full items-center justify-center rounded-[16px] px-[20px] py-[22px] text-[30px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
+          >
+            <div className="flex items-center gap-[12px]">
+              <span className="flex h-[34px] w-[34px] items-center justify-center">
+                <FavoriteIcon />
+              </span>
+              <span>最愛</span>
+            </div>
+          </button>
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
 
         <button
           type="button"
@@ -344,7 +420,7 @@ function handleNextStoryPage() {
             <button
               type="button"
               onClick={handleCycleFeedMode}
-              className="flex h-[35px] min-w-[85px] items-center justify-center gap-[5px] rounded-full border border-[#e5e5e5] bg-[#f7f7f7] px-[10px] text-[#444] shadow-[0_3px_10px_rgba(0,0,0,0.03)]"
+              className="flex h-[35px] min-w-[85px] items-center justify-center gap-[5px] rounded-full bg-gray-200/60 backdrop-blur-md border border-white/40 text-[#444] shadow-[0_6px_16px_rgba(0,0,0,0.08)]"
             >
               <GridIcon />
               <span className="whitespace-nowrap text-[12px] font-semibold text-[#555]">
@@ -510,22 +586,11 @@ function handleNextStoryPage() {
 )}
       </AnimatePresence>
 
-      {isProfileOpen && (
-  <>
-    <motion.button
-  type="button"
-  aria-label="關閉側邊選單"
-  className="fixed top-0 left-1/2 z-[140] h-full w-full max-w-[430px] -translate-x-1/2 bg-[rgba(0,0,0,0.14)]"
-  onClick={() => setIsProfileOpen(false)}
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  exit={{ opacity: 0 }}
-  transition={{ duration: 0.2, ease: "easeOut" }}
-/>
-
+      <AnimatePresence>
+  {isProfileOpen && (
     <SideProfileMenu onClose={() => setIsProfileOpen(false)} />
-  </>
-)}
+  )}
+</AnimatePresence>
       
     </div>
   )
@@ -586,6 +651,33 @@ function ChevronDownIcon() {
         stroke="currentColor"
         strokeWidth="2.2"
         strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function FollowingIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M6.5 18c1-2.8 3.3-4.2 5.5-4.2s4.5 1.4 5.5 4.2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function FavoriteIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 4l2.4 4.9 5.4.8-3.9 3.8.9 5.5L12 16.8 7.2 19l.9-5.5-3.9-3.8 5.4-.8L12 4z"
+        stroke="currentColor"
+        strokeWidth="1.8"
         strokeLinejoin="round"
       />
     </svg>
@@ -771,7 +863,7 @@ function MegaphoneIcon() {
 
 function PostUploadIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M8 5h8M12 5v14M5 12h14"
         stroke="currentColor"
@@ -784,7 +876,7 @@ function PostUploadIcon() {
 
 function VideoUploadIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect
         x="4"
         y="6"
@@ -806,7 +898,7 @@ function VideoUploadIcon() {
 
 function AlbumUploadIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect
         x="4"
         y="5"

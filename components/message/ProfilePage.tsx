@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   Grid2x2,
   Clapperboard,
@@ -29,6 +30,12 @@ type MenuItemProps = {
   label: string
 }
 
+const uploadMenuItems = [
+  { id: 'post', label: '貼文', icon: <PlusSquare size={22} /> },
+  { id: 'video', label: '短影片', icon: <Clapperboard size={22} /> },
+  { id: 'album', label: '配對牆相片集', icon: <ImageIcon size={22} /> },
+]
+
 function MenuItem({ icon, label }: MenuItemProps) {
   return (
     <button
@@ -45,6 +52,7 @@ function MenuItem({ icon, label }: MenuItemProps) {
 
 export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
   const gridItems = Array.from({ length: 9 })
 
   return (
@@ -53,16 +61,23 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
         {/* Top Bar */}
         <div className="mb-4 flex items-center justify-between">
           <button
-            type="button"
-            className="flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
-          >
-            <PlusSquare size={15} />
-            <span>發布內容</span>
-          </button>
+  type="button"
+  onClick={() => {
+  setIsMenuOpen(false)
+  setIsUploadOpen((prev) => !prev)
+}}
+  className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
+>
+  <PlusSquare size={15} />
+  <span>上傳內容</span>
+</button>
 
           <button
             type="button"
-            onClick={() => setIsMenuOpen((prev) => !prev)}
+            onClick={() => {
+  setIsUploadOpen(false)
+  setIsMenuOpen((prev) => !prev)
+}}
             className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
           >
             <Menu size={18} />
@@ -159,34 +174,105 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
         </div>
       </div>
 
-      {/* Menu Overlay */}
-      {isMenuOpen && (
-        <>
-          {/* 只蓋 ProfilePage 內容，不是整個 app */}
-          <button
-            type="button"
-            aria-label="Close profile menu overlay"
-            onClick={() => setIsMenuOpen(false)}
-            className="absolute inset-0 z-[20] bg-black/10"
-          />
+      {/* Upload Overlay */}
+      <AnimatePresence>
+        {isUploadOpen && (
+          <>
+            <motion.button
+              type="button"
+              aria-label="Close upload menu overlay"
+              onClick={() => setIsUploadOpen(false)}
+              className="absolute inset-0 z-[20] bg-black/10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            />
 
-          {/* Menu panel */}
-<div className="absolute left-1/2 top-[96px] z-[25] w-[300px] -translate-x-1/2 rounded-[26px] border-[3px] border-[#e0a3db] bg-[#f3f3f3] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.10)]">
-  <div className="flex flex-col gap-2">
-    <MenuItem icon={<UserCircle2 size={22} />} label="帳號管理" />
-    <MenuItem icon={<Activity size={22} />} label="我的動態" />
-    <MenuItem icon={<Bell size={22} />} label="通知" />
-    <MenuItem icon={<Star size={22} />} label="最愛" />
-    <MenuItem icon={<Ban size={22} />} label="已封鎖" />
-    <MenuItem icon={<Clock3 size={22} />} label="典藏內容" />
-    <MenuItem icon={<Ticket size={22} />} label="Vibe會員" />
-    <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
-    <MenuItem icon={<Settings size={22} />} label="設定" />
-    <MenuItem icon={<Megaphone size={22} />} label="廣告中心" />
-  </div>
-</div>
-        </>
-      )}
+            <motion.div
+              className="absolute left-1/2 top-[96px] z-[25] w-[300px] -translate-x-1/2 rounded-[26px] border-[2px] border-[#e0a3db] bg-[#f3f3f3] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.10)]"
+              initial={{ opacity: 0, scale: 0.82, y: -18 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.86, y: -10 }}
+              transition={{
+                type: 'spring',
+                stiffness: 360,
+                damping: 28,
+                mass: 0.9,
+              }}
+              style={{ originX: 0.12, originY: 0 }}
+            >
+              <div className="pb-5 text-center text-[20px] font-semibold text-[#666]">
+                上傳內容
+              </div>
+
+              <div className="flex flex-col gap-[14px]">
+                {uploadMenuItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="flex w-full items-center justify-center rounded-[16px] px-[24px] py-[20px] text-[22px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
+                  >
+                    <div className="flex items-center gap-[12px]">
+                      <span className="flex h-[34px] w-[34px] items-center justify-center">
+                        {item.icon}
+                      </span>
+                      <span>{item.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+            {/* Menu Overlay */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
+            {/* 只蓋 ProfilePage 內容，不是整個 app */}
+            <motion.button
+              type="button"
+              aria-label="Close profile menu overlay"
+              onClick={() => setIsMenuOpen(false)}
+              className="absolute inset-0 z-[20] bg-black/10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            />
+
+            {/* Menu panel */}
+            <motion.div
+              className="absolute left-1/2 top-[96px] z-[25] w-[300px] -translate-x-1/2 rounded-[26px] border-[3px] border-[#e0a3db] bg-[#f3f3f3] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.10)]"
+              initial={{ opacity: 0, scale: 0.82, y: -18 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.86, y: -10 }}
+              transition={{
+                type: 'spring',
+                stiffness: 360,
+                damping: 28,
+                mass: 0.9,
+              }}
+              style={{ originX: 0.88, originY: 0 }}
+            >
+              <div className="flex flex-col gap-2">
+                <MenuItem icon={<UserCircle2 size={22} />} label="帳號管理" />
+                <MenuItem icon={<Activity size={22} />} label="我的動態" />
+                <MenuItem icon={<Bell size={22} />} label="通知" />
+                <MenuItem icon={<Star size={22} />} label="最愛" />
+                <MenuItem icon={<Ban size={22} />} label="已封鎖" />
+                <MenuItem icon={<Clock3 size={22} />} label="典藏內容" />
+                <MenuItem icon={<Ticket size={22} />} label="Vibe會員" />
+                <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
+                <MenuItem icon={<Settings size={22} />} label="設定" />
+                <MenuItem icon={<Megaphone size={22} />} label="廣告中心" />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

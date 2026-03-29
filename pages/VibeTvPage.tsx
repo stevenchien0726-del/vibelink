@@ -11,7 +11,7 @@ export default function VibeTvPage() {
           </button>
 
           <button className="flex h-10 items-center justify-center rounded-full bg-[#d9d9d9] px-5 text-[16px] font-medium text-[#111]">
-            MyVibe APP
+            VibeTV APP
             <span className="ml-2 text-[18px]">›</span>
           </button>
         </div>

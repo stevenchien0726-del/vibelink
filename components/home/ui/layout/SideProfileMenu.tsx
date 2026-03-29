@@ -43,23 +43,28 @@ export default function SideProfileMenu({ onClose }: SideProfileMenuProps) {
   return (
     <>
       <motion.button
-        type="button"
-        aria-label="關閉側邊選單"
-        className="fixed top-0 left-1/2 z-[140] h-full w-full max-w-[430px] -translate-x-1/2 bg-[rgba(0,0,0,0.14)]"
-        onClick={onClose}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-      />
+  type="button"
+  aria-label="關閉側邊選單"
+  className="fixed top-0 left-1/2 z-[140] h-full w-full max-w-[430px] -translate-x-1/2 bg-[rgba(0,0,0,0.14)]"
+  onClick={onClose}
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  transition={{ duration: 0.22, ease: "easeOut" }}
+/>
 
       <motion.aside
-        className="fixed top-0 left-1/2 z-[141] flex h-full w-[72%] max-w-[310px] -translate-x-[215px] flex-col overflow-y-auto bg-white shadow-[10px_0_30px_rgba(0,0,0,0.08)]"
-        initial={{ x: -36, opacity: 0.96 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: -36, opacity: 0.96 }}
-        transition={{ duration: 0.24, ease: "easeOut" }}
-      >
+  className="fixed top-0 left-1/2 z-[141] flex h-full w-[72%] max-w-[310px] -translate-x-[215px] flex-col overflow-y-auto bg-white shadow-[10px_0_30px_rgba(0,0,0,0.08)]"
+  initial={{ x: -56, opacity: 0.98 }}
+  animate={{ x: 0, opacity: 1 }}
+  exit={{ x: -56, opacity: 0.98 }}
+  transition={{
+    type: "spring",
+    stiffness: 320,
+    damping: 30,
+    mass: 0.95,
+  }}
+>
         <div className="border-b border-[#d6d6d6] px-4 pb-4 pt-[18px]">
           <div className="mb-[12px] flex items-center gap-3">
             <span className="flex h-[24px] w-[24px] items-center justify-center text-[#111]">

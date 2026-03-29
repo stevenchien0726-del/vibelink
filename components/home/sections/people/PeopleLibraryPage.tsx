@@ -107,34 +107,6 @@ export default function PeopleLibraryPage({
             </div>
           </div>
 
-          {/* bottom nav */}
-          <div className="pointer-events-none fixed bottom-0 left-1/2 z-[90] w-full max-w-[430px] -translate-x-1/2 bg-transparent px-6 pb-4">
-            <div className="pointer-events-auto mx-auto flex h-[52px] w-full max-w-[230px] items-center justify-around rounded-full bg-[#d9d9d9] px-4 shadow-[0_3px_12px_rgba(0,0,0,0.08)]">
-              <button type="button" className="text-black">
-                <House size={22} strokeWidth={2.2} />
-              </button>
-
-              <button type="button" className="text-black">
-                <Bot size={22} strokeWidth={2.2} />
-              </button>
-
-              <button
-                type="button"
-                className="grid h-[34px] w-[34px] place-items-center rounded-[10px] bg-[#d59ad2] text-black"
-              >
-                <MessageSquare size={20} strokeWidth={2.2} />
-              </button>
-
-              <button type="button" className="text-black">
-                <SquareUserRound size={22} strokeWidth={2.2} />
-              </button>
-
-              <button type="button" className="text-black">
-                <Tv size={22} strokeWidth={2.2} />
-              </button>
-            </div>
-          </div>
-
           {/* second layer */}
           <AnimatePresence>
             {selectedFolder && (
