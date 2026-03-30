@@ -21,28 +21,28 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
     <div className="relative flex min-h-[calc(100vh-156px)] flex-col bg-transparent px-4 pt-0 pb-2">
       <div className="mb-3 text-[14px] font-medium text-white/30">訊息介面</div>
 
-      <div className="relative flex-1 px-5 pt-5 pb-4">
+      <div className="relative flex-1 pb-4">
         {/* Top controls */}
-        <div className="mb-4 flex items-center gap-3">
+        <div className="mb-5 flex items-center gap-3">
           <button
             type="button"
-            className="flex h-[44px] flex-1 items-center rounded-full bg-[#d9d9d9] px-5"
+            className="flex h-[30px] flex-1 items-center rounded-full bg-[#d9d9d9] px-6"
           >
             <Search size={24} strokeWidth={2.2} className="text-black" />
           </button>
 
           <button
-            type="button"
-            onClick={onOpenMenu}
-            className="flex h-[44px] min-w-[120px] items-center justify-center gap-3 rounded-full bg-[#d9d9d9] px-4"
-          >
-            <SquarePen size={20} strokeWidth={2.2} className="text-black" />
-            <Users size={22} strokeWidth={2.2} className="text-black" />
-          </button>
+  type="button"
+  onClick={onOpenMenu}
+  className="ml-auto flex h-[44px] min-w-[124px] items-center justify-end gap-4 rounded-full bg-[#d9d9d9] px-5"
+>
+  <SquarePen size={22} strokeWidth={2.2} className="text-black" />
+  <Users size={24} strokeWidth={2.2} className="text-black" />
+</button>
         </div>
 
         {/* Top feature buttons */}
-        <div className="relative z-[20] mb-4 grid grid-cols-3 items-start gap-3 text-center">
+        <div className="relative z-[20] mb-5 grid grid-cols-3 items-start gap-3 text-center">
           <button
   type="button"
   onClick={() => setIsPeopleLibraryOpen(true)}

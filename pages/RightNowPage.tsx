@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Heart, CircleHelp, X } from 'lucide-react'
 
 type RightNowItem = {
@@ -29,11 +29,38 @@ export default function RightNowPage({ onClose }: RightNowPageProps) {
   const [isRightNowEnabled, setIsRightNowEnabled] = useState(true)
   const [composerText, setComposerText] = useState('')
 
+  const [mounted, setMounted] = useState(false)
+  const [closing, setClosing] = useState(false)
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      setMounted(true)
+    })
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  const handleClose = () => {
+    setClosing(true)
+    setTimeout(() => {
+      onClose()
+    }, 260)
+  }
+
   return (
-    <div className="fixed inset-0 z-[130] flex justify-center bg-black/30">
-      <div className="relative min-h-screen w-full max-w-[430px] bg-[#f3f3f3]">
+    <div
+      className={`fixed inset-0 z-[130] flex justify-center transition-all duration-[260ms] ease-out ${
+        mounted && !closing ? 'bg-black/30 opacity-100' : 'bg-black/0 opacity-0'
+      }`}
+    >
+      <div
+        className={`relative min-h-screen w-full max-w-[430px] origin-bottom bg-[#f3f3f3] transition-all duration-[260ms] ease-out ${
+          mounted && !closing
+            ? 'translate-y-0 scale-100 opacity-100'
+            : 'translate-y-6 scale-[0.92] opacity-0'
+        }`}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pb-3 pt-4">
+        <div className="sticky top-0 z-[10] flex items-center justify-between bg-[#f3f3f3] px-4 pb-3 pt-4">
           <div className="flex items-center gap-2">
             <Heart size={22} className="fill-[#d89ad0] text-black" />
             <span className="text-[18px] font-semibold">Right now</span>
@@ -41,7 +68,7 @@ export default function RightNowPage({ onClose }: RightNowPageProps) {
           </div>
 
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-full bg-[#e5e5e5] px-4 py-1.5 text-[13px]"
           >
             CLOSE
@@ -63,7 +90,9 @@ export default function RightNowPage({ onClose }: RightNowPageProps) {
                   <div className="text-[16px] leading-[1.25] text-[#222]">
                     {item.text}
                   </div>
-                  <div className="mt-1 text-[14px] text-[#555]">{item.distance}</div>
+                  <div className="mt-1 text-[14px] text-[#555]">
+                    {item.distance}
+                  </div>
                 </div>
               </button>
             ))}

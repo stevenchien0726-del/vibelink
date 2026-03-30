@@ -91,26 +91,26 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
             <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
 
             <div>
-              <div className="text-[15px] font-medium text-[#222]">小新</div>
+              <div className="text-[18px] font-medium text-[#222]">小新</div>
               <div className="text-[18px] font-medium text-[#444]">Sky_07_21</div>
             </div>
           </div>
 
           <div className="pr-1 text-right">
-            <div className="text-[14px] text-[#222]">5萬</div>
-            <div className="text-[14px] text-[#222]">粉絲</div>
+            <div className="text-[18px] text-[#222]">5萬</div>
+            <div className="text-[18px] text-[#222]">粉絲</div>
           </div>
         </div>
 
         {/* Bio */}
         <div className="mb-3">
-          <div className="text-[13px] leading-[1.45] text-[#333]">HI 大家好</div>
-          <div className="text-[13px] leading-[1.45] text-[#333]">我今年20歲</div>
-          <div className="text-[13px] leading-[1.45] text-[#333]">喜歡跳舞</div>
+          <div className="text-[16px] leading-[1.45] text-[#333]">HI 大家好</div>
+          <div className="text-[16px] leading-[1.45] text-[#333]">我今年20歲</div>
+          <div className="text-[16px] leading-[1.45] text-[#333]">喜歡跳舞</div>
         </div>
 
         {/* Stats */}
-        <div className="mb-3 flex items-center gap-4 text-[13px] text-[#444]">
+        <div className="mb-3 flex items-center gap-4 text-[16px] text-[#444]">
           <div className="flex items-center gap-1">
             <span>📷</span>
             <span>20</span>
@@ -131,14 +131,14 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
         <div className="mb-4 flex gap-2">
           <button
             type="button"
-            className="h-[36px] rounded-[14px] bg-[#d9d9d9] px-4 text-[13px] text-[#222]"
+            className="h-[36px] rounded-[14px] bg-[#d9d9d9] px-5 text-[18px] text-[#222]"
           >
             LINKPORT
           </button>
 
           <button
             type="button"
-            className="h-[36px] rounded-[14px] bg-[#d9d9d9] px-4 text-[13px] text-[#222]"
+            className="h-[36px] rounded-[14px] bg-[#d9d9d9] px-4 text-[18px] text-[#222]"
           >
             編輯資料
           </button>
@@ -147,24 +147,24 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
         {/* Tab Icons */}
         <div className="mb-2 flex items-center justify-around border-b border-[#d9d9d9] pb-2">
           <button type="button" className="flex flex-col items-center text-[#222]">
-            <Grid2x2 size={19} />
+            <Grid2x2 size={20} />
           </button>
 
           <button type="button" className="flex flex-col items-center text-[#222]">
-            <Clapperboard size={19} />
+            <Clapperboard size={20} />
           </button>
 
           <button type="button" className="flex flex-col items-center text-[#222]">
-            <Bookmark size={19} />
+            <Bookmark size={20} />
           </button>
 
           <button type="button" className="flex flex-col items-center text-[#222]">
-            <ImageIcon size={19} />
+            <ImageIcon size={20} />
           </button>
         </div>
 
         {/* Active Tab Line */}
-        <div className="mb-1 h-[4px] w-[54px] rounded-full bg-[#d89ad0]" />
+        <div className="mb-1 h-[4px] w-[100px] rounded-full bg-[#d89ad0]" />
 
         {/* Grid */}
         <div className="grid grid-cols-3 gap-[2px]">
@@ -259,7 +259,7 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
             >
               <div className="flex flex-col gap-2">
                 <MenuItem icon={<UserCircle2 size={22} />} label="帳號管理" />
-                <MenuItem icon={<Activity size={22} />} label="我的動態" />
+                <MenuItem icon={<Activity size={22} />} label="流量報告" />
                 <MenuItem icon={<Bell size={22} />} label="通知" />
                 <MenuItem icon={<Star size={22} />} label="最愛" />
                 <MenuItem icon={<Ban size={22} />} label="已封鎖" />

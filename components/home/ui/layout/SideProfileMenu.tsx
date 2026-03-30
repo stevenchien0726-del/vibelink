@@ -14,6 +14,7 @@ import {
   GearIcon,
   MegaphoneIcon,
 } from "@/components/icons";
+import { UserCircle2 } from "lucide-react";
 
 type SideProfileMenuProps = {
   onClose: () => void;
@@ -98,15 +99,16 @@ export default function SideProfileMenu({ onClose }: SideProfileMenuProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-[25px] px-4 pb-6 pt-[25px]">
-          <SideItem icon={<ChartIcon />} label="動態" />
+        <div className="flex flex-col gap-[30px] px-4 pb-7 pt-[25px]">
+          <SideItem icon={<UserCircle2/>} label="帳號管理" />
+          <SideItem icon={<ChartIcon />} label="流量報告" />
           <SideItem icon={<BellIcon />} label="通知" />
-          <SideItem icon={<StarIcon />} label="Vibe會員" />
+          <SideItem icon={<StarIcon />} label="最愛" />
           <SideItem icon={<BlockIcon />} label="封鎖名單" />
           <SideItem icon={<ClockIcon />} label="瀏覽紀錄" />
-          <SideItem icon={<TicketIcon />} label="票券 / 優惠" />
+          <SideItem icon={<TicketIcon />} label="Vibe會員" />
           <SideItem icon={<GridIcon />} label="Vibe Hub" />
-          <SideItem icon={<MegaphoneIcon />} label="活動公告" />
+          <SideItem icon={<MegaphoneIcon />} label="廣告中心" />
           <SideItem icon={<GearIcon />} label="設定" />
         </div>
       </motion.aside>

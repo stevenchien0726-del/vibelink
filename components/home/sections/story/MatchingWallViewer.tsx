@@ -134,15 +134,15 @@ export default function MatchingWallViewer({
                 className="flex flex-col items-center justify-center gap-1 rounded-[16px] py-3 text-[#222]"
               >
                 <span className="text-[22px]">🖼️</span>
-                <span className="text-[13px]">他的檔案</span>
+                <span className="text-[16px]">他的檔案</span>
               </button>
 
               <button
                 type="button"
                 className="flex flex-col items-center justify-center gap-1 rounded-[16px] py-3 text-[#222]"
               >
-                <span className="text-[22px]">♡</span>
-                <span className="text-[13px]">喜歡</span>
+                <span className="text-[25px]">♡</span>
+                <span className="text-[16px]">喜歡</span>
               </button>
 
               <button
@@ -150,7 +150,7 @@ export default function MatchingWallViewer({
                 className="flex flex-col items-center justify-center gap-1 rounded-[16px] bg-white/45 py-3 text-[#222]"
               >
                 <span className="text-[22px]">✉️</span>
-                <span className="text-[13px]">發送邀請</span>
+                <span className="text-[16px]">發送邀請</span>
               </button>
             </div>
           </div>
