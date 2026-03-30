@@ -1,7 +1,7 @@
 'use client'
 
 type SearchPageProps = {
-  searchText: string
+  searchText?: string
   onBack: () => void
   onChangeSearchText: (value: string) => void
 }
@@ -19,8 +19,10 @@ export default function SearchPage({
   onBack,
   onChangeSearchText,
 }: SearchPageProps) {
+  const safeSearchText = (searchText ?? '').trim().toLowerCase()
+
   const filteredResults = mockResults.filter((item) =>
-    item.name.toLowerCase().includes(searchText.toLowerCase())
+    item.name.toLowerCase().includes(safeSearchText)
   )
 
   return (
@@ -39,7 +41,7 @@ export default function SearchPage({
             <SearchIcon />
             <input
               autoFocus
-              value={searchText}
+              value={searchText ?? ''}
               onChange={(e) => onChangeSearchText(e.target.value)}
               placeholder="搜尋"
               className="w-full bg-transparent text-[16px] text-[#333] outline-none placeholder:text-[#999]"
@@ -70,7 +72,7 @@ export default function SearchPage({
             ))
           ) : (
             <div className="rounded-[18px] bg-white px-4 py-5 text-[15px] text-[#888] shadow-[0_4px_14px_rgba(0,0,0,0.05)]">
-              找不到符合「{searchText || ' '}」的結果
+              找不到符合「{searchText ?? ''}」的結果
             </div>
           )}
         </div>
