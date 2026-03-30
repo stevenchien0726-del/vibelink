@@ -94,7 +94,7 @@ export default function FeedGrid({
             ))}
           </div>
 
-          <button className="rounded-full border border-[#ddd] bg-[#e9e9e9] px-4 py-2 text-[12px] text-[#666]">
+          <button className="rounded-full border border-[#ddd] bg-[#e9e9e9] px-4 py-2 text-[16px] text-[#666]">
             ✉ 發送邀請
           </button>
         </div>

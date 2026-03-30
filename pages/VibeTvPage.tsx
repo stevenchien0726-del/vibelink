@@ -20,7 +20,7 @@ export default function VibeTvPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f3f3] px-4 pt-4 pb-[110px]">
+    <div className="min-h-screen bg-[#f3f3f3] px-3 pt-4 pb-[110px]">
       <div className="mx-auto w-full max-w-[430px]">
         {/* Top Actions */}
         <div className="mb-3 flex items-center justify-between gap-3">
@@ -54,7 +54,7 @@ export default function VibeTvPage() {
             {bannerColors.map((color, index) => (
               <div
                 key={index}
-                className="relative h-[170px] min-w-full shrink-0 snap-center"
+                className="relative h-[200px] min-w-full shrink-0 snap-center"
                 style={{ backgroundColor: color }}
               >
                 <div className="absolute right-4 top-4 rounded-full bg-black/15 px-3 py-1 text-[14px] text-[#555]">
@@ -81,11 +81,11 @@ export default function VibeTvPage() {
         <section className="mb-6">
           <h2 className="mb-3 text-[20px] font-semibold text-[#222]">Vibe TV精選</h2>
 
-          <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1">
+          <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((item) => (
               <div
                 key={item}
-                className="h-[120px] min-w-[84px] shrink-0 rounded-[10px] bg-[#d9d9d9]"
+                className="h-[150px] min-w-[110px] shrink-0 rounded-[10px] bg-[#d9d9d9]"
               />
             ))}
           </div>
@@ -95,11 +95,11 @@ export default function VibeTvPage() {
         <section>
           <h2 className="mb-3 text-[20px] font-semibold text-[#222]">台灣Top10</h2>
 
-          <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1">
+          <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((item) => (
               <div
                 key={item}
-                className="h-[120px] min-w-[84px] shrink-0 rounded-[10px] bg-[#d9d9d9]"
+                className="h-[150px] min-w-[110px] shrink-0 rounded-[10px] bg-[#d9d9d9]"
               />
             ))}
           </div>

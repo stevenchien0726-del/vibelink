@@ -10,7 +10,7 @@ type MessagePageProps = {
   onOpenMenu?: () => void
 }
 
-const tabs = ['全部', '最愛', '追蹤中', '群組']
+const tabs = ['全部', '最愛', '追蹤中']
 
 export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
@@ -26,18 +26,18 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
         <div className="mb-5 flex items-center gap-3">
           <button
             type="button"
-            className="flex h-[30px] flex-1 items-center rounded-full bg-[#d9d9d9] px-6"
+            className="flex h-[35px] flex-1 items-center rounded-full bg-[#d9d9d9] px-6"
           >
-            <Search size={24} strokeWidth={2.2} className="text-black" />
+            <Search size={26} strokeWidth={2.2} className="text-black" />
           </button>
 
           <button
   type="button"
   onClick={onOpenMenu}
-  className="ml-auto flex h-[44px] min-w-[124px] items-center justify-end gap-4 rounded-full bg-[#d9d9d9] px-5"
+  className="ml-auto flex h-[44px] min-w-[124px] items-center justify-end gap-6 rounded-full bg-[#d9d9d9] px-6"
 >
-  <SquarePen size={22} strokeWidth={2.2} className="text-black" />
-  <Users size={24} strokeWidth={2.2} className="text-black" />
+  <SquarePen size={26} strokeWidth={2.2} className="text-black" />
+  <Users size={26} strokeWidth={2.2} className="text-black" />
 </button>
         </div>
 
@@ -49,7 +49,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   className="flex flex-col items-center"
 >
   <UserRound size={48} strokeWidth={2.1} className="mb-2 text-black" />
-  <span className="text-[14px] text-[#222]">People Library</span>
+  <span className="text-[15px] text-[#222]">People Library</span>
 </button>
 
           <button
@@ -58,7 +58,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
             className="flex flex-col items-center"
           >
             <Mail size={48} strokeWidth={2.1} className="mb-2 text-black" />
-            <span className="text-[14px] text-[#222]">好友邀請</span>
+            <span className="text-[15px] text-[#222]">好友邀請</span>
           </button>
 
           <button
@@ -71,7 +71,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
               strokeWidth={2.1}
               className="mb-2 fill-[#d89ad0] text-black"
             />
-            <span className="text-[14px] text-[#222]">Right now</span>
+            <span className="text-[15px] text-[#222]">Right now</span>
           </button>
         </div>
 
@@ -81,7 +81,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
             <button
               key={tab}
               type="button"
-              className={`flex-1 rounded-full px-2 py-[5px] text-[14px] text-[#222] ${
+              className={`flex-1 rounded-full px-2 py-[5px] text-[15px] text-[#222] ${
                 index === 0 ? 'bg-[#d8b3d8]' : 'bg-transparent'
               }`}
             >
