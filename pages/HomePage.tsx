@@ -473,7 +473,7 @@ if (isSearchPageOpen) {
   </AnimatePresence>
 </div>
 
-      <main className="min-h-screen box-border px-0 pb-[90px] pt-[66px]">
+      <main className="min-h-screen box-border px-0 pb-[90px] pt-[60px]">
         
         <section className="px-[14px] pt-[6px]">
           <h2 className="mb-3 mt-1 text-[20px] font-bold tracking-[0.2px] text-[#444444]">
@@ -498,7 +498,7 @@ if (isSearchPageOpen) {
           />
         </section>
 
-        <div className="fixed bottom-[84px] left-1/2 z-[24] w-full max-w-[430px] -translate-x-1/2 px-4">
+        <div className="fixed bottom-[96px] left-1/2 z-[24] w-full max-w-[430px] -translate-x-1/2 px-4">
           <div className="flex justify-center">
             <button
               type="button"

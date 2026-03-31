@@ -128,8 +128,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   }
 
   return (
-    <div className="relative flex min-h-[calc(100vh-156px)] flex-col bg-transparent px-4 pt-0 pb-2">
-      <div className="mb-3 text-[14px] font-medium text-white/30">訊息介面</div>
+    <div className="relative flex min-h-screen flex-col bg-transparent px-4 pt-4 pb-2">
 
       <div className="relative flex-1 pb-4">
         {/* Top controls */}

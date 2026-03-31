@@ -79,9 +79,7 @@ export default function Page() {
 
   return (
     <main
-      className={`min-h-screen box-border px-0 pb-[90px] ${
-        page === 'ai' ? 'pt-[18px]' : 'pt-[66px]'
-      }`}
+      className="mx-auto min-h-screen w-full max-w-[430px] overflow-x-hidden bg-[#f5f5f5] pb-[90px]"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
