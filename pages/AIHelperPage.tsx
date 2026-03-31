@@ -2,14 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 
 type HistoryItem = {
   id: string
   title: string
-}
-
-type AIHelperPageProps = {
-  onOpenPeopleLibrary?: (query?: string) => void
 }
 
 const historyItems: HistoryItem[] = [
@@ -25,11 +22,11 @@ const suggestionItems = [
   '身材性感內建男模特',
 ]
 
-export default function AIHelperPage({
-  onOpenPeopleLibrary,
-}: AIHelperPageProps) {
+export default function AIHelperPage() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
+  const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
+
   const drawerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -51,7 +48,6 @@ export default function AIHelperPage({
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#f5f5f5]">
-
       {/* Top bar */}
       <div className="fixed top-0 left-1/2 z-[40] flex h-[60px] w-full max-w-[430px] -translate-x-1/2 items-center justify-between bg-[rgba(245,245,245,0.96)] px-4 backdrop-blur-md">
         <button
@@ -76,7 +72,6 @@ export default function AIHelperPage({
       {/* Main content */}
       <main className="min-h-screen px-4 pb-[96px] pt-[76px]">
         <div className="flex min-h-[calc(100vh-172px)] flex-col justify-end">
-
           {/* suggestions */}
           <div className="mb-5 grid grid-cols-3 gap-4">
             {suggestionItems.map((item) => (
@@ -101,7 +96,7 @@ export default function AIHelperPage({
             <button
               type="button"
               aria-label="Open People Library"
-              onClick={() => onOpenPeopleLibrary?.(inputValue)}
+              onClick={() => setIsPeopleLibraryOpen(true)}
               className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full bg-transparent text-[#111]"
             >
               <UserCircleIcon />
@@ -180,6 +175,11 @@ export default function AIHelperPage({
           </>
         )}
       </AnimatePresence>
+
+      {/* People Library */}
+      {isPeopleLibraryOpen && (
+        <PeopleLibraryPage onClose={() => setIsPeopleLibraryOpen(false)} />
+      )}
     </div>
   )
 }
@@ -189,7 +189,12 @@ export default function AIHelperPage({
 function MenuIcon() {
   return (
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <path
+        d="M4 7h16M4 12h16M4 17h16"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
@@ -197,7 +202,13 @@ function MenuIcon() {
 function ChevronRightIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M9 6l6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="2.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -205,9 +216,27 @@ function ChevronRightIcon() {
 function BriefcaseIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M8 7V6a2 2 0 012-2h4a2 2 0 012 2v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <rect x="4" y="7" width="16" height="11" rx="2" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M4 11.5h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M8 7V6a2 2 0 012-2h4a2 2 0 012 2v1"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <rect
+        x="4"
+        y="7"
+        width="16"
+        height="11"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M4 11.5h16"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
@@ -217,7 +246,12 @@ function UserCircleIcon() {
     <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.9" />
       <circle cx="12" cy="9" r="3" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M7 18c1-2.2 2.9-3.5 5-3.5s4 1.3 5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M7 18c1-2.2 2.9-3.5 5-3.5s4 1.3 5 3.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }

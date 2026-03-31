@@ -135,6 +135,11 @@ export default function Page() {
     window.setTimeout(() => setIsSnapAnimating(false), 220)
   }
 
+  const pageTranslateStyle =
+    isDraggingPage || isSnapAnimating
+      ? { transform: `translateX(${swipeOffset}px)` }
+      : undefined
+
   return (
     <main
       className="mx-auto min-h-screen w-full max-w-[430px] overflow-x-hidden bg-[#f5f5f5] pb-[90px]"
@@ -143,16 +148,14 @@ export default function Page() {
       onTouchEnd={handleTouchEnd}
     >
       <div
-        className={`min-h-screen will-change-transform ${
+        className={`min-h-screen ${
           isDraggingPage
-            ? ''
+            ? 'will-change-transform'
             : isSnapAnimating
-            ? 'transition-transform duration-200 ease-out'
+            ? 'will-change-transform transition-transform duration-200 ease-out'
             : ''
         }`}
-        style={{
-          transform: `translateX(${swipeOffset}px)`,
-        }}
+        style={pageTranslateStyle}
       >
         {page === 'home' && <HomePage />}
         {page === 'ai' && <AIHelperPage />}
