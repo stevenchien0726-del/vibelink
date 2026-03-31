@@ -127,14 +127,14 @@ export default function MatchingWallViewer({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-[180px] bg-gradient-to-t from-black/30 to-transparent" />
 
           {/* 底部功能列：覆蓋在照片上 */}
-          <div className="absolute bottom-4 left-4 right-4 z-[5]">
+          <div className="absolute bottom-6 left-4 right-4 z-[4]">
             <div className="grid grid-cols-3 gap-2 rounded-[22px] bg-[#ead7ef]/92 p-2 backdrop-blur-md">
               <button
                 type="button"
                 className="flex flex-col items-center justify-center gap-1 rounded-[16px] py-3 text-[#222]"
               >
                 <span className="text-[22px]">🖼️</span>
-                <span className="text-[16px]">他的檔案</span>
+                <span className="text-[18px]">他的檔案</span>
               </button>
 
               <button

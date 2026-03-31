@@ -17,7 +17,10 @@ export default function StoryRow({
   onOpenStory,
 }: StoryRowProps) {
   return (
-    <div className="flex gap-3 overflow-x-auto px-1">
+    <div
+  data-horizontal-scroll="true"
+  className="scrollbar-hide flex gap-... overflow-x-auto ..."
+>
       {stories.map((story) => (
         <button
           key={story.id}

@@ -1,57 +1,97 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import HomePage from '@/pages/HomePage'
 import AIHelperPage from '@/pages/AIHelperPage'
 import MessagePage from '@/pages/MessagePage'
 import ProfilePage from '@/components/message/ProfilePage'
 import VibeTvPage from '@/pages/VibeTvPage'
-import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import BottomNav from '@/components/home/ui/nav/BottomNav'
 
-export type AppPage =
-  | 'home'
-  | 'ai'
-  | 'message'
-  | 'profile'
-  | 'tv'
-  | 'people-library'
+export type AppPage = 'home' | 'ai' | 'message' | 'profile' | 'tv'
+
+const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
 export default function Page() {
-  const [page, setPage] = useState<AppPage>('home')
-  const [peopleQuery, setPeopleQuery] = useState('')
+  const [page, setPage] = useState<AppPage>('message')
+
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
+  const touchStartTarget = useRef<EventTarget | null>(null)
+
+  function getCurrentPageIndex(currentPage: AppPage) {
+    return pageOrder.indexOf(currentPage)
+  }
+
+  function goToPrevPage() {
+    const currentIndex = getCurrentPageIndex(page)
+    if (currentIndex > 0) {
+      setPage(pageOrder[currentIndex - 1])
+    }
+  }
+
+  function goToNextPage() {
+    const currentIndex = getCurrentPageIndex(page)
+    if (currentIndex < pageOrder.length - 1) {
+      setPage(pageOrder[currentIndex + 1])
+    }
+  }
+
+  function isBlockedSwipeTarget(target: EventTarget | null) {
+    if (!(target instanceof HTMLElement)) return false
+
+    return Boolean(
+      target.closest('[data-horizontal-scroll="true"]') ||
+        target.closest('[data-no-page-swipe="true"]') ||
+        target.closest('input') ||
+        target.closest('textarea') ||
+        target.closest('[contenteditable="true"]')
+    )
+  }
+
+  function handleTouchStart(e: React.TouchEvent<HTMLElement>) {
+    const touch = e.touches[0]
+    touchStartX.current = touch.clientX
+    touchStartY.current = touch.clientY
+    touchStartTarget.current = e.target
+  }
+
+  function handleTouchEnd(e: React.TouchEvent<HTMLElement>) {
+    const touch = e.changedTouches[0]
+    const deltaX = touch.clientX - touchStartX.current
+    const deltaY = touch.clientY - touchStartY.current
+
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+
+    const passedHorizontalThreshold = absX > 48
+    const isMostlyHorizontal = absX > absY
+
+    if (!passedHorizontalThreshold || !isMostlyHorizontal) return
+    if (isBlockedSwipeTarget(touchStartTarget.current)) return
+
+    if (deltaX > 0) {
+      goToPrevPage()
+    } else {
+      goToNextPage()
+    }
+  }
 
   return (
-    <main className="min-h-screen bg-[#e9e9e9]">
-      <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#f3f3f3]">
-        {page === 'home' && <HomePage />}
+    <main
+      className={`min-h-screen box-border px-0 pb-[90px] ${
+        page === 'ai' ? 'pt-[18px]' : 'pt-[66px]'
+      }`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {page === 'home' && <HomePage />}
+      {page === 'ai' && <AIHelperPage />}
+      {page === 'message' && <MessagePage />}
+      {page === 'profile' && <ProfilePage />}
+      {page === 'tv' && <VibeTvPage />}
 
-        {page === 'ai' && (
-          <AIHelperPage
-            onOpenPeopleLibrary={(query?: string) => {
-              if (query) setPeopleQuery(query)
-              setPage('people-library')
-            }}
-          />
-        )}
-
-        {page === 'people-library' && (
-          <PeopleLibraryPage
-            query={peopleQuery}
-            onClose={() => setPage('ai')}
-          />
-        )}
-
-        {page === 'message' && <MessagePage />}
-        {page === 'profile' && (
-          <ProfilePage onCloseMenu={() => setPage('home')} />
-        )}
-        {page === 'tv' && <VibeTvPage />}
-
-        {page !== 'people-library' && (
-  <BottomNav current={page} setPage={setPage} />
-)}
-      </div>
+      <BottomNav current={page} setPage={setPage} />
     </main>
   )
 }

@@ -517,6 +517,7 @@ if (isSearchPageOpen) {
       <AnimatePresence mode="wait">
         {selectedStory && (
   <motion.div
+  data-no-page-swipe="true"
   className="fixed inset-0 z-[200] bg-[#efefef]"
   initial={{ opacity: 0 }}
   animate={{ opacity: 1 }}
