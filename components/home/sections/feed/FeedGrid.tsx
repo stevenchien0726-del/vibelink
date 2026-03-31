@@ -52,11 +52,12 @@ export default function FeedGrid({
         </div>
 
         <div className="overflow-hidden rounded-[18px]">
-          <div
-            ref={sliderRef}
-            onScroll={handleSliderScroll}
-            className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto touch-pan-x overscroll-x-contain"
-          >
+  <div
+    ref={sliderRef}
+    onScroll={handleSliderScroll}
+    data-horizontal-scroll="true"
+    className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto touch-pan-x overscroll-x-contain"
+  >
             {slideColors.map((color, index) => (
               <div
                 key={index}

@@ -5,7 +5,7 @@ import type { AppPage } from '@/app/page'
 
 type Props = {
   current: AppPage
-  setPage: React.Dispatch<React.SetStateAction<AppPage>>
+  setPage: (page: AppPage) => void
 }
 
 const items: {

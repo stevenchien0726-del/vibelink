@@ -14,6 +14,9 @@ const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
 export default function Page() {
   const [page, setPage] = useState<AppPage>('message')
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const [isDraggingPage, setIsDraggingPage] = useState(false)
+  const [isSnapAnimating, setIsSnapAnimating] = useState(false)
 
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
@@ -37,6 +40,13 @@ export default function Page() {
     }
   }
 
+  function setPageDirect(nextPage: AppPage) {
+    setIsDraggingPage(false)
+    setIsSnapAnimating(false)
+    setSwipeOffset(0)
+    setPage(nextPage)
+  }
+
   function isBlockedSwipeTarget(target: EventTarget | null) {
     if (!(target instanceof HTMLElement)) return false
 
@@ -54,9 +64,38 @@ export default function Page() {
     touchStartX.current = touch.clientX
     touchStartY.current = touch.clientY
     touchStartTarget.current = e.target
+    setIsSnapAnimating(false)
+  }
+
+  function handleTouchMove(e: React.TouchEvent<HTMLElement>) {
+    if (isBlockedSwipeTarget(touchStartTarget.current)) return
+
+    const touch = e.touches[0]
+    const deltaX = touch.clientX - touchStartX.current
+    const deltaY = touch.clientY - touchStartY.current
+
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+
+    if (absX < 8 || absX <= absY) return
+
+    const currentIndex = getCurrentPageIndex(page)
+    const isAtFirstPage = currentIndex === 0
+    const isAtLastPage = currentIndex === pageOrder.length - 1
+
+    let nextOffset = deltaX
+
+    if ((isAtFirstPage && deltaX > 0) || (isAtLastPage && deltaX < 0)) {
+      nextOffset = deltaX * 0.28
+    }
+
+    setIsDraggingPage(true)
+    setSwipeOffset(nextOffset)
   }
 
   function handleTouchEnd(e: React.TouchEvent<HTMLElement>) {
+    if (isBlockedSwipeTarget(touchStartTarget.current)) return
+
     const touch = e.changedTouches[0]
     const deltaX = touch.clientX - touchStartX.current
     const deltaY = touch.clientY - touchStartY.current
@@ -64,32 +103,65 @@ export default function Page() {
     const absX = Math.abs(deltaX)
     const absY = Math.abs(deltaY)
 
-    const passedHorizontalThreshold = absX > 48
+    const passedHorizontalThreshold = absX > 72
     const isMostlyHorizontal = absX > absY
 
-    if (!passedHorizontalThreshold || !isMostlyHorizontal) return
-    if (isBlockedSwipeTarget(touchStartTarget.current)) return
+    if (isDraggingPage) {
+      setIsDraggingPage(false)
+      setIsSnapAnimating(true)
+    }
+
+    if (!passedHorizontalThreshold || !isMostlyHorizontal) {
+      setSwipeOffset(0)
+      window.setTimeout(() => setIsSnapAnimating(false), 220)
+      return
+    }
+
+    const currentIndex = getCurrentPageIndex(page)
+    const isAtFirstPage = currentIndex === 0
+    const isAtLastPage = currentIndex === pageOrder.length - 1
 
     if (deltaX > 0) {
-      goToPrevPage()
+      if (!isAtFirstPage) {
+        goToPrevPage()
+      }
     } else {
-      goToNextPage()
+      if (!isAtLastPage) {
+        goToNextPage()
+      }
     }
+
+    setSwipeOffset(0)
+    window.setTimeout(() => setIsSnapAnimating(false), 220)
   }
 
   return (
     <main
       className="mx-auto min-h-screen w-full max-w-[430px] overflow-x-hidden bg-[#f5f5f5] pb-[90px]"
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {page === 'home' && <HomePage />}
-      {page === 'ai' && <AIHelperPage />}
-      {page === 'message' && <MessagePage />}
-      {page === 'profile' && <ProfilePage />}
-      {page === 'tv' && <VibeTvPage />}
+      <div
+        className={`min-h-screen will-change-transform ${
+          isDraggingPage
+            ? ''
+            : isSnapAnimating
+            ? 'transition-transform duration-200 ease-out'
+            : ''
+        }`}
+        style={{
+          transform: `translateX(${swipeOffset}px)`,
+        }}
+      >
+        {page === 'home' && <HomePage />}
+        {page === 'ai' && <AIHelperPage />}
+        {page === 'message' && <MessagePage />}
+        {page === 'profile' && <ProfilePage />}
+        {page === 'tv' && <VibeTvPage />}
+      </div>
 
-      <BottomNav current={page} setPage={setPage} />
+      <BottomNav current={page} setPage={setPageDirect} />
     </main>
   )
 }

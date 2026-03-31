@@ -18,15 +18,15 @@ export default function StoryRow({
 }: StoryRowProps) {
   return (
     <div
-  data-horizontal-scroll="true"
-  className="scrollbar-hide flex gap-... overflow-x-auto ..."
->
+      data-horizontal-scroll="true"
+      className="scrollbar-hide flex gap-4 overflow-x-auto px-[2px] pb-1"
+    >
       {stories.map((story) => (
         <button
           key={story.id}
           type="button"
           onClick={() => onOpenStory(story)}
-          className="flex flex-col items-center bg-transparent"
+          className="flex w-[82px] shrink-0 flex-col items-center bg-transparent"
         >
           <motion.div
             layoutId={`story-avatar-${story.id}`}
@@ -38,7 +38,7 @@ export default function StoryRow({
             className="h-[82px] w-[82px] rounded-full bg-[#d8d8d8]"
           />
 
-          <div className="mt-2 text-[13px] text-[#444]">
+          <div className="mt-2 w-full truncate text-center text-[13px] text-[#444]">
             {story.author}
           </div>
         </button>
