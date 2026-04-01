@@ -66,8 +66,8 @@ export default function SideProfileMenu({ onClose }: SideProfileMenuProps) {
     mass: 0.95,
   }}
 >
-        <div className="border-b border-[#d6d6d6] px-4 pb-5 pt-[18px]">
-          <div className="mb-[16px] flex items-center gap-3">
+        <div className="border-b border-[#d6d6d6] px-4 pb-7 pt-[35px]">
+          <div className="mb-[25px] flex items-center gap-3">
             <span className="flex h-[24px] w-[24px] items-center justify-center text-[#111]">
               <PersonIcon />
             </span>
@@ -99,7 +99,7 @@ export default function SideProfileMenu({ onClose }: SideProfileMenuProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-[30px] px-4 pb-7 pt-[25px]">
+        <div className="flex flex-col gap-[33px] px-4 pb-7 pt-[33px]">
           <SideItem icon={<UserCircle2/>} label="帳號管理" />
           <SideItem icon={<ChartIcon />} label="流量報告" />
           <SideItem icon={<BellIcon />} label="通知" />

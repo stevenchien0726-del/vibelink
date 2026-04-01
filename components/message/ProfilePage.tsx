@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Grid2x2,
@@ -40,20 +40,65 @@ function MenuItem({ icon, label }: MenuItemProps) {
   return (
     <button
       type="button"
-      className="flex w-full items-center gap-4 rounded-[14px] bg-transparent px-2 py-[10px] min-h-[45px] text-left text-[17px] text-[#222] transition hover:bg-[#ececec]"
+      className="flex w-full justify-center rounded-[14px] bg-transparent px-2 py-[12px] min-h-[52px] text-[17px] text-[#222] transition hover:bg-[#ececec]"
     >
-      <span className="flex h-[24px] w-[24px] items-center justify-center text-[#111]">
-        {icon}
-      </span>
-      <span className="leading-none">{label}</span>
+      <div className="flex min-w-[170px] items-center justify-center gap-4">
+        <span className="flex h-[24px] w-[24px] shrink-0 items-center justify-center text-[#111]">
+          {icon}
+        </span>
+        <span className="w-[96px] text-left leading-none">{label}</span>
+      </div>
     </button>
   )
 }
 
 export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isUploadOpen, setIsUploadOpen] = useState(false)
-  const gridItems = Array.from({ length: 9 })
+const [isUploadOpen, setIsUploadOpen] = useState(false)
+const [activeTab, setActiveTab] = useState(0)
+
+const gridItems = Array.from({ length: 9 })
+const albumItems = Array.from({ length: 5 })
+const tabTouchStartX = useRef<number | null>(null)
+const tabTouchDeltaX = useRef(0)
+
+function goToTab(index: number) {
+  if (index < 0 || index > 3) return
+  setActiveTab(index)
+}
+
+function handleTabTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+  const touch = e.touches[0]
+  tabTouchStartX.current = touch.clientX
+  tabTouchDeltaX.current = 0
+}
+
+function handleTabTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+  if (tabTouchStartX.current == null) return
+
+  const touch = e.touches[0]
+  const deltaX = touch.clientX - tabTouchStartX.current
+  tabTouchDeltaX.current = deltaX
+
+  if (Math.abs(deltaX) > 8) {
+    e.stopPropagation()
+  }
+}
+
+function handleTabTouchEnd() {
+  const deltaX = tabTouchDeltaX.current
+
+  if (Math.abs(deltaX) > 50) {
+    if (deltaX < 0) {
+      goToTab(activeTab + 1)
+    } else {
+      goToTab(activeTab - 1)
+    }
+  }
+
+  tabTouchStartX.current = null
+  tabTouchDeltaX.current = 0
+}
 
   return (
     <div className="relative min-h-screen bg-[#f3f3f3] pb-[110px]">
@@ -144,33 +189,116 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
           </button>
         </div>
 
-        {/* Tab Icons */}
-        <div className="mb-2 flex items-center justify-around border-b border-[#d9d9d9] pb-2">
-          <button type="button" className="flex flex-col items-center text-[#222]">
-            <Grid2x2 size={20} />
-          </button>
+                {/* Tab Icons */}
+        <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">
+          <div className="grid grid-cols-4">
+            <button
+              type="button"
+              onClick={() => goToTab(0)}
+              className="flex h-[34px] items-center justify-center text-[#222]"
+            >
+              <Grid2x2 size={20} />
+            </button>
 
-          <button type="button" className="flex flex-col items-center text-[#222]">
-            <Clapperboard size={20} />
-          </button>
+            <button
+              type="button"
+              onClick={() => goToTab(1)}
+              className="flex h-[34px] items-center justify-center text-[#222]"
+            >
+              <Clapperboard size={20} />
+            </button>
 
-          <button type="button" className="flex flex-col items-center text-[#222]">
-            <Bookmark size={20} />
-          </button>
+            <button
+              type="button"
+              onClick={() => goToTab(2)}
+              className="flex h-[34px] items-center justify-center text-[#222]"
+            >
+              <Bookmark size={20} />
+            </button>
 
-          <button type="button" className="flex flex-col items-center text-[#222]">
-            <ImageIcon size={20} />
-          </button>
+            <button
+              type="button"
+              onClick={() => goToTab(3)}
+              className="flex h-[34px] items-center justify-center text-[#222]"
+            >
+              <ImageIcon size={20} />
+            </button>
+          </div>
+
+          {/* Active Tab Line */}
+                    <div
+            className="pointer-events-none absolute bottom-0 h-[4px] px-2 transition-all duration-300 ease-out"
+            style={{
+              left: `${activeTab * 25}%`,
+              width: '25%',
+            }}
+          >
+            <div className="h-[4px] w-full rounded-full bg-[#d89ad0]" />
+          </div>
         </div>
 
-        {/* Active Tab Line */}
-        <div className="mb-1 h-[4px] w-[100px] rounded-full bg-[#d89ad0]" />
+        {/* Swipe Content Area */}
+        <div
+  data-no-page-swipe="true"
+  className="overflow-hidden touch-pan-y"
+  onTouchStart={handleTabTouchStart}
+  onTouchMove={handleTabTouchMove}
+  onTouchEnd={handleTabTouchEnd}
+>
+          <div
+            className="flex w-full transition-transform duration-300 ease-out"
+            style={{
+              transform: `translateX(-${activeTab * 100}%)`,
+            }}
+          >
+            {/* Tab 1 */}
+            <div className="w-full shrink-0">
+              <div className="grid grid-cols-3 gap-[2px]">
+                {gridItems.map((_, index) => (
+                  <div key={`grid-1-${index}`} className="aspect-square bg-[#d9d9d9]" />
+                ))}
+              </div>
+            </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-3 gap-[2px]">
-          {gridItems.map((_, index) => (
-            <div key={index} className="aspect-square bg-[#d9d9d9]" />
-          ))}
+            {/* Tab 2 */}
+            <div className="w-full shrink-0">
+              <div className="grid grid-cols-3 gap-[2px]">
+                {gridItems.map((_, index) => (
+                  <div key={`grid-2-${index}`} className="aspect-square bg-[#d9d9d9]" />
+                ))}
+              </div>
+            </div>
+
+            {/* Tab 3 */}
+            <div className="w-full shrink-0">
+              <div className="grid grid-cols-3 gap-[2px]">
+                {gridItems.map((_, index) => (
+                  <div key={`grid-3-${index}`} className="aspect-square bg-[#d9d9d9]" />
+                ))}
+              </div>
+            </div>
+
+            {/* Tab 4 */}
+<div className="w-full shrink-0">
+  <div className="flex gap-[10px] overflow-x-auto px-[2px] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    {albumItems.map((_, index) => (
+      <div
+        key={`album-${index}`}
+        className="h-[380px] min-w-[72%] rounded-[10px] shadow-[0_6px_16px_rgba(0,0,0,0.08)]"
+        style={{
+          backgroundColor: [
+            '#e3e3e3',
+            '#dcdcdc',
+            '#d6d6d6',
+            '#cfcfcf',
+            '#c8c8c8',
+          ][index % 5],
+        }}
+      />
+    ))}
+  </div>
+</div>
+          </div>
         </div>
       </div>
 
@@ -202,19 +330,16 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
               }}
               style={{ originX: 0.12, originY: 0 }}
             >
-              <div className="pb-5 text-center text-[20px] font-semibold text-[#666]">
-                上傳內容
-              </div>
 
-              <div className="flex flex-col gap-[14px]">
+              <div className="flex flex-col gap-[30px]">
                 {uploadMenuItems.map((item) => (
                   <button
                     key={item.id}
                     type="button"
-                    className="flex w-full items-center justify-center rounded-[16px] px-[24px] py-[20px] text-[22px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
+                    className="flex w-full items-center justify-center rounded-[18px] px-[24px] py-[24px] text-[25px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
                   >
                     <div className="flex items-center gap-[12px]">
-                      <span className="flex h-[34px] w-[34px] items-center justify-center">
+                      <span className="flex h-[35px] w-[35px] items-center justify-center">
                         {item.icon}
                       </span>
                       <span>{item.label}</span>
@@ -257,7 +382,7 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
               }}
               style={{ originX: 0.88, originY: 0 }}
             >
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 <MenuItem icon={<UserCircle2 size={22} />} label="帳號管理" />
                 <MenuItem icon={<Activity size={22} />} label="流量報告" />
                 <MenuItem icon={<Bell size={22} />} label="通知" />

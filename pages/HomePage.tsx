@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion, animate, useMotionValue, useTransform } from 'framer-motion'
 import StoryRow from '@/components/home/sections/story/StoryRow'
 import FeedGrid from '@/components/home/sections/feed/FeedGrid'
 import SideProfileMenu from '@/components/home/ui/layout/SideProfileMenu'
@@ -121,6 +121,22 @@ const [isSearchPageOpen, setIsSearchPageOpen] = useState(false)
   const topMenuRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
 
+  const storyTouchStartYRef = useRef<number | null>(null)
+const storyTouchStartXRef = useRef<number | null>(null)
+
+const storyDragY = useMotionValue(0)
+const storyCardScale = useTransform(storyDragY, [0, 320], [1, 0.94])
+const storyCardOpacity = useTransform(storyDragY, [0, 320], [1, 0.72])
+const storyOverlayOpacity = useTransform(storyDragY, [0, 320], [1, 0.86])
+
+const closeStoryViewer = useCallback(() => {
+  setSelectedStory(null)
+  setStoryPage(0)
+  setStoryProgress(0)
+  setIsStoryPaused(false)
+  storyDragY.set(0)
+}, [storyDragY])
+
   function handleSubmitSearch() {
   const trimmed = searchText.trim()
   setSearchText(trimmed)
@@ -210,6 +226,58 @@ function handleNextStoryPage() {
   setStoryDirection('next')
   setStoryPage((prev) => prev + 1)
   setStoryProgress(0)
+}
+
+function handleStoryTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+  const touch = e.touches[0]
+  storyTouchStartYRef.current = touch.clientY
+  storyTouchStartXRef.current = touch.clientX
+  setIsStoryPaused(true)
+}
+
+function handleStoryTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+  const startY = storyTouchStartYRef.current
+  const startX = storyTouchStartXRef.current
+  if (startY == null || startX == null) return
+
+  const touch = e.touches[0]
+  const deltaY = touch.clientY - startY
+  const deltaX = Math.abs(touch.clientX - startX)
+
+  if (deltaY > 0 && deltaX < 80) {
+    e.preventDefault()
+    storyDragY.set(deltaY)
+  }
+}
+
+function handleStoryTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+  const startY = storyTouchStartYRef.current
+  const startX = storyTouchStartXRef.current
+
+  if (startY == null || startX == null) {
+    setIsStoryPaused(false)
+    return
+  }
+
+  const touch = e.changedTouches[0]
+  const deltaY = touch.clientY - startY
+  const deltaX = Math.abs(touch.clientX - startX)
+
+  storyTouchStartYRef.current = null
+  storyTouchStartXRef.current = null
+  setIsStoryPaused(false)
+
+  if (deltaY > 140 && deltaX < 80) {
+    closeStoryViewer()
+    return
+  }
+
+  animate(storyDragY, 0, {
+    type: 'spring',
+    stiffness: 380,
+    damping: 32,
+    mass: 0.9,
+  })
 }
 
   useEffect(() => {
@@ -372,16 +440,13 @@ if (isSearchPageOpen) {
                 style={{ originX: 0.08, originY: 0 }}
                 className="fixed top-[68px] left-1/2 z-[120] w-[300px] max-w-[300px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[25px] py-[30px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
               >
-                <div className="pb-5 text-center text-[20px] font-semibold text-[#666]">
-                  上傳內容
-                </div>
 
-                <div className="flex flex-col gap-[14px]">
+                <div className="flex flex-col gap-[30px]">
                   {uploadMenuItems.map((item) => (
                     <button
                       key={item.id}
                       type="button"
-                      className="flex w-full items-center justify-center rounded-[16px] px-[24px] py-[25px] text-[25px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
+                      className="flex w-full items-center justify-center rounded-[16px] px-[24px] py-[25px] text-[30px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
                     >
                       <div className="flex items-center gap-[12px]">
                         <span className="flex h-[34px] w-[34px] items-center justify-center">
@@ -518,11 +583,17 @@ if (isSearchPageOpen) {
         {selectedStory && (
   <motion.div
   data-no-page-swipe="true"
-  className="fixed inset-0 z-[200] bg-[#efefef]"
+  className="fixed inset-0 z-[200] bg-[#efefef] touch-pan-y"
   initial={{ opacity: 0 }}
   animate={{ opacity: 1 }}
   exit={{ opacity: 0 }}
   transition={{ duration: 0.18 }}
+  onTouchStart={handleStoryTouchStart}
+  onTouchMove={handleStoryTouchMove}
+  onTouchEnd={handleStoryTouchEnd}
+  style={{
+  opacity: storyOverlayOpacity,
+}}
 >
   <div className="relative mx-auto h-full w-full max-w-[430px]">
     {(() => {
@@ -565,12 +636,7 @@ if (isSearchPageOpen) {
             </div>
 
             <button
-              onClick={() => {
-  setSelectedStory(null)
-  setStoryPage(0)
-  setStoryProgress(0)
-  setIsStoryPaused(false)
-}}
+              onClick={closeStoryViewer}
               className="rounded-full bg-[#e5e5e5] px-4 py-2 text-[13px] font-medium text-[#333]"
             >
               CLOSE
@@ -614,12 +680,15 @@ if (isSearchPageOpen) {
   }}
   transition={{ duration: 0.26, ease: 'easeOut' }}
   className="relative h-full w-full max-w-[390px] overflow-hidden rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.1)]"
-  style={{ backgroundColor: currentPage?.bg || '#cfa2cc' }}
+  style={{
+    backgroundColor: currentPage?.bg || '#cfa2cc',
+    y: storyDragY,
+    scale: storyCardScale,
+    opacity: storyCardOpacity,
+  }}
   onMouseDown={() => setIsStoryPaused(true)}
   onMouseUp={() => setIsStoryPaused(false)}
   onMouseLeave={() => setIsStoryPaused(false)}
-  onTouchStart={() => setIsStoryPaused(true)}
-  onTouchEnd={() => setIsStoryPaused(false)}
 >
               <div className="flex h-full items-center justify-center px-6 text-center text-[20px] text-white/85">
                 {currentPage?.title || '配對牆內容'}
