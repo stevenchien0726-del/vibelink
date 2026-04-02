@@ -28,6 +28,11 @@ type StoryItem = {
   author: string
 }
 
+const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app/'
+function openMembershipSite() {
+  window.open(MEMBERSHIP_URL, '_blank')
+}
+
 const uploadMenuItems: UploadMenuItem[] = [
   { id: 'post', label: '貼文', icon: <PostUploadIcon /> },
   { id: 'video', label: '短影片', icon: <VideoUploadIcon /> },

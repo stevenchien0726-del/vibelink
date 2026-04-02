@@ -21,6 +21,10 @@ const suggestionItems = [
   '喜歡大自然的女生',
   '身材性感內建男模特',
 ]
+const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app/'
+function openMembershipSite() {
+  window.open(MEMBERSHIP_URL, '_blank')
+}
 
 export default function AIHelperPage() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
@@ -59,12 +63,16 @@ export default function AIHelperPage() {
           <MenuIcon />
         </button>
 
-        <div className="flex min-w-0 items-center gap-[4px]">
-          <span className="truncate text-[17px] font-medium tracking-[-0.2px] text-[#111]">
-            Vibe Plus
-          </span>
-          <ChevronRightIcon />
-        </div>
+        <button
+  type="button"
+  onClick={openMembershipSite}
+  className="flex min-w-0 items-center gap-[4px] bg-transparent"
+>
+  <span className="truncate text-[17px] font-medium tracking-[-0.2px] text-[#111]">
+    Vibe Plus
+  </span>
+  <ChevronRightIcon />
+</button>
 
         <div className="w-10" />
       </div>
@@ -142,12 +150,16 @@ export default function AIHelperPage() {
               }}
             >
               <div className="border-b border-[#ececec] px-4 pb-4 pt-5">
-                <div className="mb-2 flex items-center gap-[4px]">
-                  <span className="text-[22px] font-medium text-[#111]">
-                    Vibe Plus
-                  </span>
-                  <ChevronRightIcon />
-                </div>
+                <button
+  type="button"
+  onClick={openMembershipSite}
+  className="mb-2 flex items-center gap-[4px] bg-transparent"
+>
+  <span className="text-[22px] font-medium text-[#111]">
+    Vibe Plus
+  </span>
+  <ChevronRightIcon />
+</button>
 
                 <div className="pt-3 pb-1">
                   <span className="text-[13px] font-medium text-[#888]">

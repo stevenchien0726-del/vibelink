@@ -28,10 +28,16 @@ type ProfilePageProps = {
 type MenuItemProps = {
   icon: React.ReactNode
   label: string
+  onClick?: () => void
 }
 
 const activeColor = '#d89ad0'
 const inactiveColor = '#222'
+const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app/'
+
+function openMembershipSite() {
+  window.open(MEMBERSHIP_URL, '_blank')
+}
 
 const uploadMenuItems = [
   { id: 'post', label: '貼文', icon: <PlusSquare size={22} /> },
@@ -39,12 +45,13 @@ const uploadMenuItems = [
   { id: 'album', label: '配對牆相片集', icon: <ImageIcon size={22} /> },
 ]
 
-function MenuItem({ icon, label }: MenuItemProps) {
+function MenuItem({ icon, label, onClick }: MenuItemProps) {
   return (
     <button
-      type="button"
-      className="flex min-h-[52px] w-full justify-center rounded-[14px] bg-transparent px-2 py-[12px] text-[17px] text-[#222] transition hover:bg-[#ececec]"
-    >
+  type="button"
+  onClick={onClick}
+  className="flex min-h-[52px] w-full justify-center rounded-[14px] bg-transparent px-2 py-[12px] text-[17px] text-[#222] transition hover:bg-[#ececec]"
+>
       <div className="flex min-w-[170px] items-center justify-center gap-4">
         <span className="flex h-[24px] w-[24px] shrink-0 items-center justify-center text-[#111]">
           {icon}
@@ -446,7 +453,14 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
                 <MenuItem icon={<Star size={22} />} label="最愛" />
                 <MenuItem icon={<Ban size={22} />} label="已封鎖" />
                 <MenuItem icon={<Clock3 size={22} />} label="典藏內容" />
-                <MenuItem icon={<Ticket size={22} />} label="Vibe會員" />
+                <MenuItem
+  icon={<Ticket size={22} />}
+  label="Vibe會員"
+  onClick={() => {
+    setIsMenuOpen(false)
+    openMembershipSite()
+  }}
+/>
                 <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
                 <MenuItem icon={<Settings size={22} />} label="設定" />
                 <MenuItem icon={<Megaphone size={22} />} label="廣告中心" />

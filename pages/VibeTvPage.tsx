@@ -3,6 +3,10 @@
 import { useRef, useState } from 'react'
 
 const bannerColors = ['#d9d9d9', '#cfcfcf', '#c4c4c4']
+const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app/'
+function openMembershipSite() {
+  window.open(MEMBERSHIP_URL, '_blank')
+}
 
 export default function VibeTvPage() {
   const [currentBanner, setCurrentBanner] = useState(0)
@@ -24,9 +28,13 @@ export default function VibeTvPage() {
       <div className="mx-auto w-full max-w-[430px]">
         {/* Top Actions */}
         <div className="mb-3 flex items-center justify-between gap-3">
-          <button className="flex h-10 items-center justify-center rounded-full bg-[#d9d9d9] px-4 text-[18px] font-medium text-[#111]">
-            Vibe會員
-          </button>
+          <button
+  type="button"
+  onClick={openMembershipSite}
+  className="flex h-10 items-center justify-center rounded-full bg-[#d9d9d9] px-4 text-[18px] font-medium text-[#111]"
+>
+  Vibe會員
+</button>
 
           <button className="flex h-10 items-center justify-center rounded-full bg-[#d9d9d9] px-5 text-[18px] font-medium text-[#111]">
             VibeTV APP
