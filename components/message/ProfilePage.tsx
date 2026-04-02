@@ -30,6 +30,9 @@ type MenuItemProps = {
   label: string
 }
 
+const activeColor = '#d89ad0'
+const inactiveColor = '#222'
+
 const uploadMenuItems = [
   { id: 'post', label: '貼文', icon: <PlusSquare size={22} /> },
   { id: 'video', label: '短影片', icon: <Clapperboard size={22} /> },
@@ -40,7 +43,7 @@ function MenuItem({ icon, label }: MenuItemProps) {
   return (
     <button
       type="button"
-      className="flex w-full justify-center rounded-[14px] bg-transparent px-2 py-[12px] min-h-[52px] text-[17px] text-[#222] transition hover:bg-[#ececec]"
+      className="flex min-h-[52px] w-full justify-center rounded-[14px] bg-transparent px-2 py-[12px] text-[17px] text-[#222] transition hover:bg-[#ececec]"
     >
       <div className="flex min-w-[170px] items-center justify-center gap-4">
         <span className="flex h-[24px] w-[24px] shrink-0 items-center justify-center text-[#111]">
@@ -54,51 +57,78 @@ function MenuItem({ icon, label }: MenuItemProps) {
 
 export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-const [isUploadOpen, setIsUploadOpen] = useState(false)
-const [activeTab, setActiveTab] = useState(0)
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState(0)
 
-const gridItems = Array.from({ length: 9 })
-const albumItems = Array.from({ length: 5 })
-const tabTouchStartX = useRef<number | null>(null)
-const tabTouchDeltaX = useRef(0)
+  const gridItems = Array.from({ length: 9 })
+  const albumItems = Array.from({ length: 5 })
 
-function goToTab(index: number) {
-  if (index < 0 || index > 3) return
-  setActiveTab(index)
-}
+  const tabTouchStartX = useRef<number | null>(null)
+  const tabTouchDeltaX = useRef(0)
+  const albumScrollRef = useRef<HTMLDivElement | null>(null)
 
-function handleTabTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-  const touch = e.touches[0]
-  tabTouchStartX.current = touch.clientX
-  tabTouchDeltaX.current = 0
-}
-
-function handleTabTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-  if (tabTouchStartX.current == null) return
-
-  const touch = e.touches[0]
-  const deltaX = touch.clientX - tabTouchStartX.current
-  tabTouchDeltaX.current = deltaX
-
-  if (Math.abs(deltaX) > 8) {
-    e.stopPropagation()
+  function goToTab(index: number) {
+    if (index < 0 || index > 3) return
+    setActiveTab(index)
   }
-}
 
-function handleTabTouchEnd() {
-  const deltaX = tabTouchDeltaX.current
+  function canSwipeFromAlbum(deltaX: number) {
+    const el = albumScrollRef.current
+    if (!el) return true
 
-  if (Math.abs(deltaX) > 50) {
-    if (deltaX < 0) {
-      goToTab(activeTab + 1)
-    } else {
-      goToTab(activeTab - 1)
+    const atFirst = el.scrollLeft <= 4
+    const atLast = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4
+
+    if (deltaX > 0) return atFirst
+    if (deltaX < 0) return atLast
+
+    return true
+  }
+
+  function handleTabTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    const touch = e.touches[0]
+    tabTouchStartX.current = touch.clientX
+    tabTouchDeltaX.current = 0
+  }
+
+  function handleTabTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    if (tabTouchStartX.current == null) return
+
+    const touch = e.touches[0]
+    const deltaX = touch.clientX - tabTouchStartX.current
+    tabTouchDeltaX.current = deltaX
+
+    if (activeTab === 3) {
+      if (!canSwipeFromAlbum(deltaX)) {
+        return
+      }
+    }
+
+    if (Math.abs(deltaX) > 8) {
+      e.stopPropagation()
     }
   }
 
-  tabTouchStartX.current = null
-  tabTouchDeltaX.current = 0
-}
+  function handleTabTouchEnd() {
+    const deltaX = tabTouchDeltaX.current
+
+    if (Math.abs(deltaX) > 50) {
+      if (activeTab === 3 && !canSwipeFromAlbum(deltaX)) {
+        tabTouchStartX.current = null
+        tabTouchDeltaX.current = 0
+        return
+      }
+
+      if (deltaX < 0) {
+        goToTab(activeTab + 1)
+      } else {
+        goToTab(activeTab - 1)
+      }
+    }
+
+    tabTouchStartX.current = null
+    tabTouchDeltaX.current = 0
+  }
 
   return (
     <div className="relative min-h-screen bg-[#f3f3f3] pb-[110px]">
@@ -106,23 +136,23 @@ function handleTabTouchEnd() {
         {/* Top Bar */}
         <div className="mb-4 flex items-center justify-between">
           <button
-  type="button"
-  onClick={() => {
-  setIsMenuOpen(false)
-  setIsUploadOpen((prev) => !prev)
-}}
-  className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
->
-  <PlusSquare size={15} />
-  <span>上傳內容</span>
-</button>
+            type="button"
+            onClick={() => {
+              setIsMenuOpen(false)
+              setIsUploadOpen((prev) => !prev)
+            }}
+            className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
+          >
+            <PlusSquare size={15} />
+            <span>上傳內容</span>
+          </button>
 
           <button
             type="button"
             onClick={() => {
-  setIsUploadOpen(false)
-  setIsMenuOpen((prev) => !prev)
-}}
+              setIsUploadOpen(false)
+              setIsMenuOpen((prev) => !prev)
+            }}
             className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
           >
             <Menu size={18} />
@@ -189,44 +219,60 @@ function handleTabTouchEnd() {
           </button>
         </div>
 
-                {/* Tab Icons */}
+        {/* Tab Icons */}
         <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">
           <div className="grid grid-cols-4">
             <button
               type="button"
               onClick={() => goToTab(0)}
-              className="flex h-[34px] items-center justify-center text-[#222]"
+              className="flex h-[34px] items-center justify-center"
             >
-              <Grid2x2 size={20} />
+              <Grid2x2
+                size={20}
+                className="transition-colors duration-200"
+                color={activeTab === 0 ? activeColor : inactiveColor}
+              />
             </button>
 
             <button
               type="button"
               onClick={() => goToTab(1)}
-              className="flex h-[34px] items-center justify-center text-[#222]"
+              className="flex h-[34px] items-center justify-center"
             >
-              <Clapperboard size={20} />
+              <Clapperboard
+                size={20}
+                className="transition-colors duration-200"
+                color={activeTab === 1 ? activeColor : inactiveColor}
+              />
             </button>
 
             <button
               type="button"
               onClick={() => goToTab(2)}
-              className="flex h-[34px] items-center justify-center text-[#222]"
+              className="flex h-[34px] items-center justify-center"
             >
-              <Bookmark size={20} />
+              <Bookmark
+                size={20}
+                className="transition-colors duration-200"
+                color={activeTab === 2 ? activeColor : inactiveColor}
+              />
             </button>
 
             <button
               type="button"
               onClick={() => goToTab(3)}
-              className="flex h-[34px] items-center justify-center text-[#222]"
+              className="flex h-[34px] items-center justify-center"
             >
-              <ImageIcon size={20} />
+              <ImageIcon
+                size={20}
+                className="transition-colors duration-200"
+                color={activeTab === 3 ? activeColor : inactiveColor}
+              />
             </button>
           </div>
 
           {/* Active Tab Line */}
-                    <div
+          <div
             className="pointer-events-none absolute bottom-0 h-[4px] px-2 transition-all duration-300 ease-out"
             style={{
               left: `${activeTab * 25}%`,
@@ -239,12 +285,12 @@ function handleTabTouchEnd() {
 
         {/* Swipe Content Area */}
         <div
-  data-no-page-swipe="true"
-  className="overflow-hidden touch-pan-y"
-  onTouchStart={handleTabTouchStart}
-  onTouchMove={handleTabTouchMove}
-  onTouchEnd={handleTabTouchEnd}
->
+          data-no-page-swipe="true"
+          className="overflow-hidden touch-pan-y"
+          onTouchStart={handleTabTouchStart}
+          onTouchMove={handleTabTouchMove}
+          onTouchEnd={handleTabTouchEnd}
+        >
           <div
             className="flex w-full transition-transform duration-300 ease-out"
             style={{
@@ -255,7 +301,10 @@ function handleTabTouchEnd() {
             <div className="w-full shrink-0">
               <div className="grid grid-cols-3 gap-[2px]">
                 {gridItems.map((_, index) => (
-                  <div key={`grid-1-${index}`} className="aspect-square bg-[#d9d9d9]" />
+                  <div
+                    key={`grid-1-${index}`}
+                    className="aspect-square bg-[#d9d9d9]"
+                  />
                 ))}
               </div>
             </div>
@@ -264,7 +313,10 @@ function handleTabTouchEnd() {
             <div className="w-full shrink-0">
               <div className="grid grid-cols-3 gap-[2px]">
                 {gridItems.map((_, index) => (
-                  <div key={`grid-2-${index}`} className="aspect-square bg-[#d9d9d9]" />
+                  <div
+                    key={`grid-2-${index}`}
+                    className="aspect-square bg-[#d9d9d9]"
+                  />
                 ))}
               </div>
             </div>
@@ -273,31 +325,39 @@ function handleTabTouchEnd() {
             <div className="w-full shrink-0">
               <div className="grid grid-cols-3 gap-[2px]">
                 {gridItems.map((_, index) => (
-                  <div key={`grid-3-${index}`} className="aspect-square bg-[#d9d9d9]" />
+                  <div
+                    key={`grid-3-${index}`}
+                    className="aspect-square bg-[#d9d9d9]"
+                  />
                 ))}
               </div>
             </div>
 
             {/* Tab 4 */}
-<div className="w-full shrink-0">
-  <div className="flex gap-[10px] overflow-x-auto px-[2px] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    {albumItems.map((_, index) => (
-      <div
-        key={`album-${index}`}
-        className="h-[380px] min-w-[72%] rounded-[10px] shadow-[0_6px_16px_rgba(0,0,0,0.08)]"
-        style={{
-          backgroundColor: [
-            '#e3e3e3',
-            '#dcdcdc',
-            '#d6d6d6',
-            '#cfcfcf',
-            '#c8c8c8',
-          ][index % 5],
-        }}
-      />
-    ))}
-  </div>
-</div>
+            <div className="w-full shrink-0">
+              <div
+                ref={albumScrollRef}
+                className="flex gap-[10px] overflow-x-auto px-[2px] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                style={{ scrollSnapType: 'x mandatory' }}
+              >
+                {albumItems.map((_, index) => (
+                  <div
+                    key={`album-${index}`}
+                    className="h-[380px] min-w-[72%] rounded-[10px] shadow-[0_6px_16px_rgba(0,0,0,0.08)]"
+                    style={{
+                      scrollSnapAlign: 'start',
+                      backgroundColor: [
+                        '#e3e3e3',
+                        '#dcdcdc',
+                        '#d6d6d6',
+                        '#cfcfcf',
+                        '#c8c8c8',
+                      ][index % 5],
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -330,7 +390,6 @@ function handleTabTouchEnd() {
               }}
               style={{ originX: 0.12, originY: 0 }}
             >
-
               <div className="flex flex-col gap-[30px]">
                 {uploadMenuItems.map((item) => (
                   <button
@@ -352,11 +411,10 @@ function handleTabTouchEnd() {
         )}
       </AnimatePresence>
 
-            {/* Menu Overlay */}
+      {/* Menu Overlay */}
       <AnimatePresence>
         {isMenuOpen && (
           <>
-            {/* 只蓋 ProfilePage 內容，不是整個 app */}
             <motion.button
               type="button"
               aria-label="Close profile menu overlay"
@@ -368,9 +426,8 @@ function handleTabTouchEnd() {
               transition={{ duration: 0.18, ease: 'easeOut' }}
             />
 
-            {/* Menu panel */}
             <motion.div
-              className="absolute left-1/2 top-[96px] z-[25] w-[300px] -translate-x-1/2 rounded-[26px] border-[3px] border-[#e0a3db] bg-[#f3f3f3] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.10)]"
+              className="absolute left-1/2 top-[96px] z-[25] w-[300px] -translate-x-1/2 rounded-[26px] bg-[#f3f3f3] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.10)]"
               initial={{ opacity: 0, scale: 0.82, y: -18 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.86, y: -10 }}
