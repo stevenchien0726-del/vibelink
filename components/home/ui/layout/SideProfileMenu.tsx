@@ -20,16 +20,17 @@ type SideProfileMenuProps = {
   onClose: () => void;
 };
 
-function SideItem({
-  icon,
-  label,
-}: {
+type SideItemProps = {
   icon: React.ReactNode;
   label: string;
-}) {
+  onClick?: () => void;
+};
+
+function SideItem({ icon, label, onClick }: SideItemProps) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="flex w-full items-center gap-3 bg-transparent py-[14px] text-left text-[14px] text-[#222]"
     >
       <span className="flex h-[24px] w-[24px] items-center justify-center text-[#111]">
@@ -41,31 +42,35 @@ function SideItem({
 }
 
 export default function SideProfileMenu({ onClose }: SideProfileMenuProps) {
+  const handleOpenVibeMemberSite = () => {
+    window.open("https://vibelink-j9m5.vercel.app/", "_blank");
+  };
+
   return (
     <>
       <motion.button
-  type="button"
-  aria-label="關閉側邊選單"
-  className="fixed top-0 left-1/2 z-[140] h-full w-full max-w-[430px] -translate-x-1/2 bg-[rgba(0,0,0,0.14)]"
-  onClick={onClose}
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  exit={{ opacity: 0 }}
-  transition={{ duration: 0.22, ease: "easeOut" }}
-/>
+        type="button"
+        aria-label="關閉側邊選單"
+        className="fixed top-0 left-1/2 z-[140] h-full w-full max-w-[430px] -translate-x-1/2 bg-[rgba(0,0,0,0.14)]"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+      />
 
       <motion.aside
-  className="fixed top-0 left-1/2 z-[141] flex h-full w-[72%] max-w-[310px] -translate-x-[215px] flex-col overflow-y-auto bg-white shadow-[10px_0_30px_rgba(0,0,0,0.08)]"
-  initial={{ x: -56, opacity: 0.98 }}
-  animate={{ x: 0, opacity: 1 }}
-  exit={{ x: -56, opacity: 0.98 }}
-  transition={{
-    type: "spring",
-    stiffness: 320,
-    damping: 30,
-    mass: 0.95,
-  }}
->
+        className="fixed top-0 left-1/2 z-[141] flex h-full w-[72%] max-w-[310px] -translate-x-[215px] flex-col overflow-y-auto bg-white shadow-[10px_0_30px_rgba(0,0,0,0.08)]"
+        initial={{ x: -56, opacity: 0.98 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: -56, opacity: 0.98 }}
+        transition={{
+          type: "spring",
+          stiffness: 320,
+          damping: 30,
+          mass: 0.95,
+        }}
+      >
         <div className="border-b border-[#d6d6d6] px-4 pb-7 pt-[35px]">
           <div className="mb-[25px] flex items-center gap-3">
             <span className="flex h-[24px] w-[24px] items-center justify-center text-[#111]">
@@ -100,13 +105,17 @@ export default function SideProfileMenu({ onClose }: SideProfileMenuProps) {
         </div>
 
         <div className="flex flex-col gap-[33px] px-4 pb-7 pt-[33px]">
-          <SideItem icon={<UserCircle2/>} label="帳號管理" />
+          <SideItem icon={<UserCircle2 />} label="帳號管理" />
           <SideItem icon={<ChartIcon />} label="流量報告" />
           <SideItem icon={<BellIcon />} label="通知" />
           <SideItem icon={<StarIcon />} label="最愛" />
           <SideItem icon={<BlockIcon />} label="封鎖名單" />
-          <SideItem icon={<ClockIcon />} label="瀏覽紀錄" />
-          <SideItem icon={<TicketIcon />} label="Vibe會員" />
+          <SideItem icon={<ClockIcon />} label="典藏內容" />
+          <SideItem
+            icon={<TicketIcon />}
+            label="Vibe會員"
+            onClick={handleOpenVibeMemberSite}
+          />
           <SideItem icon={<GridIcon />} label="Vibe Hub" />
           <SideItem icon={<GearIcon />} label="設定" />
           <SideItem icon={<MegaphoneIcon />} label="廣告中心" />
