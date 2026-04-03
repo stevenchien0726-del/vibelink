@@ -166,7 +166,7 @@ function FolderPreview({
         <button
           type="button"
           onClick={onOpenFolder}
-          className="grid grid-cols-2 gap-[8px] bg-transparent p-0 transition-transform active:scale-95"
+          className="grid gr  id-cols-2 gap-[8px] bg-transparent p-0 transition-transform active:scale-95"
           aria-label="Open folder"
         >
           <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />

@@ -5,9 +5,14 @@ import { Ticket, ChevronRight } from 'lucide-react'
 
 const bannerColors = ['#d9d9d9', '#cfcfcf', '#c4c4c4']
 const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app/'
+const VIBETV_APP_URL = 'https://vibetv-app-eight.vercel.app/'
 
 function openMembershipSite() {
   window.open(MEMBERSHIP_URL, '_blank')
+}
+
+function openVibeTvApp() {
+  window.open(VIBETV_APP_URL, '_blank')
 }
 
 export default function VibeTvPage() {
@@ -40,10 +45,14 @@ export default function VibeTvPage() {
               <span>Vibe會員</span>
             </button>
 
-            <button className="flex h-10 items-center justify-center rounded-full bg-[#d9d9d9] px-5 text-[18px] font-medium text-[#111]">
-              <span>VibeTV APP</span>
-              <ChevronRight className="ml-1 h-[18px] w-[18px]" strokeWidth={2.4} />
-            </button>
+            <button
+  type="button"
+  onClick={openVibeTvApp}
+  className="flex h-10 items-center justify-center rounded-full bg-[#d9d9d9] px-5 text-[18px] font-medium text-[#111]"
+>
+  <span>VibeTV APP</span>
+  <ChevronRight className="ml-1 h-[18px] w-[18px]" strokeWidth={2.4} />
+</button>
           </div>
         </div>
 
