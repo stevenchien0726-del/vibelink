@@ -130,7 +130,15 @@ function PlanCard({
 
       
 
-      <div className="mb-4 text-[28px] font-bold text-neutral-900">月費:{plan.price}NTD</div>
+      <div className="mb-3">
+  <div className="text-[16px] font-semibold tracking-wide text-neutral-500">
+  {plan.name}
+</div>
+
+  <div className="mt-1 text-[24px] font-bold text-neutral-900">
+    月費:{plan.price}NTD
+  </div>
+</div>
 
       <div className="space-y-4">
         <div className="space-y-2 border-t border-neutral-300 pt-3">

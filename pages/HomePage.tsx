@@ -6,6 +6,7 @@ import StoryRow from '@/components/home/sections/story/StoryRow'
 import FeedGrid from '@/components/home/sections/feed/FeedGrid'
 import SideProfileMenu from '@/components/home/ui/layout/SideProfileMenu'
 import SearchPage from '@/pages/SearchPage'
+import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 
 type FeedMode = '1x1' | '2x2' | '3x3'
 
@@ -109,10 +110,11 @@ const storyPagesMap: Record<string, { title: string; bg: string }[]> = {
 
 export default function HomePage() {
   const [feedMode, setFeedMode] = useState<FeedMode>('1x1')
-  const [isUploadOpen, setIsUploadOpen] = useState(false)
-const [isTopMenuOpen, setIsTopMenuOpen] = useState(false)
+  const [isTopMenuOpen, setIsTopMenuOpen] = useState(false)
 const [isProfileOpen, setIsProfileOpen] = useState(false)
+const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
 const [isSearchOpen, setIsSearchOpen] = useState(false)
+const [isUploadOpen, setIsUploadOpen] = useState(false)
 const [searchText, setSearchText] = useState('')
 const [isSearchPageOpen, setIsSearchPageOpen] = useState(false)
   const [selectedStory, setSelectedStory] = useState<StoryItem | null>(null)
@@ -746,7 +748,22 @@ if (isSearchPageOpen) {
 
       <AnimatePresence>
   {isProfileOpen && (
-    <SideProfileMenu onClose={() => setIsProfileOpen(false)} />
+    <SideProfileMenu
+      onClose={() => setIsProfileOpen(false)}
+      onOpenPeopleLibrary={() => {
+        setIsProfileOpen(false)
+        setIsPeopleLibraryOpen(true)
+      }}
+    />
+  )}
+</AnimatePresence>
+
+<AnimatePresence>
+  {isPeopleLibraryOpen && (
+    <PeopleLibraryPage
+      query="People Library"
+      onClose={() => setIsPeopleLibraryOpen(false)}
+    />
   )}
 </AnimatePresence>
       

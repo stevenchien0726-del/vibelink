@@ -1,5 +1,7 @@
-import React from "react";
-import { motion } from "framer-motion";
+'use client'
+
+import React from 'react'
+import { motion } from 'framer-motion'
 import {
   PersonIcon,
   MailIcon,
@@ -13,18 +15,19 @@ import {
   GridIcon,
   GearIcon,
   MegaphoneIcon,
-} from "@/components/icons";
-import { UserCircle2 } from "lucide-react";
+} from '@/components/icons'
+import { UserCircle2 } from 'lucide-react'
 
 type SideProfileMenuProps = {
-  onClose: () => void;
-};
+  onClose: () => void
+  onOpenPeopleLibrary: () => void
+}
 
 type SideItemProps = {
-  icon: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-};
+  icon: React.ReactNode
+  label: string
+  onClick?: () => void
+}
 
 function SideItem({ icon, label, onClick }: SideItemProps) {
   return (
@@ -38,13 +41,16 @@ function SideItem({ icon, label, onClick }: SideItemProps) {
       </span>
       <span>{label}</span>
     </button>
-  );
+  )
 }
 
-export default function SideProfileMenu({ onClose }: SideProfileMenuProps) {
+export default function SideProfileMenu({
+  onClose,
+  onOpenPeopleLibrary,
+}: SideProfileMenuProps) {
   const handleOpenVibeMemberSite = () => {
-    window.open("https://vibelink-j9m5.vercel.app/", "_blank");
-  };
+    window.open('https://vibelink-j9m5.vercel.app/', '_blank')
+  }
 
   return (
     <>
@@ -56,7 +62,7 @@ export default function SideProfileMenu({ onClose }: SideProfileMenuProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.22, ease: "easeOut" }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
       />
 
       <motion.aside
@@ -65,21 +71,25 @@ export default function SideProfileMenu({ onClose }: SideProfileMenuProps) {
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: -56, opacity: 0.98 }}
         transition={{
-          type: "spring",
+          type: 'spring',
           stiffness: 320,
           damping: 30,
           mass: 0.95,
         }}
       >
-        <div className="border-b border-[#d6d6d6] px-4 pb-7 pt-[35px]">
-          <div className="mb-[25px] flex items-center gap-3">
+        <div className="border-b border-[#d6d6d6] px-4 pb-7 pt-[35px] flex flex-col gap-[18px]">
+          <button
+            type="button"
+            onClick={onOpenPeopleLibrary}
+            className="flex w-full items-center gap-3 bg-transparent text-left"
+          >
             <span className="flex h-[24px] w-[24px] items-center justify-center text-[#111]">
               <PersonIcon />
             </span>
             <span className="text-[14px] font-medium text-[#222]">
               People Library
             </span>
-          </div>
+          </button>
 
           <div className="flex items-center gap-3">
             <span className="flex h-[24px] w-[24px] items-center justify-center text-[#111]">
@@ -122,5 +132,5 @@ export default function SideProfileMenu({ onClose }: SideProfileMenuProps) {
         </div>
       </motion.aside>
     </>
-  );
+  )
 }

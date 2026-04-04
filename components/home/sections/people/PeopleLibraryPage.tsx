@@ -47,7 +47,7 @@ export default function PeopleLibraryPage({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[80] flex justify-center bg-[rgba(243,243,243,0.96)]"
+        className="fixed inset-0 z-[220] flex justify-center bg-[rgba(243,243,243,0.96)]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -55,22 +55,18 @@ export default function PeopleLibraryPage({
       >
         <motion.div
           className="relative min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f3f3f3]"
-          initial={{ scale: 0.92, opacity: 0, y: 24 }}
+          initial={{ scale: 0.94, opacity: 0, y: 18 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.94, opacity: 0, y: 12 }}
+          exit={{ scale: 0.98, opacity: 0, y: 10 }}
           transition={{
-            duration: 0.28,
+            duration: 0.24,
             ease: [0.22, 1, 0.36, 1],
           }}
         >
-          {/* 主內容 */}
           <div className="px-4 pt-3 pb-[100px]">
-
-            {/* 🔍 Top Bar */}
             <div className="mb-4 flex items-center gap-3 pt-2">
               <div className="flex h-[36px] flex-1 items-center rounded-full bg-[#d9d9d9] px-4 text-[#222]">
                 <Search size={18} strokeWidth={2.2} />
-
                 <span className="ml-2 truncate text-[15px]">
                   {query || 'People Library'}
                 </span>
@@ -79,13 +75,12 @@ export default function PeopleLibraryPage({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-[36px] min-w-[82px] items-center justify-center rounded-full bg-[#d9d9d9] px-4 text-[14px] font-medium text-[#555]"
+                className="flex h-[36px] min-w-[82px] items-center justify-center rounded-full bg-[#d9d9d9] px-4 text-[14px] font-medium text-[#222]"
               >
                 CLOSE
               </button>
             </div>
 
-            {/* 📁 Folder Grid */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-5">
               {folders.map((folder) => (
                 <div key={folder.id} className="flex flex-col items-center">
@@ -107,7 +102,6 @@ export default function PeopleLibraryPage({
             </div>
           </div>
 
-          {/* 📂 第二層（資料夾展開） */}
           <AnimatePresence>
             {selectedFolder && (
               <PeopleFolderPage
@@ -121,8 +115,6 @@ export default function PeopleLibraryPage({
     </AnimatePresence>
   )
 }
-
-/* Folder Preview UI */
 
 function FolderPreview({
   onOpenFolder,
@@ -166,7 +158,7 @@ function FolderPreview({
         <button
           type="button"
           onClick={onOpenFolder}
-          className="grid gr  id-cols-2 gap-[8px] bg-transparent p-0 transition-transform active:scale-95"
+          className="grid grid-cols-2 gap-[6px] bg-transparent p-0 transition-transform active:scale-95"
           aria-label="Open folder"
         >
           <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />

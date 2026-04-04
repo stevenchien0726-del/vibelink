@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import UploadPanel from '../action/UploadPanel'
 import SideProfileMenu from '../layout/SideProfileMenu'
+import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 
 export default function TopBar() {
   const [showUpload, setShowUpload] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -27,7 +30,7 @@ export default function TopBar() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setIsMenuOpen(true)}
+              onClick={() => setIsPeopleLibraryOpen(true)}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eed9f4] text-[18px] leading-none"
             >
               ☰
@@ -60,7 +63,26 @@ export default function TopBar() {
         </div>
       </div>
 
-      {isMenuOpen && <SideProfileMenu onClose={() => setIsMenuOpen(false)} />}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <SideProfileMenu
+            onClose={() => setIsMenuOpen(false)}
+            onOpenPeopleLibrary={() => {
+              setIsMenuOpen(false)
+              setIsPeopleLibraryOpen(true)
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isPeopleLibraryOpen && (
+          <PeopleLibraryPage
+            query="People Library"
+            onClose={() => setIsPeopleLibraryOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </>
   )
 }
