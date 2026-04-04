@@ -21,6 +21,8 @@ import { UserCircle2 } from 'lucide-react'
 type SideProfileMenuProps = {
   onClose: () => void
   onOpenPeopleLibrary: () => void
+  onOpenFriendInvite: () => void
+  onOpenRightNow: () => void
 }
 
 type SideItemProps = {
@@ -47,6 +49,8 @@ function SideItem({ icon, label, onClick }: SideItemProps) {
 export default function SideProfileMenu({
   onClose,
   onOpenPeopleLibrary,
+  onOpenFriendInvite,
+  onOpenRightNow,
 }: SideProfileMenuProps) {
   const handleOpenVibeMemberSite = () => {
     window.open('https://vibelink-j9m5.vercel.app/', '_blank')
@@ -91,28 +95,40 @@ export default function SideProfileMenu({
             </span>
           </button>
 
-          <div className="flex items-center gap-3">
-            <span className="flex h-[24px] w-[24px] items-center justify-center text-[#111]">
-              <MailIcon />
-            </span>
-            <span className="text-[14px] font-medium text-[#222]">
-              好友邀請
-            </span>
-          </div>
+          <button
+  type="button"
+  onClick={onOpenFriendInvite}
+  className="flex w-full items-center gap-3 bg-transparent text-left"
+>
+  <span className="flex h-[24px] w-[24px] items-center justify-center text-[#111]">
+    <MailIcon />
+  </span>
+  <span className="text-[14px] font-medium text-[#222]">
+    好友邀請
+  </span>
+</button>
         </div>
 
         <div className="border-b border-[#d6d6d6] px-4 py-4">
-          <div className="flex w-fit max-w-full items-center gap-2 rounded-full bg-[#ededed] px-[10px] py-[6px]">
-            <span className="flex h-[20px] w-[20px] items-center justify-center text-[#111]">
-              <HeartOutlineIcon />
-            </span>
-            <span className="text-[13px] text-[#333]">Right now</span>
-            <span className="text-[13px] text-[#333]">開放中</span>
-            <div className="ml-1 flex h-[22px] w-[42px] items-center justify-end rounded-full bg-[#d190e9] p-[3px]">
-              <div className="h-4 w-4 rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.14)]" />
-            </div>
-          </div>
-        </div>
+  <div className="flex w-fit max-w-full items-center gap-2 rounded-full bg-[#ededed] px-[10px] py-[6px]">
+    <button
+      type="button"
+      onClick={onOpenRightNow}
+      className="flex items-center gap-2 bg-transparent text-left"
+    >
+      <span className="flex h-[20px] w-[20px] items-center justify-center text-[#111]">
+        <HeartOutlineIcon />
+      </span>
+      <span className="text-[13px] text-[#333]">Right now</span>
+    </button>
+
+    <span className="text-[13px] text-[#333]">開放中</span>
+
+    <div className="ml-1 flex h-[22px] w-[42px] items-center justify-end rounded-full bg-[#d190e9] p-[3px]">
+      <div className="h-4 w-4 rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.14)]" />
+    </div>
+  </div>
+</div>
 
         <div className="flex flex-col gap-[33px] px-4 pb-7 pt-[33px]">
           <SideItem icon={<UserCircle2 />} label="帳號管理" />

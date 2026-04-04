@@ -7,6 +7,8 @@ import FeedGrid from '@/components/home/sections/feed/FeedGrid'
 import SideProfileMenu from '@/components/home/ui/layout/SideProfileMenu'
 import SearchPage from '@/pages/SearchPage'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
+import FriendInvitePage from '@/pages/FriendInvitePage'
+import RightNowPage from '@/pages/RightNowPage'
 
 type FeedMode = '1x1' | '2x2' | '3x3'
 
@@ -111,8 +113,10 @@ const storyPagesMap: Record<string, { title: string; bg: string }[]> = {
 export default function HomePage() {
   const [feedMode, setFeedMode] = useState<FeedMode>('1x1')
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false)
-const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
 const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
+const [isFriendInviteOpen, setIsFriendInviteOpen] = useState(false)
+const [isRightNowOpen, setIsRightNowOpen] = useState(false)
 const [isSearchOpen, setIsSearchOpen] = useState(false)
 const [isUploadOpen, setIsUploadOpen] = useState(false)
 const [searchText, setSearchText] = useState('')
@@ -754,6 +758,14 @@ if (isSearchPageOpen) {
         setIsProfileOpen(false)
         setIsPeopleLibraryOpen(true)
       }}
+      onOpenFriendInvite={() => {
+        setIsProfileOpen(false)
+        setIsFriendInviteOpen(true)
+      }}
+      onOpenRightNow={() => {
+        setIsProfileOpen(false)
+        setIsRightNowOpen(true)
+      }}
     />
   )}
 </AnimatePresence>
@@ -763,6 +775,22 @@ if (isSearchPageOpen) {
     <PeopleLibraryPage
       query="People Library"
       onClose={() => setIsPeopleLibraryOpen(false)}
+    />
+  )}
+</AnimatePresence>
+
+<AnimatePresence>
+  {isFriendInviteOpen && (
+    <FriendInvitePage
+      onClose={() => setIsFriendInviteOpen(false)}
+    />
+  )}
+</AnimatePresence>
+
+<AnimatePresence>
+  {isRightNowOpen && (
+    <RightNowPage
+      onClose={() => setIsRightNowOpen(false)}
     />
   )}
 </AnimatePresence>
