@@ -66,12 +66,18 @@ export default function TopBar() {
       <AnimatePresence>
         {isMenuOpen && (
           <SideProfileMenu
-            onClose={() => setIsMenuOpen(false)}
-            onOpenPeopleLibrary={() => {
-              setIsMenuOpen(false)
-              setIsPeopleLibraryOpen(true)
-            }}
-          />
+  onClose={() => setIsMenuOpen(false)}
+  onOpenPeopleLibrary={() => {
+    setIsMenuOpen(false)
+    setIsPeopleLibraryOpen(true)
+  }}
+  onOpenFriendInvite={() => {
+    setIsMenuOpen(false)
+  }}
+  onOpenRightNow={() => {
+    setIsMenuOpen(false)
+  }}
+/>
         )}
       </AnimatePresence>
 
