@@ -73,14 +73,7 @@ const plans = [
     accent: 'from-fuchsia-500 to-pink-500',
     recommended: true,
     features: {
-      {
-  id: 'premium',
-  name: 'Vibe Premium',
-  price: 450,
-  accent: 'from-fuchsia-500 to-pink-500',
-  recommended: true,
-  features: {
-    vibeTv: [
+      vibeTv: [
       { label: '可觀看 Vibe TV 所有內容', included: true },
       { label: '畫質最高 4K', included: true },
       { label: 'Vibe TV零廣告體驗', included: true },
