@@ -30,7 +30,7 @@ const plans = [
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 720P', included: true },
-        { label: '零廣告體驗', included: false },
+        { label: 'Vibe TV零廣告體驗', included: false },
         { label: '離線觀看 / 下載', included: false },
         { label: '2 部裝置同時觀看', included: true },
       ],
@@ -38,6 +38,7 @@ const plans = [
         { label: 'AI 找人幫手每月 10 次', included: true },
         { label: '發送好友邀請', included: true },
         { label: '每日 Right now 30 分', included: true },
+        { label: 'Vibelink 零廣告體驗', included: false },
       ],
       vibebook: [{ label: '無限閱讀', included: false }],
     },
@@ -52,7 +53,7 @@ const plans = [
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 1080P', included: true },
-        { label: '零廣告體驗', included: true },
+        { label: 'Vibe TV零廣告體驗', included: true },
         { label: '離線觀看 / 下載', included: false },
         { label: '3 部裝置同時觀看', included: true },
       ],
@@ -60,6 +61,7 @@ const plans = [
         { label: 'AI 找人幫手無限使用', included: true },
         { label: '發送好友邀請', included: true },
         { label: '每日 Right now 60 分', included: true },
+        { label: 'Vibelink 零廣告體驗', included: false },
       ],
       vibebook: [{ label: '無限閱讀', included: false }],
     },
@@ -71,21 +73,29 @@ const plans = [
     accent: 'from-fuchsia-500 to-pink-500',
     recommended: true,
     features: {
-      vibeTv: [
-        { label: '可觀看 Vibe TV 所有內容', included: true },
-        { label: '畫質最高 4K', included: true },
-        { label: '零廣告體驗', included: true },
-        { label: '離線觀看 / 下載', included: true },
-        { label: '4 部裝置同時觀看', included: true },
-      ],
-      vibelink: [
-        { label: 'AI 找人幫手無限使用', included: true },
-        { label: '發送好友邀請', included: true },
-        { label: '每日 Right now 120 分', included: true },
-      ],
-      vibebook: [{ label: '無限閱讀', included: true }],
-    },
+      {
+  id: 'premium',
+  name: 'Vibe Premium',
+  price: 450,
+  accent: 'from-fuchsia-500 to-pink-500',
+  recommended: true,
+  features: {
+    vibeTv: [
+      { label: '可觀看 Vibe TV 所有內容', included: true },
+      { label: '畫質最高 4K', included: true },
+      { label: 'Vibe TV零廣告體驗', included: true },
+      { label: '離線觀看 / 下載', included: true },
+      { label: '4 部裝置同時觀看', included: true },
+    ],
+    vibelink: [
+      { label: 'AI 找人幫手無限使用', included: true },
+      { label: '發送好友邀請', included: true },
+      { label: '每日 Right now 120 分', included: true },
+      { label: 'Vibelink 零廣告體驗', included: true },
+    ],
+    vibebook: [{ label: '無限閱讀', included: true }],
   },
+}
 ] as const
 
 type PlanId = (typeof plans)[number]['id']
