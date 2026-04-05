@@ -2,20 +2,9 @@
 
 import { useMemo, useState } from 'react'
 import {
-  CheckCircle2,
-  Circle,
+  Check,
   Crown,
-  ExternalLink,
-  HelpCircle,
-  Infinity,
   LogOut,
-  MonitorPlay,
-  PauseCircle,
-  PlayCircle,
-  Settings,
-  Smartphone,
-  User,
-  Users,
   X,
 } from 'lucide-react'
 
@@ -74,21 +63,21 @@ const plans = [
     recommended: true,
     features: {
       vibeTv: [
-      { label: '可觀看 Vibe TV 所有內容', included: true },
-      { label: '畫質最高 4K', included: true },
-      { label: 'Vibe TV零廣告體驗', included: true },
-      { label: '離線觀看 / 下載', included: true },
-      { label: '4 部裝置同時觀看', included: true },
-    ],
-    vibelink: [
-      { label: 'AI 找人幫手無限使用', included: true },
-      { label: '發送好友邀請', included: true },
-      { label: '每日 Right now 120 分', included: true },
-      { label: 'Vibelink 零廣告體驗', included: true },
-    ],
-    vibebook: [{ label: '無限閱讀', included: true }],
+        { label: '可觀看 Vibe TV 所有內容', included: true },
+        { label: '畫質最高 4K', included: true },
+        { label: 'Vibe TV零廣告體驗', included: true },
+        { label: '離線觀看 / 下載', included: true },
+        { label: '4 部裝置同時觀看', included: true },
+      ],
+      vibelink: [
+        { label: 'AI 找人幫手無限使用', included: true },
+        { label: '發送好友邀請', included: true },
+        { label: '每日 Right now 120 分', included: true },
+        { label: 'Vibelink 零廣告體驗', included: true },
+      ],
+      vibebook: [{ label: '無限閱讀', included: true }],
+    },
   },
-}
 ] as const
 
 type PlanId = (typeof plans)[number]['id']
@@ -98,7 +87,11 @@ function FeatureRow({ label, included }: { label: string; included: boolean }) {
   return (
     <div className="flex items-start gap-2 text-[16px] text-neutral-800">
       <div className="mt-[2px] shrink-0">
-        {included ? <CheckCircle2 className="h-5 w-5" /> : <X className="h-5 w-5" />}
+        {included ? (
+          <Check className="h-5 w-5 text-fuchsia-500" strokeWidth={3} />
+        ) : (
+          <X className="h-5 w-5 text-neutral-800" />
+        )}
       </div>
       <span>{label}</span>
     </div>
@@ -129,19 +122,15 @@ function PlanCard({
   ${plan.id === 'premium' ? 'ring-2 ring-fuchsia-400 shadow-xl scale-[1.02]' : 'shadow-sm'}
 `}
     >
-      
-
-      
-
       <div className="mb-3">
-  <div className="text-[16px] font-semibold tracking-wide text-neutral-500">
-  {plan.name}
-</div>
+        <div className="text-[16px] font-semibold tracking-wide text-neutral-500">
+          {plan.name}
+        </div>
 
-  <div className="mt-1 text-[24px] font-bold text-neutral-900">
-    月費:{plan.price}NTD
-  </div>
-</div>
+        <div className="mt-1 text-[24px] font-bold text-neutral-900">
+          月費:{plan.price}NTD
+        </div>
+      </div>
 
       <div className="space-y-4">
         <div className="space-y-3 border-t border-neutral-300 pt-4">
@@ -205,9 +194,7 @@ export default function Page() {
       <div className="mx-auto w-full max-w-[430px] px-4 py-6">
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            
             <h1 className="text-3xl font-bold tracking-tight">Vibe Membership</h1>
-            
           </div>
 
           <div className="flex items-center gap-2">
@@ -246,8 +233,7 @@ export default function Page() {
                 <div className="mb-1 text-sm text-neutral-500">目前方案</div>
                 <div className="text-lg font-bold">{activePlan.name}</div>
               </div>
-              
-              
+
               <div className="rounded-2xl bg-neutral-100 p-4">
                 <div className="mb-1 text-sm text-neutral-500">下次扣款日</div>
                 <div className="text-lg font-bold">{nextBillingDate}</div>
@@ -261,7 +247,9 @@ export default function Page() {
             <div className="mb-4 flex items-end justify-between">
               <div>
                 <h2 className="text-2xl font-bold">選擇或切換會員方案</h2>
-                <p className="mt-1 text-sm text-neutral-600">這裡模擬未來官網外部訂閱頁，可直接升級、降級或查看方案差異。</p>
+                <p className="mt-1 text-sm text-neutral-600">
+                  這裡模擬未來官網外部訂閱頁，可直接升級、降級或查看方案差異。
+                </p>
               </div>
             </div>
 
@@ -279,7 +267,6 @@ export default function Page() {
           </div>
 
           <div className="space-y-4">
-
             <div className="rounded-[28px] bg-white p-5 shadow-sm">
               <div className="mb-3 text-lg font-semibold">續訂與付款方式</div>
 
