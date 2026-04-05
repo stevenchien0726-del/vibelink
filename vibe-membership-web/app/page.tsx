@@ -96,9 +96,9 @@ type SubscriptionStatus = 'active' | 'paused' | 'cancelled'
 
 function FeatureRow({ label, included }: { label: string; included: boolean }) {
   return (
-    <div className="flex items-start gap-2 text-[13px] text-neutral-800">
+    <div className="flex items-start gap-2 text-[16px] text-neutral-800">
       <div className="mt-[2px] shrink-0">
-        {included ? <CheckCircle2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
+        {included ? <CheckCircle2 className="h-5 w-5" /> : <X className="h-5 w-5" />}
       </div>
       <span>{label}</span>
     </div>
@@ -106,7 +106,7 @@ function FeatureRow({ label, included }: { label: string; included: boolean }) {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <div className="text-[15px] font-semibold italic text-neutral-800">{children}</div>
+  return <div className="text-[16px] font-semibold italic text-neutral-800">{children}</div>
 }
 
 function PlanCard({
@@ -144,21 +144,21 @@ function PlanCard({
 </div>
 
       <div className="space-y-4">
-        <div className="space-y-2 border-t border-neutral-300 pt-3">
+        <div className="space-y-3 border-t border-neutral-300 pt-4">
           <SectionTitle>Vibe TV</SectionTitle>
           {plan.features.vibeTv.map((feature) => (
             <FeatureRow key={feature.label} {...feature} />
           ))}
         </div>
 
-        <div className="space-y-2 border-t border-neutral-200 pt-3">
+        <div className="space-y-3 border-t border-neutral-200 pt-4">
           <SectionTitle>Vibelink</SectionTitle>
           {plan.features.vibelink.map((feature) => (
             <FeatureRow key={feature.label} {...feature} />
           ))}
         </div>
 
-        <div className="space-y-2 border-t border-neutral-200 pt-3">
+        <div className="space-y-3 border-t border-neutral-200 pt-4">
           <SectionTitle>VIBEBOOK</SectionTitle>
           {plan.features.vibebook.map((feature) => (
             <FeatureRow key={feature.label} {...feature} />
