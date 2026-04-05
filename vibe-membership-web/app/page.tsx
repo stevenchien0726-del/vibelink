@@ -24,7 +24,7 @@ const plans = [
         { label: '2 部裝置同時觀看', included: true },
       ],
       vibelink: [
-        { label: 'AI 找人幫手每月 10 次', included: true },
+        { label: 'AI 找人幫手無限使用', included: false },
         { label: '發送好友邀請', included: true },
         { label: '每日 Right now 30 分', included: true },
         { label: 'Vibelink 零廣告體驗', included: false },
