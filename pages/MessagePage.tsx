@@ -130,9 +130,9 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   return (
     <div className="relative flex min-h-screen flex-col bg-transparent px-4 pt-4 pb-2">
 
-      <div className="relative flex-1 px-0 pb-4 pt-[74px]">
+      <div className="relative flex-1 px-0 pb-4 pt-[90px]">
         {/* Top controls */}
-<div className="fixed left-1/2 top-[66px] z-[50] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
+<div className="fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
   <div className="relative flex items-center justify-between">
     {/* 左：帳號區 */}
     <div ref={accountSwitcherRef} className="relative">
