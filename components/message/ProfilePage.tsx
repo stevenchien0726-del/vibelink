@@ -380,7 +380,7 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
               type="button"
               aria-label="Close upload menu overlay"
               onClick={() => setIsUploadOpen(false)}
-              className="absolute inset-0 z-[20] bg-black/10"
+              className="fixed inset-0 z-[20] bg-black/10"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -388,7 +388,7 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
             />
 
             <motion.div
-              className="absolute left-1/2 top-[96px] z-[25] w-[300px] -translate-x-1/2 rounded-[26px] border-[2px] border-[#e0a3db] bg-[#f3f3f3] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.10)]"
+              className="fixed left-1/2 top-[96px] z-[25] w-[300px] -translate-x-1/2 rounded-[26px] border-[2px] border-[#e0a3db] bg-[#f3f3f3] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.10)]"
               initial={{ opacity: 0, scale: 0.82, y: -18 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.86, y: -10 }}
@@ -429,7 +429,7 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
               type="button"
               aria-label="Close profile menu overlay"
               onClick={() => setIsMenuOpen(false)}
-              className="absolute inset-0 z-[20] bg-black/10"
+              className="fixed inset-0 z-[20] bg-black/10"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -437,7 +437,7 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
             />
 
             <motion.div
-              className="absolute left-1/2 top-[96px] z-[25] w-[300px] -translate-x-1/2 rounded-[26px] bg-[#f3f3f3] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.10)]"
+              className="fixed left-1/2 top-[96px] z-[25] w-[300px] -translate-x-1/2 rounded-[26px] bg-[#f3f3f3] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.10)]"
               initial={{ opacity: 0, scale: 0.82, y: -18 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.86, y: -10 }}
