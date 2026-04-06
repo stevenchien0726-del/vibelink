@@ -33,7 +33,7 @@ export default function VibeTvPage() {
     <div className="min-h-screen bg-[#f3f3f3] pb-[110px]">
       <div className="mx-auto w-full max-w-[430px]">
         {/* Fixed Top Actions */}
-        <div className="sticky top-0 z-30 bg-[#f3f3f3]/70 backdrop-blur-md px-3 pt-4 pb-3">
+        <div className="fixed top-0 left-1/2 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-3 pt-4 pb-3 backdrop-blur-md">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -56,7 +56,7 @@ export default function VibeTvPage() {
         </div>
 
         {/* Scroll Content */}
-        <div className="px-3">
+        <div className="px-3 pt-[72px]">
           {/* Logo */}
           <div className="mb-4 pt-[2px]">
             <h1 className="text-[36px] font-black italic leading-[1.18] tracking-[-0.03em] text-[#2a2a2a]">
