@@ -6,6 +6,9 @@ import {
   Crown,
   LogOut,
   X,
+  Film,
+  Heart,
+  BookOpen,
 } from 'lucide-react'
 
 const plans = [
@@ -82,7 +85,7 @@ type SubscriptionStatus = 'active' | 'paused' | 'cancelled'
 
 function FeatureRow({ label, included }: { label: string; included: boolean }) {
   return (
-    <div className="flex items-start gap-2 text-[16px] text-neutral-800">
+    <div className="flex items-start gap-2 text-[18px] text-neutral-500">
       <div className="mt-[2px] shrink-0">
         {included ? (
           <Check className="h-5 w-5 text-fuchsia-500" strokeWidth={3} />
@@ -96,7 +99,22 @@ function FeatureRow({ label, included }: { label: string; included: boolean }) {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <div className="text-[16px] font-semibold italic text-neutral-800">{children}</div>
+  let icon = null
+
+  if (children === 'Vibe TV') {
+    icon = <Film className="h-5 w-5 text-fuchsia-600" />
+  } else if (children === 'Vibelink') {
+    icon = <Heart className="h-5 w-5 text-fuchsia-600" />
+  } else if (children === 'VIBEBOOK') {
+    icon = <BookOpen className="h-5 w-5 text-fuchsia-600" />
+  }
+
+  return (
+    <div className="flex items-center gap-2 text-[18px] font-semibold italic text-neutral-900">
+      {icon}
+      <span>{children}</span>
+    </div>
+  )
 }
 
 function PlanCard({
