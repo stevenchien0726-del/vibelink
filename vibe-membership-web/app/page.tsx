@@ -19,8 +19,8 @@ const plans = [
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 720P', included: true },
+        { label: '最多2部裝置同時觀看 / 可電視觀看', included: true },
         { label: 'Vibe TV零廣告體驗', included: false },
-        { label: '2 部裝置同時觀看', included: true },
       ],
       vibelink: [
         { label: 'AI 找人幫手無限使用', included: false },
@@ -41,8 +41,8 @@ const plans = [
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 1080P', included: true },
+        { label: '最多3部裝置同時觀看 / 可電視觀看', included: true },
         { label: 'Vibe TV零廣告體驗', included: true },
-        { label: '3 部裝置同時觀看', included: true },
       ],
       vibelink: [
         { label: 'AI 找人幫手無限使用', included: true },
@@ -63,8 +63,8 @@ const plans = [
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 4K', included: true },
+        { label: '最多4部裝置同時觀看 / 可電視觀看', included: true },
         { label: 'Vibe TV零廣告體驗', included: true },
-        { label: '4 部裝置同時觀看', included: true },
       ],
       vibelink: [
         { label: 'AI 找人幫手無限使用', included: true },
@@ -267,7 +267,7 @@ export default function Page() {
               <div className="mb-4 flex items-center justify-between rounded-2xl bg-neutral-100 px-4 py-3">
                 <div>
                   <div className="font-medium">自動續訂</div>
-                  <div className="text-sm text-neutral-500">到期後自動延續方案或取消</div>
+                  <div className="text-sm text-neutral-500">到期後自動延續目前方案或取消</div>
                 </div>
                 <button
                   onClick={() => setAutoRenew((prev) => !prev)}
