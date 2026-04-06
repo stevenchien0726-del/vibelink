@@ -3,8 +3,6 @@
 import { useMemo, useState } from 'react'
 import {
   Check,
-  Crown,
-  LogOut,
   X,
   Film,
   Heart,
@@ -102,11 +100,11 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   let icon = null
 
   if (children === 'Vibe TV') {
-    icon = <Film className="h-5 w-5 text-fuchsia-600" />
+    icon = <Film className="h-5 w-5 text-current" />
   } else if (children === 'Vibelink') {
-    icon = <Heart className="h-5 w-5 text-fuchsia-600" />
+    icon = <Heart className="h-5 w-5 text-current" />
   } else if (children === 'VIBEBOOK') {
-    icon = <BookOpen className="h-5 w-5 text-fuchsia-600" />
+    icon = <BookOpen className="h-5 w-5 text-current" />
   }
 
   return (
@@ -210,13 +208,6 @@ export default function Page() {
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Vibe Membership</h1>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800">
-              <LogOut className="mr-2 inline h-4 w-4" />
-              登出
-            </button>
           </div>
         </div>
 
