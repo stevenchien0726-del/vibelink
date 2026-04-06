@@ -139,15 +139,14 @@ function PlanCard({
       ${plan.id === 'premium' ? 'ring-2 ring-fuchsia-500/80 shadow-[0_12px_48px_rgba(217,70,239,0.18)] scale-[1.02]' : ''}
       ${isSelected ? 'border-fuchsia-400/50' : ''}`}
     >
-      <div className="mb-3">
-        <div className="text-[18px] font-semibold tracking-wide text-white/60">
-          {plan.name}
-        </div>
-
-        <div className="mt-1 text-[24px] font-bold text-white">
-          月費:{plan.price}NTD
-        </div>
-      </div>
+      <div className="mb-4">
+  <div className="text-[20px] font-semibold text-white tracking-wide">
+    <span className="text-white">{plan.name}</span>
+    <span className="text-white/70"> : </span>
+    <span className="text-white">{plan.price}NTD</span>
+    <span className="text-white/60"> / 每月</span>
+  </div>
+</div>
 
       <div className="space-y-4">
         <div className="space-y-3 border-t border-white/12 pt-4">
