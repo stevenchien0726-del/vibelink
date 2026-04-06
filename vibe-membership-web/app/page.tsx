@@ -225,10 +225,9 @@ export default function Page() {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 text-lg font-semibold">
-                  <Crown className="h-5 w-5 text-fuchsia-500" />
+
                   目前會員狀態
                 </div>
-                <p className="mt-1 text-sm text-neutral-600">你目前的外部訂閱方案與下次扣款資訊</p>
               </div>
               <div
                 className={`rounded-full px-3 py-1 text-sm font-semibold ${
