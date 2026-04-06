@@ -130,9 +130,9 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   return (
     <div className="relative flex min-h-screen flex-col bg-transparent px-4 pt-4 pb-2">
 
-      <div className="relative flex-1 pb-4">
+      <div className="relative flex-1 px-0 pb-4 pt-[74px]">
         {/* Top controls */}
-<div className="sticky top-0 z-[50] -mx-4 mb-5 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
+<div className="fixed left-1/2 top-[66px] z-[50] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
   <div className="relative flex items-center justify-between">
     {/* 左：帳號區 */}
     <div ref={accountSwitcherRef} className="relative">
@@ -289,7 +289,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
               onClick={closeAllTopPanels}
             />
 
-            <div className="absolute left-0 right-0 top-[74px] z-[70]">
+            <div className="fixed left-1/2 top-[140px] z-[70] w-[calc(100%-32px)] max-w-[398px] -translate-x-1/2">
               <div
                 className="animate-[fadeIn_0.2s_ease-out]"
                 onClick={(e) => e.stopPropagation()}
