@@ -20,7 +20,6 @@ const plans = [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 720P', included: true },
         { label: 'Vibe TV零廣告體驗', included: false },
-        { label: '離線觀看 / 下載', included: false },
         { label: '2 部裝置同時觀看', included: true },
       ],
       vibelink: [
@@ -43,7 +42,6 @@ const plans = [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 1080P', included: true },
         { label: 'Vibe TV零廣告體驗', included: true },
-        { label: '離線觀看 / 下載', included: false },
         { label: '3 部裝置同時觀看', included: true },
       ],
       vibelink: [
@@ -66,7 +64,6 @@ const plans = [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 4K', included: true },
         { label: 'Vibe TV零廣告體驗', included: true },
-        { label: '離線觀看 / 下載', included: true },
         { label: '4 部裝置同時觀看', included: true },
       ],
       vibelink: [
@@ -123,7 +120,7 @@ function PlanCard({
 `}
     >
       <div className="mb-3">
-        <div className="text-[16px] font-semibold tracking-wide text-neutral-500">
+        <div className="text-[18px] font-semibold tracking-wide text-neutral-500">
           {plan.name}
         </div>
 
@@ -247,9 +244,6 @@ export default function Page() {
             <div className="mb-4 flex items-end justify-between">
               <div>
                 <h2 className="text-2xl font-bold">選擇或切換會員方案</h2>
-                <p className="mt-1 text-sm text-neutral-600">
-                  這裡模擬未來官網外部訂閱頁，可直接升級、降級或查看方案差異。
-                </p>
               </div>
             </div>
 
@@ -273,7 +267,7 @@ export default function Page() {
               <div className="mb-4 flex items-center justify-between rounded-2xl bg-neutral-100 px-4 py-3">
                 <div>
                   <div className="font-medium">自動續訂</div>
-                  <div className="text-sm text-neutral-500">到期後自動延續目前方案</div>
+                  <div className="text-sm text-neutral-500">到期後自動延續方案或取消</div>
                 </div>
                 <button
                   onClick={() => setAutoRenew((prev) => !prev)}
