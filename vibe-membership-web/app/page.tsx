@@ -85,14 +85,14 @@ function FeatureRow({ label, included }: { label: string; included: boolean }) {
   return (
     <div
       className={`flex items-start gap-2 text-[18px] ${
-        included ? 'text-white' : 'text-white/45'
+        included ? 'text-white' : 'text-white/60'
       }`}
     >
       <div className="mt-[2px] shrink-0">
         {included ? (
           <Check className="h-5 w-5 text-white" strokeWidth={3} />
         ) : (
-          <X className="h-5 w-5 text-white/45" />
+          <X className="h-5 w-5 text-white/60" />
         )}
       </div>
       <span>{label}</span>
@@ -176,7 +176,7 @@ function PlanCard({
         className={`mt-6 h-12 w-full rounded-full text-[16px] font-semibold transition-all ${
           isCurrent
             ? 'bg-white/10 text-white/45 border border-white/10'
-            : 'bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white hover:scale-[1.01] shadow-[0_8px_24px_rgba(217,70,239,0.28)]'
+            : 'bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white hover:scale-[1.01] shadow-[0_8px_24px_rgba(217,70,239,0.28)]'
         }`}
       >
         {isCurrent ? '目前使用中' : '選擇此方案'}
@@ -227,7 +227,7 @@ export default function Page() {
               <div
                 className={`rounded-full px-3 py-1 text-sm font-semibold ${
                   status === 'active'
-                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/20'
+  ? 'bg-fuchsia-500/10 text-fuchsia-200 border border-fuchsia-400/20'
                     : status === 'paused'
                       ? 'bg-amber-500/15 text-amber-300 border border-amber-400/20'
                       : 'bg-white/10 text-white/60 border border-white/10'
