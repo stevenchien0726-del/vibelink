@@ -85,14 +85,14 @@ function FeatureRow({ label, included }: { label: string; included: boolean }) {
   return (
     <div
       className={`flex items-start gap-2 text-[18px] ${
-        included ? 'text-white' : 'text-white/35'
+        included ? 'text-white' : 'text-white/45'
       }`}
     >
       <div className="mt-[2px] shrink-0">
         {included ? (
           <Check className="h-5 w-5 text-white" strokeWidth={3} />
         ) : (
-          <X className="h-5 w-5 text-white/35" />
+          <X className="h-5 w-5 text-white/45" />
         )}
       </div>
       <span>{label}</span>
