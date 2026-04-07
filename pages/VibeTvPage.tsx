@@ -5,7 +5,7 @@ import { Ticket, ChevronRight } from 'lucide-react'
 
 const bannerColors = ['#d9d9d9', '#cfcfcf', '#c4c4c4']
 const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app/'
-const VIBETV_APP_URL = 'https://vercel.com/stevenchien0726-dels-projects/vibetv-app-qrq4/GUAAdxvtvSoKxQ2uQf6KXQYxALi6'
+const VIBETV_APP_URL = 'https://vibetv-app-qrq4-oqfu649kq-stevenchien0726-dels-projects.vercel.app/'
 
 function openMembershipSite() {
   window.open(MEMBERSHIP_URL, '_blank')
