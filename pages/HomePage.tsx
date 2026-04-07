@@ -126,6 +126,7 @@ const [isSearchPageOpen, setIsSearchPageOpen] = useState(false)
   const [storyProgress, setStoryProgress] = useState(0)
   const [storyDirection, setStoryDirection] = useState<'next' | 'prev' | 'story-next' | 'story-prev'>('next')
   const [isStoryPaused, setIsStoryPaused] = useState(false)
+  const [isFeedCapsulePressed, setIsFeedCapsulePressed] = useState(false)
 
   const uploadRef = useRef<HTMLDivElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -156,12 +157,19 @@ const closeStoryViewer = useCallback(() => {
 }
 
   function handleCycleFeedMode() {
-    setFeedMode((prev) => {
-      if (prev === '1x1') return '2x2'
-      if (prev === '2x2') return '3x3'
-      return '1x1'
-    })
-  }
+  setIsFeedCapsulePressed(true)
+
+  setFeedMode((prev) => {
+    if (prev === '1x1') return '2x2'
+    if (prev === '2x2') return '3x3'
+    return '1x1'
+  })
+
+  window.setTimeout(() => {
+    setIsFeedCapsulePressed(false)
+  }, 320)
+}
+
   function handlePrevStoryPage() {
   if (storyPage > 0) {
     setStoryDirection('prev')
@@ -578,19 +586,23 @@ if (isSearchPageOpen) {
         </section>
 
         <div className="fixed bottom-[96px] left-1/2 z-[24] w-full max-w-[430px] -translate-x-1/2 px-4">
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={handleCycleFeedMode}
-              className="flex h-[35px] min-w-[85px] items-center justify-center gap-[5px] rounded-full bg-gray-200/60 backdrop-blur-md border border-white/40 text-[#444] shadow-[0_6px_16px_rgba(0,0,0,0.08)]"
-            >
-              <GridIcon />
-              <span className="whitespace-nowrap text-[12px] font-semibold text-[#555]">
-                {feedMode}
-              </span>
-            </button>
-          </div>
-        </div>
+  <div className="flex justify-center">
+    <button
+      type="button"
+      onClick={handleCycleFeedMode}
+      className="flex h-[35px] min-w-[85px] items-center justify-center gap-[5px] rounded-full border border-white/40 bg-gray-200/60 text-[#444] shadow-[0_6px_16px_rgba(0,0,0,0.08)] backdrop-blur-md transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+      style={{
+        transform: isFeedCapsulePressed ? 'scale(1.06)' : 'scale(1)',
+        transformOrigin: 'center center',
+      }}
+    >
+      <GridIcon />
+      <span className="whitespace-nowrap text-[12px] font-semibold text-[#555]">
+        {feedMode}
+      </span>
+    </button>
+  </div>
+</div>
       </main>
 
       <AnimatePresence mode="wait">

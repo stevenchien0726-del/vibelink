@@ -48,6 +48,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
 
   const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false)
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0].id)
+  const [isTopCapsulePressed, setIsTopCapsulePressed] = useState(false)
 
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false)
   const [isEditPanelOpen, setIsEditPanelOpen] = useState(false)
@@ -101,23 +102,34 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
     setIsCreateGroupOpen(false)
   }
 
-  function openSearchPanel() {
-    closeAllTopPanels()
-    setIsAccountSwitcherOpen(false)
-    setIsSearchPanelOpen(true)
-  }
+  function triggerTopCapsuleFeedback() {
+  setIsTopCapsulePressed(true)
 
-  function openEditPanel() {
-    closeAllTopPanels()
-    setIsAccountSwitcherOpen(false)
-    setIsEditPanelOpen(true)
-  }
+  window.setTimeout(() => {
+    setIsTopCapsulePressed(false)
+  }, 320)
+}
 
-  function openCreateGroupPanel() {
-    closeAllTopPanels()
-    setIsAccountSwitcherOpen(false)
-    setIsCreateGroupOpen(true)
-  }
+function openSearchPanel() {
+  triggerTopCapsuleFeedback()
+  closeAllTopPanels()
+  setIsAccountSwitcherOpen(false)
+  setIsSearchPanelOpen(true)
+}
+
+function openEditPanel() {
+  triggerTopCapsuleFeedback()
+  closeAllTopPanels()
+  setIsAccountSwitcherOpen(false)
+  setIsEditPanelOpen(true)
+}
+
+function openCreateGroupPanel() {
+  triggerTopCapsuleFeedback()
+  closeAllTopPanels()
+  setIsAccountSwitcherOpen(false)
+  setIsCreateGroupOpen(true)
+}
 
   function toggleGroupMember(memberId: string) {
     setSelectedGroupMembers((prev) =>
@@ -253,7 +265,13 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
     </div>
 
     {/* 右：3 icon */}
-    <div className="flex items-center gap-7 rounded-full bg-[#d9d9d9] px-8 py-[10px]">
+    <div
+  className="flex items-center gap-7 rounded-full bg-[#d9d9d9] px-8 py-[10px] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+  style={{
+    transform: isTopCapsulePressed ? 'scale(1.04)' : 'scale(1)',
+    transformOrigin: 'center center',
+  }}
+>
       <button
         type="button"
         onClick={openSearchPanel}
