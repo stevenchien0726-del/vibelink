@@ -127,13 +127,15 @@ export default function MatchingWallViewer({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-[180px] bg-gradient-to-t from-black/30 to-transparent" />
 
           {/* 底部功能列：覆蓋在照片上 */}
-          <div className="absolute bottom-6 left-4 right-4 z-[4]">
+          <div className="absolute bottom-[calc(44px+env(safe-area-inset-bottom))] left-4 right-4 z-[4]">
             <div className="grid grid-cols-3 gap-2 rounded-[22px] bg-[#ead7ef]/92 p-2 backdrop-blur-md">
               <button
                 type="button"
                 className="flex flex-col items-center justify-center gap-1 rounded-[16px] py-3 text-[#222]"
               >
-                <span className="text-[22px]">🖼️</span>
+                <span className="flex h-[26px] w-[26px] items-center justify-center">
+  <ProfileIcon />
+</span>
                 <span className="text-[18px]">他的檔案</span>
               </button>
 
@@ -141,7 +143,7 @@ export default function MatchingWallViewer({
                 type="button"
                 className="flex flex-col items-center justify-center gap-1 rounded-[16px] py-3 text-[#222]"
               >
-                <span className="text-[25px]">♡</span>
+                <span className="text-[32px]"></span>
                 <span className="text-[16px]">喜歡</span>
               </button>
 
@@ -149,7 +151,9 @@ export default function MatchingWallViewer({
                 type="button"
                 className="flex flex-col items-center justify-center gap-1 rounded-[16px] bg-white/45 py-3 text-[#222]"
               >
-                <span className="text-[22px]">✉️</span>
+                <span className="flex h-[26px] w-[26px] items-center justify-center">
+  <MailIcon />
+</span>
                 <span className="text-[16px]">發送邀請</span>
               </button>
             </div>
@@ -157,5 +161,33 @@ export default function MatchingWallViewer({
         </div>
       </div>
     </div>
+  )
+}
+
+function ProfileIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M5.5 19c1.1-3 3.6-4.5 6.5-4.5s5.4 1.5 6.5 4.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function MailIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M4 8l8 6 8-6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }

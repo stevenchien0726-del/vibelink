@@ -729,19 +729,25 @@ if (isSearchPageOpen) {
             <div className="rounded-[26px] bg-[#ead7ef] px-6 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.08)]">
               <div className="grid grid-cols-3 text-center text-[#111]">
                 <button className="flex flex-col items-center gap-2">
-                  <span className="text-[26px]">🖼️</span>
-                  <span className="text-[14px]">他的檔案</span>
-                </button>
+  <span className="flex h-[26px] w-[26px] items-center justify-center">
+    <ProfileIcon />
+  </span>
+  <span className="text-[14px]">他的檔案</span>
+</button>
 
-                <button className="flex flex-col items-center gap-2">
-                  <span className="text-[26px]">♡</span>
-                  <span className="text-[14px]">喜歡</span>
-                </button>
+<button className="flex flex-col items-center gap-2">
+  <span className="flex h-[26px] w-[26px] items-center justify-center">
+    <FavoriteIcon />
+  </span>
+  <span className="text-[14px]">喜歡</span>
+</button>
 
-                <button className="flex flex-col items-center gap-2">
-                  <span className="text-[26px]">✉️</span>
-                  <span className="text-[14px]">發送邀請</span>
-                </button>
+<button className="flex flex-col items-center gap-2">
+  <span className="flex h-[26px] w-[26px] items-center justify-center">
+    <MailIcon />
+  </span>
+  <span className="text-[14px]">發送邀請</span>
+</button>
               </div>
             </div>
           </div>
@@ -1122,6 +1128,34 @@ function AlbumUploadIcon() {
         strokeLinejoin="round"
       />
       <circle cx="9" cy="9" r="1.2" fill="currentColor" />
+    </svg>
+  )
+}
+
+function ProfileIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M5.5 19c1.1-3 3.6-4.5 6.5-4.5s5.4 1.5 6.5 4.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function MailIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M4 8l8 6 8-6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
