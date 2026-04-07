@@ -407,7 +407,7 @@ if (isSearchPageOpen) {
           onClick={() => setIsSearchOpen(false)}
           className="shrink-0 text-[15px] font-medium text-[#666]"
         >
-          取消
+          CLOSE
         </button>
       </motion.div>
     ) : (
@@ -479,9 +479,12 @@ if (isSearchPageOpen) {
             onClick={() => setIsTopMenuOpen((prev) => !prev)}
             className="flex min-w-0 items-center justify-center gap-[4px] bg-transparent"
           >
-            <span className="text-[20px] font-medium tracking-[-0.2px] text-[#c16bf0]">
-              Vibelink
-            </span>
+            <img
+  src="/vibelink-logo.png"
+  alt="Vibelink"
+  className="h-[40px] object-contain translate-y-[2px] drop-shadow-[0_2px_6px_rgba(193,107,240,0.35)]"
+/>
+
 
             <motion.span
               animate={{ rotate: isTopMenuOpen ? 180 : 0 }}
