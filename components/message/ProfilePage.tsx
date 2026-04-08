@@ -1,5 +1,6 @@
 'use client'
 
+import { Camera, Smile, Tag } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -195,39 +196,49 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
         </div>
 
         {/* Stats */}
-        <div className="mb-3 flex items-center gap-4 text-[16px] text-[#444]">
-          <div className="flex items-center gap-1">
-            <span>📷</span>
-            <span>20</span>
-          </div>
+<div className="mb-4 flex items-center gap-6 text-[15px] text-[#333]">
+  <div className="flex items-center gap-2">
+    <Camera size={18} />
+    <span>20</span>
+  </div>
 
-          <div className="flex items-center gap-1">
-            <span>🔥</span>
-            <span>雙性戀</span>
-          </div>
+  <div className="flex items-center gap-2">
+    <Smile size={18} />
+    <span>雙性戀</span>
+  </div>
 
-          <div className="flex items-center gap-1">
-            <span>💎</span>
-            <span>單身</span>
-          </div>
-        </div>
+  <div className="flex items-center gap-2">
+    <Tag size={18} />
+    <span>單身</span>
+  </div>
+</div>
 
-        {/* Action Buttons */}
-        <div className="mb-4 flex gap-2">
-          <button
-            type="button"
-            className="h-[36px] rounded-[14px] bg-[#d9d9d9] px-5 text-[18px] text-[#222]"
-          >
-            LINKPORT
-          </button>
+{/* Action Buttons */}
+<div className="mb-4 flex w-full items-center gap-3">
+  <button
+    type="button"
+    className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] text-[#222] leading-none whitespace-nowrap"
+    style={{ WebkitAppearance: 'none', appearance: 'none' }}
+  >
+    LINKPORT
+  </button>
 
-          <button
-            type="button"
-            className="h-[36px] rounded-[14px] bg-[#d9d9d9] px-4 text-[18px] text-[#222]"
-          >
-            編輯資料
-          </button>
-        </div>
+  <button
+    type="button"
+    className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] text-[#222] leading-none whitespace-nowrap"
+    style={{ WebkitAppearance: 'none', appearance: 'none' }}
+  >
+    編輯檔案
+  </button>
+
+  <button
+    type="button"
+    className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] text-[#222] leading-none whitespace-nowrap"
+    style={{ WebkitAppearance: 'none', appearance: 'none' }}
+  >
+    分享檔案
+  </button>
+</div>
 
         {/* Tab Icons */}
         <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">

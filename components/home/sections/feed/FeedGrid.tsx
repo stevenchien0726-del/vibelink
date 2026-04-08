@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { Heart, MessageCircle, Mail } from 'lucide-react'
 
 export type FeedMode = '1x1' | '2x2' | '3x3'
 
@@ -74,30 +75,23 @@ export default function FeedGrid({
 
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1 text-[16px] text-[#555]">
-              <span>💗</span>
-              <span>{firstPost.likes}</span>
-            </div>
+  {/* Like */}
+  <div className="flex items-center gap-1 text-[16px] text-[#555]">
+    <Heart size={20} className="text-[#d77eea]" />
+    <span>{firstPost.likes}</span>
+  </div>
 
-            <div className="flex items-center gap-1 text-[16px] text-[#555]">
-              <span>💬</span>
-            </div>
-          </div>
+  {/* Comment */}
+  <div className="flex items-center gap-1 text-[16px] text-[#555]">
+    <MessageCircle size={20} />
+  </div>
+</div>
 
-          <div className="flex items-center gap-1">
-            {slideColors.map((_, index) => (
-              <span
-                key={index}
-                className={`block h-[6px] w-[6px] rounded-full transition-all duration-200 ${
-                  currentSlide === index ? 'bg-[#d77eea]' : 'bg-[#cfcfcf]'
-                }`}
-              />
-            ))}
-          </div>
-
-          <button className="rounded-full border border-[#ddd] bg-[#e9e9e9] px-4 py-2 text-[16px] text-[#666]">
-            ✉ 發送邀請
-          </button>
+{/* Send Invite Button */}
+<button className="flex items-center gap-2 rounded-full border border-[#d0d0d0] bg-[#ededed] px-4 py-2 text-[15px] text-[#555]">
+  <Mail size={20} />
+  <span>發送邀請</span>
+</button>
         </div>
 
         <div className="mt-3 text-[16px] text-[#444]">{firstPost.text}</div>
