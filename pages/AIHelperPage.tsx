@@ -100,15 +100,18 @@ export default function AIHelperPage() {
           </div>
 
           {/* Input row */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
-              type="button"
-              aria-label="Open People Library"
-              onClick={() => setIsPeopleLibraryOpen(true)}
-              className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full bg-transparent text-[#111]"
-            >
-              <UserCircleIcon />
-            </button>
+  type="button"
+  aria-label="Open People Library"
+  onClick={() => setIsPeopleLibraryOpen(true)}
+  className="flex h-[50px] w-[110px] shrink-0 items-center justify-center gap-[8px] rounded-full bg-[#D9D9D9] px-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] active:scale-95 transition"
+>
+  <UserCircleIcon />
+  <span className="text-[22px] font-semibold leading-none text-[#111]">
+    +
+  </span>
+</button>
 
             <div className="flex h-[38px] flex-1 items-center rounded-full bg-[#d0d0d0] px-4">
               <input
@@ -255,7 +258,7 @@ function BriefcaseIcon() {
 
 function UserCircleIcon() {
   return (
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.9" />
       <circle cx="12" cy="9" r="3" stroke="currentColor" strokeWidth="1.8" />
       <path
