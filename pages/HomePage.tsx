@@ -9,6 +9,7 @@ import SearchPage from '@/pages/SearchPage'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import FriendInvitePage from '@/pages/FriendInvitePage'
 import RightNowPage from '@/pages/RightNowPage'
+import { HeartIcon } from 'lucide-react'
 
 type FeedMode = '1x1' | '2x2' | '3x3'
 
@@ -672,37 +673,39 @@ if (isSearchPageOpen) {
           {/* 主內容 */}
           <div className="flex h-full w-full items-center justify-center px-4 pt-[80px] pb-[140px]">
             <motion.div
-  key={`${selectedStory.id}-${storyPage}`}
+  key={selectedStory.id}
   initial={{
     x:
-      storyDirection === 'next'
-        ? 22
-        : storyDirection === 'prev'
-        ? -22
-        : storyDirection === 'story-next'
+      storyDirection === 'story-next'
         ? 52
-        : -52,
-    opacity: 0.72,
+        : storyDirection === 'story-prev'
+        ? -52
+        : 0,
+    opacity:
+      storyDirection === 'story-next' || storyDirection === 'story-prev'
+        ? 0.72
+        : 1,
     scale:
       storyDirection === 'story-next' || storyDirection === 'story-prev'
         ? 0.97
-        : 0.985,
+        : 1,
   }}
   animate={{ x: 0, opacity: 1, scale: 1 }}
   exit={{
     x:
-      storyDirection === 'next'
-        ? -22
-        : storyDirection === 'prev'
-        ? 22
-        : storyDirection === 'story-next'
+      storyDirection === 'story-next'
         ? -52
-        : 52,
-    opacity: 0.72,
+        : storyDirection === 'story-prev'
+        ? 52
+        : 0,
+    opacity:
+      storyDirection === 'story-next' || storyDirection === 'story-prev'
+        ? 0.72
+        : 1,
     scale:
       storyDirection === 'story-next' || storyDirection === 'story-prev'
         ? 0.97
-        : 0.985,
+        : 1,
   }}
   transition={{ duration: 0.26, ease: 'easeOut' }}
   className="relative h-full w-full max-w-[390px] overflow-hidden rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.1)]"
@@ -716,6 +719,7 @@ if (isSearchPageOpen) {
   onMouseUp={() => setIsStoryPaused(false)}
   onMouseLeave={() => setIsStoryPaused(false)}
 >
+
               <div className="flex h-full items-center justify-center px-6 text-center text-[20px] text-white/85">
                 {currentPage?.title || '配對牆內容'}
               </div>
@@ -741,21 +745,21 @@ if (isSearchPageOpen) {
             <div className="rounded-[26px] bg-[#ead7ef] px-6 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.08)]">
               <div className="grid grid-cols-3 text-center text-[#111]">
                 <button className="flex flex-col items-center gap-2">
-  <span className="flex h-[26px] w-[26px] items-center justify-center">
+  <span className="flex h-[30px] w-[30px] items-center justify-center">
     <ProfileIcon />
   </span>
   <span className="text-[14px]">他的檔案</span>
 </button>
 
 <button className="flex flex-col items-center gap-2">
-  <span className="flex h-[26px] w-[26px] items-center justify-center">
-    <FavoriteIcon />
+  <span className="flex h-[30px] w-[30px] items-center justify-center">
+    <HeartIcon />
   </span>
   <span className="text-[14px]">喜歡</span>
 </button>
 
 <button className="flex flex-col items-center gap-2">
-  <span className="flex h-[26px] w-[26px] items-center justify-center">
+  <span className="flex h-[30px] w-[30px] items-center justify-center">
     <MailIcon />
   </span>
   <span className="text-[14px]">發送邀請</span>

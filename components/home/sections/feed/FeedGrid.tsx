@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronUp } from 'lucide-react'
+import { MoreVertical } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import {
   Heart,
@@ -105,18 +105,18 @@ export default function FeedGrid({
         </div>
 
         {/* Dots row */}
-        <div className="mt-3 flex justify-center gap-2">
-          {slideColors.map((_, index) => (
-            <div
-              key={index}
-              className={`h-[8px] w-[8px] rounded-full transition-all duration-300 ${
-                currentSlide === index
-                  ? 'scale-110 bg-[#d77eea]'
-                  : 'bg-[#cfcfcf]'
-              }`}
-            />
-          ))}
-        </div>
+        <div className="mt-2 flex justify-center gap-1.5">
+  {slideColors.map((_, index) => (
+    <div
+      key={index}
+      className={`h-[5px] w-[5px] rounded-full transition-all duration-300 ${
+        currentSlide === index
+          ? 'scale-125 bg-[#d77eea]'
+          : 'bg-[#d6d6d6]'
+      }`}
+    />
+  ))}
+</div>
 
         {/* Action row */}
         <div className="relative mt-3 flex items-center justify-between">
@@ -136,15 +136,17 @@ export default function FeedGrid({
             <div className="relative" ref={moreMenuRef}>
               <button
   onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-  className="flex h-[40px] w-[40px] translate-y-[-1px] items-center justify-center rounded-full text-[#555] hover:bg-[#eaeaea] active:scale-95 transition"
+  className="
+    flex h-[44px] w-[44px]
+    items-center justify-center
+    rounded-full
+    text-[#555]
+    hover:bg-[#eaeaea]
+    active:scale-90
+    transition
+  "
 >
-  <ChevronUp
-    size={23}
-    strokeWidth={2}
-    className={`transition-transform duration-300 ${
-      isMoreMenuOpen ? 'rotate-180' : ''
-    }`}
-  />
+  <MoreVertical size={22} strokeWidth={2.2} />
 </button>
 
               <AnimatePresence>
@@ -161,10 +163,10 @@ export default function FeedGrid({
                     }}
                     className="absolute bottom-[34px] left-1/2 z-20 w-[164px] -translate-x-1/2 rounded-[20px] border-[4px] border-[#d79adf] bg-[#f8f8f8] px-5 py-5 shadow-[0_10px_24px_rgba(0,0,0,0.08)]"
                   >
-                    <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-8">
                       <button
                         type="button"
-                        className="flex items-center gap-3 text-[16px] text-[#222]"
+                        className="flex items-center gap-3 text-[18px] text-[#222]"
                       >
                         <Bookmark size={20} strokeWidth={2} />
                         <span>收藏</span>
