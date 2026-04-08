@@ -1,5 +1,6 @@
 'use client'
 
+import { ChevronUp } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import {
   Heart,
@@ -134,13 +135,17 @@ export default function FeedGrid({
             {/* More */}
             <div className="relative" ref={moreMenuRef}>
               <button
-                type="button"
-                aria-label="Open more menu"
-                onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-                className="flex h-[20px] translate-y-[-3px] items-center justify-center text-[30px] leading-none text-[#555] active:scale-95 transition"
-              >
-                ...
-              </button>
+  onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+  className="flex h-[40px] w-[40px] translate-y-[-1px] items-center justify-center rounded-full text-[#555] hover:bg-[#eaeaea] active:scale-95 transition"
+>
+  <ChevronUp
+    size={23}
+    strokeWidth={2}
+    className={`transition-transform duration-300 ${
+      isMoreMenuOpen ? 'rotate-180' : ''
+    }`}
+  />
+</button>
 
               <AnimatePresence>
                 {isMoreMenuOpen && (
