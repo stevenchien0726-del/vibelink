@@ -20,7 +20,7 @@ const plans = [
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 720P', included: true },
-        { label: '最多2部裝置同時觀看 / 可電視觀看', included: true },
+        { label: '最多2部裝置同時觀看', included: true },
         { label: 'Vibe TV零廣告體驗', included: false },
       ],
       vibelink: [
@@ -42,7 +42,7 @@ const plans = [
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 1080P', included: true },
-        { label: '最多3部裝置同時觀看 / 可電視觀看', included: true },
+        { label: '最多3部裝置同時觀看', included: true },
         { label: 'Vibe TV零廣告體驗', included: true },
       ],
       vibelink: [
@@ -64,7 +64,7 @@ const plans = [
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 4K', included: true },
-        { label: '最多4部裝置同時觀看 / 可電視觀看', included: true },
+        { label: '最多4部裝置同時觀看', included: true },
         { label: 'Vibe TV零廣告體驗', included: true },
       ],
       vibelink: [
