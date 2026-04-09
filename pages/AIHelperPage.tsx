@@ -21,7 +21,9 @@ const suggestionItems = [
   '喜歡大自然的女生',
   '身材性感內建男模特',
 ]
+
 const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app/'
+
 function openMembershipSite() {
   window.open(MEMBERSHIP_URL, '_blank')
 }
@@ -32,6 +34,8 @@ export default function AIHelperPage() {
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
 
   const drawerRef = useRef<HTMLDivElement>(null)
+
+  const hasInput = inputValue.trim().length > 0
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -50,6 +54,14 @@ export default function AIHelperPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isHistoryOpen])
 
+  const handleSubmit = () => {
+    if (!hasInput) return
+
+    // 之後你如果要接真正送出 / 搜尋 / AI 回覆流程
+    // 就把邏輯放這裡
+    console.log('AI helper submit:', inputValue)
+  }
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#f5f5f5]">
       {/* Top bar */}
@@ -64,15 +76,15 @@ export default function AIHelperPage() {
         </button>
 
         <button
-  type="button"
-  onClick={openMembershipSite}
-  className="flex min-w-0 items-center gap-[4px] bg-transparent"
->
-  <span className="truncate text-[17px] font-medium tracking-[-0.2px] text-[#111]">
-    Vibe Plus
-  </span>
-  <ChevronRightIcon />
-</button>
+          type="button"
+          onClick={openMembershipSite}
+          className="flex min-w-0 items-center gap-[4px] bg-transparent"
+        >
+          <span className="truncate text-[17px] font-medium tracking-[-0.2px] text-[#111]">
+            Vibe Plus
+          </span>
+          <ChevronRightIcon />
+        </button>
 
         <div className="w-10" />
       </div>
@@ -81,45 +93,56 @@ export default function AIHelperPage() {
       <main className="min-h-screen px-4 pb-[96px] pt-[76px]">
         <div className="flex min-h-[calc(100vh-172px)] flex-col justify-end">
           {/* suggestions */}
-          <div className="mb-5 grid grid-cols-3 gap-4">
-            {suggestionItems.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setInputValue(item)}
-                className="flex flex-col items-start gap-2 bg-transparent text-left"
-              >
-                <div className="grid h-5 w-5 place-items-center text-[#111]">
-                  <BriefcaseIcon />
-                </div>
-                <span className="line-clamp-3 text-[14px] leading-[1.2] text-[#111]">
-                  {item}
-                </span>
-              </button>
-            ))}
-          </div>
+<div className="mb-5 grid grid-cols-3 gap-3">
+  {suggestionItems.map((item) => (
+    <button
+      key={item}
+      type="button"
+      onClick={() => setInputValue(item)}
+      className="min-h-[74px] rounded-[18px] bg-[rgba(255,255,255,0.34)] px-3 py-3 text-left shadow-[0_4px_14px_rgba(0,0,0,0.05)] backdrop-blur-[6px] transition active:scale-[0.98]"
+    >
+      <span className="block text-[14px] leading-[1.3] text-[#111]">
+        {item}
+      </span>
+    </button>
+  ))}
+</div>
 
           {/* Input row */}
           <div className="flex items-center gap-2">
             <button
-  type="button"
-  aria-label="Open People Library"
-  onClick={() => setIsPeopleLibraryOpen(true)}
-  className="flex h-[50px] w-[110px] shrink-0 items-center justify-center gap-[8px] rounded-full bg-[#D9D9D9] px-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] active:scale-95 transition"
->
-  <UserCircleIcon />
-  <span className="text-[22px] font-semibold leading-none text-[#111]">
-    +
-  </span>
-</button>
+              type="button"
+              aria-label="Open People Library"
+              onClick={() => setIsPeopleLibraryOpen(true)}
+              className="flex h-[50px] w-[110px] shrink-0 items-center justify-center gap-[8px] rounded-full bg-[#D9D9D9] px-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition active:scale-95"
+            >
+              <UserCircleIcon />
+              <span className="text-[22px] font-semibold leading-none text-[#111]">
+                +
+              </span>
+            </button>
 
-            <div className="flex h-[38px] flex-1 items-center rounded-full bg-[#d0d0d0] px-4">
+            <div className="flex h-[46px] flex-1 items-center rounded-full bg-[#d0d0d0] pl-4 pr-[6px]">
               <input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSubmit()
+                  }
+                }}
                 placeholder="AI找人幫手"
                 className="w-full bg-transparent text-[15px] text-[#222] placeholder:text-[#8a8a8a] outline-none"
               />
+
+              <button
+                type="button"
+                aria-label="Send"
+                onClick={handleSubmit}
+                className="ml-2 grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-transparent transition active:scale-95"
+              >
+                <EnterArrowIcon active={hasInput} />
+              </button>
             </div>
           </div>
         </div>
@@ -154,15 +177,15 @@ export default function AIHelperPage() {
             >
               <div className="border-b border-[#ececec] px-4 pb-4 pt-5">
                 <button
-  type="button"
-  onClick={openMembershipSite}
-  className="mb-2 flex items-center gap-[4px] bg-transparent"
->
-  <span className="text-[22px] font-medium text-[#111]">
-    Vibe Plus
-  </span>
-  <ChevronRightIcon />
-</button>
+                  type="button"
+                  onClick={openMembershipSite}
+                  className="mb-2 flex items-center gap-[4px] bg-transparent"
+                >
+                  <span className="text-[22px] font-medium text-[#111]">
+                    Vibe Plus
+                  </span>
+                  <ChevronRightIcon />
+                </button>
 
                 <div className="pt-3 pb-1">
                   <span className="text-[13px] font-medium text-[#888]">
@@ -228,34 +251,6 @@ function ChevronRightIcon() {
   )
 }
 
-function BriefcaseIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M8 7V6a2 2 0 012-2h4a2 2 0 012 2v1"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <rect
-        x="4"
-        y="7"
-        width="16"
-        height="11"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M4 11.5h16"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
 function UserCircleIcon() {
   return (
     <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
@@ -266,6 +261,29 @@ function UserCircleIcon() {
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function EnterArrowIcon({ active }: { active: boolean }) {
+  const color = active ? '#9f449f' : '#111111'
+
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2.2" />
+      <path
+        d="M9 12h6"
+        stroke={color}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M13 8l4 4-4 4"
+        stroke={color}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   )
