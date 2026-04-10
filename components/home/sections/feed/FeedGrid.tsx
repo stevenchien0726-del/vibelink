@@ -1,6 +1,5 @@
 'use client'
 
-import { MoreVertical } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import {
   Heart,
@@ -10,6 +9,7 @@ import {
   Send,
   EyeOff,
   OctagonAlert,
+  MoreHorizontal,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -76,10 +76,76 @@ export default function FeedGrid({
 
     return (
       <div>
-        {/* Author row */}
-        <div className="mb-3 flex items-center gap-2">
-          <div className="h-[30px] w-[30px] rounded-full bg-[#d6a6e3]" />
-          <div className="text-[15px] text-[#555]">{firstPost.author}</div>
+        {/* Top row */}
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
+            <div className="text-[15px] font-medium text-[#222]">
+              {firstPost.author}
+            </div>
+          </div>
+
+          <div className="relative" ref={moreMenuRef}>
+            <button
+  type="button"
+  onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+  className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[#222] active:scale-[0.96] transition"
+>
+  <MoreHorizontal size={17} strokeWidth={2.3} />
+  <span className="text-[14px] font-medium tracking-[0.2px]">MENU</span>
+</button>
+
+            <AnimatePresence>
+              {isMoreMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.82, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 8 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 360,
+                    damping: 28,
+                    mass: 0.9,
+                  }}
+                  className="absolute right-0 top-[48px] z-20 w-[174px] rounded-[20px] border-[3px] border-[#d79adf] bg-[#f8f8f8] px-5 py-5 shadow-[0_10px_24px_rgba(0,0,0,0.08)]"
+                >
+                  <div className="flex flex-col gap-6">
+                    <button
+                      type="button"
+                      className="flex items-center gap-3 text-[16px] text-[#222]"
+                    >
+                      <Bookmark size={19} strokeWidth={2} />
+                      <span>收藏</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex items-center gap-3 text-[16px] text-[#222]"
+                    >
+                      <Send size={19} strokeWidth={2} />
+                      <span>分享</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex items-center gap-3 text-[16px] text-[#222]"
+                    >
+                      <EyeOff size={19} strokeWidth={2} />
+                      <span>隱藏</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex items-center gap-3 text-[16px] text-[#222]"
+                    >
+                      <OctagonAlert size={19} strokeWidth={2} />
+                      <span>檢舉</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Image slider */}
@@ -93,10 +159,10 @@ export default function FeedGrid({
             {slideColors.map((color, index) => (
               <div
                 key={index}
-                className="relative h-[446px] min-w-full shrink-0 snap-center select-none"
+                className="relative h-[446px] min-w-full shrink-0 snap-center select-none rounded-[18px]"
                 style={{ backgroundColor: color }}
               >
-                <div className="absolute right-4 top-4 rounded-full bg-black/15 px-3 py-1 text-[14px] text-[#555]">
+                <div className="absolute right-4 top-4 rounded-full bg-black/10 px-3 py-1 text-[14px] text-[#555]">
                   {index + 1}/3
                 </div>
               </div>
@@ -104,110 +170,42 @@ export default function FeedGrid({
           </div>
         </div>
 
-        {/* Dots row */}
+        {/* Dots */}
         <div className="mt-2 flex justify-center gap-1.5">
-  {slideColors.map((_, index) => (
-    <div
-      key={index}
-      className={`h-[5px] w-[5px] rounded-full transition-all duration-300 ${
-        currentSlide === index
-          ? 'scale-125 bg-[#d77eea]'
-          : 'bg-[#d6d6d6]'
-      }`}
-    />
-  ))}
-</div>
-
-        {/* Action row */}
-        <div className="relative mt-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {/* Like */}
-            <div className="flex items-center gap-1 text-[16px] text-[#555]">
-              <Heart size={20} className="text-[#d77eea]" />
-              <span>{firstPost.likes}</span>
-            </div>
-
-            {/* Comment */}
-            <div className="flex items-center gap-1 text-[16px] text-[#555]">
-              <MessageCircle size={20} />
-            </div>
-
-            {/* More */}
-            <div className="relative" ref={moreMenuRef}>
-              <button
-  onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-  className="
-    flex h-[44px] w-[44px]
-    items-center justify-center
-    rounded-full
-    text-[#555]
-    hover:bg-[#eaeaea]
-    active:scale-90
-    transition
-  "
->
-  <MoreVertical size={22} strokeWidth={2.2} />
-</button>
-
-              <AnimatePresence>
-                {isMoreMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.82, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.88, y: 8 }}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 360,
-                      damping: 28,
-                      mass: 0.9,
-                    }}
-                    className="absolute bottom-[34px] left-1/2 z-20 w-[164px] -translate-x-1/2 rounded-[20px] border-[4px] border-[#d79adf] bg-[#f8f8f8] px-5 py-5 shadow-[0_10px_24px_rgba(0,0,0,0.08)]"
-                  >
-                    <div className="flex flex-col gap-8">
-                      <button
-                        type="button"
-                        className="flex items-center gap-3 text-[18px] text-[#222]"
-                      >
-                        <Bookmark size={20} strokeWidth={2} />
-                        <span>收藏</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        className="flex items-center gap-3 text-[16px] text-[#222]"
-                      >
-                        <Send size={20} strokeWidth={2} />
-                        <span>分享</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        className="flex items-center gap-3 text-[16px] text-[#222]"
-                      >
-                        <EyeOff size={20} strokeWidth={2} />
-                        <span>隱藏</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        className="flex items-center gap-3 text-[16px] text-[#222]"
-                      >
-                        <OctagonAlert size={20} strokeWidth={2} />
-                        <span>檢舉</span>
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Send Invite Button */}
-          <button className="flex items-center gap-2 rounded-full border border-[#d0d0d0] bg-[#ededed] px-4 py-2 text-[15px] text-[#555]">
-            <Mail size={20} />
-            <span>發送邀請</span>
-          </button>
+          {slideColors.map((_, index) => (
+            <div
+              key={index}
+              className={`h-[6px] w-[6px] rounded-full transition-all duration-300 ${
+                currentSlide === index ? 'scale-125 bg-[#d77eea]' : 'bg-[#d6d6d6]'
+              }`}
+            />
+          ))}
         </div>
+
+        {/* Bottom action row */}
+<div className="mt-4 flex items-center justify-between gap-3">
+  <div className="flex items-center gap-6">
+    <div className="flex items-center gap-1.5 text-[16px] text-[#555]">
+      <Heart size={22} className="text-[#d77eea]" />
+      <span>{firstPost.likes}</span>
+    </div>
+
+    <button
+      type="button"
+      className="flex items-center text-[#222] active:scale-95 transition"
+    >
+      <MessageCircle size={22} />
+    </button>
+  </div>
+
+  <button
+    type="button"
+    className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[14px] font-medium text-[#222] active:scale-[0.96] transition"
+  >
+    <Mail size={18} strokeWidth={2.1} />
+    <span>發送邀請</span>
+  </button>
+</div>
 
         {/* Text */}
         <div className="mt-3 text-[16px] text-[#444]">{firstPost.text}</div>
