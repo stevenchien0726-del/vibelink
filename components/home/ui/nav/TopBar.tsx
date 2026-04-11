@@ -3,12 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import UploadPanel from '../action/UploadPanel'
-import SideProfileMenu from '../layout/SideProfileMenu'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 
 export default function TopBar() {
   const [showUpload, setShowUpload] = useState(false)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
@@ -63,23 +61,6 @@ export default function TopBar() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {isMenuOpen && (
-          <SideProfileMenu
-  onClose={() => setIsMenuOpen(false)}
-  onOpenPeopleLibrary={() => {
-    setIsMenuOpen(false)
-    setIsPeopleLibraryOpen(true)
-  }}
-  onOpenFriendInvite={() => {
-    setIsMenuOpen(false)
-  }}
-  onOpenRightNow={() => {
-    setIsMenuOpen(false)
-  }}
-/>
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {isPeopleLibraryOpen && (
