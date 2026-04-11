@@ -9,14 +9,9 @@ import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPa
 import FriendInvitePage from '@/pages/FriendInvitePage'
 import RightNowPage from '@/pages/RightNowPage'
 import { HeartIcon } from 'lucide-react'
+import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 
 type FeedMode = '1x1' | '2x2' | '3x3'
-
-type UploadMenuItem = {
-  id: string
-  label: string
-  icon: React.ReactNode
-}
 
 type PostItem = {
   id: string
@@ -35,12 +30,6 @@ const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app/'
 function openMembershipSite() {
   window.open(MEMBERSHIP_URL, '_blank')
 }
-
-const uploadMenuItems: UploadMenuItem[] = [
-  { id: 'post', label: '貼文', icon: <PostUploadIcon /> },
-  { id: 'video', label: '短影片', icon: <VideoUploadIcon /> },
-  { id: 'album', label: '配對牆相片集', icon: <AlbumUploadIcon /> },
-]
 
 const mockPosts: PostItem[] = [
   {
@@ -128,7 +117,6 @@ const [isSearchPageOpen, setIsSearchPageOpen] = useState(false)
   const [isStoryPaused, setIsStoryPaused] = useState(false)
   const [isFeedCapsulePressed, setIsFeedCapsulePressed] = useState(false)
 
-  const uploadRef = useRef<HTMLDivElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
   const topMenuRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
@@ -303,9 +291,6 @@ function handleStoryTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
     function handleClickOutside(e: MouseEvent) {
       const target = e.target as Node
 
-      if (uploadRef.current && !uploadRef.current.contains(target)) {
-        setIsUploadOpen(false)
-      }
 
       if (topMenuRef.current && !topMenuRef.current.contains(target)) {
   setIsTopMenuOpen(false)
@@ -431,50 +416,15 @@ if (isSearchPageOpen) {
       transition={{ duration: 0.18 }}
       className="relative flex h-full items-center justify-between"
     >
-      <div className="relative flex w-[44px] justify-start" ref={uploadRef}>
-        <button
-          type="button"
-          onClick={() => setIsUploadOpen((prev) => !prev)}
-          className="grid h-[30px] w-[30px] place-items-center bg-transparent text-[#111]"
-        >
-          <PlusIcon />
-        </button>
-
-        <AnimatePresence>
-          {isUploadOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.72, y: -18 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.78, y: -12 }}
-              transition={{
-                type: 'spring',
-                stiffness: 380,
-                damping: 28,
-                mass: 0.9,
-              }}
-              style={{ originX: 0.08, originY: 0 }}
-              className="fixed top-[68px] left-1/2 z-[120] w-[300px] max-w-[300px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[25px] py-[30px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
-            >
-              <div className="flex flex-col gap-[30px]">
-                {uploadMenuItems.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="flex w-full items-center justify-center rounded-[16px] px-[24px] py-[25px] text-[30px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
-                  >
-                    <div className="flex items-center gap-[12px]">
-                      <span className="flex h-[34px] w-[34px] items-center justify-center">
-                        {item.icon}
-                      </span>
-                      <span className="text-center">{item.label}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <div className="relative flex w-[44px] justify-start">
+  <button
+    type="button"
+    onClick={() => setIsUploadOpen(true)}
+    className="grid h-[30px] w-[30px] place-items-center bg-transparent text-[#111]"
+  >
+    <PlusIcon />
+  </button>
+</div>
 
       <div className="absolute left-1/2 -translate-x-1/2" ref={topMenuRef}>
         <button
@@ -555,6 +505,14 @@ if (isSearchPageOpen) {
   )}
 </AnimatePresence>
 </div>
+
+<AnimatePresence>
+  {isUploadOpen && (
+    <UploadFullPage
+      onClose={() => setIsUploadOpen(false)}
+    />
+  )}
+</AnimatePresence>
 
 <main className="min-h-screen box-border px-0 pb-[90px] pt-[60px]">
         
