@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Heart, CircleHelp, X } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 type RightNowItem = {
   id: string
@@ -52,14 +53,27 @@ export default function RightNowPage({ onClose }: RightNowPageProps) {
         mounted && !closing ? 'bg-black/30 opacity-100' : 'bg-black/0 opacity-0'
       }`}
     >
-      <div
-        className={`relative min-h-screen w-full max-w-[430px] origin-bottom bg-[#f3f3f3] transition-all duration-[260ms] ease-out ${
+      <motion.div
+        drag={isComposerOpen ? false : 'y'}
+        dragDirectionLock
+        dragElastic={{ top: 0, bottom: 0.18 }}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        onDragEnd={(_, info) => {
+          if (isComposerOpen) return
+
+          const draggedDownEnough = info.offset.y > 140
+          const fastEnough = info.velocity.y > 700
+
+          if (draggedDownEnough || fastEnough) {
+            handleClose()
+          }
+        }}
+        className={`relative min-h-screen w-full max-w-[430px] origin-bottom bg-[#f3f3f3] touch-pan-y transition-all duration-[260ms] ease-out ${
           mounted && !closing
             ? 'translate-y-0 scale-100 opacity-100'
             : 'translate-y-6 scale-[0.92] opacity-0'
         }`}
       >
-        {/* Header */}
         <div className="sticky top-0 z-[10] flex items-center justify-between bg-[#f3f3f3] px-4 pb-3 pt-4">
           <div className="flex items-center gap-2">
             <Heart size={22} className="fill-[#d89ad0] text-black" />
@@ -75,7 +89,6 @@ export default function RightNowPage({ onClose }: RightNowPageProps) {
           </button>
         </div>
 
-        {/* List */}
         <div className="px-4 pb-[110px]">
           <div className="flex flex-col gap-4">
             {rightNowItems.map((item) => (
@@ -99,7 +112,6 @@ export default function RightNowPage({ onClose }: RightNowPageProps) {
           </div>
         </div>
 
-        {/* Bottom single row */}
         {!isComposerOpen && (
           <div className="fixed bottom-[90px] left-1/2 z-[131] w-full max-w-[430px] -translate-x-1/2 px-4">
             <button
@@ -130,7 +142,6 @@ export default function RightNowPage({ onClose }: RightNowPageProps) {
           </div>
         )}
 
-        {/* Composer modal */}
         {isComposerOpen && (
           <div className="fixed inset-0 z-[140] flex justify-center bg-black/10">
             <div className="relative w-full max-w-[430px]">
@@ -182,7 +193,7 @@ export default function RightNowPage({ onClose }: RightNowPageProps) {
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   )
 }

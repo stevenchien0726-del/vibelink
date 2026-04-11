@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Mail, Menu } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 type FriendInvitePageProps = {
   onClose: () => void
@@ -32,14 +33,25 @@ export default function FriendInvitePage({ onClose }: FriendInvitePageProps) {
         mounted && !closing ? 'bg-black/30 opacity-100' : 'bg-black/0 opacity-0'
       }`}
     >
-      <div
-        className={`relative min-h-screen w-full max-w-[430px] origin-bottom transition-all duration-[260ms] ease-out ${
+      <motion.div
+        drag="y"
+        dragDirectionLock
+        dragElastic={{ top: 0, bottom: 0.18 }}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        onDragEnd={(_, info) => {
+          const draggedDownEnough = info.offset.y > 140
+          const fastEnough = info.velocity.y > 700
+
+          if (draggedDownEnough || fastEnough) {
+            handleClose()
+          }
+        }}
+        className={`relative min-h-screen w-full max-w-[430px] origin-bottom bg-[#f3f3f3] touch-pan-y transition-all duration-[260ms] ease-out ${
           mounted && !closing
             ? 'translate-y-0 scale-100 opacity-100'
             : 'translate-y-6 scale-[0.92] opacity-0'
-        } bg-[#f3f3f3]`}
+        }`}
       >
-        {/* Header */}
         <div className="sticky top-0 z-[10] flex items-center justify-between bg-[#f3f3f3] px-4 pt-4 pb-3">
           <div className="flex items-center gap-2">
             <Mail size={22} />
@@ -58,7 +70,6 @@ export default function FriendInvitePage({ onClose }: FriendInvitePageProps) {
           </button>
         </div>
 
-        {/* Scroll Content */}
         <div className="px-4 pb-[20px]">
           <div className="grid grid-cols-2 gap-4">
             {dummyUsers.map((_, index) => (
@@ -82,9 +93,8 @@ export default function FriendInvitePage({ onClose }: FriendInvitePageProps) {
           </div>
         </div>
 
-        {/* 底部覆蓋層 */}
         <div className="pointer-events-none fixed bottom-0 left-1/2 z-[130] h-[110px] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]" />
-      </div>
+      </motion.div>
     </div>
   )
 }

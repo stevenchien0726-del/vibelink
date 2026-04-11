@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, animate, useMotionValue, useTransform } from 'framer-motion'
 import StoryRow from '@/components/home/sections/story/StoryRow'
 import FeedGrid from '@/components/home/sections/feed/FeedGrid'
-import SideProfileMenu from '@/components/home/ui/layout/SideProfileMenu'
 import SearchPage from '@/pages/SearchPage'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import FriendInvitePage from '@/pages/FriendInvitePage'
@@ -378,190 +377,186 @@ if (isSearchPageOpen) {
   ref={searchRef}
 >
   <AnimatePresence mode="wait" initial={false}>
-    {isSearchOpen ? (
-      <motion.div
-        key="search-bar"
-        initial={{ opacity: 0, y: -10, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -8, scale: 0.98 }}
-        transition={{
-          type: 'spring',
-          stiffness: 380,
-          damping: 28,
-          mass: 0.9,
-        }}
-        className="flex h-full items-center gap-2"
-      >
-        <div className="flex h-[42px] flex-1 items-center gap-2 rounded-full border border-[#e6d8ee] bg-[#f7f1fa] px-4 shadow-[0_8px_22px_rgba(0,0,0,0.08)]">
-  <button type="button" onClick={handleSubmitSearch} className="shrink-0 text-[#444]">
-    <SearchIcon />
-  </button>
-
-  <input
-    autoFocus
-    value={searchText}
-    onChange={(e) => setSearchText(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter') {
-        handleSubmitSearch()
-      }
-    }}
-    placeholder="搜尋"
-    className="w-full bg-transparent text-[16px] text-[#333] outline-none placeholder:text-[#999]"
-  />
-</div>
-
+  {isSearchOpen ? (
+    <motion.div
+      key="search-bar"
+      initial={{ opacity: 0, y: -10, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -8, scale: 0.98 }}
+      transition={{
+        type: 'spring',
+        stiffness: 380,
+        damping: 28,
+        mass: 0.9,
+      }}
+      className="flex h-full items-center gap-2"
+    >
+      <div className="flex h-[42px] flex-1 items-center gap-2 rounded-full border border-[#e6d8ee] bg-[#f7f1fa] px-4 shadow-[0_8px_22px_rgba(0,0,0,0.08)]">
         <button
           type="button"
-          onClick={() => setIsSearchOpen(false)}
-          className="shrink-0 text-[15px] font-medium text-[#666]"
-        >
-          CLOSE
-        </button>
-      </motion.div>
-    ) : (
-      <motion.div
-        key="default-bar"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 8 }}
-        transition={{ duration: 0.18 }}
-        className="grid h-full grid-cols-[44px_28px_1fr_44px] items-center gap-2"
-      >
-        <button
-          type="button"
-          onClick={() => setIsProfileOpen(true)}
-          className="grid h-[38px] w-[38px] place-items-center rounded-full border border-[#e8e8e8] bg-[#f4f4f4] text-[#222] shadow-[0_2px_10px_rgba(0,0,0,0.06)]"
-        >
-          <UserAvatarIcon />
-        </button>
-
-        <div className="relative" ref={uploadRef}>
-          <button
-            type="button"
-            onClick={() => setIsUploadOpen((prev) => !prev)}
-            className="grid h-[30px] w-[30px] place-items-center bg-transparent text-[#111]"
-          >
-            <PlusIcon />
-          </button>
-
-          <AnimatePresence>
-            {isUploadOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.72, y: -18 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.78, y: -12 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 380,
-                  damping: 28,
-                  mass: 0.9,
-                }}
-                style={{ originX: 0.08, originY: 0 }}
-                className="fixed top-[68px] left-1/2 z-[120] w-[300px] max-w-[300px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[25px] py-[30px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
-              >
-
-                <div className="flex flex-col gap-[30px]">
-                  {uploadMenuItems.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className="flex w-full items-center justify-center rounded-[16px] px-[24px] py-[25px] text-[30px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
-                    >
-                      <div className="flex items-center gap-[12px]">
-                        <span className="flex h-[34px] w-[34px] items-center justify-center">
-                          {item.icon}
-                        </span>
-                        <span className="text-center">{item.label}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="relative flex justify-center" ref={topMenuRef}>
-          <button
-            type="button"
-            onClick={() => setIsTopMenuOpen((prev) => !prev)}
-            className="flex min-w-0 items-center justify-center gap-[4px] bg-transparent"
-          >
-            <img
-  src="/vibelink-logo.png"
-  alt="Vibelink"
-  className="h-[40px] object-contain translate-y-[2px] drop-shadow-[0_2px_6px_rgba(193,107,240,0.35)]"
-/>
-
-
-            <motion.span
-              animate={{ rotate: isTopMenuOpen ? 180 : 0 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="flex items-center justify-center"
-            >
-              <ChevronDownIcon />
-            </motion.span>
-          </button>
-
-          <AnimatePresence>
-            {isTopMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.72, y: -16 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.78, y: -10 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 380,
-                  damping: 28,
-                  mass: 0.9,
-                }}
-                style={{ originX: 0.5, originY: 0 }}
-                className="absolute top-[52px] left-1/2 z-[130] w-[250px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[24px] py-[24px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
-              >
-                <div className="flex flex-col gap-[14px]">
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-center rounded-[16px] px-[20px] py-[22px] text-[25px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
-                  >
-                    <div className="flex items-center gap-[12px]">
-                      <span className="flex h-[34px] w-[34px] items-center justify-center">
-                        <FollowingIcon />
-                      </span>
-                      <span>追蹤中</span>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-center rounded-[16px] px-[20px] py-[22px] text-[30px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
-                  >
-                    <div className="flex items-center gap-[12px]">
-                      <span className="flex h-[34px] w-[34px] items-center justify-center">
-                        <FavoriteIcon />
-                      </span>
-                      <span>最愛</span>
-                    </div>
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsSearchOpen(true)}
-          className="ml-auto grid h-[36px] w-[36px] place-items-center bg-transparent text-[#111]"
+          onClick={handleSubmitSearch}
+          className="shrink-0 text-[#444]"
         >
           <SearchIcon />
         </button>
-      </motion.div>
-    )}
-  </AnimatePresence>
+
+        <input
+          autoFocus
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSubmitSearch()
+            }
+          }}
+          placeholder="搜尋"
+          className="w-full bg-transparent text-[16px] text-[#333] outline-none placeholder:text-[#999]"
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setIsSearchOpen(false)}
+        className="shrink-0 text-[15px] font-medium text-[#666]"
+      >
+        CLOSE
+      </button>
+    </motion.div>
+  ) : (
+    <motion.div
+      key="default-bar"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.18 }}
+      className="relative flex h-full items-center justify-between"
+    >
+      <div className="relative flex w-[44px] justify-start" ref={uploadRef}>
+        <button
+          type="button"
+          onClick={() => setIsUploadOpen((prev) => !prev)}
+          className="grid h-[30px] w-[30px] place-items-center bg-transparent text-[#111]"
+        >
+          <PlusIcon />
+        </button>
+
+        <AnimatePresence>
+          {isUploadOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.72, y: -18 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.78, y: -12 }}
+              transition={{
+                type: 'spring',
+                stiffness: 380,
+                damping: 28,
+                mass: 0.9,
+              }}
+              style={{ originX: 0.08, originY: 0 }}
+              className="fixed top-[68px] left-1/2 z-[120] w-[300px] max-w-[300px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[25px] py-[30px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+            >
+              <div className="flex flex-col gap-[30px]">
+                {uploadMenuItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="flex w-full items-center justify-center rounded-[16px] px-[24px] py-[25px] text-[30px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
+                  >
+                    <div className="flex items-center gap-[12px]">
+                      <span className="flex h-[34px] w-[34px] items-center justify-center">
+                        {item.icon}
+                      </span>
+                      <span className="text-center">{item.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="absolute left-1/2 -translate-x-1/2" ref={topMenuRef}>
+        <button
+          type="button"
+          onClick={() => setIsTopMenuOpen((prev) => !prev)}
+          className="flex min-w-0 items-center justify-center gap-[4px] bg-transparent"
+        >
+          <img
+            src="/vibelink-logo.png"
+            alt="Vibelink"
+            className="h-[40px] object-contain translate-y-[2px] drop-shadow-[0_2px_6px_rgba(193,107,240,0.35)]"
+          />
+
+          <motion.span
+            animate={{ rotate: isTopMenuOpen ? 180 : 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="flex items-center justify-center"
+          >
+            <ChevronDownIcon />
+          </motion.span>
+        </button>
+
+        <AnimatePresence>
+          {isTopMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.72, y: -16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.78, y: -10 }}
+              transition={{
+                type: 'spring',
+                stiffness: 380,
+                damping: 28,
+                mass: 0.9,
+              }}
+              style={{ originX: 0.5, originY: 0 }}
+              className="absolute top-[52px] left-1/2 z-[130] w-[250px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[24px] py-[24px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+            >
+              <div className="flex flex-col gap-[14px]">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center rounded-[16px] px-[20px] py-[22px] text-[25px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
+                >
+                  <div className="flex items-center gap-[12px]">
+                    <span className="flex h-[34px] w-[34px] items-center justify-center">
+                      <FollowingIcon />
+                    </span>
+                    <span>追蹤中</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center rounded-[16px] px-[20px] py-[22px] text-[30px] font-medium text-[#222] transition-all duration-200 hover:bg-[#222]/8"
+                >
+                  <div className="flex items-center gap-[12px]">
+                    <span className="flex h-[34px] w-[34px] items-center justify-center">
+                      <FavoriteIcon />
+                    </span>
+                    <span>最愛</span>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="flex w-[44px] justify-end">
+        <button
+          type="button"
+          onClick={() => setIsSearchOpen(true)}
+          className="grid h-[36px] w-[36px] place-items-center bg-transparent text-[#111]"
+        >
+          <SearchIcon />
+        </button>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
 </div>
 
-      <main className="min-h-screen box-border px-0 pb-[90px] pt-[60px]">
+<main className="min-h-screen box-border px-0 pb-[90px] pt-[60px]">
         
         <section className="px-[14px] pt-[6px]">
           <h2 className="mb-3 mt-1 text-[20px] font-bold tracking-[0.2px] text-[#444444]">
@@ -775,25 +770,7 @@ if (isSearchPageOpen) {
 )}
       </AnimatePresence>
 
-      <AnimatePresence>
-  {isProfileOpen && (
-    <SideProfileMenu
-      onClose={() => setIsProfileOpen(false)}
-      onOpenPeopleLibrary={() => {
-        setIsProfileOpen(false)
-        setIsPeopleLibraryOpen(true)
-      }}
-      onOpenFriendInvite={() => {
-        setIsProfileOpen(false)
-        setIsFriendInviteOpen(true)
-      }}
-      onOpenRightNow={() => {
-        setIsProfileOpen(false)
-        setIsRightNowOpen(true)
-      }}
-    />
-  )}
-</AnimatePresence>
+    
 
 <AnimatePresence>
   {isPeopleLibraryOpen && (

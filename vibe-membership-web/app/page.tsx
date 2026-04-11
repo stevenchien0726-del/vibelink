@@ -25,7 +25,6 @@ const plans = [
       ],
       vibelink: [
         { label: 'AI 找人幫手無限使用', included: false },
-        { label: '發送好友邀請', included: true },
         { label: '每日 Right now 30 分', included: true },
         { label: 'Vibelink 零廣告體驗', included: false },
       ],
@@ -47,7 +46,6 @@ const plans = [
       ],
       vibelink: [
         { label: 'AI 找人幫手無限使用', included: true },
-        { label: '發送好友邀請', included: true },
         { label: '每日 Right now 60 分', included: true },
         { label: 'Vibelink 零廣告體驗', included: false },
       ],
@@ -69,7 +67,6 @@ const plans = [
       ],
       vibelink: [
         { label: 'AI 找人幫手無限使用', included: true },
-        { label: '發送好友邀請', included: true },
         { label: '每日 Right now 120 分', included: true },
         { label: 'Vibelink 零廣告體驗', included: true },
       ],

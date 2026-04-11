@@ -54,13 +54,25 @@ export default function PeopleLibraryPage({
         transition={{ duration: 0.18 }}
       >
         <motion.div
-          className="relative min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f3f3f3]"
+          className="relative min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f3f3f3] touch-pan-y"
           initial={{ scale: 0.94, opacity: 0, y: 18 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.98, opacity: 0, y: 10 }}
           transition={{
             duration: 0.24,
             ease: [0.22, 1, 0.36, 1],
+          }}
+          drag="y"
+          dragDirectionLock
+          dragElastic={{ top: 0, bottom: 0.18 }}
+          dragConstraints={{ top: 0, bottom: 0 }}
+          onDragEnd={(_, info) => {
+            const draggedDownEnough = info.offset.y > 140
+            const fastEnough = info.velocity.y > 700
+
+            if (draggedDownEnough || fastEnough) {
+              onClose()
+            }
           }}
         >
           <div className="px-4 pt-3 pb-[100px]">
