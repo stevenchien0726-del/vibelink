@@ -40,6 +40,8 @@ export default function FeedGrid({
 
   const sliderRef = useRef<HTMLDivElement | null>(null)
   const moreMenuRef = useRef<HTMLDivElement | null>(null)
+  const sliderTouchStartXRef = useRef<number | null>(null)
+  const sliderTouchStartYRef = useRef<number | null>(null)
 
   const handleSliderScroll = () => {
     const slider = sliderRef.current
@@ -50,6 +52,34 @@ export default function FeedGrid({
 
     const index = Math.round(slider.scrollLeft / slideWidth)
     setCurrentSlide(index)
+  }
+
+  function handleSliderTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    const touch = e.touches[0]
+    sliderTouchStartXRef.current = touch.clientX
+    sliderTouchStartYRef.current = touch.clientY
+  }
+
+  function handleSliderTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    const startX = sliderTouchStartXRef.current
+    const startY = sliderTouchStartYRef.current
+    if (startX == null || startY == null) return
+
+    const touch = e.touches[0]
+    const deltaX = touch.clientX - startX
+    const deltaY = touch.clientY - startY
+
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+
+    if (absX > absY && absX > 8) {
+      e.stopPropagation()
+    }
+  }
+
+  function handleSliderTouchEnd() {
+    sliderTouchStartXRef.current = null
+    sliderTouchStartYRef.current = null
   }
 
   useEffect(() => {
@@ -76,7 +106,6 @@ export default function FeedGrid({
 
     return (
       <div>
-        {/* Top row */}
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
@@ -87,13 +116,15 @@ export default function FeedGrid({
 
           <div className="relative" ref={moreMenuRef}>
             <button
-  type="button"
-  onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-  className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[#222] active:scale-[0.96] transition"
->
-  <MoreHorizontal size={17} strokeWidth={2.3} />
-  <span className="text-[14px] font-medium tracking-[0.2px]">MENU</span>
-</button>
+              type="button"
+              onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+              className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[#222] transition active:scale-[0.96]"
+            >
+              <MoreHorizontal size={17} strokeWidth={2.3} />
+              <span className="text-[14px] font-medium tracking-[0.2px]">
+                MENU
+              </span>
+            </button>
 
             <AnimatePresence>
               {isMoreMenuOpen && (
@@ -148,13 +179,16 @@ export default function FeedGrid({
           </div>
         </div>
 
-        {/* Image slider */}
         <div className="overflow-hidden rounded-[18px]">
           <div
             ref={sliderRef}
             onScroll={handleSliderScroll}
+            onTouchStart={handleSliderTouchStart}
+            onTouchMove={handleSliderTouchMove}
+            onTouchEnd={handleSliderTouchEnd}
             data-horizontal-scroll="true"
-            className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto touch-pan-y overscroll-x-contain"
+            className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
+            style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {slideColors.map((color, index) => (
               <div
@@ -170,44 +204,43 @@ export default function FeedGrid({
           </div>
         </div>
 
-        {/* Dots */}
         <div className="mt-2 flex justify-center gap-1.5">
           {slideColors.map((_, index) => (
             <div
               key={index}
               className={`h-[6px] w-[6px] rounded-full transition-all duration-300 ${
-                currentSlide === index ? 'scale-125 bg-[#d77eea]' : 'bg-[#d6d6d6]'
+                currentSlide === index
+                  ? 'scale-125 bg-[#d77eea]'
+                  : 'bg-[#d6d6d6]'
               }`}
             />
           ))}
         </div>
 
-        {/* Bottom action row */}
-<div className="mt-4 flex items-center justify-between gap-3">
-  <div className="flex items-center gap-6">
-    <div className="flex items-center gap-1.5 text-[16px] text-[#555]">
-      <Heart size={22} className="text-[#d77eea]" />
-      <span>{firstPost.likes}</span>
-    </div>
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-1.5 text-[16px] text-[#555]">
+              <Heart size={22} className="text-[#d77eea]" />
+              <span>{firstPost.likes}</span>
+            </div>
 
-    <button
-      type="button"
-      className="flex items-center text-[#222] active:scale-95 transition"
-    >
-      <MessageCircle size={22} />
-    </button>
-  </div>
+            <button
+              type="button"
+              className="flex items-center text-[#222] transition active:scale-95"
+            >
+              <MessageCircle size={22} />
+            </button>
+          </div>
 
-  <button
-    type="button"
-    className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[14px] font-medium text-[#222] active:scale-[0.96] transition"
-  >
-    <Mail size={18} strokeWidth={2.1} />
-    <span>發送邀請</span>
-  </button>
-</div>
+          <button
+            type="button"
+            className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[14px] font-medium text-[#222] transition active:scale-[0.96]"
+          >
+            <Mail size={18} strokeWidth={2.1} />
+            <span>發送邀請</span>
+          </button>
+        </div>
 
-        {/* Text */}
         <div className="mt-3 text-[16px] text-[#444]">{firstPost.text}</div>
       </div>
     )
