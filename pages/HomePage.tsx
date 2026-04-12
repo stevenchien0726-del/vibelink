@@ -127,6 +127,47 @@ const storyCardScale = useTransform(storyDragY, [0, 320], [1, 0.94])
 const storyCardOpacity = useTransform(storyDragY, [0, 320], [1, 0.72])
 const storyOverlayOpacity = useTransform(storyDragY, [0, 320], [1, 0.86])
 
+const [isTopBarVisible, setIsTopBarVisible] = useState(true)
+
+const lastScrollYRef = useRef(0)
+const scrollTickingRef = useRef(false)
+
+useEffect(() => {
+  function handleScroll() {
+    const currentY = window.scrollY || window.pageYOffset
+
+    if (scrollTickingRef.current) return
+
+    scrollTickingRef.current = true
+
+    window.requestAnimationFrame(() => {
+      const lastY = lastScrollYRef.current
+      const delta = currentY - lastY
+
+      if (currentY <= 8) {
+        setIsTopBarVisible(true)
+      } else if (Math.abs(delta) > 6) {
+        if (delta > 0) {
+          setIsTopBarVisible(false)
+          setIsTopMenuOpen(false)
+          setIsSearchOpen(false)
+        } else {
+          setIsTopBarVisible(true)
+        }
+      }
+
+      lastScrollYRef.current = currentY
+      scrollTickingRef.current = false
+    })
+  }
+
+  window.addEventListener('scroll', handleScroll, { passive: true })
+
+  return () => {
+    window.removeEventListener('scroll', handleScroll)
+  }
+}, [])
+
 const closeStoryViewer = useCallback(() => {
   setSelectedStory(null)
   setStoryPage(0)
@@ -355,10 +396,21 @@ if (isSearchPageOpen) {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#f5f5f5]">
-      <div
+      <motion.div
   className="fixed top-0 left-1/2 z-[40] h-[60px] w-full max-w-[430px] -translate-x-1/2 bg-[rgba(245,245,245,0.96)] px-[14px] py-[8px] backdrop-blur-md"
   ref={searchRef}
+  animate={{
+    y: isTopBarVisible || isSearchOpen ? 0 : -72,
+    opacity: isTopBarVisible || isSearchOpen ? 1 : 0.92,
+  }}
+  transition={{
+    type: 'spring',
+    stiffness: 380,
+    damping: 34,
+    mass: 0.95,
+  }}
 >
+  
   <AnimatePresence mode="wait" initial={false}>
   {isSearchOpen ? (
     <motion.div
@@ -500,9 +552,9 @@ if (isSearchPageOpen) {
         </button>
       </div>
     </motion.div>
-  )}
+    )}
 </AnimatePresence>
-</div>
+</motion.div>
 
 <AnimatePresence>
   {isUploadOpen && (

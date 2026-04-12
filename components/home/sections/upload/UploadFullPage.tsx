@@ -242,10 +242,10 @@ export default function UploadFullPage({
             </AnimatePresence>
 
             <div
-  className="relative grid grid-cols-3 rounded-[18px] bg-[#d8d8d8] p-[4px]"
+  className="relative grid grid-cols-3 rounded-[18px] bg-[#dddddd] p-[4px]"
 >
   <motion.div
-    className="absolute top-[4px] bottom-[4px] rounded-[14px] bg-[#ead0ef]"
+    className="absolute top-[4px] bottom-[4px] rounded-[14px] bg-[#f0f0f0]"
     animate={{
       left:
         activeTab === 'video'
@@ -259,7 +259,7 @@ export default function UploadFullPage({
       type: 'spring',
       stiffness: 360,
       damping: 30,
-      mass: 1,
+      mass: 0.9,
     }}
   />
 
