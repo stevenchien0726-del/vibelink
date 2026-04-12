@@ -251,9 +251,9 @@ export default function FeedGrid({
       <div className="grid grid-cols-2 gap-2">
         {posts.slice(0, 4).map((post) => (
           <div
-            key={post.id}
-            className="aspect-square w-full rounded-[16px] bg-[#dddddd]"
-          />
+  key={post.id}
+  className="h-[280px] w-full rounded-[20px] bg-[#dddddd]"
+/>
         ))}
       </div>
     )
@@ -263,8 +263,8 @@ export default function FeedGrid({
     <div className="grid grid-cols-3 gap-2">
       {posts.slice(0, 9).map((post) => (
         <div key={post.id}>
-          <div className="aspect-square w-full rounded-[14px] bg-[#dddddd]" />
-        </div>
+  <div className="h-[190px] w-full rounded-[18px] bg-[#dddddd]" />
+</div>
       ))}
     </div>
   )

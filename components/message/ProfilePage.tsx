@@ -327,7 +327,7 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
                 {gridItems.map((_, index) => (
                   <div
                     key={`grid-1-${index}`}
-                    className="aspect-square bg-[#d9d9d9]"
+                    className="h-[190px] bg-[#d9d9d9]"
                   />
                 ))}
               </div>
@@ -339,7 +339,7 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
                 {gridItems.map((_, index) => (
                   <div
                     key={`grid-2-${index}`}
-                    className="aspect-square bg-[#d9d9d9]"
+                    className="h-[190px] bg-[#d9d9d9]"
                   />
                 ))}
               </div>
@@ -351,7 +351,7 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
                 {gridItems.map((_, index) => (
                   <div
                     key={`grid-3-${index}`}
-                    className="aspect-square bg-[#d9d9d9]"
+                    className="h-[190px] bg-[#d9d9d9]"
                   />
                 ))}
               </div>
