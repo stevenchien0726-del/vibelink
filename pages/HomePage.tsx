@@ -7,7 +7,6 @@ import FeedGrid from '@/components/home/sections/feed/FeedGrid'
 import SearchPage from '@/pages/SearchPage'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import FriendInvitePage from '@/pages/FriendInvitePage'
-import RightNowPage from '@/pages/RightNowPage'
 import { HeartIcon } from 'lucide-react'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 
@@ -105,7 +104,6 @@ export default function HomePage() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
 const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
 const [isFriendInviteOpen, setIsFriendInviteOpen] = useState(false)
-const [isRightNowOpen, setIsRightNowOpen] = useState(false)
 const [isSearchOpen, setIsSearchOpen] = useState(false)
 const [isUploadOpen, setIsUploadOpen] = useState(false)
 const [searchText, setSearchText] = useState('')
@@ -743,14 +741,6 @@ if (isSearchPageOpen) {
   {isFriendInviteOpen && (
     <FriendInvitePage
       onClose={() => setIsFriendInviteOpen(false)}
-    />
-  )}
-</AnimatePresence>
-
-<AnimatePresence>
-  {isRightNowOpen && (
-    <RightNowPage
-      onClose={() => setIsRightNowOpen(false)}
     />
   )}
 </AnimatePresence>

@@ -242,62 +242,60 @@ export default function UploadFullPage({
             </AnimatePresence>
 
             <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                borderRadius: '18px',
-                background: '#d8d8d8',
-                padding: '4px',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setActiveTab('video')}
-                style={{
-                  height: '48px',
-                  borderRadius: '14px',
-                  background: activeTab === 'video' ? '#ead0ef' : 'transparent',
-                  color: activeTab === 'video' ? '#111111' : '#666666',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  border: 'none',
-                }}
-              >
-                短影片
-              </button>
+  className="relative grid grid-cols-3 rounded-[18px] bg-[#d8d8d8] p-[4px]"
+>
+  <motion.div
+    className="absolute top-[4px] bottom-[4px] rounded-[14px] bg-[#ead0ef]"
+    animate={{
+      left:
+        activeTab === 'video'
+          ? '4px'
+          : activeTab === 'post'
+          ? 'calc(33.333% + 1.5px)'
+          : 'calc(66.666% - 1px)',
+      width: 'calc(33.333% - 2.7px)',
+    }}
+    transition={{
+      type: 'spring',
+      stiffness: 360,
+      damping: 30,
+      mass: 1,
+    }}
+  />
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('post')}
-                style={{
-                  height: '48px',
-                  borderRadius: '14px',
-                  background: activeTab === 'post' ? '#ead0ef' : 'transparent',
-                  color: activeTab === 'post' ? '#111111' : '#666666',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  border: 'none',
-                }}
-              >
-                貼文
-              </button>
+  <button
+    type="button"
+    onClick={() => setActiveTab('video')}
+    className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
+    style={{
+      color: activeTab === 'video' ? '#111111' : '#666666',
+    }}
+  >
+    短影片
+  </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('album')}
-                style={{
-                  height: '48px',
-                  borderRadius: '14px',
-                  background: activeTab === 'album' ? '#ead0ef' : 'transparent',
-                  color: activeTab === 'album' ? '#111111' : '#666666',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  border: 'none',
-                }}
-              >
-                配對牆相片
-              </button>
-            </div>
+  <button
+    type="button"
+    onClick={() => setActiveTab('post')}
+    className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
+    style={{
+      color: activeTab === 'post' ? '#111111' : '#666666',
+    }}
+  >
+    貼文
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setActiveTab('album')}
+    className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
+    style={{
+      color: activeTab === 'album' ? '#111111' : '#666666',
+    }}
+  >
+    配對牆相片
+  </button>
+</div>
           </div>
         </div>
       </motion.div>

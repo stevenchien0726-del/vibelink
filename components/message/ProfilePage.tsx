@@ -1,5 +1,6 @@
 'use client'
 
+import { MapPin } from 'lucide-react'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import { Camera, Smile, Tag } from 'lucide-react'
 import { useRef, useState } from 'react'
@@ -206,6 +207,12 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
   <div className="flex items-center gap-2">
     <Tag size={18} />
     <span>單身</span>
+  </div>
+
+  {/* 🔥 新增 IP 標籤 */}
+  <div className="flex items-center gap-2">
+    <MapPin size={18} />
+    <span>台灣, 台北</span>
   </div>
 </div>
 
