@@ -426,8 +426,6 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
                 <MenuItem icon={<UserCircle2 size={22} />} label="帳號管理" />
                 <MenuItem icon={<Activity size={22} />} label="流量報告" />
                 <MenuItem icon={<Bell size={22} />} label="通知" />
-                <MenuItem icon={<Star size={22} />} label="最愛" />
-                <MenuItem icon={<Ban size={22} />} label="已封鎖" />
                 <MenuItem icon={<Clock3 size={22} />} label="典藏內容" />
                 <MenuItem
   icon={<Ticket size={22} />}
