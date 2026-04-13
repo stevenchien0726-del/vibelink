@@ -9,6 +9,7 @@ import VibeTvPage from '@/pages/VibeTvPage'
 import BottomNav from '@/components/home/ui/nav/BottomNav'
 
 export type AppPage = 'home' | 'ai' | 'message' | 'profile' | 'tv'
+export type CapsulePosition = '左' | '中' | '右'
 
 const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
@@ -17,6 +18,9 @@ export default function Page() {
   const [swipeOffset, setSwipeOffset] = useState(0)
   const [isDraggingPage, setIsDraggingPage] = useState(false)
   const [isSnapAnimating, setIsSnapAnimating] = useState(false)
+
+  const [feedCapsulePosition, setFeedCapsulePosition] =
+    useState<CapsulePosition>('中')
 
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
@@ -152,15 +156,26 @@ export default function Page() {
           isDraggingPage
             ? 'will-change-transform'
             : isSnapAnimating
-            ? 'will-change-transform transition-transform duration-200 ease-out'
-            : ''
+              ? 'will-change-transform transition-transform duration-200 ease-out'
+              : ''
         }`}
         style={pageTranslateStyle}
       >
-        {page === 'home' && <HomePage />}
+        {page === 'home' && (
+          <HomePage feedCapsulePosition={feedCapsulePosition} />
+        )}
+
         {page === 'ai' && <AIHelperPage />}
+
         {page === 'message' && <MessagePage />}
-        {page === 'profile' && <ProfilePage />}
+
+        {page === 'profile' && (
+          <ProfilePage
+            feedCapsulePosition={feedCapsulePosition}
+            onChangeFeedCapsulePosition={setFeedCapsulePosition}
+          />
+        )}
+
         {page === 'tv' && <VibeTvPage />}
       </div>
 

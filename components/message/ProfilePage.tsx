@@ -1,9 +1,5 @@
 'use client'
 
-import SettingsPage from '@/components/SettingsPage'
-import { MapPin } from 'lucide-react'
-import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
-import { Camera, Smile, Tag } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -16,17 +12,24 @@ import {
   UserCircle2,
   Activity,
   Bell,
-  Star,
-  Ban,
   Clock3,
   Ticket,
   Grid3x3,
   Settings,
   Megaphone,
+  Camera,
+  Smile,
+  Tag,
+  MapPin,
 } from 'lucide-react'
+import SettingsPage from '@/pages/SettingsPage'
+import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
+import type { CapsulePosition } from '@/app/page'
 
 type ProfilePageProps = {
   onCloseMenu?: () => void
+  feedCapsulePosition: CapsulePosition
+  onChangeFeedCapsulePosition: (value: CapsulePosition) => void
 }
 
 type MenuItemProps = {
@@ -43,14 +46,13 @@ function openMembershipSite() {
   window.open(MEMBERSHIP_URL, '_blank')
 }
 
-
 function MenuItem({ icon, label, onClick }: MenuItemProps) {
   return (
     <button
-  type="button"
-  onClick={onClick}
-  className="flex min-h-[52px] w-full justify-center rounded-[14px] bg-transparent px-2 py-[12px] text-[17px] text-[#222] transition hover:bg-[#ececec]"
->
+      type="button"
+      onClick={onClick}
+      className="flex min-h-[52px] w-full justify-center rounded-[14px] bg-transparent px-2 py-[12px] text-[17px] text-[#222] transition hover:bg-[#ececec]"
+    >
       <div className="flex min-w-[170px] items-center justify-center gap-4">
         <span className="flex h-[24px] w-[24px] shrink-0 items-center justify-center text-[#111]">
           {icon}
@@ -61,7 +63,10 @@ function MenuItem({ icon, label, onClick }: MenuItemProps) {
   )
 }
 
-export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
+export default function ProfilePage({
+  feedCapsulePosition,
+  onChangeFeedCapsulePosition,
+}: ProfilePageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
@@ -105,10 +110,8 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
     const deltaX = touch.clientX - tabTouchStartX.current
     tabTouchDeltaX.current = deltaX
 
-    if (activeTab === 3) {
-      if (!canSwipeFromAlbum(deltaX)) {
-        return
-      }
+    if (activeTab === 3 && !canSwipeFromAlbum(deltaX)) {
+      return
     }
 
     if (Math.abs(deltaX) > 8) {
@@ -140,37 +143,34 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
   return (
     <div className="relative min-h-screen bg-[#f3f3f3] pb-[110px]">
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[90px]">
-        {/* Top Bar */}
-        {/* Top Bar */}
-<div className="fixed top-0 left-1/2 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
-  <div className="flex items-center justify-between">
-    <button
-      type="button"
-      onClick={() => {
-        setIsMenuOpen(false)
-        setIsUploadOpen((prev) => !prev)
-      }}
-      className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
-    >
-      <PlusSquare size={15} />
-      <span>上傳內容</span>
-    </button>
+        <div className="fixed top-0 left-1/2 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                setIsMenuOpen(false)
+                setIsUploadOpen((prev) => !prev)
+              }}
+              className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
+            >
+              <PlusSquare size={15} />
+              <span>上傳內容</span>
+            </button>
 
-    <button
-      type="button"
-      onClick={() => {
-        setIsUploadOpen(false)
-        setIsMenuOpen((prev) => !prev)
-      }}
-      className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
-    >
-      <Menu size={18} />
-      <span>{isMenuOpen ? 'CLOSE' : 'MENU'}</span>
-    </button>
-  </div>
-</div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsUploadOpen(false)
+                setIsMenuOpen((prev) => !prev)
+              }}
+              className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
+            >
+              <Menu size={18} />
+              <span>{isMenuOpen ? 'CLOSE' : 'MENU'}</span>
+            </button>
+          </div>
+        </div>
 
-        {/* Profile Header */}
         <div className="mb-3 flex items-start justify-between">
           <div className="flex gap-3">
             <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
@@ -187,65 +187,60 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
           </div>
         </div>
 
-        {/* Bio */}
         <div className="mb-3">
           <div className="text-[16px] leading-[1.45] text-[#333]">HI 大家好</div>
           <div className="text-[16px] leading-[1.45] text-[#333]">我今年20歲</div>
           <div className="text-[16px] leading-[1.45] text-[#333]">喜歡跳舞</div>
         </div>
 
-        {/* Stats */}
-<div className="mb-4 flex items-center gap-6 text-[15px] text-[#333]">
-  <div className="flex items-center gap-2">
-    <Camera size={18} />
-    <span>20</span>
-  </div>
+        <div className="mb-4 flex items-center gap-6 text-[15px] text-[#333]">
+          <div className="flex items-center gap-2">
+            <Camera size={18} />
+            <span>20</span>
+          </div>
 
-  <div className="flex items-center gap-2">
-    <Smile size={18} />
-    <span>雙性戀</span>
-  </div>
+          <div className="flex items-center gap-2">
+            <Smile size={18} />
+            <span>雙性戀</span>
+          </div>
 
-  <div className="flex items-center gap-2">
-    <Tag size={18} />
-    <span>單身</span>
-  </div>
+          <div className="flex items-center gap-2">
+            <Tag size={18} />
+            <span>單身</span>
+          </div>
 
-  {/* 🔥 新增 IP 標籤 */}
-  <div className="flex items-center gap-2">
-    <MapPin size={18} />
-    <span>台灣, 台北</span>
-  </div>
-</div>
+          <div className="flex items-center gap-2">
+            <MapPin size={18} />
+            <span>台灣, 台北</span>
+          </div>
+        </div>
 
-{/* Action Buttons */}
-<div className="mb-4 flex w-full items-center gap-3">
-  <button
-    type="button"
-    className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] text-[#222] leading-none whitespace-nowrap"
-    style={{ WebkitAppearance: 'none', appearance: 'none' }}
-  >
-    LINKPORT
-  </button>
+        <div className="mb-4 flex w-full items-center gap-3">
+          <button
+            type="button"
+            className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
+            style={{ WebkitAppearance: 'none', appearance: 'none' }}
+          >
+            LINKPORT
+          </button>
 
-  <button
-    type="button"
-    className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] text-[#222] leading-none whitespace-nowrap"
-    style={{ WebkitAppearance: 'none', appearance: 'none' }}
-  >
-    編輯檔案
-  </button>
+          <button
+            type="button"
+            className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
+            style={{ WebkitAppearance: 'none', appearance: 'none' }}
+          >
+            編輯檔案
+          </button>
 
-  <button
-    type="button"
-    className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] text-[#222] leading-none whitespace-nowrap"
-    style={{ WebkitAppearance: 'none', appearance: 'none' }}
-  >
-    分享檔案
-  </button>
-</div>
+          <button
+            type="button"
+            className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
+            style={{ WebkitAppearance: 'none', appearance: 'none' }}
+          >
+            分享檔案
+          </button>
+        </div>
 
-        {/* Tab Icons */}
         <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">
           <div className="grid grid-cols-4">
             <button
@@ -297,7 +292,6 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
             </button>
           </div>
 
-          {/* Active Tab Line */}
           <div
             className="pointer-events-none absolute bottom-0 h-[4px] px-2 transition-all duration-300 ease-out"
             style={{
@@ -309,7 +303,6 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
           </div>
         </div>
 
-        {/* Swipe Content Area */}
         <div
           data-no-page-swipe="true"
           className="overflow-hidden touch-pan-y"
@@ -323,7 +316,6 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
               transform: `translateX(-${activeTab * 100}%)`,
             }}
           >
-            {/* Tab 1 */}
             <div className="w-full shrink-0">
               <div className="grid grid-cols-3 gap-[2px]">
                 {gridItems.map((_, index) => (
@@ -335,7 +327,6 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
               </div>
             </div>
 
-            {/* Tab 2 */}
             <div className="w-full shrink-0">
               <div className="grid grid-cols-3 gap-[2px]">
                 {gridItems.map((_, index) => (
@@ -347,7 +338,6 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
               </div>
             </div>
 
-            {/* Tab 3 */}
             <div className="w-full shrink-0">
               <div className="grid grid-cols-3 gap-[2px]">
                 {gridItems.map((_, index) => (
@@ -359,7 +349,6 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
               </div>
             </div>
 
-            {/* Tab 4 */}
             <div className="w-full shrink-0">
               <div
                 ref={albumScrollRef}
@@ -389,19 +378,35 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
       </div>
 
       <AnimatePresence>
-  {isUploadOpen && (
-    <UploadFullPage
-      onClose={() => setIsUploadOpen(false)}
-    />
-  )}
-</AnimatePresence>
-{showSettingsPage && (
-  <SettingsPage
-    onClose={() => setShowSettingsPage(false)}
-  />
-)}
+        {isUploadOpen && (
+          <UploadFullPage onClose={() => setIsUploadOpen(false)} />
+        )}
+      </AnimatePresence>
 
-      {/* Menu Overlay */}
+      <AnimatePresence>
+        {showSettingsPage && (
+  <SettingsPage
+            onClose={() => {
+              setShowSettingsPage(false)
+              setIsMenuOpen(true)
+            }}
+            capsulePosition={feedCapsulePosition}
+            onCapsulePositionChange={onChangeFeedCapsulePosition}
+            initialDarkMode={false}
+            initialShowCity={false}
+            onDarkModeChange={(value) => {
+              console.log('dark mode:', value)
+            }}
+            onShowCityChange={(value) => {
+              console.log('show city:', value)
+            }}
+            onBlockedClick={() => {
+              console.log('blocked clicked')
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {isMenuOpen && (
           <>
@@ -431,42 +436,39 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
             >
               <div className="flex flex-col gap-3">
                 <MenuItem icon={<UserCircle2 size={22} />} label="帳號管理" />
-                <MenuItem icon={<Activity size={22} />} label="流量報告" />
+
+                <MenuItem
+                  icon={<Settings size={22} />}
+                  label="設定"
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    setShowSettingsPage(true)
+                  }}
+                />
+
                 <MenuItem icon={<Bell size={22} />} label="通知" />
+
+                <MenuItem icon={<Activity size={22} />} label="流量報告" />
+                
                 <MenuItem icon={<Clock3 size={22} />} label="典藏內容" />
+
                 <MenuItem
-  icon={<Ticket size={22} />}
-  label="Vibe會員"
-  onClick={() => {
-    setIsMenuOpen(false)
-    openMembershipSite()
-  }}
-/>
+                  icon={<Ticket size={22} />}
+                  label="Vibe會員"
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    openMembershipSite()
+                  }}
+                />
+
                 <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
-                <MenuItem
-  icon={<Settings size={22} />}
-  label="設定"
-  onClick={() => {
-    setIsMenuOpen(false)
-    setShowSettingsPage(true)
-  }}
-/>
+
                 <MenuItem icon={<Megaphone size={22} />} label="廣告中心" />
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
-      <AnimatePresence>
-  {showSettingsPage && (
-    <SettingsPage
-      onClose={() => {
-        setShowSettingsPage(false)
-        setIsMenuOpen(true)
-      }}
-    />
-  )}
-</AnimatePresence>
     </div>
   )
 }
