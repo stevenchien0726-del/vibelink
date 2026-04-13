@@ -1,5 +1,6 @@
 'use client'
 
+import SettingsPage from '@/components/SettingsPage'
 import { MapPin } from 'lucide-react'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import { Camera, Smile, Tag } from 'lucide-react'
@@ -64,6 +65,7 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
+  const [showSettingsPage, setShowSettingsPage] = useState(false)
 
   const gridItems = Array.from({ length: 9 })
   const albumItems = Array.from({ length: 5 })
@@ -393,6 +395,11 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
     />
   )}
 </AnimatePresence>
+{showSettingsPage && (
+  <SettingsPage
+    onClose={() => setShowSettingsPage(false)}
+  />
+)}
 
       {/* Menu Overlay */}
       <AnimatePresence>
@@ -436,13 +443,30 @@ export default function ProfilePage({ onCloseMenu }: ProfilePageProps) {
   }}
 />
                 <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
-                <MenuItem icon={<Settings size={22} />} label="設定" />
+                <MenuItem
+  icon={<Settings size={22} />}
+  label="設定"
+  onClick={() => {
+    setIsMenuOpen(false)
+    setShowSettingsPage(true)
+  }}
+/>
                 <MenuItem icon={<Megaphone size={22} />} label="廣告中心" />
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+      <AnimatePresence>
+  {showSettingsPage && (
+    <SettingsPage
+      onClose={() => {
+        setShowSettingsPage(false)
+        setIsMenuOpen(true)
+      }}
+    />
+  )}
+</AnimatePresence>
     </div>
   )
 }
