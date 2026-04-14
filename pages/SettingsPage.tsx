@@ -62,59 +62,71 @@ export default function SettingsPage({
   }
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    const touch = e.touches[0]
-    touchStartX.current = touch.clientX
-    touchStartY.current = touch.clientY
-    draggingEnabled.current = touch.clientX <= 32
+  e.stopPropagation()
+
+  const touch = e.touches[0]
+  touchStartX.current = touch.clientX
+  touchStartY.current = touch.clientY
+  draggingEnabled.current = touch.clientX <= 32
+  setIsDraggingBack(false)
+}
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+  e.stopPropagation()
+
+  if (!draggingEnabled.current) return
+  if (touchStartX.current == null || touchStartY.current == null) return
+
+  const touch = e.touches[0]
+  const deltaX = touch.clientX - touchStartX.current
+  const deltaY = touch.clientY - touchStartY.current
+
+  if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
+    draggingEnabled.current = false
+    setIsDraggingBack(false)
+    setDragX(0)
+    return
+  }
+
+  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    e.preventDefault()
+  }
+
+  if (deltaX > 0) {
+    setIsDraggingBack(true)
+    setDragX(deltaX)
+  } else {
+    setIsDraggingBack(false)
+    setDragX(0)
+  }
+}
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+  e.stopPropagation()
+
+  if (!draggingEnabled.current) {
+    touchStartX.current = null
+    touchStartY.current = null
+    return
+  }
+
+  if (dragX > 90) {
+    setDragX(0)
+    setIsDraggingBack(false)
+    onClose()
+  } else {
+    setDragX(0)
     setIsDraggingBack(false)
   }
 
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!draggingEnabled.current) return
-    if (touchStartX.current == null || touchStartY.current == null) return
-
-    const touch = e.touches[0]
-    const deltaX = touch.clientX - touchStartX.current
-    const deltaY = touch.clientY - touchStartY.current
-
-    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
-      draggingEnabled.current = false
-      setIsDraggingBack(false)
-      setDragX(0)
-      return
-    }
-
-    if (deltaX > 0) {
-      setIsDraggingBack(true)
-      setDragX(deltaX)
-    } else {
-      setIsDraggingBack(false)
-      setDragX(0)
-    }
-  }
-
-  const handleTouchEnd = () => {
-    if (!draggingEnabled.current) {
-      touchStartX.current = null
-      touchStartY.current = null
-      return
-    }
-
-    if (dragX > 90) {
-      onClose()
-    } else {
-      setDragX(0)
-      setIsDraggingBack(false)
-    }
-
-    touchStartX.current = null
-    touchStartY.current = null
-    draggingEnabled.current = false
-  }
+  touchStartX.current = null
+  touchStartY.current = null
+  draggingEnabled.current = false
+}
 
   return (
     <motion.div
-      className="fixed inset-0 z-[220] flex justify-center bg-[#f3f3f3]"
+  className="fixed inset-0 z-[220] flex justify-center bg-[#f3f3f3] touch-pan-y"
       initial={{ x: '100%' }}
       animate={{ x: dragX }}
       exit={{ x: '100%' }}
