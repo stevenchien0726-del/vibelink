@@ -438,13 +438,12 @@ export default function ProfilePage({
                 <MenuItem icon={<UserCircle2 size={22} />} label="帳號管理" />
 
                 <MenuItem
-                  icon={<Settings size={22} />}
-                  label="設定"
-                  onClick={() => {
-                    setIsMenuOpen(false)
-                    setShowSettingsPage(true)
-                  }}
-                />
+  icon={<Settings size={22} />}
+  label="設定"
+  onClick={() => {
+    setShowSettingsPage(true)
+  }}
+/>
 
                 <MenuItem icon={<Bell size={22} />} label="通知" />
 
