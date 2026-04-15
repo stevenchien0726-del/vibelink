@@ -13,8 +13,8 @@ export type CapsulePosition = '左' | '中' | '右'
 
 const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
-export default function Page() {
-  const [page, setPage] = useState<AppPage>('message')
+export default function () {
+  const [page, setPage] = useState<AppPage>('home')
   const [swipeOffset, setSwipeOffset] = useState(0)
   const [isDraggingPage, setIsDraggingPage] = useState(false)
   const [isSnapAnimating, setIsSnapAnimating] = useState(false)

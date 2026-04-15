@@ -273,13 +273,13 @@ function EnterArrowIcon({ active }: { active: boolean }) {
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2.2" />
       <path
-        d="M9 12h6"
+        d="M12 16V9"
         stroke={color}
         strokeWidth="2.2"
         strokeLinecap="round"
       />
       <path
-        d="M13 8l4 4-4 4"
+        d="M8 13l4-4 4 4"
         stroke={color}
         strokeWidth="2.2"
         strokeLinecap="round"
