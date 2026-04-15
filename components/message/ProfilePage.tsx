@@ -21,6 +21,7 @@ import {
   Smile,
   Tag,
   MapPin,
+  CircleHelp,
 } from 'lucide-react'
 import SettingsPage from '@/pages/SettingsPage'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
@@ -73,6 +74,7 @@ export default function ProfilePage({
   const [activeTab, setActiveTab] = useState(0)
   const [showSettingsPage, setShowSettingsPage] = useState(false)
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
+  const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
 
   const gridItems = Array.from({ length: 9 })
   const albumItems = Array.from({ length: 5 })
@@ -313,69 +315,109 @@ export default function ProfilePage({
           onTouchEnd={handleTabTouchEnd}
         >
           <div
-            className="flex w-full transition-transform duration-300 ease-out"
-            style={{
-              transform: `translateX(-${activeTab * 100}%)`,
-            }}
-          >
-            <div className="w-full shrink-0">
-              <div className="grid grid-cols-3 gap-[2px]">
-                {gridItems.map((_, index) => (
-                  <div
-                    key={`grid-1-${index}`}
-                    className="h-[190px] bg-[#d9d9d9]"
-                  />
-                ))}
-              </div>
-            </div>
+  className="flex w-full transition-transform duration-300 ease-out"
+  style={{
+    transform: `translateX(-${activeTab * 100}%)`,
+  }}
+>
+  {/* 第1頁 */}
+  <div className="w-full shrink-0">
+    <div className="grid grid-cols-3 gap-[2px]">
+      {gridItems.map((_, index) => (
+        <div
+          key={`grid-1-${index}`}
+          className="h-[190px] bg-[#d9d9d9]"
+        />
+      ))}
+    </div>
+  </div>
 
-            <div className="w-full shrink-0">
-              <div className="grid grid-cols-3 gap-[2px]">
-                {gridItems.map((_, index) => (
-                  <div
-                    key={`grid-2-${index}`}
-                    className="h-[190px] bg-[#d9d9d9]"
-                  />
-                ))}
-              </div>
-            </div>
+  {/* 第2頁 */}
+  <div className="w-full shrink-0">
+    <div className="grid grid-cols-3 gap-[2px]">
+      {gridItems.map((_, index) => (
+        <div
+          key={`grid-2-${index}`}
+          className="h-[190px] bg-[#d9d9d9]"
+        />
+      ))}
+    </div>
+  </div>
 
-            <div className="w-full shrink-0">
-              <div className="grid grid-cols-3 gap-[2px]">
-                {gridItems.map((_, index) => (
-                  <div
-                    key={`grid-3-${index}`}
-                    className="h-[190px] bg-[#d9d9d9]"
-                  />
-                ))}
-              </div>
-            </div>
+  {/* 第3頁（收藏） */}
+  <div className="w-full shrink-0">
+    <div className="mb-3 rounded-[24px] bg-[#d9d9d9] px-5 py-4">
+  <div className="flex items-center justify-between">
+    <span className="text-[24px] text-[#111]">我的收藏</span>
 
-            <div className="w-full shrink-0">
-              <div
-                ref={albumScrollRef}
-                className="flex gap-[10px] overflow-x-auto px-[2px] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                style={{ scrollSnapType: 'x mandatory' }}
-              >
-                {albumItems.map((_, index) => (
-                  <div
-                    key={`album-${index}`}
-                    className="h-[380px] min-w-[72%] rounded-[10px] shadow-[0_6px_16px_rgba(0,0,0,0.08)]"
-                    style={{
-                      scrollSnapAlign: 'start',
-                      backgroundColor: [
-                        '#e3e3e3',
-                        '#dcdcdc',
-                        '#d6d6d6',
-                        '#cfcfcf',
-                        '#c8c8c8',
-                      ][index % 5],
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+    <div className="flex items-center gap-3">
+      <span className="text-[20px] text-[#111]">公開</span>
+
+      <button
+        type="button"
+        onClick={() => setIsFavoritesPublic((prev) => !prev)}
+        className={`relative h-[40px] w-[98px] rounded-full transition-all duration-250 active:scale-[0.98] ${
+          isFavoritesPublic ? 'bg-[#caa3d8]' : 'bg-[#e3e3e3]'
+        }`}
+      >
+        <span
+          className={`absolute top-1/2 h-[32px] w-[32px] -translate-y-1/2 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.10)] transition-all duration-250 ${
+            isFavoritesPublic ? 'right-[4px]' : 'left-[4px]'
+          }`}
+        />
+      </button>
+    </div>
+  </div>
+</div>
+
+    <div className="grid grid-cols-3 gap-[2px]">
+      {gridItems.map((_, index) => (
+        <div
+          key={`grid-3-${index}`}
+          className="h-[190px] bg-[#d9d9d9]"
+        />
+      ))}
+    </div>
+  </div>
+
+  {/* 第4頁 */}
+<div className="w-full shrink-0">
+  <div className="mb-3 flex items-center justify-between px-[2px]">
+    <span className="text-[22px] font-medium text-[#111]">配對牆相片集</span>
+
+    <button
+      type="button"
+      aria-label="配對牆相片集說明"
+      className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#e7e7e7] text-[#444] transition active:scale-[0.96]"
+    >
+      <CircleHelp size={18} strokeWidth={2.1} />
+    </button>
+  </div>
+
+  <div
+    ref={albumScrollRef}
+    className="flex gap-[10px] overflow-x-auto px-[2px] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    style={{ scrollSnapType: 'x mandatory' }}
+  >
+    {albumItems.map((_, index) => (
+      <div
+        key={`album-${index}`}
+        className="h-[380px] min-w-[72%] rounded-[10px] shadow-[0_6px_16px_rgba(0,0,0,0.08)]"
+        style={{
+          scrollSnapAlign: 'start',
+          backgroundColor: [
+            '#e3e3e3',
+            '#dcdcdc',
+            '#d6d6d6',
+            '#cfcfcf',
+            '#c8c8c8',
+          ][index % 5],
+        }}
+      />
+    ))}
+  </div>
+</div>
+</div>
         </div>
       </div>
 
