@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import SettingsPage from '@/pages/SettingsPage'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
+import AccountManagePage from '@/components/message/AccountManagePage'
 import type { CapsulePosition } from '@/app/page'
 
 type ProfilePageProps = {
@@ -71,6 +72,7 @@ export default function ProfilePage({
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const [showSettingsPage, setShowSettingsPage] = useState(false)
+  const [showAccountManagePage, setShowAccountManagePage] = useState(false)
 
   const gridItems = Array.from({ length: 9 })
   const albumItems = Array.from({ length: 5 })
@@ -385,6 +387,7 @@ export default function ProfilePage({
 
       <AnimatePresence>
         {showSettingsPage && (
+          
   <SettingsPage
             onClose={() => {
               setShowSettingsPage(false)
@@ -435,8 +438,8 @@ export default function ProfilePage({
               style={{ originX: 0.88, originY: 0 }}
             >
               <div className="flex flex-col gap-3">
-                <MenuItem icon={<UserCircle2 size={22} />} label="帳號管理" />
-
+                <MenuItem icon={<Bell size={22} />} label="通知" />
+                
                 <MenuItem
   icon={<Settings size={22} />}
   label="設定"
@@ -444,8 +447,15 @@ export default function ProfilePage({
     setShowSettingsPage(true)
   }}
 />
-
-                <MenuItem icon={<Bell size={22} />} label="通知" />
+                
+                <MenuItem
+  icon={<UserCircle2 size={22} />}
+  label="帳號管理"
+  onClick={() => {
+    setShowAccountManagePage(true)
+    setIsMenuOpen(false)
+  }}
+/>
 
                 <MenuItem icon={<Activity size={22} />} label="流量報告" />
                 
@@ -468,6 +478,13 @@ export default function ProfilePage({
           </>
         )}
       </AnimatePresence>
+      <AnimatePresence>
+  {showAccountManagePage && (
+    <AccountManagePage
+      onClose={() => setShowAccountManagePage(false)}
+    />
+  )}
+</AnimatePresence>
     </div>
   )
 }

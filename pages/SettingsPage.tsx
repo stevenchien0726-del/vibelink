@@ -8,6 +8,10 @@ import {
   Grid2x2,
   MapPin,
   Moon,
+  Heart,
+  Ban,
+  Globe,
+  MessageCircle,
 } from 'lucide-react'
 import type { CapsulePosition } from '@/app/page'
 
@@ -20,6 +24,9 @@ type SettingsPageProps = {
   onDarkModeChange?: (value: boolean) => void
   onShowCityChange?: (value: boolean) => void
   onBlockedClick?: () => void
+  onFavoritesClick?: () => void
+  onLanguageClick?: () => void
+  onMessagesClick?: () => void
 }
 
 export default function SettingsPage({
@@ -31,6 +38,9 @@ export default function SettingsPage({
   onDarkModeChange,
   onShowCityChange,
   onBlockedClick,
+  onFavoritesClick,
+  onLanguageClick,
+  onMessagesClick,
 }: SettingsPageProps) {
   const [darkMode, setDarkMode] = useState(initialDarkMode)
   const [showCity, setShowCity] = useState(initialShowCity)
@@ -62,71 +72,71 @@ export default function SettingsPage({
   }
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-  e.stopPropagation()
+    e.stopPropagation()
 
-  const touch = e.touches[0]
-  touchStartX.current = touch.clientX
-  touchStartY.current = touch.clientY
-  draggingEnabled.current = touch.clientX <= 32
-  setIsDraggingBack(false)
-}
+    const touch = e.touches[0]
+    touchStartX.current = touch.clientX
+    touchStartY.current = touch.clientY
+    draggingEnabled.current = touch.clientX <= 32
+    setIsDraggingBack(false)
+  }
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-  e.stopPropagation()
+    e.stopPropagation()
 
-  if (!draggingEnabled.current) return
-  if (touchStartX.current == null || touchStartY.current == null) return
+    if (!draggingEnabled.current) return
+    if (touchStartX.current == null || touchStartY.current == null) return
 
-  const touch = e.touches[0]
-  const deltaX = touch.clientX - touchStartX.current
-  const deltaY = touch.clientY - touchStartY.current
+    const touch = e.touches[0]
+    const deltaX = touch.clientX - touchStartX.current
+    const deltaY = touch.clientY - touchStartY.current
 
-  if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
-    draggingEnabled.current = false
-    setIsDraggingBack(false)
-    setDragX(0)
-    return
+    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
+      draggingEnabled.current = false
+      setIsDraggingBack(false)
+      setDragX(0)
+      return
+    }
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.preventDefault()
+    }
+
+    if (deltaX > 0) {
+      setIsDraggingBack(true)
+      setDragX(deltaX)
+    } else {
+      setIsDraggingBack(false)
+      setDragX(0)
+    }
   }
-
-  if (Math.abs(deltaX) > Math.abs(deltaY)) {
-    e.preventDefault()
-  }
-
-  if (deltaX > 0) {
-    setIsDraggingBack(true)
-    setDragX(deltaX)
-  } else {
-    setIsDraggingBack(false)
-    setDragX(0)
-  }
-}
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-  e.stopPropagation()
+    e.stopPropagation()
 
-  if (!draggingEnabled.current) {
+    if (!draggingEnabled.current) {
+      touchStartX.current = null
+      touchStartY.current = null
+      return
+    }
+
+    if (dragX > 90) {
+      setDragX(0)
+      setIsDraggingBack(false)
+      onClose()
+    } else {
+      setDragX(0)
+      setIsDraggingBack(false)
+    }
+
     touchStartX.current = null
     touchStartY.current = null
-    return
+    draggingEnabled.current = false
   }
-
-  if (dragX > 90) {
-    setDragX(0)
-    setIsDraggingBack(false)
-    onClose()
-  } else {
-    setDragX(0)
-    setIsDraggingBack(false)
-  }
-
-  touchStartX.current = null
-  touchStartY.current = null
-  draggingEnabled.current = false
-}
 
   return (
     <motion.div
-  className="fixed inset-0 z-[220] flex justify-center bg-[#f3f3f3] touch-pan-y"
+      className="fixed inset-0 z-[220] flex justify-center bg-[#f3f3f3] touch-pan-y"
       initial={{ x: '100%' }}
       animate={{ x: dragX }}
       exit={{ x: '100%' }}
@@ -160,56 +170,56 @@ export default function SettingsPage({
 
         <div className="px-4 pt-[72px] pb-10">
           <div className="rounded-[22px] bg-[#d9d9d9] px-4 py-4">
-            <div>
-              <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
-                  <Grid2x2 size={19} strokeWidth={2.1} />
-                </span>
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
+                <Grid2x2 size={19} strokeWidth={2.1} />
+              </span>
 
-                <span className="text-[16px] font-medium text-[#222]">
-                  自由化版面膠囊位置
-                </span>
+              <span className="text-[16px] font-medium text-[#222]">
+                自由化版面膠囊位置
+              </span>
+            </div>
+
+            <div className="mb-4 h-px bg-[#bcbcbc]" />
+
+            <LayoutGroup id="capsule-position-segment">
+              <div className="grid grid-cols-3 gap-3">
+                {(['左', '中', '右'] as CapsulePosition[]).map((item) => {
+                  const selected = capsulePosition === item
+
+                  return (
+                    <motion.button
+                      key={item}
+                      type="button"
+                      onClick={() => onCapsulePositionChange(item)}
+                      whileTap={{ scale: 1.05 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 520,
+                        damping: 26,
+                      }}
+                      className="relative flex h-[46px] items-center justify-center overflow-hidden rounded-[16px] border border-[#ececec] bg-white text-[17px] font-medium text-[#222] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                    >
+                      {selected && (
+                        <motion.div
+                          layoutId="capsule-position-pill"
+                          className="absolute inset-0 rounded-[16px] bg-[#d9afe6]"
+                          transition={{
+                            type: 'spring',
+                            stiffness: 420,
+                            damping: 32,
+                          }}
+                        />
+                      )}
+
+                      <span className="relative z-10">{item}</span>
+                    </motion.button>
+                  )
+                })}
               </div>
+            </LayoutGroup>
 
-              <LayoutGroup id="capsule-position-segment">
-  <div className="grid grid-cols-3 gap-3">
-    {(['左', '中', '右'] as CapsulePosition[]).map((item) => {
-      const selected = capsulePosition === item
-
-      return (
-        <motion.button
-          key={item}
-          type="button"
-          onClick={() => onCapsulePositionChange(item)}
-          whileTap={{ scale: 1.05 }}
-          transition={{
-            type: 'spring',
-            stiffness: 520,
-            damping: 26,
-          }}
-          className="relative flex h-[42px] items-center justify-center overflow-hidden rounded-[14px] border border-[#ececec] bg-white text-[17px] font-medium text-[#222] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-        >
-          {selected && (
-            <motion.div
-              layoutId="capsule-position-pill"
-              className="absolute inset-0 rounded-[14px] bg-[#d9afe6]"
-              transition={{
-                type: 'spring',
-                stiffness: 420,
-                damping: 32,
-              }}
-            />
-          )}
-
-          <span className="relative z-10">{item}</span>
-        </motion.button>
-      )
-    })}
-  </div>
-</LayoutGroup>
-</div>
-
-            <div className="my-4 h-px bg-[#bcbcbc]" />
+            <div className="my-5 h-px bg-[#bcbcbc]" />
 
             <div className="flex items-center justify-between py-1">
               <div className="flex items-center gap-3">
@@ -231,7 +241,7 @@ export default function SettingsPage({
               </div>
             </div>
 
-            <div className="my-4 h-px bg-[#bcbcbc]" />
+            <div className="my-5 h-px bg-[#bcbcbc]" />
 
             <div className="flex items-center justify-between py-1">
               <div className="flex items-center gap-3">
@@ -254,19 +264,61 @@ export default function SettingsPage({
             </div>
           </div>
 
-          <div className="mt-[22px]">
-  <button
-    type="button"
-    onClick={onBlockedClick}
-    className="flex w-full items-center justify-between rounded-[18px] bg-white px-5 py-[20px] text-left shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition active:scale-[0.985]"
-  >
-    <span className="text-[16px] font-medium text-[#222]">已封鎖</span>
-    <ChevronRight size={20} className="text-[#444]" />
-  </button>
-</div>
+          <div className="mt-[26px] space-y-[18px]">
+            <SettingsRow
+              icon={<Heart size={21} strokeWidth={2.1} />}
+              label="最愛和按讚"
+              onClick={onFavoritesClick}
+            />
+
+            <SettingsRow
+              icon={<Ban size={21} strokeWidth={2.1} />}
+              label="已封鎖"
+              onClick={onBlockedClick}
+            />
+
+            <SettingsRow
+              icon={<Globe size={21} strokeWidth={2.1} />}
+              label="語言"
+              onClick={onLanguageClick}
+            />
+
+            <SettingsRow
+              icon={<MessageCircle size={21} strokeWidth={2.1} />}
+              label="訊息和留言"
+              onClick={onMessagesClick}
+            />
+          </div>
         </div>
       </div>
     </motion.div>
+  )
+}
+
+function SettingsRow({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode
+  label: string
+  onClick?: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center justify-between rounded-[20px] bg-white px-10 py-[px]"
+    >
+      <div className="flex items-center gap-3">
+        <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
+          {icon}
+        </span>
+        <span className="text-[16px] font-medium text-[#222]">{label}</span>
+      </div>
+
+      <ChevronRight size={20} className="text-[#444]" />
+    </button>
   )
 }
 
