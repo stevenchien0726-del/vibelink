@@ -490,14 +490,6 @@ export default function ProfilePage({
   }}
 />
                 
-                <MenuItem
-  icon={<UserCircle2 size={22} />}
-  label="帳號管理"
-  onClick={() => {
-    setShowAccountManagePage(true)
-    setIsMenuOpen(false)
-  }}
-/>
 
                 <MenuItem icon={<Activity size={22} />} label="流量報告" />
                 
@@ -513,6 +505,16 @@ export default function ProfilePage({
                 />
 
                 <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
+
+                
+                <MenuItem
+  icon={<UserCircle2 size={22} />}
+  label="帳號管理"
+  onClick={() => {
+    setShowAccountManagePage(true)
+    setIsMenuOpen(false)
+  }}
+/>
 
                 <MenuItem icon={<Megaphone size={22} />} label="廣告中心" />
               </div>

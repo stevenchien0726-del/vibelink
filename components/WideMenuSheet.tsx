@@ -56,25 +56,31 @@ export default function WideMenuSheet({ onClose }: Props) {
         </div>
 
         {/* 追蹤：更寬 */}
-        <div className="mb-6">
-          <button className="flex w-full items-center justify-center gap-3 rounded-[18px] bg-white py-4 shadow-sm">
-            <UserPlus size={18} />
-            <span className="text-[16px] text-[#111]">追蹤</span>
-          </button>
+        <div className="mb-8">
+          <button className="flex w-full items-center gap-3 rounded-[18px] bg-white py-4 px-5 shadow-sm">
+  <span className="flex h-[18px] w-[18px] items-center justify-center">
+    <UserPlus size={18} />
+  </span>
+  <span className="text-[16px] leading-none text-[#111]">追蹤</span>
+</button>
         </div>
 
         {/* 檢舉 / 封鎖：間距拉大 */}
         <div className="rounded-[18px] bg-white px-5 py-6 shadow-sm">
           <div className="flex flex-col gap-6">
             <button className="flex items-center gap-3">
-              <AlertCircle size={18} />
-              <span className="text-[16px] text-[#111]">檢舉</span>
-            </button>
+  <span className="flex h-[18px] w-[18px] items-center justify-center">
+    <AlertCircle size={18} />
+  </span>
+  <span className="text-[16px] leading-none text-[#111]">檢舉</span>
+</button>
 
-            <button className="flex items-center gap-3">
-              <Ban size={18} />
-              <span className="text-[16px] text-[#111]">封鎖</span>
-            </button>
+<button className="flex items-center gap-3">
+  <span className="flex h-[18px] w-[18px] items-center justify-center">
+    <Ban size={18} />
+  </span>
+  <span className="text-[16px] leading-none text-[#111]">封鎖</span>
+</button>
           </div>
         </div>
       </div>

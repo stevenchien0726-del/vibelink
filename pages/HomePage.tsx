@@ -505,8 +505,8 @@ export default function HomePage({
         style={{ originX: 0.5, originY: 0 }}
         className="absolute top-[52px] left-1/2 z-[130] w-[250px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[24px] py-[24px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
       >
-        <div className="flex flex-col gap-[14px]">
-          <button className="flex w-full items-center justify-center rounded-[16px] px-[20px] py-[22px] text-[20px] font-medium text-[#222] hover:bg-[#222]/8">
+        <div className="flex flex-col gap-[30px]">
+          <button className="flex w-full items-center justify-center rounded-[16px] px-[25px] py-[30px] text-[20px] font-medium text-[#222] hover:bg-[#222]/8">
             <FollowingIcon />
             <span className="ml-2">追蹤中</span>
           </button>

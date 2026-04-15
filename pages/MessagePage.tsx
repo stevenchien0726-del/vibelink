@@ -165,44 +165,50 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   }
 
   function handleTabTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-    if (tabTouchStartX.current == null || tabTouchStartY.current == null) return
+  if (tabTouchStartX.current == null || tabTouchStartY.current == null) return
 
-    const touch = e.touches[0]
-    const deltaX = touch.clientX - tabTouchStartX.current
-    const deltaY = touch.clientY - tabTouchStartY.current
+  const touch = e.touches[0]
+  const deltaX = touch.clientX - tabTouchStartX.current
+  const deltaY = touch.clientY - tabTouchStartY.current
 
-    tabTouchDeltaX.current = deltaX
-    tabTouchDeltaY.current = deltaY
+  tabTouchDeltaX.current = deltaX
+  tabTouchDeltaY.current = deltaY
 
-    const isMostlyHorizontal = Math.abs(deltaX) > Math.abs(deltaY)
+  const absX = Math.abs(deltaX)
+  const absY = Math.abs(deltaY)
+  const isMostlyHorizontal = absX > absY
 
-    if (!isMostlyHorizontal) return
+  if (!isMostlyHorizontal) return
 
-    if (!canAllowOuterPageSwipe(deltaX)) {
-      e.stopPropagation()
-    }
+  // 只要這一區在做水平滑動，就先擋外層 page swipe
+  e.stopPropagation()
+
+  // 邊界時也不要讓整頁切出去
+  if (absX > 8) {
+    e.preventDefault()
   }
+}
 
   function handleTabTouchEnd() {
-    const deltaX = tabTouchDeltaX.current
-    const deltaY = tabTouchDeltaY.current
-    const isMostlyHorizontal = Math.abs(deltaX) > Math.abs(deltaY)
+  const deltaX = tabTouchDeltaX.current
+  const deltaY = tabTouchDeltaY.current
+  const absX = Math.abs(deltaX)
+  const absY = Math.abs(deltaY)
+  const isMostlyHorizontal = absX > absY
 
-    if (isMostlyHorizontal && Math.abs(deltaX) > 50) {
-      if (!canAllowOuterPageSwipe(deltaX)) {
-        if (deltaX < 0) {
-          goToTab(activeTab + 1)
-        } else {
-          goToTab(activeTab - 1)
-        }
-      }
+  if (isMostlyHorizontal && absX > 50) {
+    if (deltaX < 0) {
+      goToTab(activeTab + 1)
+    } else {
+      goToTab(activeTab - 1)
     }
-
-    tabTouchStartX.current = null
-    tabTouchStartY.current = null
-    tabTouchDeltaX.current = 0
-    tabTouchDeltaY.current = 0
   }
+
+  tabTouchStartX.current = null
+  tabTouchStartY.current = null
+  tabTouchDeltaX.current = 0
+  tabTouchDeltaY.current = 0
+}
 
   return (
     <div className="relative flex min-h-screen flex-col bg-transparent px-4 pt-4 pb-2">
@@ -639,11 +645,12 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
         </div>
 
         <div
-          className="overflow-hidden touch-pan-y"
-          onTouchStart={handleTabTouchStart}
-          onTouchMove={handleTabTouchMove}
-          onTouchEnd={handleTabTouchEnd}
-        >
+  data-no-page-swipe="true"
+  className="overflow-hidden touch-pan-y"
+  onTouchStart={handleTabTouchStart}
+  onTouchMove={handleTabTouchMove}
+  onTouchEnd={handleTabTouchEnd}
+>
           <div
             className="flex w-full transition-transform duration-300 ease-out"
             style={{
