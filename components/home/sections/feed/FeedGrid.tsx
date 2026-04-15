@@ -1,17 +1,14 @@
 'use client'
 
+import WideMenuSheet from '@/components/WideMenuSheet'
 import { useEffect, useRef, useState } from 'react'
 import {
   Heart,
   MessageCircle,
   Mail,
-  Bookmark,
-  Send,
-  EyeOff,
-  OctagonAlert,
   MoreHorizontal,
 } from 'lucide-react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, } from 'framer-motion'
 
 export type FeedMode = '1x1' | '2x2' | '3x3'
 
@@ -39,7 +36,6 @@ export default function FeedGrid({
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
 
   const sliderRef = useRef<HTMLDivElement | null>(null)
-  const moreMenuRef = useRef<HTMLDivElement | null>(null)
   const sliderTouchStartXRef = useRef<number | null>(null)
   const sliderTouchStartYRef = useRef<number | null>(null)
 
@@ -82,23 +78,6 @@ export default function FeedGrid({
     sliderTouchStartYRef.current = null
   }
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      const target = e.target as Node
-
-      if (
-        isMoreMenuOpen &&
-        moreMenuRef.current &&
-        !moreMenuRef.current.contains(target)
-      ) {
-        setIsMoreMenuOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isMoreMenuOpen])
-
   if (feedMode === '1x1') {
     const firstPost = posts[0]
 
@@ -114,7 +93,7 @@ export default function FeedGrid({
             </div>
           </div>
 
-          <div className="relative" ref={moreMenuRef}>
+          <div className="relative">
             <button
               type="button"
               onClick={() => setIsMoreMenuOpen((prev) => !prev)}
@@ -127,55 +106,10 @@ export default function FeedGrid({
             </button>
 
             <AnimatePresence>
-              {isMoreMenuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.82, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 8 }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 360,
-                    damping: 28,
-                    mass: 0.9,
-                  }}
-                  className="absolute right-0 top-[48px] z-20 w-[174px] rounded-[20px] border-[3px] border-[#d79adf] bg-[#f8f8f8] px-5 py-5 shadow-[0_10px_24px_rgba(0,0,0,0.08)]"
-                >
-                  <div className="flex flex-col gap-6">
-                    <button
-                      type="button"
-                      className="flex items-center gap-3 text-[16px] text-[#222]"
-                    >
-                      <Bookmark size={19} strokeWidth={2} />
-                      <span>收藏</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="flex items-center gap-3 text-[16px] text-[#222]"
-                    >
-                      <Send size={19} strokeWidth={2} />
-                      <span>分享</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="flex items-center gap-3 text-[16px] text-[#222]"
-                    >
-                      <EyeOff size={19} strokeWidth={2} />
-                      <span>隱藏</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="flex items-center gap-3 text-[16px] text-[#222]"
-                    >
-                      <OctagonAlert size={19} strokeWidth={2} />
-                      <span>檢舉</span>
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+  {isMoreMenuOpen && (
+    <WideMenuSheet onClose={() => setIsMoreMenuOpen(false)} />
+  )}
+</AnimatePresence>
           </div>
         </div>
 
