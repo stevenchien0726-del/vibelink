@@ -346,26 +346,38 @@ export default function ProfilePage({
 
   {/* 第3頁（收藏） */}
   <div className="w-full shrink-0">
-    <div className="mb-3 rounded-[24px] bg-[#d9d9d9] px-5 py-4">
+    <div className="mb-3 rounded-[16px] bg-[#e3e3e3] px-4 py-[10px]">
   <div className="flex items-center justify-between">
-    <span className="text-[24px] text-[#111]">我的收藏</span>
+    <span className="text-[16px] font-medium text-[#111]">
+      我的收藏
+    </span>
 
     <div className="flex items-center gap-3">
-      <span className="text-[20px] text-[#111]">公開</span>
-
-      <button
-        type="button"
-        onClick={() => setIsFavoritesPublic((prev) => !prev)}
-        className={`relative h-[40px] w-[98px] rounded-full transition-all duration-250 active:scale-[0.98] ${
-          isFavoritesPublic ? 'bg-[#caa3d8]' : 'bg-[#e3e3e3]'
+      <span
+        className={`text-[14px] font-medium transition-colors ${
+          isFavoritesPublic ? 'text-[#8B5CF6]' : 'text-[#666]'
         }`}
       >
-        <span
-          className={`absolute top-1/2 h-[32px] w-[32px] -translate-y-1/2 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.10)] transition-all duration-250 ${
-            isFavoritesPublic ? 'right-[4px]' : 'left-[4px]'
-          }`}
-        />
-      </button>
+        {isFavoritesPublic ? '公開' : '不公開'}
+      </span>
+
+      <button
+  type="button"
+  onClick={() => setIsFavoritesPublic((prev) => !prev)}
+  className="relative flex h-[32px] w-[62px] items-center rounded-full border border-transparent transition-all duration-300 active:scale-[0.96]"
+  style={{
+    backgroundColor: isFavoritesPublic ? '#dc5cf6b1' : '#d0d0d0',
+    boxShadow: isFavoritesPublic
+      ? '0 4px 12px rgba(233, 92, 246, 0.35)'
+      : '0 2px 8px rgba(0,0,0,0.08)',
+  }}
+>
+  <span
+    className={`absolute top-1/2 h-[24px] w-[24px] -translate-y-1/2 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] transition-all duration-300 ${
+      isFavoritesPublic ? 'left-[34px]' : 'left-[4px]'
+    }`}
+  />
+</button>
     </div>
   </div>
 </div>
@@ -383,7 +395,10 @@ export default function ProfilePage({
   {/* 第4頁 */}
 <div className="w-full shrink-0">
   <div className="mb-3 flex items-center justify-between px-[2px]">
-    <span className="text-[22px] font-medium text-[#111]">配對牆相片集</span>
+    <span className="text-[22px] font-medium">
+  <span className="text-[#8B5CF6]">VIBE</span>
+  <span className="ml-[1px] text-[#111]">WALL</span>
+</span>
 
     <button
       type="button"

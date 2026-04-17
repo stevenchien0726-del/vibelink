@@ -544,9 +544,10 @@ export default function HomePage({
 
       <main className="min-h-screen box-border px-0 pb-[90px] pt-[60px]">
         <section className="px-[14px] pt-[6px]">
-          <h2 className="mb-3 mt-1 text-[20px] font-bold tracking-[0.2px] text-[#444444]">
-            配對牆
-          </h2>
+          <h2 className="mb-3 mt-1 text-[20px] font-bold tracking-[0.2px]">
+  <span className="text-[#8B5CF6]">VIBE</span>
+  <span className="ml-1 text-[#666] dark:text-white/80">WALL</span>
+</h2>
 
           <StoryRow
             stories={mockStories}

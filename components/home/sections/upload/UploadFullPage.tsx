@@ -215,7 +215,7 @@ export default function UploadFullPage({
                       border: 'none',
                     }}
                   >
-                    選擇配對牆相片
+                    選擇相片
                   </button>
 
                   <button
@@ -293,7 +293,7 @@ export default function UploadFullPage({
       color: activeTab === 'album' ? '#111111' : '#666666',
     }}
   >
-    配對牆相片
+    VIBEWALL
   </button>
 </div>
           </div>

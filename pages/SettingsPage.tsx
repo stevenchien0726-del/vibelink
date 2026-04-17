@@ -180,8 +180,6 @@ export default function SettingsPage({
               </span>
             </div>
 
-            <div className="mb-4 h-px bg-[#bcbcbc]" />
-
             <LayoutGroup id="capsule-position-segment">
               <div className="grid grid-cols-3 gap-3">
                 {(['左', '中', '右'] as CapsulePosition[]).map((item) => {
@@ -219,7 +217,7 @@ export default function SettingsPage({
               </div>
             </LayoutGroup>
 
-            <div className="my-5 h-px bg-[#bcbcbc]" />
+            <div className="my-5 h-px bg-[#8f8f8f]" />
 
             <div className="flex items-center justify-between py-1">
               <div className="flex items-center gap-3">
@@ -241,7 +239,7 @@ export default function SettingsPage({
               </div>
             </div>
 
-            <div className="my-5 h-px bg-[#bcbcbc]" />
+            <div className="my-5 h-px bg-[#8f8f8f]" />
 
             <div className="flex items-center justify-between py-1">
               <div className="flex items-center gap-3">
@@ -264,12 +262,14 @@ export default function SettingsPage({
             </div>
           </div>
 
-          <div className="mt-[26px] space-y-[18px]">
+          <div className="mt-[30px] rounded-[22px] bg-[#d9d9d9] py-[20px] overflow-hidden">
             <SettingsRow
               icon={<Heart size={21} strokeWidth={2.1} />}
               label="最愛和按讚"
               onClick={onFavoritesClick}
             />
+
+            <Divider />
 
             <SettingsRow
               icon={<Ban size={21} strokeWidth={2.1} />}
@@ -277,11 +277,15 @@ export default function SettingsPage({
               onClick={onBlockedClick}
             />
 
+            <Divider />
+
             <SettingsRow
               icon={<Globe size={21} strokeWidth={2.1} />}
               label="語言"
               onClick={onLanguageClick}
             />
+
+            <Divider />
 
             <SettingsRow
               icon={<MessageCircle size={21} strokeWidth={2.1} />}
@@ -308,16 +312,19 @@ function SettingsRow({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-between rounded-[20px] bg-white px-10 py-[px]"
+      className="grid w-full grid-cols-[36px_minmax(0,1fr)_60px] items-center gap-x-3 pl-[30px] pr-4 py-[36px] active:bg-[#cfcfcf]"
     >
-      <div className="flex items-center gap-3">
-        <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
-          {icon}
-        </span>
-        <span className="text-[16px] font-medium text-[#222]">{label}</span>
-      </div>
+      <span className="flex h-[22px] w-[52px] items-center justify-center text-[#111]">
+        {icon}
+      </span>
 
-      <ChevronRight size={20} className="text-[#444]" />
+      <span className="text-left text-[16px] font-medium leading-none text-[#222]">
+        {label}
+      </span>
+
+      <span className="flex items-center justify-center">
+        <ChevronRight size={18} strokeWidth={2.4} className="text-[#444]" />
+      </span>
     </button>
   )
 }
@@ -344,4 +351,8 @@ function Switch({
       />
     </button>
   )
+}
+
+function Divider() {
+  return <div className="mx-4 my-[25px] h-px bg-[#2b2b2b]" />
 }
