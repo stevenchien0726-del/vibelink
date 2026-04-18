@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import {
   Check,
   ChevronDown,
@@ -57,6 +58,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
     'g3',
   ])
 
+  const [isTabBarPressed, setIsTabBarPressed] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
 
   const accountSwitcherRef = useRef<HTMLDivElement | null>(null)
@@ -142,9 +144,9 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   }
 
   function goToTab(index: number) {
-    if (index < 0 || index > 2) return
-    setActiveTab(index)
-  }
+  if (index < 0 || index >= tabs.length) return
+  setActiveTab(index)
+}
 
   function canAllowOuterPageSwipe(deltaX: number) {
     const atFirstTab = activeTab === 0
@@ -621,28 +623,48 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
           </button>
         </div>
 
-        <div className="relative mb-4 h-[54px] rounded-full bg-[#CACACA] p-[4px]">
-          <div className="relative grid h-full grid-cols-3">
-            <div
-              className="pointer-events-none absolute top-0 bottom-0 rounded-full bg-[#d9d9d9] transition-all duration-300 ease-out"
-              style={{
-                left: `${activeTab * 33.3333}%`,
-                width: '33.3333%',
-              }}
-            />
+        <motion.div
+  className="relative mb-4 h-[54px] rounded-full bg-[#CACACA] p-[4px]"
+  animate={{
+    scale: isTabBarPressed ? 0.985 : 1,
+  }}
+  transition={{
+    duration: 0.16,
+    ease: [0.22, 1, 0.36, 1],
+  }}
+  onTouchStart={() => setIsTabBarPressed(true)}
+  onTouchEnd={() => setIsTabBarPressed(false)}
+  onTouchCancel={() => setIsTabBarPressed(false)}
+  onMouseDown={() => setIsTabBarPressed(true)}
+  onMouseUp={() => setIsTabBarPressed(false)}
+  onMouseLeave={() => setIsTabBarPressed(false)}
+>
+  <div className="relative grid h-full grid-cols-3">
+    <div
+      className="pointer-events-none absolute top-0 bottom-0 rounded-full bg-[#d9d9d9] transition-all duration-300 ease-out"
+      style={{
+        left: `${activeTab * 33.3333}%`,
+        width: '33.3333%',
+      }}
+    />
 
-            {tabs.map((tab, index) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => goToTab(index)}
-                className="relative z-[2] flex h-full items-center justify-center rounded-full text-[18px] text-[#111]"
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
+    {tabs.map((tab, index) => (
+      <motion.button
+        key={tab}
+        type="button"
+        onClick={() => goToTab(index)}
+        whileTap={{ scale: 0.97 }}
+        transition={{
+          duration: 0.12,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+        className="relative z-[2] flex h-full items-center justify-center rounded-full text-[18px] text-[#111]"
+      >
+        {tab}
+      </motion.button>
+    ))}
+  </div>
+</motion.div>
 
         <div
   data-no-page-swipe="true"

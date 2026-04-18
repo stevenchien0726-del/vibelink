@@ -122,6 +122,39 @@ export default function VibeTvPage() {
               ))}
             </div>
           </section>
+
+          {/* Section 3 */}
+<section className="mt-6">
+  <div className="mb-3 flex items-center justify-between">
+    <h2 className="text-[20px] font-semibold text-[#222]">
+      <span className="bg-gradient-to-r from-[#c86ad9] to-[#7a4fd1] bg-clip-text text-transparent">
+        VIBE
+      </span>
+      <span className="ml-[1px] text-[#222]">BOOK</span>
+    </h2>
+
+    <button
+      type="button"
+      className="flex items-center text-[16px] font-medium text-[#222]"
+    >
+      <span>OPEN APP</span>
+      <ChevronRight className="ml-1 h-[16px] w-[16px]" strokeWidth={2.4} />
+    </button>
+  </div>
+
+  <div
+    data-horizontal-scroll="true"
+    className="scrollbar-hide flex gap-2 overflow-x-auto pb-1"
+  >
+    {Array.from({ length: 25 }).map((_, index) => (
+      <div
+        key={`vibebook-${index}`}
+        className="h-[150px] min-w-[110px] shrink-0 rounded-[10px] bg-[#d9d9d9]"
+      />
+    ))}
+  </div>
+</section>
+
         </div>
       </div>
     </div>

@@ -148,33 +148,33 @@ export default function ProfilePage({
     <div className="relative min-h-screen bg-[#f3f3f3] pb-[110px]">
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[90px]">
         <div className="fixed top-0 left-1/2 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => {
-                setIsMenuOpen(false)
-                setIsUploadOpen((prev) => !prev)
-              }}
-              className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
-            >
-              <PlusSquare size={15} />
-              <span>上傳內容</span>
-            </button>
+  <div className="flex items-center justify-between">
+    <button
+      type="button"
+      onClick={() => {
+        setIsUploadOpen(false)
+        setIsMenuOpen((prev) => !prev)
+      }}
+      className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
+    >
+      <Menu size={18} />
+      <span>{isMenuOpen ? 'CLOSE' : 'MENU'}</span>
+    </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setIsUploadOpen(false)
-                setIsMenuOpen((prev) => !prev)
-              }}
-              className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
-            >
-              <Menu size={18} />
-              <span>{isMenuOpen ? 'CLOSE' : 'MENU'}</span>
-            </button>
-          </div>
-        </div>
-
+    <button
+      type="button"
+      onClick={() => {
+        setIsMenuOpen(false)
+        setIsUploadOpen((prev) => !prev)
+      }}
+      className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
+    >
+      <PlusSquare size={15} />
+      <span>上傳內容</span>
+    </button>
+  </div>
+</div>
+          
         <div className="mb-3 flex items-start justify-between">
           <div className="flex gap-3">
             <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
@@ -364,7 +364,7 @@ export default function ProfilePage({
       <button
   type="button"
   onClick={() => setIsFavoritesPublic((prev) => !prev)}
-  className="relative flex h-[32px] w-[62px] items-center rounded-full border border-transparent transition-all duration-300 active:scale-[0.96]"
+  className="relative flex h-[28px] w-[54px] items-center rounded-full border border-transparent transition-all duration-300 active:scale-[0.96]"
   style={{
     backgroundColor: isFavoritesPublic ? '#dc5cf6b1' : '#d0d0d0',
     boxShadow: isFavoritesPublic
@@ -373,8 +373,8 @@ export default function ProfilePage({
   }}
 >
   <span
-    className={`absolute top-1/2 h-[24px] w-[24px] -translate-y-1/2 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] transition-all duration-300 ${
-      isFavoritesPublic ? 'left-[34px]' : 'left-[4px]'
+    className={`absolute top-1/2 h-[20px] w-[20px] -translate-y-1/2 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] transition-all duration-300 ${
+      isFavoritesPublic ? 'left-[30px]' : 'left-[4px]'
     }`}
   />
 </button>
