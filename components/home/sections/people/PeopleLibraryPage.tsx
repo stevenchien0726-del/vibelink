@@ -62,18 +62,20 @@ export default function PeopleLibraryPage({
             duration: 0.24,
             ease: [0.22, 1, 0.36, 1],
           }}
-          drag="y"
-          dragDirectionLock
-          dragElastic={{ top: 0, bottom: 0.18 }}
-          dragConstraints={{ top: 0, bottom: 0 }}
-          onDragEnd={(_, info) => {
-            const draggedDownEnough = info.offset.y > 140
-            const fastEnough = info.velocity.y > 700
+          drag={selectedFolder ? false : 'y'}
+dragDirectionLock
+dragElastic={{ top: 0, bottom: 0.18 }}
+dragConstraints={{ top: 0, bottom: 0 }}
+onDragEnd={(_, info) => {
+  if (selectedFolder) return
 
-            if (draggedDownEnough || fastEnough) {
-              onClose()
-            }
-          }}
+  const draggedDownEnough = info.offset.y > 140
+  const fastEnough = info.velocity.y > 700
+
+  if (draggedDownEnough || fastEnough) {
+    onClose()
+  }
+}}
         >
           <div className="px-4 pt-3 pb-[100px]">
             <div className="mb-4 flex items-center gap-3 pt-2">
@@ -117,9 +119,9 @@ export default function PeopleLibraryPage({
           <AnimatePresence>
             {selectedFolder && (
               <PeopleFolderPage
-                title={getFolderName(selectedFolder)}
-                onClose={() => setSelectedFolder(null)}
-              />
+  title={getFolderName(selectedFolder)}
+  onClose={() => setSelectedFolder(null)}
+/>
             )}
           </AnimatePresence>
         </motion.div>

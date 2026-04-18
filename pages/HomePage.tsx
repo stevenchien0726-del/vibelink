@@ -542,22 +542,22 @@ export default function HomePage({
       )}
     </AnimatePresence>
 
-      <main className="min-h-screen box-border px-0 pb-[90px] pt-[60px]">
-        <section className="px-[14px] pt-[6px]">
-          <h1 className="text-[18px] font-semibold">
-  <span className="text-[#8B5CF6]">VIBE</span>
-  <span className="text-black"> WALL</span>
-</h1>
+      <main className="min-h-screen box-border px- pb-[90px] pt-[60px]">
+        <section className="px-[14px] pt-[10px]">
+  <h1 className="mb-[13px] text-[18px] font-semibold">
+    <span className="text-[#8B5CF6]">VIBE</span>
+    <span className="text-black"> WALL</span>
+  </h1>
 
-          <StoryRow
-            stories={mockStories}
-            onOpenStory={(story) => {
-              setSelectedStory(story)
-              setStoryPage(0)
-              setStoryProgress(0)
-            }}
-          />
-        </section>
+  <StoryRow
+    stories={mockStories}
+    onOpenStory={(story) => {
+      setSelectedStory(story)
+      setStoryPage(0)
+      setStoryProgress(0)
+    }}
+  />
+</section>
 
         <section className="px-3 pt-3">
           <FeedGrid
