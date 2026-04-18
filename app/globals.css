@@ -45,3 +45,13 @@ body {
     transform: scale(1) translateY(0);
   }
 }
+
+/* 隱藏 scrollbar（所有瀏覽器） */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE, Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
