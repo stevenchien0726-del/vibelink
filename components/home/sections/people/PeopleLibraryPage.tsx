@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, animate, useMotionValue, useTransform } from 'framer-motion'
 import { Search } from 'lucide-react'
 import PeopleFolderPage from './PeopleFolderPage'
 
@@ -43,40 +43,64 @@ export default function PeopleLibraryPage({
   onClose,
 }: PeopleLibraryPageProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
+const sheetY = useMotionValue(0)
+const overlayOpacity = useTransform(sheetY, [0, 320], [1, 0.78])
+const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[220] flex justify-center bg-[rgba(243,243,243,0.96)]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.18 }}
-      >
-        <motion.div
-          className="relative min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f3f3f3] touch-pan-y"
-          initial={{ scale: 0.94, opacity: 0, y: 18 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.98, opacity: 0, y: 10 }}
-          transition={{
-            duration: 0.24,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          drag={selectedFolder ? false : 'y'}
-dragDirectionLock
-dragElastic={{ top: 0, bottom: 0.18 }}
-dragConstraints={{ top: 0, bottom: 0 }}
-onDragEnd={(_, info) => {
-  if (selectedFolder) return
+  className="fixed inset-0 z-[220] flex justify-center bg-[rgba(243,243,243,0.96)]"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  style={{ opacity: overlayOpacity }}
+  transition={{ duration: 0.18 }}
+>
 
-  const draggedDownEnough = info.offset.y > 140
-  const fastEnough = info.velocity.y > 700
+      <motion.div
+  className="relative min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f3f3f3] touch-pan-y"
+  initial={{ scale: 0.94, opacity: 0, y: 18 }}
+  animate={{ scale: 1, opacity: 1, y: 0 }}
+  exit={{ scale: 0.98, opacity: 0, y: 10 }}
+  transition={{
+    duration: 0.24,
+    ease: [0.22, 1, 0.36, 1],
+  }}
+  style={{
+    y: sheetY,
+    scale: sheetScale,
+  }}
+  drag={selectedFolder ? false : 'y'}
+  dragListener={!selectedFolder}
+  dragDirectionLock
+  dragMomentum={false}
+  dragElastic={{ top: 0, bottom: 0.14 }}
+  dragConstraints={{ top: 0, bottom: 0 }}
+  onDragEnd={(_, info) => {
+    if (selectedFolder) return
 
-  if (draggedDownEnough || fastEnough) {
-    onClose()
-  }
-}}
-        >
+    const draggedDownEnough = info.offset.y > 130
+    const fastEnough = info.velocity.y > 650
+
+    if (draggedDownEnough || fastEnough) {
+      animate(sheetY, 540, {
+        duration: 0.22,
+        ease: [0.22, 1, 0.36, 1],
+        onComplete: onClose,
+      })
+      return
+    }
+
+    animate(sheetY, 0, {
+      type: 'spring',
+      stiffness: 420,
+      damping: 34,
+      mass: 0.9,
+    })
+  }}
+>
+  
           <div className="px-4 pt-3 pb-[100px]">
             <div className="mb-4 flex items-center gap-3 pt-2">
               <div className="flex h-[36px] flex-1 items-center rounded-full bg-[#d9d9d9] px-4 text-[#222]">
