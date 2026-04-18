@@ -1,7 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { AnimatePresence, motion, animate, useMotionValue, useTransform } from 'framer-motion'
+import { useRef, useState } from 'react'
+import {
+  AnimatePresence,
+  motion,
+  animate,
+  useMotionValue,
+  useTransform,
+} from 'framer-motion'
 import { Search } from 'lucide-react'
 import PeopleFolderPage from './PeopleFolderPage'
 
@@ -19,20 +25,28 @@ type PeopleLibraryPageProps = {
 const folders: FolderItem[] = [
   { id: 'recent', label: '最近追蹤', emoji: '🆕' },
   { id: 'favorite', label: '我的最愛', emoji: '✨' },
-  { id: 'mutual-follow', label: '互相關注中', emoji: '🔁' },
   { id: 'more-interaction', label: '較常互動', emoji: '💬' },
+  { id: 'mutual-follow', label: '互相關注中', emoji: '🔁' },
+  { id: 'social-lover', label: '熱愛社交的人', emoji: '🥳' },
+  { id: 'might-care', label: '你可能在意的人', emoji: '👀' },
   { id: 'less-interaction', label: '較少互動', emoji: '💤' },
-  { id: 'might-care', label: '你可能在意', emoji: '👀' },
+  { id: 'creator', label: 'Vibelink創作者', emoji: '🎨' },
+  { id: 'official-business', label: '官方和商業帳戶', emoji: '🏢' },
+  { id: 'high-reply', label: '高頻互動與回覆', emoji: '⚡' },
 ]
 
 function getFolderName(id: string) {
   const map: Record<string, string> = {
     recent: '🆕 最近追蹤',
     favorite: '✨ 我的最愛',
-    'mutual-follow': '🔁 互相關注中',
     'more-interaction': '💬 較常互動',
+    'mutual-follow': '🔁 互相關注中',
+    'social-lover': '🥳 熱愛社交的人',
+    'might-care': '👀 你可能在意的人',
     'less-interaction': '💤 較少互動',
-    'might-care': '👀 你可能在意',
+    creator: '🎨 Vibelink創作者',
+    'official-business': '🏢 官方和商業帳戶',
+    'high-reply': '⚡ 高頻互動與回覆',
   }
 
   return map[id] || 'People Library'
@@ -43,65 +57,113 @@ export default function PeopleLibraryPage({
   onClose,
 }: PeopleLibraryPageProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
-const sheetY = useMotionValue(0)
-const overlayOpacity = useTransform(sheetY, [0, 320], [1, 0.78])
-const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
+
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const canDragCloseRef = useRef(true)
+
+  const sheetY = useMotionValue(0)
+  const overlayOpacity = useTransform(sheetY, [0, 320], [1, 0.78])
+  const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
+
+  function closeSheet() {
+    animate(sheetY, 540, {
+      duration: 0.22,
+      ease: [0.22, 1, 0.36, 1],
+      onComplete: onClose,
+    })
+  }
+
+  function handleScroll() {
+    const el = scrollRef.current
+    if (!el) return
+    canDragCloseRef.current = el.scrollTop <= 0
+  }
 
   return (
     <AnimatePresence>
       <motion.div
-  className="fixed inset-0 z-[220] flex justify-center bg-[rgba(243,243,243,0.96)]"
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  exit={{ opacity: 0 }}
-  style={{ opacity: overlayOpacity }}
-  transition={{ duration: 0.18 }}
->
+        className="fixed inset-0 z-[220] flex justify-center bg-[rgba(243,243,243,0.96)]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        style={{ opacity: overlayOpacity }}
+        transition={{ duration: 0.18 }}
+      >
+        <motion.div
+          className="relative min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f3f3f3]"
+          initial={{ scale: 0.94, opacity: 0, y: 18 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.98, opacity: 0, y: 10 }}
+          transition={{
+            duration: 0.24,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+          style={{
+            y: sheetY,
+            scale: sheetScale,
+          }}
+          drag={selectedFolder ? false : 'y'}
+          dragListener={!selectedFolder}
+          dragDirectionLock
+          dragMomentum={false}
+          dragElastic={{ top: 0, bottom: 0.14 }}
+          dragConstraints={{ top: 0, bottom: 0 }}
+          onDragStart={() => {
+            const el = scrollRef.current
+            if (!el) {
+              canDragCloseRef.current = true
+              return
+            }
+            canDragCloseRef.current = el.scrollTop <= 0
+          }}
+          onDrag={(_, info) => {
+            if (selectedFolder) return
 
-      <motion.div
-  className="relative min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f3f3f3] touch-pan-y"
-  initial={{ scale: 0.94, opacity: 0, y: 18 }}
-  animate={{ scale: 1, opacity: 1, y: 0 }}
-  exit={{ scale: 0.98, opacity: 0, y: 10 }}
-  transition={{
-    duration: 0.24,
-    ease: [0.22, 1, 0.36, 1],
-  }}
-  style={{
-    y: sheetY,
-    scale: sheetScale,
-  }}
-  drag={selectedFolder ? false : 'y'}
-  dragListener={!selectedFolder}
-  dragDirectionLock
-  dragMomentum={false}
-  dragElastic={{ top: 0, bottom: 0.14 }}
-  dragConstraints={{ top: 0, bottom: 0 }}
-  onDragEnd={(_, info) => {
-    if (selectedFolder) return
+            if (!canDragCloseRef.current) {
+              sheetY.set(0)
+              return
+            }
 
-    const draggedDownEnough = info.offset.y > 130
-    const fastEnough = info.velocity.y > 650
+            if (info.offset.y < 0) {
+              sheetY.set(0)
+            }
+          }}
+          onDragEnd={(_, info) => {
+            if (selectedFolder) return
 
-    if (draggedDownEnough || fastEnough) {
-      animate(sheetY, 540, {
-        duration: 0.22,
-        ease: [0.22, 1, 0.36, 1],
-        onComplete: onClose,
-      })
-      return
-    }
+            if (!canDragCloseRef.current) {
+              animate(sheetY, 0, {
+                type: 'spring',
+                stiffness: 420,
+                damping: 34,
+                mass: 0.9,
+              })
+              return
+            }
 
-    animate(sheetY, 0, {
-      type: 'spring',
-      stiffness: 420,
-      damping: 34,
-      mass: 0.9,
-    })
-  }}
+            const draggedDownEnough = info.offset.y > 130
+            const fastEnough = info.velocity.y > 650
+
+            if (draggedDownEnough || fastEnough) {
+              closeSheet()
+              return
+            }
+
+            animate(sheetY, 0, {
+              type: 'spring',
+              stiffness: 420,
+              damping: 34,
+              mass: 0.9,
+            })
+          }}
+        >
+          <div
+  ref={scrollRef}
+  onScroll={handleScroll}
+  className="h-screen overflow-y-auto px-4 pb-[120px] pt-3 
+  [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 >
   
-          <div className="px-4 pt-3 pb-[100px]">
             <div className="mb-4 flex items-center gap-3 pt-2">
               <div className="flex h-[36px] flex-1 items-center rounded-full bg-[#d9d9d9] px-4 text-[#222]">
                 <Search size={18} strokeWidth={2.2} />
@@ -112,7 +174,7 @@ const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
 
               <button
                 type="button"
-                onClick={onClose}
+                onClick={closeSheet}
                 className="flex h-[36px] min-w-[82px] items-center justify-center rounded-full bg-[#d9d9d9] px-4 text-[14px] font-medium text-[#222]"
               >
                 CLOSE
@@ -131,7 +193,7 @@ const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
                     />
                   </div>
 
-                  <div className="mt-3 text-center text-[14px] leading-none text-[#444]">
+                  <div className="mt-3 text-center text-[14px] leading-[1.2] text-[#444]">
                     <span className="mr-[2px]">{folder.emoji}</span>
                     <span>{folder.label}</span>
                   </div>
@@ -143,9 +205,9 @@ const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
           <AnimatePresence>
             {selectedFolder && (
               <PeopleFolderPage
-  title={getFolderName(selectedFolder)}
-  onClose={() => setSelectedFolder(null)}
-/>
+                title={getFolderName(selectedFolder)}
+                onClose={() => setSelectedFolder(null)}
+              />
             )}
           </AnimatePresence>
         </motion.div>
