@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, animate, useMotionValue, useTransform } from 'framer-motion'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
+import { fakeAiSearch } from '../lib/fakeAiSearch'
+import { FakeUser } from '../data/fakeUsers'
 
 type HistoryItem = {
   id: string
@@ -32,6 +34,16 @@ function openMembershipSite() {
 export default function AIHelperPage() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
+
+  const [loading, setLoading] = useState(false)
+const [results, setResults] = useState<FakeUser[]>([])
+const [aiText, setAiText] = useState('')
+
+const [displayedAiText, setDisplayedAiText] = useState('')
+const [showCandidates, setShowCandidates] = useState(false)
+const [showWalls, setShowWalls] = useState(false)
+const [showMorePrompts, setShowMorePrompts] = useState(false)
+
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
 
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -79,11 +91,70 @@ export default function AIHelperPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isHistoryOpen])
 
-  const handleSubmit = () => {
-    if (!hasInput) return
-    console.log('AI helper submit:', inputValue)
-  }
+  function typeText(text: string, onDone?: () => void) {
+  setDisplayedAiText('')
+  let index = 0
 
+  const timer = setInterval(() => {
+    index += 1
+    setDisplayedAiText(text.slice(0, index))
+
+    if (index >= text.length) {
+      clearInterval(timer)
+      onDone?.()
+    }
+  }, 22)
+}
+
+  const handleSubmit = () => {
+  if (!hasInput) return
+
+  setLoading(true)
+  setResults([])
+  setAiText('')
+  setDisplayedAiText('')
+  setShowCandidates(false)
+  setShowWalls(false)
+  setShowMorePrompts(false)
+
+  const currentInput = inputValue
+
+  setTimeout(() => {
+    const matchedUsers = fakeAiSearch(currentInput)
+
+    let nextAiText = ''
+    if (matchedUsers.length > 0) {
+      nextAiText = `我幫你篩選出幾位符合「${currentInput}」的用戶，整體更偏向情緒回饋感高、互動自然、照片氛圍容易產生好感的人選。`
+    } else {
+      nextAiText = `目前沒有找到完全符合「${currentInput}」的用戶，你可以換更簡短的描述再試一次。`
+    }
+
+    setAiText(nextAiText)
+    setLoading(false)
+
+    typeText(nextAiText, () => {
+      if (matchedUsers.length > 0) {
+        setResults(matchedUsers)
+
+        setTimeout(() => {
+          setShowCandidates(true)
+        }, 120)
+
+        setTimeout(() => {
+          setShowWalls(true)
+        }, 260)
+
+        setTimeout(() => {
+          setShowMorePrompts(true)
+        }, 420)
+      } else {
+        setShowMorePrompts(true)
+      }
+    })
+  }, 900)
+}
+
+  
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#f5f5f5]">
       {/* Top bar */}
@@ -112,63 +183,260 @@ export default function AIHelperPage() {
       </div>
 
       {/* Main content */}
-      <main className="min-h-screen px-4 pb-[96px] pt-[76px]">
-        <div className="flex min-h-[calc(100vh-172px)] flex-col justify-end">
+      <main className="min-h-screen px-4 pt-[76px] pb-[170px]">
+        <div className="flex min-h-[calc(100vh-76px)] flex-col">
+         
           {/* suggestions */}
-          <div className="mb-5 grid grid-cols-3 gap-3">
-            {suggestionItems.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setInputValue(item)}
-                className="min-h-[74px] rounded-[18px] bg-[rgba(255,255,255,0.34)] px-3 py-3 text-left shadow-[0_4px_14px_rgba(0,0,0,0.05)] backdrop-blur-[6px] transition active:scale-[0.98]"
-              >
-                <span className="block text-[14px] leading-[1.3] text-[#111]">
-                  {item}
-                </span>
-              </button>
-            ))}
-          </div>
 
-          {/* Input row */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Open People Library"
-              onClick={() => setIsPeopleLibraryOpen(true)}
-              className="flex h-[50px] w-[110px] shrink-0 items-center justify-center gap-[8px] rounded-full bg-[#D9D9D9] px-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition active:scale-95"
-            >
-              <UserCircleIcon />
-              <span className="text-[22px] font-semibold leading-none text-[#111]">
-                +
-              </span>
-            </button>
+          {!loading && !aiText && results.length === 0 && (
+  <div className="fixed bottom-[154px] left-1/2 z-[55] grid w-full max-w-[430px] -translate-x-1/2 grid-cols-3 gap-3 px-4">
+    {suggestionItems.map((item) => (
+      <button
+        key={item}
+        type="button"
+        onClick={() => setInputValue(item)}
+        className="min-h-[74px] rounded-[18px] bg-[rgba(255,255,255,0.72)] px-3 py-3 text-left shadow-[0_4px_14px_rgba(0,0,0,0.05)] backdrop-blur-[6px] transition active:scale-[0.98]"
+      >
+        <span className="block text-[14px] leading-[1.3] text-[#111]">
+          {item}
+        </span>
+      </button>
+    ))}
+  </div>
+)}
 
-            <div className="flex h-[50px] flex-1 items-center rounded-full bg-[#d0d0d0] pl-4 pr-[6px]">
-              <input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSubmit()
-                  }
-                }}
-                placeholder="AI找人幫手"
-                className="w-full bg-transparent text-[15px] text-[#222] placeholder:text-[#8a8a8a] outline-none"
-              />
+{/* AI Result 區 */}
+<div className="mb-4 space-y-3">
+  {loading && (
+    <div className="rounded-[18px] bg-white px-4 py-3 text-[14px] text-gray-500 shadow-[0_4px_12px_rgba(0,0,0,0.06)]">
+      Analyzing your request...
+    </div>
+  )}
 
-              <button
-                type="button"
-                aria-label="Send"
-                onClick={handleSubmit}
-                className="ml-2 grid h-[36px] w-[36px] shrink-0 place-items-center rounded-full bg-transparent transition active:scale-95"
-              >
-                <EnterArrowIcon active={hasInput} />
-              </button>
+  {(loading || displayedAiText) && (
+  <div className="rounded-[18px] bg-[#ead8f5] px-4 py-3 text-[14px] leading-[1.45] text-[#3f2c4f] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+    {loading && !displayedAiText ? 'Analyzing your request...' : displayedAiText}
+  </div>
+)}
+   
+
+  {showCandidates && results.length > 0 && (
+  <div className="space-y-4">
+
+      {results.slice(0, 2).map((user, index) => (
+        <div key={user.id} className="space-y-3">
+          {/* 候選人標題 + 分析 */}
+          <div className="px-1">
+            <div className="mb-1 text-[15px] font-semibold text-[#1f1f1f]">
+              候選人 {String(index + 1).padStart(2, '0')} ｜ {user.name} ｜ {user.age}歲
+            </div>
+
+            <div className="text-[14px] leading-[1.45] text-[#2d2d2d]">
+              奶狗感、{user.tags.slice(0, 2).join('、')}、互動感偏高，
+              整體氛圍偏可愛又帶一點主動感。
+            </div>
+
+            <div className="mt-2 text-[13px] leading-[1.45] text-[#3a3a3a]">
+              社群照片感：{user.tags.join('、')}
             </div>
           </div>
+
+          {/* 候選人相片牆 */}
+<div className="space-y-2">
+  <div className="text-[16px] font-medium text-[#6b4f7f]">
+    {user.name} 的相片牆
+  </div>
+
+
+ 
+
+  <div className="-mx-1 overflow-x-auto pb-1 no-scrollbar">
+    <div className="flex gap-3 px-1">
+      {Array.from({ length: 5 }).map((_, photoIndex) => {
+        const imgSrc = user.images[photoIndex % user.images.length]
+
+        return (
+          <button
+            key={`${user.id}-photo-${photoIndex}`}
+            type="button"
+            className="shrink-0 text-left transition active:scale-[0.98]"
+          >
+            <div className="h-[160px] w-[110px] overflow-hidden rounded-[16px] bg-[#ead8f5] shadow-[0_3px_10px_rgba(0,0,0,0.05)]">
+              <img
+                src={imgSrc}
+                alt={`${user.name} photo ${photoIndex + 1}`}
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="mt-2 text-[12px] leading-[1.3] text-[#2d2340]">
+              {user.name}_{String(photoIndex + 1).padStart(2, '0')}
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  </div>
+
+
+
+</div>
         </div>
-      </main>
+      ))}
+
+{showWalls && (
+  <div className="space-y-4 pt-4">
+    {/* 第一行：更多人選照片牆 */}
+    <div className="space-y-2">
+      <div className="flex items-center gap-1 text-[14px] text-[#3d3d3d]">
+        <span>🖼️</span>
+        <span>更多人選照片牆</span>
+      </div>
+
+      <div className="-mx-1 overflow-x-auto pb-1 no-scrollbar">
+        <div className="flex gap-3 px-1">
+          {Array.from({ length: 10 }).map((_, photoIndex) => {
+            const poolUser = results[photoIndex % results.length]
+            const imgSrc = poolUser.images[photoIndex % poolUser.images.length]
+
+            return (
+              <button
+                key={`more-wall-${photoIndex}`}
+                type="button"
+                className="shrink-0"
+              >
+                <div className="h-[138px] w-[96px] overflow-hidden rounded-[16px] bg-[#ead8f5]">
+                  <img
+                    src={imgSrc}
+                    alt={`${poolUser.name} wall photo ${photoIndex + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+
+                <div className="mt-2 text-[12px] leading-[1.3] text-[#2d2340]">
+                  {poolUser.name}_{String(photoIndex + 1).padStart(2, '0')}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+
+    {/* 第二行：相似的人 */}
+    <div className="space-y-2">
+      <div className="flex items-center gap-1 text-[14px] text-[#3d3d3d]">
+        <span>🖼️</span>
+        <span>相似的人</span>
+      </div>
+
+      <div className="-mx-1 overflow-x-auto pb-1 no-scrollbar">
+        <div className="flex gap-3 px-1">
+          {Array.from({ length: 10 }).map((_, photoIndex) => {
+            const poolUser = results[(photoIndex + 1) % results.length]
+            const imgSrc = poolUser.images[photoIndex % poolUser.images.length]
+
+            return (
+              <button
+                key={`similar-wall-${photoIndex}`}
+                type="button"
+                className="shrink-0"
+              >
+                <div className="h-[138px] w-[96px] overflow-hidden rounded-[16px] bg-[#ead8f5]">
+                  <img
+                    src={imgSrc}
+                    alt={`${poolUser.name} similar photo ${photoIndex + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+
+                <div className="mt-2 text-[12px] leading-[1.3] text-[#2d2340]">
+                  {poolUser.name}_{String(photoIndex + 1).padStart(2, '0')}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* 更多提示詞 */}
+{showMorePrompts && (
+  <div className="mt-6 px-1">
+    <div className="flex items-center gap-1 text-[16px] font-medium text-[#6b4f7f]">
+      <span>✨</span>
+      <span>更多提示詞</span>
+    </div>
+
+    <div className="mt-3 flex flex-col gap-5">
+      {[
+        '幫我找更成熟一點的奶狗男生',
+        '找夜生活但個性溫柔的人',
+        '想找高互動感、會主動聊天的人',
+      ].map((prompt) => (
+        <button
+          key={prompt}
+          type="button"
+          onClick={() => {
+            setInputValue(prompt)
+            setTimeout(() => {
+              handleSubmit()
+            }, 100)
+          }}
+          className="w-full rounded-[14px] bg-white px-3 py-4 text-left text-[14px] text-[#222] shadow-[0_3px_10px_rgba(0,0,0,0.04)] transition active:scale-[0.98]"
+        >
+          {prompt}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
+
+    </div>
+  )}
+</div>
+</div>
+</main>
+
+          {/* Fixed Input row */}
+<div className="fixed bottom-[92px] left-1/2 z-[60] flex w-full max-w-[430px] -translate-x-1/2 items-center gap-2 px-4">
+  <button
+    type="button"
+    aria-label="Open People Library"
+    onClick={() => setIsPeopleLibraryOpen(true)}
+    className="flex h-[50px] w-[110px] shrink-0 items-center justify-center gap-[8px] rounded-full bg-[#D9D9D9] px-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition active:scale-95"
+  >
+    <UserCircleIcon />
+    <span className="text-[22px] font-semibold leading-none text-[#111]">
+      +
+    </span>
+  </button>
+
+  <div className="flex h-[50px] flex-1 items-center rounded-full bg-[#d0d0d0] pl-4 pr-[6px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+    <input
+      value={inputValue}
+      onChange={(e) => setInputValue(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          handleSubmit()
+        }
+      }}
+      placeholder="AI找人幫手"
+      className="w-full bg-transparent text-[15px] text-[#222] placeholder:text-[#8a8a8a] outline-none"
+    />
+
+    <button
+      type="button"
+      aria-label="Send"
+      onClick={handleSubmit}
+      className="ml-2 grid h-[36px] w-[36px] shrink-0 place-items-center rounded-full bg-transparent transition active:scale-95"
+    >
+      <EnterArrowIcon active={hasInput} />
+    </button>
+  </div>
+</div>
 
       {/* History drawer */}
       <AnimatePresence>
