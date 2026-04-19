@@ -263,6 +263,7 @@ const stopWheelPropagation = (e: React.WheelEvent<HTMLDivElement>) => {
  
 
   <div
+  data-horizontal-scroll="true"
   className="-mx-1 overflow-x-auto pb-1 no-scrollbar touch-pan-x"
   onTouchStart={stopSwipePropagation}
   onTouchMove={stopSwipePropagation}
@@ -270,6 +271,7 @@ const stopWheelPropagation = (e: React.WheelEvent<HTMLDivElement>) => {
   onPointerMove={stopPointerPropagation}
   onWheel={stopWheelPropagation}
 >
+
     <div className="flex gap-3 px-1 select-none">
       {Array.from({ length: 5 }).map((_, photoIndex) => {
         const imgSrc = user.images[photoIndex % user.images.length]
@@ -313,6 +315,7 @@ const stopWheelPropagation = (e: React.WheelEvent<HTMLDivElement>) => {
       </div>
 
       <div
+  data-horizontal-scroll="true"
   className="-mx-1 overflow-x-auto pb-1 no-scrollbar touch-pan-x"
   onTouchStart={stopSwipePropagation}
   onTouchMove={stopSwipePropagation}
@@ -357,6 +360,7 @@ const stopWheelPropagation = (e: React.WheelEvent<HTMLDivElement>) => {
       </div>
 
       <div
+  data-horizontal-scroll="true"
   className="-mx-1 overflow-x-auto pb-1 no-scrollbar touch-pan-x"
   onTouchStart={stopSwipePropagation}
   onTouchMove={stopSwipePropagation}
