@@ -25,6 +25,7 @@ export default function () {
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const touchStartTarget = useRef<EventTarget | null>(null)
+  const isSwipeBlockedRef = useRef(false)
 
   function getCurrentPageIndex(currentPage: AppPage) {
     return pageOrder.indexOf(currentPage)
@@ -64,15 +65,22 @@ export default function () {
   }
 
   function handleTouchStart(e: React.TouchEvent<HTMLElement>) {
-    const touch = e.touches[0]
-    touchStartX.current = touch.clientX
-    touchStartY.current = touch.clientY
-    touchStartTarget.current = e.target
-    setIsSnapAnimating(false)
-  }
+  const touch = e.touches[0]
+  touchStartX.current = touch.clientX
+  touchStartY.current = touch.clientY
+  touchStartTarget.current = e.target
+  isSwipeBlockedRef.current = isBlockedSwipeTarget(e.target)
+  setIsSnapAnimating(false)
+}
 
   function handleTouchMove(e: React.TouchEvent<HTMLElement>) {
-    if (isBlockedSwipeTarget(touchStartTarget.current)) return
+    if (isSwipeBlockedRef.current || isBlockedSwipeTarget(e.target)) {
+  if (isDraggingPage) {
+    setIsDraggingPage(false)
+    setSwipeOffset(0)
+  }
+  return
+}
 
     const touch = e.touches[0]
     const deltaX = touch.clientX - touchStartX.current
@@ -98,7 +106,7 @@ export default function () {
   }
 
   function handleTouchEnd(e: React.TouchEvent<HTMLElement>) {
-    if (isBlockedSwipeTarget(touchStartTarget.current)) return
+    if (isSwipeBlockedRef.current || isBlockedSwipeTarget(e.target)) return
 
     const touch = e.changedTouches[0]
     const deltaX = touch.clientX - touchStartX.current
@@ -118,6 +126,7 @@ export default function () {
     if (!passedHorizontalThreshold || !isMostlyHorizontal) {
       setSwipeOffset(0)
       window.setTimeout(() => setIsSnapAnimating(false), 220)
+      isSwipeBlockedRef.current = false
       return
     }
 
@@ -137,6 +146,7 @@ export default function () {
 
     setSwipeOffset(0)
     window.setTimeout(() => setIsSnapAnimating(false), 220)
+    isSwipeBlockedRef.current = false
   }
 
   const pageTranslateStyle =
