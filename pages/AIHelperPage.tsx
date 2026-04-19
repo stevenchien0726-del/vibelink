@@ -106,6 +106,18 @@ const [showMorePrompts, setShowMorePrompts] = useState(false)
   }, 22)
 }
 
+const stopSwipePropagation = (e: React.TouchEvent<HTMLDivElement>) => {
+  e.stopPropagation()
+}
+
+const stopPointerPropagation = (e: React.PointerEvent<HTMLDivElement>) => {
+  e.stopPropagation()
+}
+
+const stopWheelPropagation = (e: React.WheelEvent<HTMLDivElement>) => {
+  e.stopPropagation()
+}
+
   const handleSubmit = () => {
   if (!hasInput) return
 
@@ -250,8 +262,15 @@ const [showMorePrompts, setShowMorePrompts] = useState(false)
 
  
 
-  <div className="-mx-1 overflow-x-auto pb-1 no-scrollbar">
-    <div className="flex gap-3 px-1">
+  <div
+  className="-mx-1 overflow-x-auto pb-1 no-scrollbar touch-pan-x"
+  onTouchStart={stopSwipePropagation}
+  onTouchMove={stopSwipePropagation}
+  onPointerDown={stopPointerPropagation}
+  onPointerMove={stopPointerPropagation}
+  onWheel={stopWheelPropagation}
+>
+    <div className="flex gap-3 px-1 select-none">
       {Array.from({ length: 5 }).map((_, photoIndex) => {
         const imgSrc = user.images[photoIndex % user.images.length]
 
@@ -293,8 +312,15 @@ const [showMorePrompts, setShowMorePrompts] = useState(false)
         <span>更多人選照片牆</span>
       </div>
 
-      <div className="-mx-1 overflow-x-auto pb-1 no-scrollbar">
-        <div className="flex gap-3 px-1">
+      <div
+  className="-mx-1 overflow-x-auto pb-1 no-scrollbar touch-pan-x"
+  onTouchStart={stopSwipePropagation}
+  onTouchMove={stopSwipePropagation}
+  onPointerDown={stopPointerPropagation}
+  onPointerMove={stopPointerPropagation}
+  onWheel={stopWheelPropagation}
+>
+        <div className="flex gap-3 px-1 select-none">
           {Array.from({ length: 10 }).map((_, photoIndex) => {
             const poolUser = results[photoIndex % results.length]
             const imgSrc = poolUser.images[photoIndex % poolUser.images.length]
@@ -330,8 +356,15 @@ const [showMorePrompts, setShowMorePrompts] = useState(false)
         <span>相似的人</span>
       </div>
 
-      <div className="-mx-1 overflow-x-auto pb-1 no-scrollbar">
-        <div className="flex gap-3 px-1">
+      <div
+  className="-mx-1 overflow-x-auto pb-1 no-scrollbar touch-pan-x"
+  onTouchStart={stopSwipePropagation}
+  onTouchMove={stopSwipePropagation}
+  onPointerDown={stopPointerPropagation}
+  onPointerMove={stopPointerPropagation}
+  onWheel={stopWheelPropagation}
+>
+        <div className="flex gap-3 px-1 select-none">
           {Array.from({ length: 10 }).map((_, photoIndex) => {
             const poolUser = results[(photoIndex + 1) % results.length]
             const imgSrc = poolUser.images[photoIndex % poolUser.images.length]

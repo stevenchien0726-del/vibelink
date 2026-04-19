@@ -65,3 +65,13 @@ body {
   -ms-overflow-style: none;  /* IE / Edge */
   scrollbar-width: none;     /* Firefox */
 }
+
+.touch-pan-x {
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+}
+
+.select-none {
+  -webkit-user-select: none;
+  user-select: none;
+}
