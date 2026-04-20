@@ -1,14 +1,14 @@
 'use client'
 
 import WideMenuSheet from '@/components/WideMenuSheet'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Heart,
   MessageCircle,
   Mail,
   MoreHorizontal,
 } from 'lucide-react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 
 export type FeedMode = '1x1' | '2x2' | '3x3'
 
@@ -34,12 +34,6 @@ export default function FeedGrid({
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
 
-  const sliderRef = useRef<HTMLDivElement | null>(null)
-  const touchStartXRef = useRef<number | null>(null)
-  const touchStartYRef = useRef<number | null>(null)
-  const touchMovedXRef = useRef(0)
-  const isHorizontalGestureRef = useRef(false)
-
   const firstPost = posts[0]
 
   const postImages =
@@ -49,109 +43,11 @@ export default function FeedGrid({
 
   useEffect(() => {
     setCurrentSlide(0)
-
-    const slider = sliderRef.current
-    if (!slider) return
-
-    slider.scrollTo({
-      left: 0,
-      behavior: 'auto',
-    })
   }, [firstPost?.id, feedMode])
 
   const goToSlide = (index: number) => {
-    const slider = sliderRef.current
-    if (!slider) return
-
     const safeIndex = Math.max(0, Math.min(index, postImages.length - 1))
-    const slideWidth = slider.clientWidth
-
-    slider.scrollTo({
-      left: safeIndex * slideWidth,
-      behavior: 'smooth',
-    })
-
     setCurrentSlide(safeIndex)
-  }
-
-  const handleSliderScroll = () => {
-    const slider = sliderRef.current
-    if (!slider) return
-
-    const slideWidth = slider.clientWidth
-    if (slideWidth === 0) return
-
-    const index = Math.round(slider.scrollLeft / slideWidth)
-    const safeIndex = Math.max(0, Math.min(index, postImages.length - 1))
-
-    if (safeIndex !== currentSlide) {
-      setCurrentSlide(safeIndex)
-    }
-  }
-
-  function handleSliderTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-    const touch = e.touches[0]
-    touchStartXRef.current = touch.clientX
-    touchStartYRef.current = touch.clientY
-    touchMovedXRef.current = 0
-    isHorizontalGestureRef.current = false
-  }
-
-  function handleSliderTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-    const startX = touchStartXRef.current
-    const startY = touchStartYRef.current
-    if (startX == null || startY == null) return
-
-    const touch = e.touches[0]
-    const deltaX = touch.clientX - startX
-    const deltaY = touch.clientY - startY
-
-    touchMovedXRef.current = deltaX
-
-    const absX = Math.abs(deltaX)
-    const absY = Math.abs(deltaY)
-
-    if (absX > absY && absX > 8) {
-      isHorizontalGestureRef.current = true
-      e.stopPropagation()
-    }
-  }
-
-  function handleSliderTouchEnd() {
-    const slider = sliderRef.current
-    if (!slider) {
-      touchStartXRef.current = null
-      touchStartYRef.current = null
-      touchMovedXRef.current = 0
-      isHorizontalGestureRef.current = false
-      return
-    }
-
-    const slideWidth = slider.clientWidth
-    const deltaX = touchMovedXRef.current
-    const threshold = Math.min(50, slideWidth * 0.12)
-
-    let nextIndex = currentSlide
-
-    if (isHorizontalGestureRef.current) {
-      if (deltaX < -threshold) {
-        nextIndex = Math.min(currentSlide + 1, postImages.length - 1)
-      } else if (deltaX > threshold) {
-        nextIndex = Math.max(currentSlide - 1, 0)
-      } else {
-        nextIndex = Math.round(slider.scrollLeft / slideWidth)
-      }
-    } else {
-      nextIndex = Math.round(slider.scrollLeft / slideWidth)
-    }
-
-    nextIndex = Math.max(0, Math.min(nextIndex, postImages.length - 1))
-    goToSlide(nextIndex)
-
-    touchStartXRef.current = null
-    touchStartYRef.current = null
-    touchMovedXRef.current = 0
-    isHorizontalGestureRef.current = false
   }
 
   if (feedMode === '1x1') {
@@ -193,23 +89,41 @@ export default function FeedGrid({
         </div>
 
         <div className="overflow-hidden rounded-[18px]">
-          <div
-            ref={sliderRef}
-            onScroll={handleSliderScroll}
-            onTouchStart={handleSliderTouchStart}
-            onTouchMove={handleSliderTouchMove}
-            onTouchEnd={handleSliderTouchEnd}
-            data-horizontal-scroll="true"
-            className="scrollbar-hide flex overflow-x-auto overscroll-x-contain snap-x snap-mandatory"
-            style={{
-              WebkitOverflowScrolling: 'touch',
-              scrollSnapType: 'x mandatory',
+          <motion.div
+            className="flex"
+            animate={{ x: `-${currentSlide * 100}%` }}
+            transition={{
+              type: 'spring',
+              stiffness: 380,
+              damping: 34,
+            }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.02}
+            dragMomentum={false}
+            style={{ touchAction: 'pan-y' }}
+            onDragEnd={(_, info) => {
+              const offset = info.offset.x
+              const velocity = info.velocity.x
+
+              // 手機上更靈敏的翻頁門檻
+              if (offset < -40 || velocity < -280) {
+                goToSlide(currentSlide + 1)
+                return
+              }
+
+              if (offset > 40 || velocity > 280) {
+                goToSlide(currentSlide - 1)
+                return
+              }
+
+              goToSlide(currentSlide)
             }}
           >
             {postImages.map((image, index) => (
               <div
                 key={index}
-                className="relative h-[446px] min-w-full shrink-0 snap-center select-none overflow-hidden rounded-[18px] bg-[#dddddd]"
+                className="relative h-[446px] w-full shrink-0 grow-0 basis-full select-none overflow-hidden rounded-[18px] bg-[#dddddd]"
               >
                 <img
                   src={image}
@@ -225,7 +139,7 @@ export default function FeedGrid({
                 </div>
               </div>
             ))}
-          </div>
+          </motion.div>
         </div>
 
         <div className="mt-2 flex justify-center gap-1.5">
