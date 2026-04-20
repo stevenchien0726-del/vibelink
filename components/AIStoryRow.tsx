@@ -352,17 +352,38 @@ export default function AIStoryRow() {
           <div className="text-[15px] font-semibold text-black">限時動態</div>
         </div>
 
-        <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+        <div
+  data-no-page-swipe="true"
+  className="scrollbar-hide flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory touch-pan-x"
+  onTouchStart={(e) => {
+    e.stopPropagation()
+  }}
+  onTouchMove={(e) => {
+    e.stopPropagation()
+  }}
+  onTouchEnd={(e) => {
+    e.stopPropagation()
+  }}
+>
           {storyUsers.map((user, index) => {
             const cover = user.stories[0]
 
             return (
               <button
-                key={user.id}
-                type="button"
-                onClick={() => handleOpenStory(index)}
-                className="w-[120px] shrink-0 snap-start text-left"
-              >
+  key={user.id}
+  type="button"
+  onClick={() => handleOpenStory(index)}
+  onTouchStart={(e) => {
+    e.stopPropagation()
+  }}
+  onTouchMove={(e) => {
+    e.stopPropagation()
+  }}
+  onTouchEnd={(e) => {
+    e.stopPropagation()
+  }}
+  className="w-[116px] shrink-0 snap-start text-left"
+>
                 <div className="relative h-[170px] w-[120px] overflow-hidden rounded-[24px] bg-[#e9e9e9] shadow-sm">
                   <img
                     src={cover.image}

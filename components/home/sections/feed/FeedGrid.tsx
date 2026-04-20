@@ -1,14 +1,14 @@
 'use client'
 
 import WideMenuSheet from '@/components/WideMenuSheet'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   Heart,
   MessageCircle,
   Mail,
   MoreHorizontal,
 } from 'lucide-react'
-import { AnimatePresence, } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 
 export type FeedMode = '1x1' | '2x2' | '3x3'
 
@@ -17,7 +17,8 @@ export type PostItem = {
   author: string
   text: string
   likes: number
-  image: string
+  images: string[]
+  aiTags: string[]
 }
 
 type FeedGridProps = {
@@ -25,8 +26,6 @@ type FeedGridProps = {
   feedMode?: FeedMode
   setFeedMode?: (mode: FeedMode) => void
 }
-
-const slideColors = ['#dddddd', '#d2d2d2', '#c7c7c7']
 
 export default function FeedGrid({
   posts = [],
@@ -83,6 +82,16 @@ export default function FeedGrid({
 
     if (!firstPost) return null
 
+    const postImages =
+      firstPost.images && firstPost.images.length > 0
+        ? firstPost.images
+        : ['https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80']
+
+    const postTags =
+      firstPost.aiTags && firstPost.aiTags.length > 0
+        ? firstPost.aiTags
+        : ['自然感', '療癒', '戶外']
+
     return (
       <div>
         <div className="mb-3 flex items-center justify-between gap-3">
@@ -106,10 +115,10 @@ export default function FeedGrid({
             </button>
 
             <AnimatePresence>
-  {isMoreMenuOpen && (
-    <WideMenuSheet onClose={() => setIsMoreMenuOpen(false)} />
-  )}
-</AnimatePresence>
+              {isMoreMenuOpen && (
+                <WideMenuSheet onClose={() => setIsMoreMenuOpen(false)} />
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -124,14 +133,22 @@ export default function FeedGrid({
             className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
-            {slideColors.map((color, index) => (
+            {postImages.map((image, index) => (
               <div
                 key={index}
-                className="relative h-[446px] min-w-full shrink-0 snap-center select-none rounded-[18px]"
-                style={{ backgroundColor: color }}
+                className="relative h-[446px] min-w-full shrink-0 snap-center select-none overflow-hidden rounded-[18px] bg-[#dddddd]"
               >
-                <div className="absolute right-4 top-4 rounded-full bg-black/10 px-3 py-1 text-[14px] text-[#555]">
-                  {index + 1}/3
+                <img
+                  src={image}
+                  alt={`${firstPost.author} ${index + 1}`}
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/8" />
+
+                <div className="absolute right-4 top-4 rounded-full bg-black/10 px-3 py-1 text-[14px] text-[#555] backdrop-blur-sm">
+                  {index + 1}/{postImages.length}
                 </div>
               </div>
             ))}
@@ -139,7 +156,7 @@ export default function FeedGrid({
         </div>
 
         <div className="mt-2 flex justify-center gap-1.5">
-          {slideColors.map((_, index) => (
+          {postImages.map((_, index) => (
             <div
               key={index}
               className={`h-[6px] w-[6px] rounded-full transition-all duration-300 ${
@@ -176,6 +193,21 @@ export default function FeedGrid({
         </div>
 
         <div className="mt-3 text-[16px] text-[#444]">{firstPost.text}</div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+  <span className="text-[12px] font-semibold text-[#666]">
+    AI判讀標籤
+  </span>
+
+  {postTags.slice(0, 3).map((tag) => (
+    <span
+      key={tag}
+      className="rounded-full bg-[#eeeeee] px-3 py-[7px] text-[12px] font-medium text-[#666] shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+    >
+      #{tag}
+    </span>
+  ))}
+</div>
       </div>
     )
   }
@@ -183,23 +215,51 @@ export default function FeedGrid({
   if (feedMode === '2x2') {
     return (
       <div className="grid grid-cols-2 gap-2">
-        {posts.slice(0, 4).map((post) => (
-          <div
-  key={post.id}
-  className="h-[280px] w-full rounded-[20px] bg-[#dddddd]"
-/>
-        ))}
+        {posts.slice(0, 4).map((post) => {
+          const image =
+            post.images && post.images.length > 0
+              ? post.images[0]
+              : 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
+
+          return (
+            <div
+              key={post.id}
+              className="relative h-[280px] w-full overflow-hidden rounded-[20px] bg-[#dddddd]"
+            >
+              <img
+                src={image}
+                alt={post.author}
+                className="h-full w-full object-cover"
+                draggable={false}
+              />
+            </div>
+          )
+        })}
       </div>
     )
   }
 
   return (
     <div className="grid grid-cols-3 gap-2">
-      {posts.slice(0, 9).map((post) => (
-        <div key={post.id}>
-  <div className="h-[190px] w-full rounded-[18px] bg-[#dddddd]" />
-</div>
-      ))}
+      {posts.slice(0, 9).map((post) => {
+        const image =
+          post.images && post.images.length > 0
+            ? post.images[0]
+            : 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
+
+        return (
+          <div key={post.id}>
+            <div className="relative h-[190px] w-full overflow-hidden rounded-[18px] bg-[#dddddd]">
+              <img
+                src={image}
+                alt={post.author}
+                className="h-full w-full object-cover"
+                draggable={false}
+              />
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
