@@ -396,8 +396,8 @@ export default function ProfilePage({
 <div className="w-full shrink-0">
   <div className="mb-3 flex items-center justify-between px-[2px]">
     <span className="text-[22px] font-medium">
-  <span className="text-[#8B5CF6]">VIBE</span>
-  <span className="ml-[1px] text-[#111]">WALL</span>
+  
+  <span className="ml-[1px] text-[#111]">精選限動`</span>
 </span>
 
     <button
@@ -409,28 +409,7 @@ export default function ProfilePage({
     </button>
   </div>
 
-  <div
-    ref={albumScrollRef}
-    className="flex gap-[10px] overflow-x-auto px-[2px] pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    style={{ scrollSnapType: 'x mandatory' }}
-  >
-    {albumItems.map((_, index) => (
-      <div
-        key={`album-${index}`}
-        className="h-[380px] min-w-[72%] rounded-[10px] shadow-[0_6px_16px_rgba(0,0,0,0.08)]"
-        style={{
-          scrollSnapAlign: 'start',
-          backgroundColor: [
-            '#e3e3e3',
-            '#dcdcdc',
-            '#d6d6d6',
-            '#cfcfcf',
-            '#c8c8c8',
-          ][index % 5],
-        }}
-      />
-    ))}
-  </div>
+  
 </div>
 </div>
         </div>
