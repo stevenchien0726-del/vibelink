@@ -1,7 +1,7 @@
 'use client'
 
 import WideMenuSheet from '@/components/WideMenuSheet'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Heart,
   MessageCircle,
@@ -34,6 +34,9 @@ export default function FeedGrid({
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
 
+  const gestureStartRef = useRef<{ x: number; y: number } | null>(null)
+  const isHorizontalGestureRef = useRef(false)
+
   const firstPost = posts[0]
 
   const postImages =
@@ -48,6 +51,37 @@ export default function FeedGrid({
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, postImages.length - 1))
     setCurrentSlide(safeIndex)
+  }
+
+  function handleTouchStartCapture(e: React.TouchEvent<HTMLDivElement>) {
+    const touch = e.touches[0]
+    gestureStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+    }
+    isHorizontalGestureRef.current = false
+  }
+
+  function handleTouchMoveCapture(e: React.TouchEvent<HTMLDivElement>) {
+    if (!gestureStartRef.current) return
+
+    const touch = e.touches[0]
+    const deltaX = touch.clientX - gestureStartRef.current.x
+    const deltaY = touch.clientY - gestureStartRef.current.y
+
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+
+    // 一旦確認是水平手勢，就阻止它冒泡到外層 page swipe
+    if (absX > absY && absX > 6) {
+      isHorizontalGestureRef.current = true
+      e.stopPropagation()
+    }
+  }
+
+  function handleTouchEndCapture() {
+    gestureStartRef.current = null
+    isHorizontalGestureRef.current = false
   }
 
   if (feedMode === '1x1') {
@@ -88,31 +122,53 @@ export default function FeedGrid({
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[18px]">
+        <div
+          className="overflow-hidden rounded-[18px]"
+          onTouchStartCapture={handleTouchStartCapture}
+          onTouchMoveCapture={handleTouchMoveCapture}
+          onTouchEndCapture={handleTouchEndCapture}
+          onPointerDownCapture={(e) => {
+            e.stopPropagation()
+          }}
+          onPointerMoveCapture={(e) => {
+            if (isHorizontalGestureRef.current) {
+              e.stopPropagation()
+            }
+          }}
+        >
           <motion.div
             className="flex"
             animate={{ x: `-${currentSlide * 100}%` }}
             transition={{
               type: 'spring',
-              stiffness: 380,
-              damping: 34,
+              stiffness: 420,
+              damping: 38,
             }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.02}
+            dragElastic={0}
             dragMomentum={false}
             style={{ touchAction: 'pan-y' }}
-            onDragEnd={(_, info) => {
+            onDragStart={(e) => {
+              e.stopPropagation()
+            }}
+            onDrag={(_, info) => {
+              if (Math.abs(info.offset.x) > 4) {
+                isHorizontalGestureRef.current = true
+              }
+            }}
+            onDragEnd={(e, info) => {
+              e.stopPropagation()
+
               const offset = info.offset.x
               const velocity = info.velocity.x
 
-              // 手機上更靈敏的翻頁門檻
-              if (offset < -40 || velocity < -280) {
+              if (offset < -45 || velocity < -320) {
                 goToSlide(currentSlide + 1)
                 return
               }
 
-              if (offset > 40 || velocity > 280) {
+              if (offset > 45 || velocity > 320) {
                 goToSlide(currentSlide - 1)
                 return
               }
