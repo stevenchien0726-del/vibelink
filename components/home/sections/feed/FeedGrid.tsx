@@ -1,7 +1,7 @@
 'use client'
 
 import WideMenuSheet from '@/components/WideMenuSheet'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Heart,
   MessageCircle,
@@ -37,6 +37,42 @@ export default function FeedGrid({
   const sliderRef = useRef<HTMLDivElement | null>(null)
   const sliderTouchStartXRef = useRef<number | null>(null)
   const sliderTouchStartYRef = useRef<number | null>(null)
+  const sliderStartScrollLeftRef = useRef<number>(0)
+  const isDraggingHorizontallyRef = useRef(false)
+
+  const firstPost = posts[0]
+
+  const postImages =
+    firstPost?.images && firstPost.images.length > 0
+      ? firstPost.images
+      : ['https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80']
+
+  useEffect(() => {
+    setCurrentSlide(0)
+
+    const slider = sliderRef.current
+    if (!slider) return
+
+    slider.scrollTo({
+      left: 0,
+      behavior: 'auto',
+    })
+  }, [firstPost?.id, feedMode])
+
+  const goToSlide = (index: number) => {
+    const slider = sliderRef.current
+    if (!slider) return
+
+    const safeIndex = Math.max(0, Math.min(index, postImages.length - 1))
+    const slideWidth = slider.clientWidth
+
+    slider.scrollTo({
+      left: safeIndex * slideWidth,
+      behavior: 'smooth',
+    })
+
+    setCurrentSlide(safeIndex)
+  }
 
   const handleSliderScroll = () => {
     const slider = sliderRef.current
@@ -46,13 +82,22 @@ export default function FeedGrid({
     if (slideWidth === 0) return
 
     const index = Math.round(slider.scrollLeft / slideWidth)
-    setCurrentSlide(index)
+    const safeIndex = Math.max(0, Math.min(index, postImages.length - 1))
+
+    if (safeIndex !== currentSlide) {
+      setCurrentSlide(safeIndex)
+    }
   }
 
   function handleSliderTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    const slider = sliderRef.current
+    if (!slider) return
+
     const touch = e.touches[0]
     sliderTouchStartXRef.current = touch.clientX
     sliderTouchStartYRef.current = touch.clientY
+    sliderStartScrollLeftRef.current = slider.scrollLeft
+    isDraggingHorizontallyRef.current = false
   }
 
   function handleSliderTouchMove(e: React.TouchEvent<HTMLDivElement>) {
@@ -67,25 +112,54 @@ export default function FeedGrid({
     const absX = Math.abs(deltaX)
     const absY = Math.abs(deltaY)
 
-    if (absX > absY && absX > 8) {
+    // 只有當明確是水平滑動時，才阻止事件往外層傳
+    if (absX > absY && absX > 6) {
+      isDraggingHorizontallyRef.current = true
       e.stopPropagation()
     }
   }
 
   function handleSliderTouchEnd() {
+    const slider = sliderRef.current
+    const startX = sliderTouchStartXRef.current
+    const startScrollLeft = sliderStartScrollLeftRef.current
+
+    if (!slider || startX == null) {
+      sliderTouchStartXRef.current = null
+      sliderTouchStartYRef.current = null
+      isDraggingHorizontallyRef.current = false
+      return
+    }
+
+    const slideWidth = slider.clientWidth
+    const endScrollLeft = slider.scrollLeft
+    const moved = endScrollLeft - startScrollLeft
+
+    // 降低手機翻頁門檻，避免要滑很多次
+    const threshold = Math.min(60, slideWidth * 0.12)
+
+    let nextIndex = currentSlide
+
+    if (Math.abs(moved) > threshold) {
+      if (moved > 0) {
+        nextIndex = Math.min(currentSlide + 1, postImages.length - 1)
+      } else {
+        nextIndex = Math.max(currentSlide - 1, 0)
+      }
+    } else {
+      nextIndex = Math.round(endScrollLeft / slideWidth)
+      nextIndex = Math.max(0, Math.min(nextIndex, postImages.length - 1))
+    }
+
+    goToSlide(nextIndex)
+
     sliderTouchStartXRef.current = null
     sliderTouchStartYRef.current = null
+    isDraggingHorizontallyRef.current = false
   }
 
   if (feedMode === '1x1') {
-    const firstPost = posts[0]
-
     if (!firstPost) return null
-
-    const postImages =
-      firstPost.images && firstPost.images.length > 0
-        ? firstPost.images
-        : ['https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80']
 
     const postTags =
       firstPost.aiTags && firstPost.aiTags.length > 0
@@ -130,8 +204,12 @@ export default function FeedGrid({
             onTouchMove={handleSliderTouchMove}
             onTouchEnd={handleSliderTouchEnd}
             data-horizontal-scroll="true"
-            className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
-            style={{ WebkitOverflowScrolling: 'touch' }}
+            className="scrollbar-hide flex overflow-x-auto overscroll-x-contain snap-x snap-mandatory"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              scrollSnapType: 'x mandatory',
+              touchAction: 'pan-y',
+            }}
           >
             {postImages.map((image, index) => (
               <div
@@ -141,7 +219,7 @@ export default function FeedGrid({
                 <img
                   src={image}
                   alt={`${firstPost.author} ${index + 1}`}
-                  className="h-full w-full object-cover"
+                  className="pointer-events-none h-full w-full object-cover"
                   draggable={false}
                 />
 
@@ -157,13 +235,16 @@ export default function FeedGrid({
 
         <div className="mt-2 flex justify-center gap-1.5">
           {postImages.map((_, index) => (
-            <div
+            <button
               key={index}
+              type="button"
+              onClick={() => goToSlide(index)}
               className={`h-[6px] w-[6px] rounded-full transition-all duration-300 ${
                 currentSlide === index
                   ? 'scale-125 bg-[#d77eea]'
                   : 'bg-[#d6d6d6]'
               }`}
+              aria-label={`前往第 ${index + 1} 張圖片`}
             />
           ))}
         </div>
@@ -195,19 +276,19 @@ export default function FeedGrid({
         <div className="mt-3 text-[16px] text-[#444]">{firstPost.text}</div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-  <span className="text-[12px] font-semibold text-[#666]">
-    AI判讀標籤
-  </span>
+          <span className="text-[12px] font-semibold text-[#666]">
+            AI判讀標籤
+          </span>
 
-  {postTags.slice(0, 3).map((tag) => (
-    <span
-      key={tag}
-      className="rounded-full bg-[#eeeeee] px-3 py-[7px] text-[12px] font-medium text-[#666] shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
-    >
-      #{tag}
-    </span>
-  ))}
-</div>
+          {postTags.slice(0, 3).map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-[#eeeeee] px-3 py-[7px] text-[12px] font-medium text-[#666] shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
       </div>
     )
   }
