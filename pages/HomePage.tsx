@@ -16,6 +16,7 @@ import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPa
 import FriendInvitePage from '@/pages/FriendInvitePage'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import type { CapsulePosition } from '@/app/page'
+import AIStoryRow from '@/components/AIStoryRow'
 
 type FeedMode = '1x1' | '2x2' | '3x3'
 
@@ -543,21 +544,8 @@ export default function HomePage({
     </AnimatePresence>
 
       <main className="min-h-screen box-border px- pb-[90px] pt-[60px]">
-        <section className="px-[14px] pt-[10px]">
-  <h1 className="mb-[13px] text-[18px] font-semibold">
-    <span className="text-[#8B5CF6]">VIBE</span>
-    <span className="text-black"> WALL</span>
-  </h1>
-
-  <StoryRow
-    stories={mockStories}
-    onOpenStory={(story) => {
-      setSelectedStory(story)
-      setStoryPage(0)
-      setStoryProgress(0)
-    }}
-  />
-</section>
+        
+        <AIStoryRow />
 
         <section className="px-3 pt-3">
           <FeedGrid

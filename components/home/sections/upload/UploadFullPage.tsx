@@ -293,7 +293,7 @@ export default function UploadFullPage({
       color: activeTab === 'album' ? '#111111' : '#666666',
     }}
   >
-    VIBEWALL
+    限時動態
   </button>
 </div>
           </div>

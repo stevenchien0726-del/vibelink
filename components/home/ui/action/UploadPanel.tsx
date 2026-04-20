@@ -27,7 +27,7 @@ export default function UploadPanel() {
           className="flex w-full items-center justify-start gap-3 text-[15px] text-[#333] transition-opacity hover:opacity-70"
         >
           <span className="text-[18px]">🖼️</span>
-          <span>VIBEWALL相片</span>
+          <span>限時動態</span>
         </button>
       </div>
     </div>
