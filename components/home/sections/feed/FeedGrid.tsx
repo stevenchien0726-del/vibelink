@@ -35,10 +35,10 @@ export default function FeedGrid({
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
 
   const sliderRef = useRef<HTMLDivElement | null>(null)
-  const sliderTouchStartXRef = useRef<number | null>(null)
-  const sliderTouchStartYRef = useRef<number | null>(null)
-  const sliderStartScrollLeftRef = useRef<number>(0)
-  const isDraggingHorizontallyRef = useRef(false)
+  const touchStartXRef = useRef<number | null>(null)
+  const touchStartYRef = useRef<number | null>(null)
+  const touchMovedXRef = useRef(0)
+  const isHorizontalGestureRef = useRef(false)
 
   const firstPost = posts[0]
 
@@ -90,72 +90,68 @@ export default function FeedGrid({
   }
 
   function handleSliderTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-    const slider = sliderRef.current
-    if (!slider) return
-
     const touch = e.touches[0]
-    sliderTouchStartXRef.current = touch.clientX
-    sliderTouchStartYRef.current = touch.clientY
-    sliderStartScrollLeftRef.current = slider.scrollLeft
-    isDraggingHorizontallyRef.current = false
+    touchStartXRef.current = touch.clientX
+    touchStartYRef.current = touch.clientY
+    touchMovedXRef.current = 0
+    isHorizontalGestureRef.current = false
   }
 
   function handleSliderTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-    const startX = sliderTouchStartXRef.current
-    const startY = sliderTouchStartYRef.current
+    const startX = touchStartXRef.current
+    const startY = touchStartYRef.current
     if (startX == null || startY == null) return
 
     const touch = e.touches[0]
     const deltaX = touch.clientX - startX
     const deltaY = touch.clientY - startY
 
+    touchMovedXRef.current = deltaX
+
     const absX = Math.abs(deltaX)
     const absY = Math.abs(deltaY)
 
-    // 只有當明確是水平滑動時，才阻止事件往外層傳
-    if (absX > absY && absX > 6) {
-      isDraggingHorizontallyRef.current = true
+    if (absX > absY && absX > 8) {
+      isHorizontalGestureRef.current = true
       e.stopPropagation()
     }
   }
 
   function handleSliderTouchEnd() {
     const slider = sliderRef.current
-    const startX = sliderTouchStartXRef.current
-    const startScrollLeft = sliderStartScrollLeftRef.current
-
-    if (!slider || startX == null) {
-      sliderTouchStartXRef.current = null
-      sliderTouchStartYRef.current = null
-      isDraggingHorizontallyRef.current = false
+    if (!slider) {
+      touchStartXRef.current = null
+      touchStartYRef.current = null
+      touchMovedXRef.current = 0
+      isHorizontalGestureRef.current = false
       return
     }
 
     const slideWidth = slider.clientWidth
-    const endScrollLeft = slider.scrollLeft
-    const moved = endScrollLeft - startScrollLeft
-
-    // 降低手機翻頁門檻，避免要滑很多次
-    const threshold = Math.min(60, slideWidth * 0.12)
+    const deltaX = touchMovedXRef.current
+    const threshold = Math.min(50, slideWidth * 0.12)
 
     let nextIndex = currentSlide
 
-    if (Math.abs(moved) > threshold) {
-      if (moved > 0) {
+    if (isHorizontalGestureRef.current) {
+      if (deltaX < -threshold) {
         nextIndex = Math.min(currentSlide + 1, postImages.length - 1)
-      } else {
+      } else if (deltaX > threshold) {
         nextIndex = Math.max(currentSlide - 1, 0)
+      } else {
+        nextIndex = Math.round(slider.scrollLeft / slideWidth)
       }
     } else {
-      nextIndex = Math.round(endScrollLeft / slideWidth)
-      nextIndex = Math.max(0, Math.min(nextIndex, postImages.length - 1))
+      nextIndex = Math.round(slider.scrollLeft / slideWidth)
     }
 
+    nextIndex = Math.max(0, Math.min(nextIndex, postImages.length - 1))
     goToSlide(nextIndex)
 
-    sliderTouchStartXRef.current = null
-    sliderTouchStartYRef.current = null
-    isDraggingHorizontallyRef.current = false
+    touchStartXRef.current = null
+    touchStartYRef.current = null
+    touchMovedXRef.current = 0
+    isHorizontalGestureRef.current = false
   }
 
   if (feedMode === '1x1') {
@@ -208,7 +204,6 @@ export default function FeedGrid({
             style={{
               WebkitOverflowScrolling: 'touch',
               scrollSnapType: 'x mandatory',
-              touchAction: 'pan-y',
             }}
           >
             {postImages.map((image, index) => (
