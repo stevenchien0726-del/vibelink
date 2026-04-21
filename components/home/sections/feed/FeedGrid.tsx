@@ -55,60 +55,69 @@ export default function FeedGrid({
   }
 
   function handleCarouselTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-    const touch = e.touches[0]
-    touchStartXRef.current = touch.clientX
-    touchStartYRef.current = touch.clientY
-    isHorizontalGestureRef.current = false
-  }
+  const touch = e.touches[0]
+  touchStartXRef.current = touch.clientX
+  touchStartYRef.current = touch.clientY
+  isHorizontalGestureRef.current = false
+}
 
-  function handleCarouselTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-    const startX = touchStartXRef.current
-    const startY = touchStartYRef.current
-    if (startX == null || startY == null) return
+function handleCarouselTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+  const startX = touchStartXRef.current
+  const startY = touchStartYRef.current
+  if (startX == null || startY == null) return
 
-    const touch = e.touches[0]
-    const deltaX = touch.clientX - startX
-    const deltaY = touch.clientY - startY
+  const touch = e.touches[0]
+  const deltaX = touch.clientX - startX
+  const deltaY = touch.clientY - startY
 
-    const absX = Math.abs(deltaX)
-    const absY = Math.abs(deltaY)
+  const absX = Math.abs(deltaX)
+  const absY = Math.abs(deltaY)
 
-    if (absX > absY && absX > 6) {
+  if (!isHorizontalGestureRef.current) {
+    const passedHorizontalGate = absX > 10 && absX > absY * 1.15
+    if (passedHorizontalGate) {
       isHorizontalGestureRef.current = true
-      e.stopPropagation()
     }
   }
 
-  function handleCarouselTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
-    const startX = touchStartXRef.current
-    const startY = touchStartYRef.current
+  if (isHorizontalGestureRef.current) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+}
 
-    if (startX == null || startY == null) {
-      touchStartXRef.current = null
-      touchStartYRef.current = null
-      isHorizontalGestureRef.current = false
-      return
-    }
+function handleCarouselTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+  const startX = touchStartXRef.current
+  const startY = touchStartYRef.current
 
-    const touch = e.changedTouches[0]
-    const deltaX = touch.clientX - startX
-    const deltaY = touch.clientY - startY
-
-    const absX = Math.abs(deltaX)
-    const absY = Math.abs(deltaY)
-
-    if (absX > absY && absX > 36) {
-      if (deltaX < 0) {
-        goToSlide(currentSlide + 1)
-      } else {
-        goToSlide(currentSlide - 1)
-      }
-    }
-
+  if (startX == null || startY == null) {
     touchStartXRef.current = null
     touchStartYRef.current = null
     isHorizontalGestureRef.current = false
+    return
   }
+
+  const touch = e.changedTouches[0]
+  const deltaX = touch.clientX - startX
+  const deltaY = touch.clientY - startY
+
+  const absX = Math.abs(deltaX)
+  const absY = Math.abs(deltaY)
+
+  const shouldSlide = absX > 36 && absX > absY * 1.1
+
+  if (shouldSlide) {
+    if (deltaX < 0) {
+      goToSlide(currentSlide + 1)
+    } else {
+      goToSlide(currentSlide - 1)
+    }
+  }
+
+  touchStartXRef.current = null
+  touchStartYRef.current = null
+  isHorizontalGestureRef.current = false
+}
 
   if (feedMode === '1x1') {
     if (!firstPost) return null
@@ -149,12 +158,14 @@ export default function FeedGrid({
         </div>
 
         <div
-          className="relative overflow-hidden rounded-[18px]"
-          data-horizontal-scroll="true"
-          onTouchStartCapture={handleCarouselTouchStart}
-          onTouchMoveCapture={handleCarouselTouchMove}
-          onTouchEndCapture={handleCarouselTouchEnd}
-        >
+  className="relative overflow-hidden rounded-[18px]"
+  data-horizontal-scroll="true"
+  onTouchStartCapture={handleCarouselTouchStart}
+  onTouchMoveCapture={handleCarouselTouchMove}
+  onTouchEndCapture={handleCarouselTouchEnd}
+  style={{ touchAction: 'pan-y' }}
+>
+
           <motion.div
             className="flex"
             animate={{ x: `-${currentSlide * 100}%` }}
@@ -186,21 +197,19 @@ export default function FeedGrid({
           </motion.div>
         </div>
 
-        <div className="relative z-[30] mt-4 mb-8 flex items-center justify-center gap-2">
-          {postImages.map((_, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => goToSlide(index)}
-              className={`h-[8px] w-[8px] rounded-full transition-all duration-200 ${
-                currentSlide === index
-                  ? 'scale-110 bg-[#d77eea]'
-                  : 'bg-[#d6d6d6]'
-              }`}
-              aria-label={`前往第 ${index + 1} 張圖片`}
-            />
-          ))}
-        </div>
+        <div className="mt-3 mb-[16px] flex items-center justify-center gap-[6px]">
+  {postImages.map((_, index) => (
+    <div
+      key={index}
+      onClick={() => goToSlide(index)}
+      className={`rounded-full transition-all duration-200 ${
+        currentSlide === index
+          ? 'h-[6px] w-[6px] bg-[#d77eea]'
+          : 'h-[4px] w-[4px] bg-[#d6d6d6]'
+      }`}
+    />
+  ))}
+</div>
 
         <div className="mt-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-6">
