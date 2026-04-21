@@ -34,7 +34,8 @@ export default function FeedGrid({
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
 
-  const gestureStartRef = useRef<{ x: number; y: number } | null>(null)
+  const touchStartXRef = useRef<number | null>(null)
+  const touchStartYRef = useRef<number | null>(null)
   const isHorizontalGestureRef = useRef(false)
 
   const firstPost = posts[0]
@@ -53,34 +54,59 @@ export default function FeedGrid({
     setCurrentSlide(safeIndex)
   }
 
-  function handleTouchStartCapture(e: React.TouchEvent<HTMLDivElement>) {
+  function handleCarouselTouchStart(e: React.TouchEvent<HTMLDivElement>) {
     const touch = e.touches[0]
-    gestureStartRef.current = {
-      x: touch.clientX,
-      y: touch.clientY,
-    }
+    touchStartXRef.current = touch.clientX
+    touchStartYRef.current = touch.clientY
     isHorizontalGestureRef.current = false
   }
 
-  function handleTouchMoveCapture(e: React.TouchEvent<HTMLDivElement>) {
-    if (!gestureStartRef.current) return
+  function handleCarouselTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    const startX = touchStartXRef.current
+    const startY = touchStartYRef.current
+    if (startX == null || startY == null) return
 
     const touch = e.touches[0]
-    const deltaX = touch.clientX - gestureStartRef.current.x
-    const deltaY = touch.clientY - gestureStartRef.current.y
+    const deltaX = touch.clientX - startX
+    const deltaY = touch.clientY - startY
 
     const absX = Math.abs(deltaX)
     const absY = Math.abs(deltaY)
 
-    // 一旦確認是水平手勢，就阻止它冒泡到外層 page swipe
     if (absX > absY && absX > 6) {
       isHorizontalGestureRef.current = true
       e.stopPropagation()
     }
   }
 
-  function handleTouchEndCapture() {
-    gestureStartRef.current = null
+  function handleCarouselTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+    const startX = touchStartXRef.current
+    const startY = touchStartYRef.current
+
+    if (startX == null || startY == null) {
+      touchStartXRef.current = null
+      touchStartYRef.current = null
+      isHorizontalGestureRef.current = false
+      return
+    }
+
+    const touch = e.changedTouches[0]
+    const deltaX = touch.clientX - startX
+    const deltaY = touch.clientY - startY
+
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+
+    if (absX > absY && absX > 36) {
+      if (deltaX < 0) {
+        goToSlide(currentSlide + 1)
+      } else {
+        goToSlide(currentSlide - 1)
+      }
+    }
+
+    touchStartXRef.current = null
+    touchStartYRef.current = null
     isHorizontalGestureRef.current = false
   }
 
@@ -123,57 +149,19 @@ export default function FeedGrid({
         </div>
 
         <div
-          className="overflow-hidden rounded-[18px]"
-          onTouchStartCapture={handleTouchStartCapture}
-          onTouchMoveCapture={handleTouchMoveCapture}
-          onTouchEndCapture={handleTouchEndCapture}
-          onPointerDownCapture={(e) => {
-            e.stopPropagation()
-          }}
-          onPointerMoveCapture={(e) => {
-            if (isHorizontalGestureRef.current) {
-              e.stopPropagation()
-            }
-          }}
+          className="relative overflow-hidden rounded-[18px]"
+          data-horizontal-scroll="true"
+          onTouchStartCapture={handleCarouselTouchStart}
+          onTouchMoveCapture={handleCarouselTouchMove}
+          onTouchEndCapture={handleCarouselTouchEnd}
         >
           <motion.div
             className="flex"
             animate={{ x: `-${currentSlide * 100}%` }}
             transition={{
               type: 'spring',
-              stiffness: 420,
-              damping: 38,
-            }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0}
-            dragMomentum={false}
-            style={{ touchAction: 'pan-y' }}
-            onDragStart={(e) => {
-              e.stopPropagation()
-            }}
-            onDrag={(_, info) => {
-              if (Math.abs(info.offset.x) > 4) {
-                isHorizontalGestureRef.current = true
-              }
-            }}
-            onDragEnd={(e, info) => {
-              e.stopPropagation()
-
-              const offset = info.offset.x
-              const velocity = info.velocity.x
-
-              if (offset < -45 || velocity < -320) {
-                goToSlide(currentSlide + 1)
-                return
-              }
-
-              if (offset > 45 || velocity > 320) {
-                goToSlide(currentSlide - 1)
-                return
-              }
-
-              goToSlide(currentSlide)
+              stiffness: 360,
+              damping: 34,
             }}
           >
             {postImages.map((image, index) => (
@@ -198,15 +186,15 @@ export default function FeedGrid({
           </motion.div>
         </div>
 
-        <div className="mt-2 flex justify-center gap-1.5">
+        <div className="relative z-[30] mt-4 mb-8 flex items-center justify-center gap-2">
           {postImages.map((_, index) => (
             <button
               key={index}
               type="button"
               onClick={() => goToSlide(index)}
-              className={`h-[6px] w-[6px] rounded-full transition-all duration-300 ${
+              className={`h-[8px] w-[8px] rounded-full transition-all duration-200 ${
                 currentSlide === index
-                  ? 'scale-125 bg-[#d77eea]'
+                  ? 'scale-110 bg-[#d77eea]'
                   : 'bg-[#d6d6d6]'
               }`}
               aria-label={`前往第 ${index + 1} 張圖片`}

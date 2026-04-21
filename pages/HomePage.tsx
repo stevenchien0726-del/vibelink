@@ -578,13 +578,16 @@ export default function HomePage({
         
         <AIStoryRow />
 
-        <section className="px-3 pt-3">
-          <FeedGrid
-            posts={mockPosts}
-            feedMode={feedMode}
-            setFeedMode={setFeedMode}
-          />
-        </section>
+        <section
+  className="px-3 pt-3"
+  data-block-page-swipe="true"
+>
+  <FeedGrid
+    posts={mockPosts}
+    feedMode={feedMode}
+    setFeedMode={setFeedMode}
+  />
+</section>
 
         <div className="pointer-events-none fixed bottom-[96px] left-0 right-0 z-[24] mx-auto w-full max-w-[430px] px-4">
           <div

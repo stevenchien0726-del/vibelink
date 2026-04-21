@@ -13,7 +13,7 @@ export type CapsulePosition = '左' | '中' | '右'
 
 const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
-export default function () {
+export default function Page() {
   const [page, setPage] = useState<AppPage>('home')
   const [swipeOffset, setSwipeOffset] = useState(0)
   const [isDraggingPage, setIsDraggingPage] = useState(false)
@@ -24,8 +24,11 @@ export default function () {
 
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
-  const touchStartTarget = useRef<EventTarget | null>(null)
   const isSwipeBlockedRef = useRef(false)
+
+  const pointerStartX = useRef(0)
+  const pointerStartY = useRef(0)
+  const isPointerDownRef = useRef(false)
 
   function getCurrentPageIndex(currentPage: AppPage) {
     return pageOrder.indexOf(currentPage)
@@ -56,7 +59,8 @@ export default function () {
     if (!(target instanceof HTMLElement)) return false
 
     return Boolean(
-      target.closest('[data-horizontal-scroll="true"]') ||
+      target.closest('[data-block-page-swipe="true"]') ||
+        target.closest('[data-horizontal-scroll="true"]') ||
         target.closest('[data-no-page-swipe="true"]') ||
         target.closest('input') ||
         target.closest('textarea') ||
@@ -65,22 +69,27 @@ export default function () {
   }
 
   function handleTouchStart(e: React.TouchEvent<HTMLElement>) {
-  const touch = e.touches[0]
-  touchStartX.current = touch.clientX
-  touchStartY.current = touch.clientY
-  touchStartTarget.current = e.target
-  isSwipeBlockedRef.current = isBlockedSwipeTarget(e.target)
-  setIsSnapAnimating(false)
-}
+    const touch = e.touches[0]
+    touchStartX.current = touch.clientX
+    touchStartY.current = touch.clientY
+    isSwipeBlockedRef.current = isBlockedSwipeTarget(e.target)
+
+    if (isSwipeBlockedRef.current) {
+      setIsDraggingPage(false)
+      setSwipeOffset(0)
+    }
+
+    setIsSnapAnimating(false)
+  }
 
   function handleTouchMove(e: React.TouchEvent<HTMLElement>) {
     if (isSwipeBlockedRef.current || isBlockedSwipeTarget(e.target)) {
-  if (isDraggingPage) {
-    setIsDraggingPage(false)
-    setSwipeOffset(0)
-  }
-  return
-}
+      if (isDraggingPage) {
+        setIsDraggingPage(false)
+        setSwipeOffset(0)
+      }
+      return
+    }
 
     const touch = e.touches[0]
     const deltaX = touch.clientX - touchStartX.current
@@ -106,11 +115,121 @@ export default function () {
   }
 
   function handleTouchEnd(e: React.TouchEvent<HTMLElement>) {
-    if (isSwipeBlockedRef.current || isBlockedSwipeTarget(e.target)) return
+    if (isSwipeBlockedRef.current || isBlockedSwipeTarget(e.target)) {
+      isSwipeBlockedRef.current = false
+      setIsDraggingPage(false)
+      setSwipeOffset(0)
+      setIsSnapAnimating(false)
+      return
+    }
 
     const touch = e.changedTouches[0]
     const deltaX = touch.clientX - touchStartX.current
     const deltaY = touch.clientY - touchStartY.current
+
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+
+    const passedHorizontalThreshold = absX > 72
+    const isMostlyHorizontal = absX > absY
+
+    if (isDraggingPage) {
+      setIsDraggingPage(false)
+      setIsSnapAnimating(true)
+    }
+
+    if (!passedHorizontalThreshold || !isMostlyHorizontal) {
+      setSwipeOffset(0)
+      window.setTimeout(() => setIsSnapAnimating(false), 220)
+      isSwipeBlockedRef.current = false
+      return
+    }
+
+    const currentIndex = getCurrentPageIndex(page)
+    const isAtFirstPage = currentIndex === 0
+    const isAtLastPage = currentIndex === pageOrder.length - 1
+
+    if (deltaX > 0) {
+      if (!isAtFirstPage) {
+        goToPrevPage()
+      }
+    } else {
+      if (!isAtLastPage) {
+        goToNextPage()
+      }
+    }
+
+    setSwipeOffset(0)
+    window.setTimeout(() => setIsSnapAnimating(false), 220)
+    isSwipeBlockedRef.current = false
+  }
+
+  function handlePointerDown(e: React.PointerEvent<HTMLElement>) {
+    if (e.pointerType !== 'mouse') return
+
+    pointerStartX.current = e.clientX
+    pointerStartY.current = e.clientY
+    isPointerDownRef.current = true
+    isSwipeBlockedRef.current = isBlockedSwipeTarget(e.target)
+
+    if (isSwipeBlockedRef.current) {
+      setIsDraggingPage(false)
+      setSwipeOffset(0)
+    }
+
+    setIsSnapAnimating(false)
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLElement>) {
+    if (e.pointerType !== 'mouse') return
+    if (!isPointerDownRef.current) return
+
+    if (isSwipeBlockedRef.current || isBlockedSwipeTarget(e.target)) {
+      if (isDraggingPage) {
+        setIsDraggingPage(false)
+        setSwipeOffset(0)
+      }
+      return
+    }
+
+    const deltaX = e.clientX - pointerStartX.current
+    const deltaY = e.clientY - pointerStartY.current
+
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+
+    if (absX < 8 || absX <= absY) return
+
+    const currentIndex = getCurrentPageIndex(page)
+    const isAtFirstPage = currentIndex === 0
+    const isAtLastPage = currentIndex === pageOrder.length - 1
+
+    let nextOffset = deltaX
+
+    if ((isAtFirstPage && deltaX > 0) || (isAtLastPage && deltaX < 0)) {
+      nextOffset = deltaX * 0.28
+    }
+
+    setIsDraggingPage(true)
+    setSwipeOffset(nextOffset)
+  }
+
+  function handlePointerUp(e: React.PointerEvent<HTMLElement>) {
+    if (e.pointerType !== 'mouse') return
+    if (!isPointerDownRef.current) return
+
+    isPointerDownRef.current = false
+
+    if (isSwipeBlockedRef.current || isBlockedSwipeTarget(e.target)) {
+      isSwipeBlockedRef.current = false
+      setIsDraggingPage(false)
+      setSwipeOffset(0)
+      setIsSnapAnimating(false)
+      return
+    }
+
+    const deltaX = e.clientX - pointerStartX.current
+    const deltaY = e.clientY - pointerStartY.current
 
     const absX = Math.abs(deltaX)
     const absY = Math.abs(deltaY)
@@ -160,6 +279,9 @@ export default function () {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
     >
       <div
         className={`min-h-screen ${
