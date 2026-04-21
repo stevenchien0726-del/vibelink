@@ -20,6 +20,7 @@ type FolderItem = {
 type PeopleLibraryPageProps = {
   query?: string
   onClose: () => void
+  onPickUser?: (user: { id: string; name: string; avatar: string }) => void
 }
 
 const folders: FolderItem[] = [
@@ -55,7 +56,9 @@ function getFolderName(id: string) {
 export default function PeopleLibraryPage({
   query,
   onClose,
+  onPickUser,
 }: PeopleLibraryPageProps) {
+
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
@@ -186,11 +189,13 @@ export default function PeopleLibraryPage({
                 <div key={folder.id} className="flex flex-col items-center">
                   <div className="flex h-[170px] w-full items-center justify-center rounded-[20px] bg-[#d9d9d9] px-4">
                     <FolderPreview
-                      onOpenFolder={() => setSelectedFolder(folder.id)}
-                      onOpenProfile={(userId) => {
-                        console.log('open profile:', folder.id, userId)
-                      }}
-                    />
+  folderId={folder.id}
+  onOpenFolder={() => setSelectedFolder(folder.id)}
+  onOpenProfile={(userId) => {
+    console.log('open profile:', folder.id, userId)
+  }}
+  onPickUser={onPickUser}
+/>
                   </div>
 
                   <div className="mt-3 text-center text-[14px] leading-[1.2] text-[#444]">
@@ -217,23 +222,47 @@ export default function PeopleLibraryPage({
 }
 
 function FolderPreview({
+  folderId,
   onOpenFolder,
   onOpenProfile,
+  onPickUser,
 }: {
+  folderId: string
   onOpenFolder: () => void
   onOpenProfile: (userId: string) => void
+  onPickUser?: (user: { id: string; name: string; avatar: string }) => void
 }) {
+
   return (
     <div className="grid w-full grid-cols-[1fr_1fr] items-center gap-4">
       <div className="flex flex-col items-center gap-5">
         <button
-          type="button"
-          onClick={() => onOpenProfile('user-1')}
-          className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
-          aria-label="Open user 1 profile"
-        >
-          <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
-        </button>
+  type="button"
+  onClick={() => {
+    if (folderId === 'recent') {
+      onPickUser?.({
+        id: 'user-1',
+        name: 'Sky_07_21',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
+      })
+      return
+    }
+
+    onOpenProfile('user-1')
+  }}
+  className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
+  aria-label="Open user 1 profile"
+>
+  {folderId === 'recent' ? (
+    <img
+      src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80"
+      alt="Sky_07_21"
+      className="h-[42px] w-[42px] rounded-full object-cover"
+    />
+  ) : (
+    <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
+  )}
+</button>
 
         <button
           type="button"

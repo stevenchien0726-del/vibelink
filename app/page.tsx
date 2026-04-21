@@ -19,6 +19,11 @@ export default function Page() {
   const [isDraggingPage, setIsDraggingPage] = useState(false)
   const [isSnapAnimating, setIsSnapAnimating] = useState(false)
 
+  const [selectedUser, setSelectedUser] = useState<{
+  name: string
+  avatar: string
+} | null>(null)
+
   const [feedCapsulePosition, setFeedCapsulePosition] =
     useState<CapsulePosition>('中')
 
@@ -315,3 +320,4 @@ export default function Page() {
     </main>
   )
 }
+
