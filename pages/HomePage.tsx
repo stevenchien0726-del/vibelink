@@ -9,7 +9,6 @@ import {
   useTransform,
 } from 'framer-motion'
 import { HeartIcon } from 'lucide-react'
-import StoryRow from '@/components/home/sections/story/StoryRow'
 import FeedGrid from '@/components/home/sections/feed/FeedGrid'
 import SearchPage from '@/pages/SearchPage'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
