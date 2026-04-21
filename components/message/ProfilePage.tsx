@@ -276,7 +276,7 @@ export default function ProfilePage({
               onClick={() => goToTab(2)}
               className="flex h-[34px] items-center justify-center"
             >
-              <Bookmark
+              <ImageIcon
                 size={20}
                 className="transition-colors duration-200"
                 color={activeTab === 2 ? activeColor : inactiveColor}
@@ -288,7 +288,7 @@ export default function ProfilePage({
               onClick={() => goToTab(3)}
               className="flex h-[34px] items-center justify-center"
             >
-              <ImageIcon
+              <Bookmark
                 size={20}
                 className="transition-colors duration-200"
                 color={activeTab === 3 ? activeColor : inactiveColor}
@@ -344,43 +344,84 @@ export default function ProfilePage({
     </div>
   </div>
 
-  {/* 第3頁（收藏） */}
+    {/* 第3頁（精選限動） */}
   <div className="w-full shrink-0">
-    <div className="mb-3 rounded-[16px] bg-[#e3e3e3] px-4 py-[10px]">
-  <div className="flex items-center justify-between">
-    <span className="text-[16px] font-medium text-[#111]">
-      我的收藏
-    </span>
-
-    <div className="flex items-center gap-3">
-      <span
-        className={`text-[14px] font-medium transition-colors ${
-          isFavoritesPublic ? 'text-[#8B5CF6]' : 'text-[#666]'
-        }`}
-      >
-        {isFavoritesPublic ? '公開' : '不公開'}
+    <div className="mb-3 flex items-center justify-between px-[2px]">
+      <span className="text-[22px] font-medium">
+        <span className="ml-[1px] text-[#111]">精選限動</span>
       </span>
 
-      <button
-  type="button"
-  onClick={() => setIsFavoritesPublic((prev) => !prev)}
-  className="relative flex h-[28px] w-[54px] items-center rounded-full border border-transparent transition-all duration-300 active:scale-[0.96]"
-  style={{
-    backgroundColor: isFavoritesPublic ? '#dc5cf6b1' : '#d0d0d0',
-    boxShadow: isFavoritesPublic
-      ? '0 4px 12px rgba(233, 92, 246, 0.35)'
-      : '0 2px 8px rgba(0,0,0,0.08)',
-  }}
->
-  <span
-    className={`absolute top-1/2 h-[20px] w-[20px] -translate-y-1/2 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] transition-all duration-300 ${
-      isFavoritesPublic ? 'left-[30px]' : 'left-[4px]'
-    }`}
-  />
-</button>
     </div>
+
+    {/* 第3頁（精選限動） */}
+<div className="w-full shrink-0">
+  
+
+  {/* 👇 加這段 */}
+  <div className="grid grid-cols-2 gap-3">
+    {[
+      { label: '日常' },
+      { label: '跳舞' },
+      { label: '旅遊' },
+      { label: '健身' },
+    ].map((item, index) => (
+      <div
+        key={index}
+        className="relative h-[250px] w-full overflow-hidden rounded-[20px] bg-[#d9d9d9]"
+      >
+        {/* 未來可以放封面圖 */}
+        <div className="absolute inset-0 bg-[#cfcfcf]" />
+
+        {/* 底部文字 */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[15px] font-medium text-[#222]">
+          {item.label}
+        </div>
+      </div>
+    ))}
   </div>
 </div>
+
+  </div>
+
+  
+
+  {/* 第4頁（收藏） */}
+  <div className="w-full shrink-0">
+    <div className="mb-3 rounded-[16px] bg-[#e3e3e3] px-4 py-[10px]">
+      <div className="flex items-center justify-between">
+        <span className="text-[16px] font-medium text-[#111]">
+          我的收藏
+        </span>
+
+        <div className="flex items-center gap-3">
+          <span
+            className={`text-[14px] font-medium transition-colors ${
+              isFavoritesPublic ? 'text-[#8B5CF6]' : 'text-[#666]'
+            }`}
+          >
+            {isFavoritesPublic ? '公開' : '不公開'}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setIsFavoritesPublic((prev) => !prev)}
+            className="relative flex h-[28px] w-[54px] items-center rounded-full border border-transparent transition-all duration-300 active:scale-[0.96]"
+            style={{
+              backgroundColor: isFavoritesPublic ? '#dc5cf6b1' : '#d0d0d0',
+              boxShadow: isFavoritesPublic
+                ? '0 4px 12px rgba(233, 92, 246, 0.35)'
+                : '0 2px 8px rgba(0,0,0,0.08)',
+            }}
+          >
+            <span
+              className={`absolute top-1/2 h-[20px] w-[20px] -translate-y-1/2 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] transition-all duration-300 ${
+                isFavoritesPublic ? 'left-[30px]' : 'left-[4px]'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div className="grid grid-cols-3 gap-[2px]">
       {gridItems.map((_, index) => (
@@ -391,26 +432,6 @@ export default function ProfilePage({
       ))}
     </div>
   </div>
-
-  {/* 第4頁 */}
-<div className="w-full shrink-0">
-  <div className="mb-3 flex items-center justify-between px-[2px]">
-    <span className="text-[22px] font-medium">
-  
-  <span className="ml-[1px] text-[#111]">精選限動`</span>
-</span>
-
-    <button
-      type="button"
-      aria-label="配對牆相片集說明"
-      className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#e7e7e7] text-[#444] transition active:scale-[0.96]"
-    >
-      <CircleHelp size={18} strokeWidth={2.1} />
-    </button>
-  </div>
-
-  
-</div>
 </div>
         </div>
       </div>
