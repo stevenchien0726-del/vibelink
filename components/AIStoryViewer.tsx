@@ -11,6 +11,7 @@ type StoryPage = {
 
 type Props = {
   userName: string
+  avatar: string
   story: StoryPage
   storyCount: number
   currentIndex: number
