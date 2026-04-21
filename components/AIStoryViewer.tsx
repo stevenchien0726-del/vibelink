@@ -26,6 +26,7 @@ type Props = {
 
 export default function AIStoryViewer({
   userName,
+  avatar,
   story,
   storyCount,
   currentIndex,
@@ -233,26 +234,29 @@ export default function AIStoryViewer({
           </div>
 
           <div className="flex items-center justify-between">
-            <div>
-              <div className="text-[18px] font-semibold text-white">
-                {userName}
-              </div>
-              
-            </div>
+  <div className="flex items-center gap-3">
+    <img
+      src={avatar}
+      alt={userName}
+      className="h-10 w-10 rounded-full object-cover ring-1 ring-white/35"
+      draggable={false}
+    />
+    <div className="text-[18px] font-semibold text-white">
+      {userName}
+    </div>
+  </div>
 
-            
-
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                finishClose()
-              }}
-              className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm"
-            >
-              <X size={20} />
-            </button>
-          </div>
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation()
+      finishClose()
+    }}
+    className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm"
+  >
+    <X size={20} />
+  </button>
+</div>
         </div>
 
         <button

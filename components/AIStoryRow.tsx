@@ -439,19 +439,20 @@ export default function AIStoryRow() {
 
       {selectedUser && selectedPage && (
         <AIStoryViewer
-          userName={selectedUser.name}
-          story={selectedPage}
-          storyCount={selectedUser.stories.length}
-          currentIndex={selectedPageIndex}
-          progress={storyProgress}
-          onClose={handleCloseViewer}
-          onNextPage={handleNextPage}
-          onPrevPage={handlePrevPage}
-          onNextUser={handleNextUser}
-          onPrevUser={handlePrevUser}
-          onPause={() => setIsPaused(true)}
-          onResume={() => setIsPaused(false)}
-        />
+  userName={selectedUser.name}
+  avatar={selectedUser.avatar}
+  story={selectedPage}
+  storyCount={selectedUser.stories.length}
+  currentIndex={selectedPageIndex}
+  progress={storyProgress}
+  onClose={handleCloseViewer}
+  onNextPage={handleNextPage}
+  onPrevPage={handlePrevPage}
+  onNextUser={handleNextUser}
+  onPrevUser={handlePrevUser}
+  onPause={() => setIsPaused(true)}
+  onResume={() => setIsPaused(false)}
+/>
       )}
     </>
   )
