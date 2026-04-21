@@ -313,9 +313,7 @@ const finalQuery =
               />
             </div>
 
-            <div className="mt-2 text-[12px] leading-[1.3] text-[#2d2340]">
-              {user.name}_{String(photoIndex + 1).padStart(2, '0')}
-            </div>
+            
           </button>
         )
       })}
@@ -365,9 +363,7 @@ const finalQuery =
                   />
                 </div>
 
-                <div className="mt-2 text-[12px] leading-[1.3] text-[#2d2340]">
-                  {poolUser.name}_{String(photoIndex + 1).padStart(2, '0')}
-                </div>
+                
               </button>
             )
           })}
@@ -410,9 +406,7 @@ const finalQuery =
                   />
                 </div>
 
-                <div className="mt-2 text-[12px] leading-[1.3] text-[#2d2340]">
-                  {poolUser.name}_{String(photoIndex + 1).padStart(2, '0')}
-                </div>
+                
               </button>
             )
           })}
