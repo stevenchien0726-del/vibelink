@@ -194,11 +194,24 @@ const storyUsers: StoryUser[] = [
   },
 ]
 
+function getInitialUnreadCount(user: StoryUser, index: number) {
+  const countMap = [3, 2, 0, 1, 7, 0, 4, 2, 0, 5]
+  const fallback = Math.min(user.stories.length, 3)
+  return countMap[index] ?? fallback
+}
+
 export default function AIStoryRow() {
   const [selectedUserIndex, setSelectedUserIndex] = useState<number | null>(null)
   const [selectedPageIndex, setSelectedPageIndex] = useState(0)
   const [storyProgress, setStoryProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+
+  const unreadCountMap = useMemo(() => {
+    return storyUsers.reduce<Record<number, number>>((acc, user, index) => {
+      acc[user.id] = getInitialUnreadCount(user, index)
+      return acc
+    }, {})
+  }, [])
 
   const selectedUser =
     selectedUserIndex !== null ? storyUsers[selectedUserIndex] : null
@@ -353,37 +366,39 @@ export default function AIStoryRow() {
         </div>
 
         <div
-  data-no-page-swipe="true"
-  className="scrollbar-hide flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory touch-pan-x"
-  onTouchStart={(e) => {
-    e.stopPropagation()
-  }}
-  onTouchMove={(e) => {
-    e.stopPropagation()
-  }}
-  onTouchEnd={(e) => {
-    e.stopPropagation()
-  }}
->
+          data-no-page-swipe="true"
+          className="scrollbar-hide flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory touch-pan-x"
+          onTouchStart={(e) => {
+            e.stopPropagation()
+          }}
+          onTouchMove={(e) => {
+            e.stopPropagation()
+          }}
+          onTouchEnd={(e) => {
+            e.stopPropagation()
+          }}
+        >
           {storyUsers.map((user, index) => {
             const cover = user.stories[0]
+            const unreadCount = unreadCountMap[user.id] ?? 0
+            const isAllSeen = unreadCount <= 0
 
             return (
               <button
-  key={user.id}
-  type="button"
-  onClick={() => handleOpenStory(index)}
-  onTouchStart={(e) => {
-    e.stopPropagation()
-  }}
-  onTouchMove={(e) => {
-    e.stopPropagation()
-  }}
-  onTouchEnd={(e) => {
-    e.stopPropagation()
-  }}
-  className="w-[116px] shrink-0 snap-start text-left"
->
+                key={user.id}
+                type="button"
+                onClick={() => handleOpenStory(index)}
+                onTouchStart={(e) => {
+                  e.stopPropagation()
+                }}
+                onTouchMove={(e) => {
+                  e.stopPropagation()
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation()
+                }}
+                className="w-[116px] shrink-0 snap-start text-left"
+              >
                 <div className="relative h-[170px] w-[120px] overflow-hidden rounded-[24px] bg-[#e9e9e9] shadow-sm">
                   <img
                     src={cover.image}
@@ -392,6 +407,16 @@ export default function AIStoryRow() {
                   />
 
                   <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/65" />
+
+                  <div className="absolute right-[8px] top-[8px] z-10">
+                    {isAllSeen ? (
+                      <div className="h-[14px] w-[14px] rounded-full bg-[#bdbdbd] shadow-[0_1px_4px_rgba(0,0,0,0.18)]" />
+                    ) : (
+                      <div className="flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-[#8b5cf6] px-[5px] text-[10px] font-bold leading-none text-white shadow-[0_2px_8px_rgba(139,92,246,0.35)]">
+                        {Math.min(unreadCount, 10)}
+                      </div>
+                    )}
+                  </div>
 
                   <div className="absolute bottom-2 left-2 right-2">
                     <div className="flex flex-wrap gap-1">

@@ -27,230 +27,268 @@ type FeedGridProps = {
   setFeedMode?: (mode: FeedMode) => void
 }
 
+const FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
+
 export default function FeedGrid({
   posts = [],
   feedMode = '1x1',
 }: FeedGridProps) {
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
+  const [slideMap, setSlideMap] = useState<Record<string, number>>({})
+  const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null)
 
   const touchStartXRef = useRef<number | null>(null)
   const touchStartYRef = useRef<number | null>(null)
   const isHorizontalGestureRef = useRef(false)
-
-  const firstPost = posts[0]
-
-  const postImages =
-    firstPost?.images && firstPost.images.length > 0
-      ? firstPost.images
-      : ['https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80']
+  const activeTouchPostIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    setCurrentSlide(0)
-  }, [firstPost?.id, feedMode])
+    setSlideMap({})
+    setOpenMenuPostId(null)
+  }, [feedMode])
 
-  const goToSlide = (index: number) => {
-    const safeIndex = Math.max(0, Math.min(index, postImages.length - 1))
-    setCurrentSlide(safeIndex)
+  const getPostImages = (post: PostItem) => {
+    return post.images && post.images.length > 0 ? post.images : [FALLBACK_IMAGE]
   }
 
-  function handleCarouselTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-  const touch = e.touches[0]
-  touchStartXRef.current = touch.clientX
-  touchStartYRef.current = touch.clientY
-  isHorizontalGestureRef.current = false
-}
+  const getPostTags = (post: PostItem) => {
+    return post.aiTags && post.aiTags.length > 0
+      ? post.aiTags
+      : ['自然感', '療癒', '戶外']
+  }
 
-function handleCarouselTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-  const startX = touchStartXRef.current
-  const startY = touchStartYRef.current
-  if (startX == null || startY == null) return
+  const getCurrentSlide = (postId: string) => {
+    return slideMap[postId] ?? 0
+  }
 
-  const touch = e.touches[0]
-  const deltaX = touch.clientX - startX
-  const deltaY = touch.clientY - startY
+  const goToSlide = (postId: string, nextIndex: number, imageLength: number) => {
+    const safeIndex = Math.max(0, Math.min(nextIndex, imageLength - 1))
+    setSlideMap((prev) => ({
+      ...prev,
+      [postId]: safeIndex,
+    }))
+  }
 
-  const absX = Math.abs(deltaX)
-  const absY = Math.abs(deltaY)
+  function handleCarouselTouchStart(
+    e: React.TouchEvent<HTMLDivElement>,
+    postId: string
+  ) {
+    const touch = e.touches[0]
+    touchStartXRef.current = touch.clientX
+    touchStartYRef.current = touch.clientY
+    isHorizontalGestureRef.current = false
+    activeTouchPostIdRef.current = postId
+  }
 
-  if (!isHorizontalGestureRef.current) {
-    const passedHorizontalGate = absX > 10 && absX > absY * 1.15
-    if (passedHorizontalGate) {
-      isHorizontalGestureRef.current = true
+  function handleCarouselTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    const startX = touchStartXRef.current
+    const startY = touchStartYRef.current
+    if (startX == null || startY == null) return
+
+    const touch = e.touches[0]
+    const deltaX = touch.clientX - startX
+    const deltaY = touch.clientY - startY
+
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+
+    if (!isHorizontalGestureRef.current) {
+      const passedHorizontalGate = absX > 10 && absX > absY * 1.15
+      if (passedHorizontalGate) {
+        isHorizontalGestureRef.current = true
+      }
+    }
+
+    if (isHorizontalGestureRef.current) {
+      e.preventDefault()
+      e.stopPropagation()
     }
   }
 
-  if (isHorizontalGestureRef.current) {
-    e.preventDefault()
-    e.stopPropagation()
-  }
-}
+  function handleCarouselTouchEnd(
+    e: React.TouchEvent<HTMLDivElement>,
+    postId: string,
+    imageLength: number
+  ) {
+    const startX = touchStartXRef.current
+    const startY = touchStartYRef.current
 
-function handleCarouselTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
-  const startX = touchStartXRef.current
-  const startY = touchStartYRef.current
+    if (startX == null || startY == null) {
+      touchStartXRef.current = null
+      touchStartYRef.current = null
+      isHorizontalGestureRef.current = false
+      activeTouchPostIdRef.current = null
+      return
+    }
 
-  if (startX == null || startY == null) {
+    const touch = e.changedTouches[0]
+    const deltaX = touch.clientX - startX
+    const deltaY = touch.clientY - startY
+
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+
+    const shouldSlide = absX > 36 && absX > absY * 1.1
+    const currentSlide = getCurrentSlide(postId)
+
+    if (shouldSlide) {
+      if (deltaX < 0) {
+        goToSlide(postId, currentSlide + 1, imageLength)
+      } else {
+        goToSlide(postId, currentSlide - 1, imageLength)
+      }
+    }
+
     touchStartXRef.current = null
     touchStartYRef.current = null
     isHorizontalGestureRef.current = false
-    return
+    activeTouchPostIdRef.current = null
   }
-
-  const touch = e.changedTouches[0]
-  const deltaX = touch.clientX - startX
-  const deltaY = touch.clientY - startY
-
-  const absX = Math.abs(deltaX)
-  const absY = Math.abs(deltaY)
-
-  const shouldSlide = absX > 36 && absX > absY * 1.1
-
-  if (shouldSlide) {
-    if (deltaX < 0) {
-      goToSlide(currentSlide + 1)
-    } else {
-      goToSlide(currentSlide - 1)
-    }
-  }
-
-  touchStartXRef.current = null
-  touchStartYRef.current = null
-  isHorizontalGestureRef.current = false
-}
 
   if (feedMode === '1x1') {
-    if (!firstPost) return null
-
-    const postTags =
-      firstPost.aiTags && firstPost.aiTags.length > 0
-        ? firstPost.aiTags
-        : ['自然感', '療癒', '戶外']
+    if (!posts || posts.length === 0) return null
 
     return (
-      <div>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
-            <div className="text-[15px] font-medium text-[#222]">
-              {firstPost.author}
-            </div>
-          </div>
+      <div className="flex flex-col gap-10">
+        {posts.map((post) => {
+          const postImages = getPostImages(post)
+          const postTags = getPostTags(post)
+          const currentSlide = getCurrentSlide(post.id)
 
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-              className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[#222] transition active:scale-[0.96]"
-            >
-              <MoreHorizontal size={17} strokeWidth={2.3} />
-              <span className="text-[14px] font-medium tracking-[0.2px]">
-                MENU
-              </span>
-            </button>
+          return (
+            <div key={post.id}>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
+                  <div className="text-[15px] font-medium text-[#222]">
+                    {post.author}
+                  </div>
+                </div>
 
-            <AnimatePresence>
-              {isMoreMenuOpen && (
-                <WideMenuSheet onClose={() => setIsMoreMenuOpen(false)} />
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenMenuPostId((prev) =>
+                        prev === post.id ? null : post.id
+                      )
+                    }
+                    className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[#222] transition active:scale-[0.96]"
+                  >
+                    <MoreHorizontal size={17} strokeWidth={2.3} />
+                    <span className="text-[14px] font-medium tracking-[0.2px]">
+                      MENU
+                    </span>
+                  </button>
 
-        <div
-  className="relative overflow-hidden rounded-[18px]"
-  data-horizontal-scroll="true"
-  onTouchStartCapture={handleCarouselTouchStart}
-  onTouchMoveCapture={handleCarouselTouchMove}
-  onTouchEndCapture={handleCarouselTouchEnd}
-  style={{ touchAction: 'pan-y' }}
->
-
-          <motion.div
-            className="flex"
-            animate={{ x: `-${currentSlide * 100}%` }}
-            transition={{
-              type: 'spring',
-              stiffness: 360,
-              damping: 34,
-            }}
-          >
-            {postImages.map((image, index) => (
-              <div
-                key={index}
-                className="relative h-[446px] w-full shrink-0 grow-0 basis-full select-none overflow-hidden rounded-[18px] bg-[#dddddd]"
-              >
-                <img
-                  src={image}
-                  alt={`${firstPost.author} ${index + 1}`}
-                  className="pointer-events-none h-full w-full object-cover"
-                  draggable={false}
-                />
-
-                <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/8" />
-
-                <div className="absolute right-4 top-4 rounded-full bg-black/10 px-3 py-1 text-[14px] text-[#555] backdrop-blur-sm">
-                  {index + 1}/{postImages.length}
+                  <AnimatePresence>
+                    {openMenuPostId === post.id && (
+                      <WideMenuSheet onClose={() => setOpenMenuPostId(null)} />
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
-            ))}
-          </motion.div>
-        </div>
 
-        <div className="mt-3 mb-[16px] flex items-center justify-center gap-[6px]">
-  {postImages.map((_, index) => (
-    <div
-      key={index}
-      onClick={() => goToSlide(index)}
-      className={`rounded-full transition-all duration-200 ${
-        currentSlide === index
-          ? 'h-[6px] w-[6px] bg-[#d77eea]'
-          : 'h-[4px] w-[4px] bg-[#d6d6d6]'
-      }`}
-    />
-  ))}
-</div>
+              <div
+                className="relative overflow-hidden rounded-[18px]"
+                data-horizontal-scroll="true"
+                onTouchStartCapture={(e) => handleCarouselTouchStart(e, post.id)}
+                onTouchMoveCapture={handleCarouselTouchMove}
+                onTouchEndCapture={(e) =>
+                  handleCarouselTouchEnd(e, post.id, postImages.length)
+                }
+                style={{ touchAction: 'pan-y' }}
+              >
+                <motion.div
+                  className="flex"
+                  animate={{ x: `-${currentSlide * 100}%` }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 360,
+                    damping: 34,
+                  }}
+                >
+                  {postImages.map((image, index) => (
+                    <div
+                      key={`${post.id}-${index}`}
+                      className="relative h-[446px] w-full shrink-0 grow-0 basis-full select-none overflow-hidden rounded-[18px] bg-[#dddddd]"
+                    >
+                      <img
+                        src={image}
+                        alt={`${post.author} ${index + 1}`}
+                        className="pointer-events-none h-full w-full object-cover"
+                        draggable={false}
+                      />
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-1.5 text-[16px] text-[#555]">
-              <Heart size={22} className="text-[#d77eea]" />
-              <span>{firstPost.likes}</span>
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/8" />
+
+                      <div className="absolute right-4 top-4 rounded-full bg-black/10 px-3 py-1 text-[14px] text-[#555] backdrop-blur-sm">
+                        {index + 1}/{postImages.length}
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
+              </div>
+
+              <div className="mb-[16px] mt-3 flex items-center justify-center gap-[6px]">
+                {postImages.map((_, index) => (
+                  <button
+                    key={`${post.id}-dot-${index}`}
+                    type="button"
+                    onClick={() => goToSlide(post.id, index, postImages.length)}
+                    className={`rounded-full transition-all duration-200 ${
+                      currentSlide === index
+                        ? 'h-[6px] w-[6px] bg-[#d77eea]'
+                        : 'h-[4px] w-[4px] bg-[#d6d6d6]'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-1.5 text-[16px] text-[#555]">
+                    <Heart size={22} className="text-[#d77eea]" />
+                    <span>{post.likes}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="flex items-center text-[#222] transition active:scale-95"
+                  >
+                    <MessageCircle size={22} />
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[14px] font-medium text-[#222] transition active:scale-[0.96]"
+                >
+                  <Mail size={18} strokeWidth={2.1} />
+                  <span>發送邀請</span>
+                </button>
+              </div>
+
+              <div className="mt-3 text-[16px] text-[#444]">{post.text}</div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-[12px] font-semibold text-[#666]">
+                  AI判讀標籤
+                </span>
+
+                {postTags.slice(0, 3).map((tag) => (
+                  <span
+                    key={`${post.id}-${tag}`}
+                    className="rounded-full bg-[#eeeeee] px-3 py-[7px] text-[12px] font-medium text-[#666] shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
             </div>
-
-            <button
-              type="button"
-              className="flex items-center text-[#222] transition active:scale-95"
-            >
-              <MessageCircle size={22} />
-            </button>
-          </div>
-
-          <button
-            type="button"
-            className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[14px] font-medium text-[#222] transition active:scale-[0.96]"
-          >
-            <Mail size={18} strokeWidth={2.1} />
-            <span>發送邀請</span>
-          </button>
-        </div>
-
-        <div className="mt-3 text-[16px] text-[#444]">{firstPost.text}</div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-[12px] font-semibold text-[#666]">
-            AI判讀標籤
-          </span>
-
-          {postTags.slice(0, 3).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-[#eeeeee] px-3 py-[7px] text-[12px] font-medium text-[#666] shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
+          )
+        })}
       </div>
     )
   }
@@ -258,11 +296,8 @@ function handleCarouselTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   if (feedMode === '2x2') {
     return (
       <div className="grid grid-cols-2 gap-2">
-        {posts.slice(0, 4).map((post) => {
-          const image =
-            post.images && post.images.length > 0
-              ? post.images[0]
-              : 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
+        {posts.slice(0, 6).map((post) => {
+          const image = getPostImages(post)[0]
 
           return (
             <div
@@ -285,10 +320,7 @@ function handleCarouselTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   return (
     <div className="grid grid-cols-3 gap-2">
       {posts.slice(0, 9).map((post) => {
-        const image =
-          post.images && post.images.length > 0
-            ? post.images[0]
-            : 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
+        const image = getPostImages(post)[0]
 
         return (
           <div key={post.id}>
