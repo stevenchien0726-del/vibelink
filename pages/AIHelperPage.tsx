@@ -24,7 +24,7 @@ const suggestionItems = [
   '身材性感內建男模特',
 ]
 
-const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app/'
+const MEMBERSHIP_URL = 'https://vibelink-j9m5-eig7av0if-stevenchien0726-dels-projects.vercel.app/'
 const DRAWER_WIDTH = 320
 
 function openMembershipSite() {
