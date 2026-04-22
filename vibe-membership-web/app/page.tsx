@@ -10,30 +10,11 @@ import {
 } from 'lucide-react'
 
 const plans = [
-  {
-    id: 'basic',
-    name: 'Vibe Basic',
-    price: 160,
-    accent: 'from-fuchsia-300 to-pink-300',
-    recommended: false,
-    features: {
-      vibeTv: [
-        { label: '可觀看 Vibe TV 所有內容', included: true },
-        { label: '畫質最高 720P', included: true },
-        { label: '最多2部裝置同時觀看', included: true },
-        { label: 'Vibe TV零廣告體驗', included: false },
-      ],
-      vibelink: [
-        { label: 'AI 找人幫手無限使用', included: false },
-        { label: 'Vibelink 零廣告體驗', included: false },
-      ],
-      vibebook: [{ label: '無限閱讀', included: false }],
-    },
-  },
+  
   {
     id: 'plus',
     name: 'Vibe Plus',
-    price: 320,
+    price: 260,
     accent: 'from-fuchsia-400 to-pink-400',
     recommended: false,
     features: {
@@ -41,7 +22,6 @@ const plans = [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 1080P', included: true },
         { label: '最多3部裝置同時觀看', included: true },
-        { label: 'Vibe TV零廣告體驗', included: true },
       ],
       vibelink: [
         { label: 'AI 找人幫手無限使用', included: true },
@@ -53,7 +33,7 @@ const plans = [
   {
     id: 'premium',
     name: 'Vibe Premium',
-    price: 450,
+    price: 390,
     accent: 'from-fuchsia-500 to-pink-500',
     recommended: true,
     features: {
@@ -61,7 +41,6 @@ const plans = [
         { label: '可觀看 Vibe TV 所有內容', included: true },
         { label: '畫質最高 4K', included: true },
         { label: '最多4部裝置同時觀看', included: true },
-        { label: 'Vibe TV零廣告體驗', included: true },
       ],
       vibelink: [
         { label: 'AI 找人幫手無限使用', included: true },
