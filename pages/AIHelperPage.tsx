@@ -5,6 +5,7 @@ import { AnimatePresence, motion, animate, useMotionValue, useTransform } from '
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import { fakeAiSearch } from '../lib/fakeAiSearch'
 import { FakeUser } from '../data/fakeUsers'
+import { X } from 'lucide-react'
 
 type HistoryItem = {
   id: string
@@ -22,6 +23,63 @@ const suggestionItems = [
   '幫我找可愛奶狗弟弟',
   '喜歡大自然的女生',
   '身材性感內建男模特',
+]
+
+const SKY_LIBRARY_RESULTS = [
+  {
+    id: 'sky-match-1',
+    name: 'Evan',
+    age: 27,
+    tags: ['自然感', '公路感', '安靜成熟', '戶外', '低調感'],
+    images: [
+      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80',
+      'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80',
+      'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80',
+      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=80',
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80',
+    ],
+  },
+  {
+    id: 'sky-match-2',
+    name: 'Miles',
+    age: 29,
+    tags: ['山景', '慢節奏', '穩定感', '攝影感', '旅行感'],
+    images: [
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80',
+      'https://images.unsplash.com/photo-1439853949127-fa647821eba0?w=1200&q=80',
+      'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=80',
+      'https://images.unsplash.com/photo-1494526585095-c41746248156?w=1200&q=80',
+      'https://images.unsplash.com/photo-1492447166138-50c3889fccb1?w=1200&q=80',
+    ],
+  },
+  {
+    id: 'sky-match-3',
+    name: 'Rowan',
+    age: 26,
+    tags: ['海風感', '舒服感', '安靜聊天', '文青', '療癒系'],
+    images: [
+      'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=1200&q=80',
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80',
+      'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1200&q=80',
+      'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1200&q=80',
+      'https://images.unsplash.com/photo-1517423440428-a5a00ad493e8?w=1200&q=80',
+    ],
+  },
+] as FakeUser[]
+
+const SKY_USER_ANALYSIS: Record<string, string> = {
+  'sky-match-1':
+    '整體偏自然戶外與公路旅行感，聊天節奏慢，給人的感覺比較穩、比較耐看，也更像會陪你往外走走的人。',
+  'sky-match-2':
+    '山景與慢生活感很重，照片裡有一種成熟但不高冷的距離感，比較像是能安靜聊天、慢慢熟起來的類型。',
+  'sky-match-3':
+    '海風感和舒服感比較強，整體氣質偏溫和療癒，不是高刺激型，而是容易讓人放鬆、願意多聊幾句的類型。',
+}
+
+const SKY_MORE_PROMPTS = [
+  '幫我找比 Sky_07_21 更成熟一點的人',
+  '找和 Sky_07_21 一樣自然感強但更主動聊天的人',
+  '找偏安靜、戶外感、適合慢慢熟起來的人',
 ]
 
 const MEMBERSHIP_URL = 'https://vibelink-j9m5-eig7av0if-stevenchien0726-dels-projects.vercel.app/'
@@ -174,6 +232,19 @@ function handlePickLibraryUser(payload: {
   setIsPeopleLibraryOpen(false)
 }
 
+const isSkySeedSearch = selectedLibraryUser?.id === 'user-1'
+
+function getCandidateDescription(user: FakeUser) {
+  if (isSkySeedSearch) {
+    return (
+      SKY_USER_ANALYSIS[user.id] ??
+      '整體偏自然、穩定、低刺激互動感，更像是會慢慢建立熟悉感的類型。'
+    )
+  }
+
+  return `奶狗感、${user.tags.slice(0, 2).join('、')}、互動感偏高，整體氛圍偏可愛又帶一點主動感。`
+}
+
   const handleSubmit = () => {
   if (!hasInput && !selectedLibraryUser) return
 
@@ -190,18 +261,30 @@ const finalQuery =
   currentInput || (selectedLibraryUser ? `幫我找像 ${selectedLibraryUser.name} 的人` : '')
 
   setTimeout(() => {
-    const matchedUsers = fakeAiSearch(finalQuery)
+    const matchedUsers = isSkySeedSearch
+  ? SKY_LIBRARY_RESULTS
+  : fakeAiSearch(finalQuery)
 
     let nextAiText = ''
     if (matchedUsers.length > 0) {
-      nextAiText = selectedLibraryUser
-  ? `我幫你從「${selectedLibraryUser.name}」延伸找出幾位相似類型的用戶，整體更偏向情緒回饋感高、互動自然、照片氛圍接近的人選。`
-  : `我幫你篩選出幾位符合「${finalQuery}」的用戶，整體更偏向情緒回饋感高、互動自然、照片氛圍容易產生好感的人選。`
-    } else {
-      nextAiText = selectedLibraryUser
-  ? `目前沒有找到完全符合「${selectedLibraryUser.name} 相似類型」的用戶，你可以再補充想要的感覺。`
-  : `目前沒有找到完全符合「${finalQuery}」的用戶，你可以換更簡短的描述再試一次。`
-    }
+  if (isSkySeedSearch) {
+    nextAiText =
+      '我幫你從「Sky_07_21」延伸找出幾位更偏自然感、安靜成熟、旅行與慢節奏氛圍的用戶。這次不是找同一種可愛互動型，而是往更耐看、比較適合長聊天與真實相處感的方向去擴散。'
+  } else if (selectedLibraryUser) {
+    nextAiText = `我幫你從「${selectedLibraryUser.name}」延伸找出幾位相似類型的用戶，整體更偏向情緒回饋感高、互動自然、照片氛圍接近的人選。`
+  } else {
+    nextAiText = `我幫你篩選出幾位符合「${finalQuery}」的用戶，整體更偏向情緒回饋感高、互動自然、照片氛圍容易產生好感的人選。`
+  }
+} else {
+  if (isSkySeedSearch) {
+    nextAiText =
+      '目前沒有找到完全符合 Sky_07_21 延伸方向的用戶，你可以再補一句像是「更成熟」、「更安靜」、「更有戶外感」這類描述。'
+  } else if (selectedLibraryUser) {
+    nextAiText = `目前沒有找到完全符合「${selectedLibraryUser.name} 相似類型」的用戶，你可以再補充想要的感覺。`
+  } else {
+    nextAiText = `目前沒有找到完全符合「${finalQuery}」的用戶，你可以換更簡短的描述再試一次。`
+  }
+}
 
     setAiText(nextAiText)
     setLoading(false)
@@ -303,13 +386,12 @@ const finalQuery =
           {/* 候選人標題 + 分析 */}
           <div className="px-1">
             <div className="mb-1 text-[15px] font-semibold text-[#1f1f1f]">
-               {user.name} ｜ {user.age}歲
-            </div>
+  {user.name}
+</div>
 
             <div className="text-[14px] leading-[1.45] text-[#2d2d2d]">
-              奶狗感、{user.tags.slice(0, 2).join('、')}、互動感偏高，
-              整體氛圍偏可愛又帶一點主動感。
-            </div>
+  {getCandidateDescription(user)}
+</div>
 
             <div className="mt-2 text-[13px] leading-[1.45] text-[#3a3a3a]">
               社群照片感：{user.tags.join('、')}
@@ -371,7 +453,6 @@ const finalQuery =
     {/* 第一行：更多人選照片牆 */}
     <div className="space-y-2">
       <div className="flex items-center gap-1 text-[14px] text-[#3d3d3d]">
-        <span>🖼️</span>
         <span>更多人選照片牆</span>
       </div>
 
@@ -414,7 +495,6 @@ const finalQuery =
     {/* 第二行：相似的人 */}
     <div className="space-y-2">
       <div className="flex items-center gap-1 text-[14px] text-[#3d3d3d]">
-        <span>🖼️</span>
         <span>相似的人</span>
       </div>
 
@@ -460,16 +540,18 @@ const finalQuery =
 {showMorePrompts && (
   <div className="mt-6 px-1">
     <div className="flex items-center gap-1 text-[16px] font-medium text-[#6b4f7f]">
-      <span>✨</span>
       <span>更多提示詞</span>
     </div>
 
     <div className="mt-3 flex flex-col gap-5">
-      {[
-        '幫我找更成熟一點的奶狗男生',
-        '找夜生活但個性溫柔的人',
-        '想找高互動感、會主動聊天的人',
-      ].map((prompt) => (
+      {(isSkySeedSearch
+  ? SKY_MORE_PROMPTS
+  : [
+      '幫我找更成熟一點的奶狗男生',
+      '找夜生活但個性溫柔的人',
+      '想找高互動感、會主動聊天的人',
+    ]
+).map((prompt) => (
         <button
           key={prompt}
           type="button"
@@ -515,13 +597,13 @@ const finalQuery =
       </span>
 
       <button
-        type="button"
-        aria-label="Clear selected user"
-        onClick={() => setSelectedLibraryUser(null)}
-        className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#cfcfcf] text-[12px] leading-none text-[#555] transition active:scale-95"
-      >
-        ×
-      </button>
+  type="button"
+  aria-label="Clear selected user"
+  onClick={() => setSelectedLibraryUser(null)}
+  className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-[#cfcfcf] text-[#555] transition active:scale-95"
+>
+  <X size={18} strokeWidth={2.4} />
+</button>
     </div>
   ) : (
     <button
