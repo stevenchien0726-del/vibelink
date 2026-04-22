@@ -242,7 +242,7 @@ export default function FeedGrid({
         className="flex h-[10px] items-center justify-center p-0"
       >
         <span
-  className={`block h-[8px] w-[8px] rounded-full transition-all duration-300 ${
+  className={`block h-[7px] w-[7px] rounded-full transition-all duration-250 ${
     currentSlide === index
       ? 'bg-[#c86cff]'
       : 'bg-[#d8b4f8]'
@@ -282,7 +282,7 @@ export default function FeedGrid({
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="text-[12px] font-semibold text-[#666]">
-                  AI判讀標籤
+                  AI標籤
                 </span>
 
                 {postTags.slice(0, 3).map((tag) => (

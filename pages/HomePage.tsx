@@ -516,28 +516,30 @@ export default function HomePage({
     <AnimatePresence>
   {isTopMenuOpen && (
     <motion.div
-      initial={{ opacity: 0, scale: 0.94, y: -8 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96, y: -6 }}
-      transition={{ duration: 0.18, ease: 'easeOut' }}
-      className="absolute left-0 top-[46px] z-[200] w-[360px] rounded-[20px] border border-[#e4d7ea] bg-[#f3f3f3] px-3 py-4 shadow-[0_10px_26px_rgba(0,0,0,0.12)]"
+  initial={{ opacity: 0, scale: 0.94, y: -8 }}
+  animate={{ opacity: 1, scale: 1, y: 0 }}
+  exit={{ opacity: 0, scale: 0.96, y: -6 }}
+  transition={{ duration: 0.18, ease: 'easeOut' }}
+  className="absolute left-0 top-[46px] z-[200] w-[200px] rounded-[20px] border border-[#e4d7ea] bg-[#f3f3f3] p-4 shadow-[0_10px_26px_rgba(0,0,0,0.12)]"
+>
+  <div className="flex flex-col gap-6">
+    <button
+      type="button"
+      className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
     >
-      <button
-        type="button"
-        className="flex w-full items-center justify-center gap-3 rounded-[16px] bg-white/55 px-10 py-5 text-[18px] text-[#222] transition-colors active:bg-black/5"
-      >
-        <FollowingIcon />
-        <span>追蹤中</span>
-      </button>
+      <FollowingIcon />
+      <span>追蹤中</span>
+    </button>
 
-      <button
-        type="button"
-        className="mt-3 flex w-full items-center justify-center gap-3 rounded-[16px] bg-white/55 px-10 py-5 text-[18px] text-[#222] transition-colors active:bg-black/5"
-      >
-        <FavoriteIcon />
-        <span>最愛</span>
-      </button>
-    </motion.div>
+    <button
+      type="button"
+      className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
+    >
+      <FavoriteIcon />
+      <span>最愛</span>
+    </button>
+  </div>
+</motion.div>
   )}
 </AnimatePresence>
   </div>

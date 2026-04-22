@@ -1,12 +1,38 @@
 'use client'
 
 import { useRef } from 'react'
-import { AnimatePresence, motion, animate, useMotionValue, useTransform } from 'framer-motion'
+import {
+  AnimatePresence,
+  motion,
+  animate,
+  useMotionValue,
+  useTransform,
+} from 'framer-motion'
 import { Trash2 } from 'lucide-react'
+
+type PickedUser = {
+  id: string
+  name: string
+  avatar: string
+}
+
+type PickUserPayload = {
+  user: PickedUser
+  sourceRect: DOMRect
+}
 
 type PeopleFolderPageProps = {
   title: string
+  folderId: string
   onClose: () => void
+  onPickUser?: (payload: PickUserPayload) => void
+}
+
+const RECENT_PRIMARY_USER: PickedUser = {
+  id: 'user-1',
+  name: 'Sky_07_21',
+  avatar:
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
 }
 
 const mockUsers = Array.from({ length: 16 }, (_, i) => ({
@@ -16,7 +42,9 @@ const mockUsers = Array.from({ length: 16 }, (_, i) => ({
 
 export default function PeopleFolderPage({
   title,
+  folderId,
   onClose,
+  onPickUser,
 }: PeopleFolderPageProps) {
   const touchStartYRef = useRef<number | null>(null)
   const touchStartXRef = useRef<number | null>(null)
@@ -40,7 +68,6 @@ export default function PeopleFolderPage({
     const deltaY = touch.clientY - startY
     const deltaX = Math.abs(touch.clientX - startX)
 
-    // 只有往下拉，而且垂直意圖明確時才跟手指移動
     if (deltaY > 0 && deltaX < 70) {
       e.preventDefault()
       dragY.set(deltaY)
@@ -104,7 +131,7 @@ export default function PeopleFolderPage({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="flex items-center justify-between px-5 pt-4 pb-3">
+          <div className="flex items-center justify-between px-5 pb-3 pt-4">
             <div className="truncate text-[16px] font-medium text-[#222]">
               {title}
             </div>
@@ -129,14 +156,49 @@ export default function PeopleFolderPage({
 
           <div className="px-5 pb-[120px]">
             <div className="grid grid-cols-4 gap-x-5 gap-y-8">
-              {mockUsers.map((user) => (
+              <button
+                type="button"
+                onClick={(e) => {
+                  if (folderId === 'recent') {
+                    const sourceRect = (
+                      e.currentTarget as HTMLButtonElement
+                    ).getBoundingClientRect()
+
+                    onPickUser?.({
+                      user: RECENT_PRIMARY_USER,
+                      sourceRect,
+                    })
+                  }
+                }}
+                className="flex flex-col items-center active:scale-95"
+              >
+                {folderId === 'recent' ? (
+                  <img
+                    src={RECENT_PRIMARY_USER.avatar}
+                    alt={RECENT_PRIMARY_USER.name}
+                    className="h-[62px] w-[62px] rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
+                )}
+
+                <div className="mt-3 text-[13px] text-[#555]">
+                  {folderId === 'recent'
+                    ? RECENT_PRIMARY_USER.name
+                    : '(用戶名)'}
+                </div>
+              </button>
+
+              {mockUsers.slice(1).map((user) => (
                 <button
                   key={user.id}
                   type="button"
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center active:scale-95"
                 >
                   <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
-                  <div className="mt-3 text-[13px] text-[#555]">{user.name}</div>
+                  <div className="mt-3 text-[13px] text-[#555]">
+                    {user.name}
+                  </div>
                 </button>
               ))}
             </div>

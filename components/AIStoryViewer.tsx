@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { X, Sparkles } from 'lucide-react'
+import { X } from 'lucide-react'
 
 type StoryPage = {
   id: number
@@ -284,23 +284,7 @@ export default function AIStoryViewer({
           }}
         />
 
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-[20] px-4 pb-7">
-          <div className="mb-3 flex items-center gap-2 text-white">
-            <Sparkles size={16} />
-            <span className="text-[13px] font-semibold">AI 判讀標籤</span>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {story.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full bg-white/90 px-3 py-[7px] text-[12px] font-medium text-[#5b4b8a]"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        </div>
+        
       </div>
     </div>
   )

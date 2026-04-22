@@ -418,18 +418,7 @@ export default function AIStoryRow() {
                     )}
                   </div>
 
-                  <div className="absolute bottom-2 left-2 right-2">
-                    <div className="flex flex-wrap gap-1">
-                      {cover.tags.slice(0, 2).map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-white/88 px-2 py-[3px] text-[9px] font-medium text-[#4b5563] backdrop-blur-sm"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                  
                 </div>
               </button>
             )

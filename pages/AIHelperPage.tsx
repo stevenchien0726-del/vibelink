@@ -51,6 +51,24 @@ const [showMorePrompts, setShowMorePrompts] = useState(false)
   avatar: string
 } | null>(null)
 
+const [flyingUser, setFlyingUser] = useState<{
+  user: { id: string; name: string; avatar: string }
+  sourceRect: {
+    top: number
+    left: number
+    width: number
+    height: number
+  }
+  targetRect: {
+    top: number
+    left: number
+    width: number
+    height: number
+  }
+} | null>(null)
+
+const targetRef = useRef<HTMLDivElement | null>(null)
+
   const drawerRef = useRef<HTMLDivElement>(null)
   const drawerX = useMotionValue(-DRAWER_WIDTH)
   const overlayOpacity = useTransform(drawerX, [-DRAWER_WIDTH, 0], [0, 1])
@@ -123,12 +141,36 @@ const stopWheelPropagation = (e: React.WheelEvent<HTMLDivElement>) => {
   e.stopPropagation()
 }
 
-function handlePickLibraryUser(user: {
-  id: string
-  name: string
-  avatar: string
+function handlePickLibraryUser(payload: {
+  user: { id: string; name: string; avatar: string }
+  sourceRect: DOMRect
 }) {
-  setSelectedLibraryUser(user)
+  const targetEl = targetRef.current
+
+  if (!targetEl) {
+    setSelectedLibraryUser(payload.user)
+    setIsPeopleLibraryOpen(false)
+    return
+  }
+
+  const targetRect = targetEl.getBoundingClientRect()
+
+  setFlyingUser({
+    user: payload.user,
+    sourceRect: {
+      top: payload.sourceRect.top,
+      left: payload.sourceRect.left,
+      width: payload.sourceRect.width,
+      height: payload.sourceRect.height,
+    },
+    targetRect: {
+      top: targetRect.top,
+      left: targetRect.left,
+      width: targetRect.width,
+      height: targetRect.height,
+    },
+  })
+
   setIsPeopleLibraryOpen(false)
 }
 
@@ -183,8 +225,6 @@ const finalQuery =
     setShowMorePrompts(true)
   }
 
-  // ✅ 就加在這裡
-  setSelectedLibraryUser(null)
 })
   }, 900)
 }
@@ -458,8 +498,12 @@ const finalQuery =
 {/* Fixed Input row */}
 <div className="fixed bottom-[92px] left-1/2 z-[60] flex w-full max-w-[430px] -translate-x-1/2 items-center gap-2 px-4">
   {/* 左側入口：未選人時顯示 People Library，選到人後直接覆蓋成 user capsule */}
+  <div
+  ref={targetRef}
+  className="relative h-[50px] w-[150px] shrink-0"
+>
   {selectedLibraryUser ? (
-    <div className="flex h-[50px] w-[150px] shrink-0 items-center gap-2 rounded-full bg-[#D9D9D9] px-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+    <div className="flex h-[50px] w-full items-center gap-2 rounded-full bg-[#D9D9D9] px-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
       <img
         src={selectedLibraryUser.avatar}
         alt={selectedLibraryUser.name}
@@ -484,7 +528,7 @@ const finalQuery =
       type="button"
       aria-label="Open People Library"
       onClick={() => setIsPeopleLibraryOpen(true)}
-      className="flex h-[50px] w-[110px] shrink-0 items-center justify-center gap-[8px] rounded-full bg-[#D9D9D9] px-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition active:scale-95"
+      className="flex h-[50px] w-full items-center justify-center gap-[8px] rounded-full bg-[#D9D9D9] px-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition active:scale-95"
     >
       <UserCircleIcon />
       <span className="text-[22px] font-semibold leading-none text-[#111]">
@@ -492,6 +536,7 @@ const finalQuery =
       </span>
     </button>
   )}
+</div>
 
   {/* AI 輸入框 */}
   <div className="flex h-[50px] min-w-0 flex-1 items-center rounded-full bg-[#d0d0d0] pl-4 pr-[6px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
@@ -503,8 +548,8 @@ const finalQuery =
           handleSubmit()
         }
       }}
-      placeholder="AI找人幫手"
-      className="w-full min-w-0 bg-transparent text-[15px] text-[#222] placeholder:text-[#8a8a8a] outline-none"
+      placeholder="AI雷達"
+      className="w-full min-w-0 text-[15px] text-[#222] placeholder:text-[#8a8a8a] outline-none"
     />
 
     <button
@@ -602,6 +647,53 @@ const finalQuery =
     onPickUser={handlePickLibraryUser}
   />
 )}
+    
+    <AnimatePresence>
+  {flyingUser && (
+    <motion.div
+      initial={{
+        position: 'fixed',
+        top: flyingUser.sourceRect.top,
+        left: flyingUser.sourceRect.left,
+        width: flyingUser.sourceRect.width,
+        height: flyingUser.sourceRect.height,
+        borderRadius: 999,
+        zIndex: 999,
+        opacity: 1,
+      }}
+      animate={{
+        top: flyingUser.targetRect.top,
+        left: flyingUser.targetRect.left,
+        width: flyingUser.targetRect.width,
+        height: flyingUser.targetRect.height,
+        borderRadius: 999,
+        opacity: 1,
+      }}
+      exit={{ opacity: 0 }}
+      transition={{
+        duration: 0.42,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      onAnimationComplete={() => {
+        setSelectedLibraryUser(flyingUser.user)
+        setFlyingUser(null)
+      }}
+      className="pointer-events-none overflow-hidden bg-[#D9D9D9] shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+    >
+      <div className="flex h-full w-full items-center gap-2 px-[12px]">
+        <img
+          src={flyingUser.user.avatar}
+          alt={flyingUser.user.name}
+          className="h-[30px] w-[30px] rounded-full object-cover"
+        />
+        <span className="min-w-0 truncate text-[13px] text-[#222]">
+          {flyingUser.user.name}
+        </span>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+    
     </div>
   )
 }
