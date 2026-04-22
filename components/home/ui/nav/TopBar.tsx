@@ -91,7 +91,7 @@ export default function TopBar() {
               <Search size={22} strokeWidth={2.2} />
             </button>
 
-            <div className="mx-1 h-5 w-px bg-[#cfcfcf]" />
+            <div className="mx-1 h-6 w-px bg-[#cfcfcf]" />
 
             <div className="relative" ref={wrapperRef}>
               <button
@@ -104,7 +104,7 @@ export default function TopBar() {
               </button>
 
               {showUpload && (
-                <div className="absolute right-0 top-full z-[120] mt-3">
+                <div className="absolute right-0 top-full z-[120] mt-5">
                   <UploadPanel />
                 </div>
               )}

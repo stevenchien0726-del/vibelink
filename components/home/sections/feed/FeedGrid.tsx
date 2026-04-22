@@ -188,65 +188,73 @@ export default function FeedGrid({
                   </AnimatePresence>
                 </div>
               </div>
+              
 
-              <div
-                className="relative overflow-hidden rounded-[18px]"
-                data-horizontal-scroll="true"
-                onTouchStartCapture={(e) => handleCarouselTouchStart(e, post.id)}
-                onTouchMoveCapture={handleCarouselTouchMove}
-                onTouchEndCapture={(e) =>
-                  handleCarouselTouchEnd(e, post.id, postImages.length)
-                }
-                style={{ touchAction: 'pan-y' }}
-              >
-                <motion.div
-                  className="flex"
-                  animate={{ x: `-${currentSlide * 100}%` }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 360,
-                    damping: 34,
-                  }}
-                >
-                  {postImages.map((image, index) => (
-                    <div
-                      key={`${post.id}-${index}`}
-                      className="relative h-[446px] w-full shrink-0 grow-0 basis-full select-none overflow-hidden rounded-[18px] bg-[#dddddd]"
-                    >
-                      <img
-                        src={image}
-                        alt={`${post.author} ${index + 1}`}
-                        className="pointer-events-none h-full w-full object-cover"
-                        draggable={false}
-                      />
+              <div className="relative">
+  <div
+    className="relative isolate overflow-hidden rounded-[18px]"
+    data-horizontal-scroll="true"
+    onTouchStartCapture={(e) => handleCarouselTouchStart(e, post.id)}
+    onTouchMoveCapture={handleCarouselTouchMove}
+    onTouchEndCapture={(e) =>
+      handleCarouselTouchEnd(e, post.id, postImages.length)
+    }
+    style={{ touchAction: 'pan-y' }}
+  >
+    <motion.div
+      className="flex"
+      animate={{ x: `-${currentSlide * 100}%` }}
+      transition={{
+        type: 'spring',
+        stiffness: 360,
+        damping: 34,
+      }}
+    >
+      {postImages.map((image, index) => (
+        <div
+          key={`${post.id}-${index}`}
+          className="relative h-[446px] w-full shrink-0 grow-0 basis-full select-none bg-[#dddddd]"
+        >
+          <img
+            src={image}
+            alt={`${post.author} ${index + 1}`}
+            className="pointer-events-none h-full w-full object-cover"
+            draggable={false}
+          />
 
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/8" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/8" />
 
-                      <div className="absolute right-4 top-4 rounded-full bg-black/10 px-3 py-1 text-[14px] text-[#555] backdrop-blur-sm">
-                        {index + 1}/{postImages.length}
-                      </div>
-                    </div>
-                  ))}
-                </motion.div>
-              </div>
+          <div className="absolute right-4 top-4 rounded-full bg-black/10 px-3 py-1 text-[14px] text-[#555] backdrop-blur-sm">
+            {index + 1}/{postImages.length}
+          </div>
+        </div>
+      ))}
+    </motion.div>
+  </div>
 
-              <div className="mb-[16px] mt-3 flex items-center justify-center gap-[6px]">
-                {postImages.map((_, index) => (
-                  <button
-                    key={`${post.id}-dot-${index}`}
-                    type="button"
-                    onClick={() => goToSlide(post.id, index, postImages.length)}
-                    className={`rounded-full transition-all duration-200 ${
-                      currentSlide === index
-                        ? 'h-[6px] w-[6px] bg-[#d77eea]'
-                        : 'h-[4px] w-[4px] bg-[#d6d6d6]'
-                    }`}
-                    aria-label={`Go to slide ${index + 1}`}
-                  />
-                ))}
-              </div>
+  <div className="absolute -bottom-[18px] left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2">
+    {postImages.map((_, index) => (
+      <button
+        key={`${post.id}-dot-${index}`}
+        type="button"
+        onClick={() => goToSlide(post.id, index, postImages.length)}
+        aria-label={`Go to slide ${index + 1}`}
+        className="flex h-[10px] items-center justify-center p-0"
+      >
+        <span
+  className={`block h-[8px] w-[8px] rounded-full transition-all duration-300 ${
+    currentSlide === index
+      ? 'bg-[#c86cff]'
+      : 'bg-[#d8b4f8]'
+  }`}
+/>
+      </button>
+    ))}
+  </div>
+</div>
 
-              <div className="mt-4 flex items-center justify-between gap-3">
+
+              <div className="mt-5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-1.5 text-[16px] text-[#555]">
                     <Heart size={22} className="text-[#d77eea]" />

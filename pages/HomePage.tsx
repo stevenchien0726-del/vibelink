@@ -543,7 +543,7 @@ export default function HomePage({
   </div>
 
     {/* 右：功能膠囊 */}
-  <div className="flex h-[40px] items-center gap-4 rounded-full bg-[#e5e5e5] px-4 shadow-inner">
+  <div className="flex h-[40px] items-center gap-6 rounded-full bg-[#e5e5e5] px-4 shadow-inner">
     <button
       type="button"
       onClick={() => setIsSearchOpen(true)}
