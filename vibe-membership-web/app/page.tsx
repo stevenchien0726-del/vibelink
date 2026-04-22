@@ -20,11 +20,10 @@ const plans = [
     features: {
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
-        { label: '畫質最高 1080P', included: true },
         { label: '最多3部裝置同時觀看', included: true },
       ],
       vibelink: [
-        { label: 'AI 找人幫手無限使用', included: true },
+        { label: 'AI雷達無限使用', included: true },
         { label: 'Vibelink 零廣告體驗', included: false },
       ],
       vibebook: [{ label: '無限閱讀', included: false }],
@@ -39,11 +38,10 @@ const plans = [
     features: {
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
-        { label: '畫質最高 4K', included: true },
         { label: '最多4部裝置同時觀看', included: true },
       ],
       vibelink: [
-        { label: 'AI 找人幫手無限使用', included: true },
+        { label: 'AI雷達無限使用', included: true },
         { label: 'Vibelink 零廣告體驗', included: true },
       ],
       vibebook: [{ label: '無限閱讀', included: true }],
