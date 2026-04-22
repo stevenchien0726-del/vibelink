@@ -166,12 +166,12 @@ export default function Page() {
   const [billingCycle] = useState<'monthly'>('monthly')
 
   const activePlan = useMemo(
-    () => plans.find((plan) => plan.id === currentPlan) ?? plans[2],
+    () => plans.find((plan) => plan.id === currentPlan) ?? plans[0],
     [currentPlan]
   )
 
   const selectedPlanInfo = useMemo(
-    () => plans.find((plan) => plan.id === selectedPlan) ?? plans[2],
+    () => plans.find((plan) => plan.id === selectedPlan) ?? plans[0],
     [selectedPlan]
   )
 
