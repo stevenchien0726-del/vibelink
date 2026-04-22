@@ -263,7 +263,7 @@ const finalQuery =
           {/* 候選人標題 + 分析 */}
           <div className="px-1">
             <div className="mb-1 text-[15px] font-semibold text-[#1f1f1f]">
-              候選人 {String(index + 1).padStart(2, '0')} ｜ {user.name} ｜ {user.age}歲
+               {user.name} ｜ {user.age}歲
             </div>
 
             <div className="text-[14px] leading-[1.45] text-[#2d2d2d]">

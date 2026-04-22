@@ -8,7 +8,7 @@ import {
   useMotionValue,
   useTransform,
 } from 'framer-motion'
-import { HeartIcon } from 'lucide-react'
+import { Bell, HeartIcon } from 'lucide-react'
 import FeedGrid from '@/components/home/sections/feed/FeedGrid'
 import SearchPage from '@/pages/SearchPage'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
@@ -359,17 +359,21 @@ export default function HomePage({
   }
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      const target = e.target as Node
+  function handleClickOutside(e: MouseEvent) {
+    const target = e.target as Node
 
-      if (searchRef.current && !searchRef.current.contains(target)) {
-        setIsSearchOpen(false)
-      }
+    if (searchRef.current && !searchRef.current.contains(target)) {
+      setIsSearchOpen(false)
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    if (topMenuRef.current && !topMenuRef.current.contains(target)) {
+      setIsTopMenuOpen(false)
+    }
+  }
+
+  document.addEventListener('mousedown', handleClickOutside)
+  return () => document.removeEventListener('mousedown', handleClickOutside)
+}, [])
 
   useEffect(() => {
     if (!selectedStory) return
@@ -478,94 +482,100 @@ export default function HomePage({
             </button>
           </motion.div>
         ) : (
-          <motion.div
-            key="default-bar"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.18 }}
-            className="relative flex h-full items-center justify-between"
-          >
-            <div className="relative flex w-[44px] justify-start">
-              <button
-                type="button"
-                onClick={() => setIsUploadOpen(true)}
-                className="grid h-[30px] w-[30px] place-items-center bg-transparent text-[#111]"
-              >
-                <PlusIcon />
-              </button>
-            </div>
-
-            <div
-  className="absolute left-1/2 -translate-x-1/2"
-  ref={topMenuRef}
+          
+<motion.div
+  key="default-bar"
+  initial={{ opacity: 0, y: 8 }}
+  animate={{ opacity: 1, y: 0 }}
+  exit={{ opacity: 0, y: 8 }}
+  transition={{ duration: 0.18 }}
+  className="relative flex h-full items-center justify-between px-4"
 >
-  <button
-    type="button"
-    onClick={() => setIsTopMenuOpen((prev) => !prev)}
-    className="flex min-w-0 items-center justify-center gap-[4px] bg-transparent"
-  >
-    <img
-      src="/vibelink-logo.png"
-      alt="Vibelink"
-      className="h-[40px] translate-y-[2px] object-contain drop-shadow-[0_2px_6px_rgba(193,107,240,0.35)]"
-    />
-
-    <motion.span
-      animate={{ rotate: isTopMenuOpen ? 180 : 0 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="flex items-center justify-center"
+  {/* 左：logo 膠囊 + 小選單 */}
+  <div className="relative" ref={topMenuRef}>
+    <button
+      type="button"
+      onClick={() => setIsTopMenuOpen((prev) => !prev)}
+      className="flex h-[38px] items-center gap-1 rounded-[12px] bg-[#e9e9e9] px-3 transition-all active:scale-[0.96] active:bg-[#dddddd]"
     >
-      <ChevronDownIcon />
-    </motion.span>
-  </button>
+      <img
+        src="/vibelink-logo.png"
+        alt="Vibelink"
+        className="h-[36px] object-contain"
+      />
 
-  {/* 🔥 這就是你缺的 */}
-  <AnimatePresence>
-    {isTopMenuOpen && (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.72, y: -16 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.78, y: -10 }}
-        transition={{
-          type: 'spring',
-          stiffness: 380,
-          damping: 28,
-          mass: 0.9,
-        }}
-        style={{ originX: 0.5, originY: 0 }}
-        className="absolute top-[52px] left-1/2 z-[130] w-[250px] -translate-x-1/2 rounded-[20px] border border-[#d58be7] bg-[#f6eff7] px-[24px] py-[24px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+      <motion.span
+        animate={{ rotate: isTopMenuOpen ? 180 : 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="flex items-center justify-center text-[#222]"
       >
-        <div className="flex flex-col gap-[30px]">
-          <button className="flex w-full items-center justify-center rounded-[16px] px-[25px] py-[30px] text-[20px] font-medium text-[#222] hover:bg-[#222]/8">
-            <FollowingIcon />
-            <span className="ml-2">追蹤中</span>
-          </button>
+        <ChevronDownIcon />
+      </motion.span>
+    </button>
 
-          <button className="flex w-full items-center justify-center rounded-[16px] px-[20px] py-[22px] text-[20px] font-medium text-[#222] hover:bg-[#222]/8">
-            <FavoriteIcon />
-            <span className="ml-2">最愛</span>
-          </button>
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-</div>
-                
+    <AnimatePresence>
+  {isTopMenuOpen && (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.94, y: -8 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96, y: -6 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+      className="absolute left-0 top-[46px] z-[200] w-[360px] rounded-[20px] border border-[#e4d7ea] bg-[#f3f3f3] px-3 py-4 shadow-[0_10px_26px_rgba(0,0,0,0.12)]"
+    >
+      <button
+        type="button"
+        className="flex w-full items-center justify-center gap-3 rounded-[16px] bg-white/55 px-10 py-5 text-[18px] text-[#222] transition-colors active:bg-black/5"
+      >
+        <FollowingIcon />
+        <span>追蹤中</span>
+      </button>
 
-            <div className="flex w-[96px] items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsSearchOpen(true)}
-                className="grid h-[36px] w-[36px] place-items-center bg-transparent text-[#111]"
-              >
-                <SearchIcon />
-              </button>
-            </div>
-          </motion.div>
-        )}
+      <button
+        type="button"
+        className="mt-3 flex w-full items-center justify-center gap-3 rounded-[16px] bg-white/55 px-10 py-5 text-[18px] text-[#222] transition-colors active:bg-black/5"
+      >
+        <FavoriteIcon />
+        <span>最愛</span>
+      </button>
+    </motion.div>
+  )}
+</AnimatePresence>
+  </div>
+
+    {/* 右：功能膠囊 */}
+  <div className="flex h-[40px] items-center gap-4 rounded-full bg-[#e5e5e5] px-4 shadow-inner">
+    <button
+      type="button"
+      onClick={() => setIsSearchOpen(true)}
+      className="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all active:scale-[0.95] active:bg-black/5"
+    >
+      <SearchIcon />
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setIsUploadOpen(true)}
+      className="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all active:scale-[0.95] active:bg-black/5"
+    >
+      <PlusIcon />
+    </button>
+
+    <button
+      type="button"
+      className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-black transition-all active:scale-[0.95] active:bg-black/5"
+    >
+      <Bell size={20} strokeWidth={2.1} />
+    </button>
+  </div>
+</motion.div>
+
+            )}
       </AnimatePresence>
     </motion.div>
+                
+
+            
+          
 
     <AnimatePresence>
       {isUploadOpen && (
@@ -573,7 +583,7 @@ export default function HomePage({
       )}
     </AnimatePresence>
 
-      <main className="min-h-screen box-border px- pb-[90px] pt-[60px]">
+      <main className="min-h-screen box-border px- pb-[90px] pt-[64px]">
         
         <AIStoryRow />
 
@@ -636,6 +646,8 @@ export default function HomePage({
                 const currentPage = pages[storyPage] || pages[0]
 
                 return (
+
+                  
                   <>
                     <div className="absolute left-0 right-0 top-0 z-[5] px-4 pt-4">
                       <div className="flex gap-1">
@@ -828,7 +840,7 @@ function SearchIcon() {
 
 function ChevronDownIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M6 9l6 6 6-6"
         stroke="currentColor"
