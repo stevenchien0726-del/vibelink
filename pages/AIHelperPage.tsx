@@ -82,7 +82,7 @@ const SKY_MORE_PROMPTS = [
   '找偏安靜、戶外感、適合慢慢熟起來的人',
 ]
 
-const MEMBERSHIP_URL = 'https://vibelink-j9m5-eig7av0if-stevenchien0726-dels-projects.vercel.app/'
+const MEMBERSHIP_URL = 'https://vibelink-j9m5-nrpr52s4p-stevenchien0726-dels-projects.vercel.app/'
 const DRAWER_WIDTH = 320
 
 function openMembershipSite() {
