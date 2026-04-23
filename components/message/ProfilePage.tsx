@@ -180,8 +180,8 @@ export default function ProfilePage({
             <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
 
             <div>
-              <div className="text-[18px] font-medium text-[#222]">小新</div>
-              <div className="text-[18px] font-medium text-[#444]">Sky_07_21</div>
+              <div className="text-[18px] font-medium text-[#222]">Steven</div>
+              <div className="text-[18px] font-medium text-[#444]">steven_07</div>
             </div>
           </div>
 
@@ -194,7 +194,6 @@ export default function ProfilePage({
         <div className="mb-3">
           <div className="text-[16px] leading-[1.45] text-[#333]">HI 大家好</div>
           <div className="text-[16px] leading-[1.45] text-[#333]">我今年20歲</div>
-          <div className="text-[16px] leading-[1.45] text-[#333]">喜歡跳舞</div>
         </div>
 
         <div className="mb-4 flex items-center gap-6 text-[15px] text-[#333]">

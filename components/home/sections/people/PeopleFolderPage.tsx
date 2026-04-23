@@ -32,7 +32,7 @@ const RECENT_PRIMARY_USER: PickedUser = {
   id: 'user-1',
   name: 'Sky_07_21',
   avatar:
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
 }
 
 const mockUsers = Array.from({ length: 16 }, (_, i) => ({
