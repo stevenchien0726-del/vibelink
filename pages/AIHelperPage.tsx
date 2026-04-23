@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, animate, useMotionValue, useTransform } from 'framer-motion'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import { fakeAiSearch } from '../lib/fakeAiSearch'
-import { FakeUser } from '../data/fakeUsers'
+import { FakeUser, fakeUsers } from '../data/fakeUsers'
 import { X } from 'lucide-react'
 
 type HistoryItem = {
@@ -245,6 +245,11 @@ function getCandidateDescription(user: FakeUser) {
   return `奶狗感、${user.tags.slice(0, 2).join('、')}、互動感偏高，整體氛圍偏可愛又帶一點主動感。`
 }
 
+const secondaryWallUsers =
+  results.length > 2
+    ? results.slice(2)
+    : fakeUsers.filter((user) => !results.slice(0, 2).some((topUser) => topUser.id === user.id))
+
   const handleSubmit = () => {
   if (!hasInput && !selectedLibraryUser) return
 
@@ -418,31 +423,27 @@ const finalQuery =
 >
 
     <div className="flex gap-3 px-1 select-none">
-      {Array.from({ length: 5 }).map((_, photoIndex) => {
-        const imgSrc = user.images[photoIndex % user.images.length]
+  {Array.from({ length: 5 }).map((_, photoIndex) => {
+    const imgSrc = user.images[photoIndex % user.images.length]
 
-        return (
-          <button
-            key={`${user.id}-photo-${photoIndex}`}
-            type="button"
-            className="shrink-0 text-left transition active:scale-[0.98]"
-          >
-            <div className="h-[160px] w-[110px] overflow-hidden rounded-[16px] bg-[#ead8f5] shadow-[0_3px_10px_rgba(0,0,0,0.05)]">
-              <img
-                src={imgSrc}
-                alt={`${user.name} photo ${photoIndex + 1}`}
-                className="h-full w-full object-cover"
-              />
-            </div>
-
-            
-          </button>
-        )
-      })}
+    return (
+      <button
+        key={`${user.id}-photo-${photoIndex}`}
+        type="button"
+        className="shrink-0 text-left transition active:scale-[0.98]"
+      >
+        <div className="h-[160px] w-[110px] overflow-hidden rounded-[16px] bg-[#ead8f5] shadow-[0_3px_10px_rgba(0,0,0,0.05)]">
+          <img
+            src={imgSrc}
+            alt={`${user.name} photo ${photoIndex + 1}`}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      </button>
+    )
+  })}
+</div>
     </div>
-  </div>
-
-
 
 </div>
         </div>
@@ -453,7 +454,7 @@ const finalQuery =
     {/* 第一行：更多人選照片牆 */}
     <div className="space-y-2">
       <div className="flex items-center gap-1 text-[14px] text-[#3d3d3d]">
-        <span>更多人選照片牆</span>
+        <span>更多人選</span>
       </div>
 
       <div
@@ -467,8 +468,20 @@ const finalQuery =
 >
         <div className="flex gap-3 px-1 select-none">
           {Array.from({ length: 10 }).map((_, photoIndex) => {
-            const poolUser = results[photoIndex % results.length]
-            const imgSrc = poolUser.images[photoIndex % poolUser.images.length]
+  const customImages = [
+  'https://media.gettyimages.com/id/598221526/zh/%E7%85%A7%E7%89%87/portrait-of-laughing-young-man-looking-at-camera-in-park.jpg?s=612x612&w=gi&k=20&c=ey962-jpbWJNXoPi-Ry9FKZs6F1Fgo75BhAJ6u-52hs=',
+  'https://media.istockphoto.com/id/2190079061/photo/handsome-teen-boy-with-curly-hairstyle-wearing-green-t-shirt-posing-isolated-on-blue.jpg?s=612x612&w=0&k=20&c=PS54cA3ozt4stBfvfar4g7CXmfBuZpBh3ua25hGLJ7E=',
+  'https://www.apetogentleman.com/wp-content/uploads/2021/12/malemodelsinstagram1.jpg',
+  'https://i.pinimg.com/736x/70/bb/5e/70bb5ee6f51b14df8339173219eb8210.jpg',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKP91P5KvWJnDB8WznlQopUwc2JXdmNXCaAg&s',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpGf42AJCgNlPWDDqcYNQ2lB_TT-J5ZEkNRg&s',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQBavemIrsTCgcTWkrWG4eARWkuCZYet1AsaA&s',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRN5bv5EJfCV2KA8l7u065C6N0Hj_t0IVsG9Q&s',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQTJdgVOPMTDEZnpuxDxoS1ye01pbw4NyaVdw&s',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRhxiqTxuz4ZYkxWDBUVkA5KrS79kM042BwA&s'
+  ]
+
+const imgSrc = customImages[photoIndex % customImages.length]
 
             return (
               <button
@@ -479,7 +492,7 @@ const finalQuery =
                 <div className="h-[138px] w-[96px] overflow-hidden rounded-[16px] bg-[#ead8f5]">
                   <img
                     src={imgSrc}
-                    alt={`${poolUser.name} wall photo ${photoIndex + 1}`}
+                    alt={`photo ${photoIndex + 1}`}
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -508,29 +521,40 @@ const finalQuery =
   onWheel={stopWheelPropagation}
 >
         <div className="flex gap-3 px-1 select-none">
-          {Array.from({ length: 10 }).map((_, photoIndex) => {
-            const poolUser = results[(photoIndex + 1) % results.length]
-            const imgSrc = poolUser.images[photoIndex % poolUser.images.length]
+  {Array.from({ length: 10 }).map((_, photoIndex) => {
 
-            return (
-              <button
-                key={`similar-wall-${photoIndex}`}
-                type="button"
-                className="shrink-0"
-              >
-                <div className="h-[138px] w-[96px] overflow-hidden rounded-[16px] bg-[#ead8f5]">
-                  <img
-                    src={imgSrc}
-                    alt={`${poolUser.name} similar photo ${photoIndex + 1}`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+  const similarImages = [
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQBZggibpSFa8gwzkzP0CG1Dv-Ds5pQUHF3UA&s',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRf8fUJQAbL1LoBErCkHIoUNDsEbLjyoXAZEg&s',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSg9QiG0Oh0yY-hYiv1bR7uFZz9eQZkE9tkwA&s',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdRo2IXdswrdAadBDC2x22AzUTSzRI2W4Q-w&s',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeON3kdPRrV5LKCxXhm1hdF8i6OWAYg5qDzA&s',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxwqx6TVqLhw4HURqXgs6AbOAXm7eujZaKzg&s',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRphCek8U6aDXU1I8oXsDhBNZmOSCBJ08dmzA&s',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNzLaQaIJcIRFUH_M1JdazQCTkf_k3QqUsDg&s',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJtiAu7x5YyGbAECdzCHBQ3-QJk5QQgM5R7Q&s',
+    'https://obs.line-scdn.net/0hEbtLyby5Gk1JNQv_D2BlGndjR2MyRgNfNE0XfGQxFCpnBQpIIQZcImkzEC43BAkfdQFQKm5iFHs3AFo',
+  ]
 
-                
-              </button>
-            )
-          })}
-        </div>
+  const imgSrc = similarImages[photoIndex % similarImages.length]
+
+  return (
+    <button
+      key={`similar-wall-${photoIndex}`}
+      type="button"
+      className="shrink-0"
+    >
+      <div className="h-[138px] w-[96px] overflow-hidden rounded-[16px] bg-[#ead8f5]">
+        <img
+          src={imgSrc}
+          alt={`similar photo ${photoIndex + 1}`}
+          className="h-full w-full object-cover"
+        />
+      </div>
+    </button>
+  )
+})}
+</div>
       </div>
     </div>
   </div>
