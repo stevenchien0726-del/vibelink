@@ -30,7 +30,7 @@ type PeopleFolderPageProps = {
 
 const RECENT_PRIMARY_USER: PickedUser = {
   id: 'user-1',
-  name: 'Sky_07_21',
+  name: '小新',
   avatar:
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
 }

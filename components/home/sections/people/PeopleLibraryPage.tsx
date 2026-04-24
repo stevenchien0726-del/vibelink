@@ -49,7 +49,7 @@ const folders: FolderItem[] = [
 
 const RECENT_PRIMARY_USER: PickedUser = {
   id: 'user-1',
-  name: 'Sky_07_21',
+  name: '小新',
   avatar:
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
 }
@@ -238,6 +238,56 @@ export default function PeopleLibraryPage({
   )
 }
 
+function UserAvatarWithName({
+  user,
+  onClick,
+}: {
+  user: PickedUser
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
+      aria-label={`Open ${user.name} profile`}
+    >
+      <img
+        src={user.avatar}
+        alt={user.name}
+        className="h-[42px] w-[42px] shrink-0 rounded-full object-cover"
+      />
+
+      <span className="mt-[6px] max-w-[72px] truncate text-center text-[12px] leading-[1.1] text-[#333]">
+        {user.name}
+      </span>
+    </button>
+  )
+}
+
+function PlaceholderUserButton({
+  userId,
+  onOpenProfile,
+}: {
+  userId: string
+  onOpenProfile: (userId: string) => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpenProfile(userId)}
+      className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
+      aria-label={`Open ${userId} profile`}
+    >
+      <div className="h-[42px] w-[42px] shrink-0 rounded-full bg-[#c893cf]" />
+
+      <span className="mt-[6px] max-w-[72px] truncate text-center text-[12px] leading-[1.1] text-[#777]">
+        （用戶名）
+      </span>
+    </button>
+  )
+}
+
 function FolderPreview({
   folderId,
   onOpenFolder,
@@ -250,71 +300,43 @@ function FolderPreview({
   onPickUser?: (payload: PickUserPayload) => void
 }) {
   return (
-    <div className="grid w-full grid-cols-[1fr_1fr] items-center gap-4">
-      <div className="flex flex-col items-center gap-5">
-        <button
-          type="button"
+    <div className="grid w-full grid-cols-2 place-items-start gap-x-6 gap-y-5 pt-1">
+      {folderId === 'recent' ? (
+        <UserAvatarWithName
+          user={RECENT_PRIMARY_USER}
           onClick={(e) => {
-            if (folderId === 'recent') {
-              const sourceRect = (
-                e.currentTarget as HTMLButtonElement
-              ).getBoundingClientRect()
+            const sourceRect = e.currentTarget.getBoundingClientRect()
 
-              onPickUser?.({
-                user: RECENT_PRIMARY_USER,
-                sourceRect,
-              })
-              return
-            }
-
-            onOpenProfile('user-1')
+            onPickUser?.({
+              user: RECENT_PRIMARY_USER,
+              sourceRect,
+            })
           }}
-          className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
-          aria-label="Open user 1 profile"
-        >
-          {folderId === 'recent' ? (
-            <img
-              src={RECENT_PRIMARY_USER.avatar}
-              alt={RECENT_PRIMARY_USER.name}
-              className="h-[42px] w-[42px] rounded-full object-cover"
-            />
-          ) : (
-            <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
-          )}
-        </button>
+        />
+      ) : (
+        <PlaceholderUserButton
+          userId="user-1"
+          onOpenProfile={onOpenProfile}
+        />
+      )}
 
-        <button
-          type="button"
-          onClick={() => onOpenProfile('user-2')}
-          className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
-          aria-label="Open user 2 profile"
-        >
-          <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
-        </button>
-      </div>
+      <PlaceholderUserButton userId="user-2" onOpenProfile={onOpenProfile} />
 
-      <div className="flex flex-col items-center gap-5">
-        <button
-          type="button"
-          onClick={() => onOpenProfile('user-3')}
-          className="grid h-[42px] w-[42px] place-items-center bg-transparent p-0 transition-transform active:scale-95"
-          aria-label="Open user 3 profile"
-        >
-          <div className="h-[42px] w-[42px] rounded-full bg-[#c893cf]" />
-        </button>
+      <PlaceholderUserButton userId="user-3" onOpenProfile={onOpenProfile} />
 
-        <button
-          type="button"
-          onClick={onOpenFolder}
-          className="grid grid-cols-2 gap-[6px] bg-transparent p-0 transition-transform active:scale-95"
-          aria-label="Open folder"
-        >
-          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-        </button>
-      </div>
+      <button
+  type="button"
+  onClick={onOpenFolder}
+  className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
+  aria-label="Open folder"
+>
+  <div className="mt-[6px] grid grid-cols-2 gap-[6px]">
+    <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+    <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+    <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+    <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+  </div>
+</button>
     </div>
   )
 }

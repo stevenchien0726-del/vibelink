@@ -118,6 +118,9 @@ const [showCandidates, setShowCandidates] = useState(false)
 const [showWalls, setShowWalls] = useState(false)
 const [showMorePrompts, setShowMorePrompts] = useState(false)
 
+const [showTopBar, setShowTopBar] = useState(true)
+const lastScrollYRef = useRef(0)
+
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const [selectedLibraryUser, setSelectedLibraryUser] = useState<{
   id: string
@@ -142,6 +145,8 @@ const [flyingUser, setFlyingUser] = useState<{
 } | null>(null)
 
 const targetRef = useRef<HTMLDivElement | null>(null)
+
+const mainScrollRef = useRef<HTMLElement | null>(null)
 
   const drawerRef = useRef<HTMLDivElement>(null)
   const drawerX = useMotionValue(-DRAWER_WIDTH)
@@ -266,8 +271,30 @@ const secondaryWallUsers =
     ? results.slice(2)
     : fakeUsers.filter((user) => !results.slice(0, 2).some((topUser) => topUser.id === user.id))
 
-  const handleSubmit = () => {
+  function handleMainScroll() {
+  const el = mainScrollRef.current
+  if (!el) return
+
+  const currentY = el.scrollTop
+
+  if (currentY > lastScrollYRef.current && currentY > 40) {
+    setShowTopBar(false)
+  } else if (currentY < lastScrollYRef.current) {
+    setShowTopBar(true)
+  }
+
+  lastScrollYRef.current = currentY
+}
+
+    const handleSubmit = () => {
   if (!hasInput && !selectedLibraryUser) return
+
+  mainScrollRef.current?.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+
+  setShowTopBar(true)
 
   setLoading(true)
   setResults([])
@@ -337,7 +364,11 @@ const finalQuery =
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#f5f5f5]">
       {/* Top bar */}
-      <div className="fixed top-0 left-1/2 z-[40] flex h-[60px] w-full max-w-[430px] -translate-x-1/2 items-center justify-between bg-[rgba(245,245,245,0.96)] px-4 backdrop-blur-md">
+      <div
+  className={`fixed top-0 left-1/2 z-[40] flex h-[60px] w-full max-w-[430px] -translate-x-1/2 items-center justify-between bg-[rgba(245,245,245,0.96)] px-4 backdrop-blur-md transition-transform duration-300 ${
+    showTopBar ? 'translate-y-0' : '-translate-y-full'
+  }`}
+>
         <button
           type="button"
           aria-label="Open history"
@@ -362,7 +393,11 @@ const finalQuery =
       </div>
 
       {/* Main content */}
-      <main className="min-h-screen px-4 pt-[76px] pb-[170px]">
+      <main
+  ref={mainScrollRef}
+  onScroll={handleMainScroll}
+  className="h-screen overflow-y-auto px-4 pt-[76px] pb-[170px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+>
         <div className="flex min-h-[calc(100vh-76px)] flex-col">
          
           {/* suggestions */}
@@ -386,11 +421,7 @@ const finalQuery =
 
 {/* AI Result 區 */}
 <div className="mb-4 space-y-3">
-  {loading && (
-    <div className="rounded-[18px] bg-white px-4 py-3 text-[14px] text-gray-500 shadow-[0_4px_12px_rgba(0,0,0,0.06)]">
-      Analyzing your request...
-    </div>
-  )}
+  
 
   {(loading || displayedAiText) && (
   <div className="rounded-[18px] bg-[#ead8f5] px-4 py-3 text-[14px] leading-[1.45] text-[#3f2c4f] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
@@ -733,7 +764,7 @@ const imgSrc = imagePool[photoIndex % imagePool.length]
 
                 <div className="pb-1 pt-3">
                   <span className="text-[13px] font-medium text-[#888]">
-                    聊天歷史紀錄
+                     過去24小時聊天紀錄
                   </span>
                 </div>
               </div>
