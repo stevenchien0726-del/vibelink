@@ -68,7 +68,6 @@ function getFolderName(id: string) {
   return map[id] || 'People Library'
 }
 
-console.log('🔥 PeopleLibraryPage mounted')
 export default function PeopleLibraryPage({
   query,
   onClose,
@@ -79,15 +78,12 @@ export default function PeopleLibraryPage({
   const [recentUser, setRecentUser] = useState<PickedUser | null>(null)
 
 useEffect(() => {
-  console.log('🔥 useEffect running')
+  
   async function fetchUser() {
     const { data, error } = await supabase
   .from('profiles')
   .select('*')
 
-console.log('profiles data:', data)
-console.log('profiles error:', error)
-alert('Supabase data: ' + JSON.stringify(data))
 
     if (data && data.length > 0) {
   const firstUser = data[0]
