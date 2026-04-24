@@ -25,23 +25,41 @@ export default function BottomNav({ current, setPage }: Props) {
 
   // 動畫階段：idle / press / pop
   const [pressState, setPressState] = useState<'idle' | 'press' | 'pop'>('idle')
+  const [refreshingPage, setRefreshingPage] = useState<AppPage | null>(null)
 
   function handlePress(page: AppPage) {
+  // 點目前所在頁面的 icon：回到頂部 + 模擬刷新
+  if (current === page) {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+
+    setRefreshingPage(page)
+
+    window.dispatchEvent(
+      new CustomEvent('vibelink-refresh-page', {
+        detail: { page },
+      })
+    )
+
+    setTimeout(() => {
+      setRefreshingPage(null)
+    }, 700)
+  } else {
     setPage(page)
-
-    // Step1：先微縮
-    setPressState('press')
-
-    // Step2：快速放大
-    setTimeout(() => {
-      setPressState('pop')
-    }, 80)
-
-    // Step3：回到正常
-    setTimeout(() => {
-      setPressState('idle')
-    }, 260)
   }
+
+  setPressState('press')
+
+  setTimeout(() => {
+    setPressState('pop')
+  }, 80)
+
+  setTimeout(() => {
+    setPressState('idle')
+  }, 260)
+}
 
   // scale控制（關鍵）
   const scale =
@@ -85,10 +103,10 @@ export default function BottomNav({ current, setPage }: Props) {
                 className="flex h-full items-center justify-center"
               >
                 <Icon
-                  className={`h-[24px] w-[24px] transition-colors duration-300 ${
-                    active ? 'text-[#a855f7]' : 'text-black'
-                  }`}
-                />
+  className={`h-[24px] w-[24px] transition-all duration-300 ${
+    active ? 'text-[#a855f7]' : 'text-black'
+  } ${refreshingPage === key ? 'scale-110 rotate-[-8deg]' : 'scale-100 rotate-0'}`}
+/>
               </button>
             )
           })}
