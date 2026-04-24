@@ -196,17 +196,20 @@ export default function ProfilePage({
           <div className="text-[16px] leading-[1.45] text-[#333]">我今年20歲</div>
         </div>
 
-        <div className="mb-4 flex items-center gap-6 text-[15px] text-[#333]">
+        <button
+  type="button"
+  className=" mb-4 inline-flex h-[32px] min-w-[120px] items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-5 text-[14px] leading-none whitespace-nowrap text-[#222]"
+>
+  LINKPORT
+</button>
+
+        <div className="mt-4 mb-4 flex items-center gap-6 text-[15px] text-[#333]">
           <div className="flex items-center gap-2">
             <Camera size={18} />
             <span>20</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Smile size={18} />
-            <span>雙性戀</span>
-          </div>
-
+          
           <div className="flex items-center gap-2">
             <Tag size={18} />
             <span>單身</span>
@@ -219,13 +222,7 @@ export default function ProfilePage({
         </div>
 
         <div className="mb-4 flex w-full items-center gap-3">
-          <button
-            type="button"
-            className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
-            style={{ WebkitAppearance: 'none', appearance: 'none' }}
-          >
-            LINKPORT
-          </button>
+          
 
           <button
             type="button"

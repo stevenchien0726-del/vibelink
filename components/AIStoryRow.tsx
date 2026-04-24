@@ -195,7 +195,7 @@ const storyUsers: StoryUser[] = [
 ]
 
 function getInitialUnreadCount(user: StoryUser, index: number) {
-  const countMap = [3, 2, 0, 1, 7, 0, 4, 2, 0, 5]
+  const countMap = [3, 2, 0, 2, 1, 0, 1, 2, 0, 3]
   const fallback = Math.min(user.stories.length, 3)
   return countMap[index] ?? fallback
 }

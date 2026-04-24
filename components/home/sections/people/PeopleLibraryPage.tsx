@@ -11,6 +11,9 @@ import {
 import { Search } from 'lucide-react'
 import PeopleFolderPage from './PeopleFolderPage'
 
+import { useEffect } from 'react'
+import { supabase } from '../../../../lib/supabase'
+
 type PickedUser = {
   id: string
   name: string
@@ -47,12 +50,6 @@ const folders: FolderItem[] = [
   { id: 'high-reply', label: '高頻互動與回覆', emoji: '⚡' },
 ]
 
-const RECENT_PRIMARY_USER: PickedUser = {
-  id: 'user-1',
-  name: '小新',
-  avatar:
-    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
-}
 
 function getFolderName(id: string) {
   const map: Record<string, string> = {
@@ -71,12 +68,41 @@ function getFolderName(id: string) {
   return map[id] || 'People Library'
 }
 
+console.log('🔥 PeopleLibraryPage mounted')
 export default function PeopleLibraryPage({
   query,
   onClose,
   onPickUser,
 }: PeopleLibraryPageProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
+
+  const [recentUser, setRecentUser] = useState<PickedUser | null>(null)
+
+useEffect(() => {
+  console.log('🔥 useEffect running')
+  async function fetchUser() {
+    const { data, error } = await supabase
+  .from('profiles')
+  .select('*')
+
+console.log('profiles data:', data)
+console.log('profiles error:', error)
+alert('Supabase data: ' + JSON.stringify(data))
+
+    if (data && data.length > 0) {
+  const firstUser = data[0]
+
+  setRecentUser({
+    id: firstUser.id,
+    name: firstUser.username,
+    avatar:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
+  })
+}
+  }
+
+  fetchUser()
+}, [])
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const canDragCloseRef = useRef(true)
@@ -205,6 +231,7 @@ export default function PeopleLibraryPage({
                   <div className="flex h-[170px] w-full items-center justify-center rounded-[20px] bg-[#d9d9d9] px-4">
                     <FolderPreview
                       folderId={folder.id}
+                      recentUser={recentUser}
                       onOpenFolder={() => setSelectedFolder(folder.id)}
                       onOpenProfile={(userId) => {
                         console.log('open profile:', folder.id, userId)
@@ -293,32 +320,47 @@ function FolderPreview({
   onOpenFolder,
   onOpenProfile,
   onPickUser,
+  recentUser,   // ⭐ 加這行
 }: {
   folderId: string
   onOpenFolder: () => void
   onOpenProfile: (userId: string) => void
   onPickUser?: (payload: PickUserPayload) => void
+  recentUser: PickedUser | null   // ⭐ 加這行
 }) {
   return (
     <div className="grid w-full grid-cols-2 place-items-start gap-x-6 gap-y-5 pt-1">
       {folderId === 'recent' ? (
-        <UserAvatarWithName
-          user={RECENT_PRIMARY_USER}
-          onClick={(e) => {
-            const sourceRect = e.currentTarget.getBoundingClientRect()
+  <UserAvatarWithName
+    user={
+  recentUser || {
+    id: 'fallback-user',
+    name: '小新',
+    avatar:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
+  }
+}
+    onClick={(e) => {
+      const sourceRect = e.currentTarget.getBoundingClientRect()
 
-            onPickUser?.({
-              user: RECENT_PRIMARY_USER,
-              sourceRect,
-            })
-          }}
-        />
-      ) : (
-        <PlaceholderUserButton
-          userId="user-1"
-          onOpenProfile={onOpenProfile}
-        />
-      )}
+      onPickUser?.({
+        user:
+  recentUser || {
+    id: 'fallback-user',
+    name: '小新',
+    avatar:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
+  },
+        sourceRect,
+      })
+    }}
+  />
+) : (
+  <PlaceholderUserButton
+    userId="user-1"
+    onOpenProfile={onOpenProfile}
+  />
+)}
 
       <PlaceholderUserButton userId="user-2" onOpenProfile={onOpenProfile} />
 

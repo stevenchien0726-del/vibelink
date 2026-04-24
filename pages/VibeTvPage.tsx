@@ -89,7 +89,7 @@ export default function VibeTvPage() {
             </div>
           </div>
 
-          {/* Section 1 */}
+          {/* Section */}
           <section className="mb-6">
             <h2 className="mb-3 text-[20px] font-semibold text-[#222]">Vibe TV精選</h2>
 
@@ -97,7 +97,8 @@ export default function VibeTvPage() {
               data-horizontal-scroll="true"
               className="scrollbar-hide flex gap-2 overflow-x-auto pb-1"
             >
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((item) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map
+              ((item) => (
                 <div
                   key={item}
                   className="h-[150px] min-w-[110px] shrink-0 rounded-[10px] bg-[#d9d9d9]"
@@ -106,9 +107,9 @@ export default function VibeTvPage() {
             </div>
           </section>
 
-          {/* Section 2 */}
+          {/* Section */}
           <section>
-            <h2 className="mb-3 text-[20px] font-semibold text-[#222]">台灣Top10</h2>
+            <h2 className="mb-3 text-[20px] font-semibold text-[#222]">Top10影集</h2>
 
             <div
               data-horizontal-scroll="true"
@@ -123,7 +124,24 @@ export default function VibeTvPage() {
             </div>
           </section>
 
-          {/* Section 3 */}
+          {/* Section */}
+          <section>
+            <h2 className="mb-3 text-[20px] font-semibold text-[#222]">Top10電影</h2>
+
+            <div
+              data-horizontal-scroll="true"
+              className="scrollbar-hide flex gap-2 overflow-x-auto pb-1"
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((item) => (
+                <div
+                  key={item}
+                  className="h-[150px] min-w-[110px] shrink-0 rounded-[10px] bg-[#d9d9d9]"
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Section */}
 <section className="mt-6">
   <div className="mb-3 flex items-center justify-between">
     <h2 className="text-[20px] font-semibold text-[#222]">

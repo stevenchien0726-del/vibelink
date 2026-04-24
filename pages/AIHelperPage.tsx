@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, animate, useMotionValue, useTransform } from 'framer-motion'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
-import { fakeAiSearch } from '../lib/fakeAiSearch'
+import { fakeAiSearch } from '@/lib/fakeAiSearch'
 import { FakeUser, fakeUsers } from '../data/fakeUsers'
 import { X } from 'lucide-react'
 
@@ -762,9 +762,9 @@ const imgSrc = imagePool[photoIndex % imagePool.length]
                   <ChevronRightIcon />
                 </button>
 
-                <div className="pb-1 pt-3">
-                  <span className="text-[13px] font-medium text-[#888]">
-                     過去24小時聊天紀錄
+                <div className="pb-1 pt-6">
+                  <span className="text-[16px] font-medium text-[#888]">
+                     過去30天的聊天
                   </span>
                 </div>
               </div>

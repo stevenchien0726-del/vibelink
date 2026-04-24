@@ -61,6 +61,9 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   const [isTabBarPressed, setIsTabBarPressed] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
 
+  const [isTopBarHidden, setIsTopBarHidden] = useState(false)
+const lastScrollYRef = useRef(0)
+
   const accountSwitcherRef = useRef<HTMLDivElement | null>(null)
   const tabTouchStartX = useRef<number | null>(null)
   const tabTouchStartY = useRef<number | null>(null)
@@ -198,6 +201,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   const absY = Math.abs(deltaY)
   const isMostlyHorizontal = absX > absY
 
+
   if (isMostlyHorizontal && absX > 50) {
     if (deltaX < 0) {
       goToTab(activeTab + 1)
@@ -212,10 +216,32 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   tabTouchDeltaY.current = 0
 }
 
+function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
+  const currentY = e.currentTarget.scrollTop
+  const lastY = lastScrollYRef.current
+
+  if (currentY > lastY + 8 && currentY > 40) {
+    setIsTopBarHidden(true)
+  }
+
+  if (currentY < lastY - 8) {
+    setIsTopBarHidden(false)
+  }
+
+  lastScrollYRef.current = currentY
+}
+
   return (
-    <div className="relative flex min-h-screen flex-col bg-transparent px-4 pt-4 pb-2">
+    <div
+  onScroll={handleMessageScroll}
+  className="relative flex h-screen flex-col overflow-y-auto bg-transparent px-4 pt-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+>
       <div className="relative flex-1 px-0 pb-4 pt-[90px]">
-        <div className="fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
+        <div
+  className={`fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+    isTopBarHidden ? '-translate-y-full' : 'translate-y-0'
+  }`}
+>
           <div className="relative flex items-center justify-between">
             <div ref={accountSwitcherRef} className="relative">
               <button
