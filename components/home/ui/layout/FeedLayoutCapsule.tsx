@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 
-type LayoutMode = '1x1' | '2x2' | '3x3'
+type LayoutMode = '1x1' | '2x2'
 
 type FeedLayoutCapsuleProps = {
   layout: LayoutMode
@@ -28,11 +28,9 @@ export default function FeedLayoutCapsule({
   layout,
   onChangeLayout,
 }: FeedLayoutCapsuleProps) {
-  const nextLayout: LayoutMode =
-    layout === '1x1' ? '2x2' : layout === '2x2' ? '3x3' : '1x1'
+  const nextLayout: LayoutMode = layout === '1x1' ? '2x2' : '1x1'
 
-  const label =
-    layout === '1x1' ? '1x1' : layout === '2x2' ? '2x2' : '3x3'
+  const label = layout
 
   return (
     <motion.button

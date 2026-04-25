@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
-export type FeedMode = '1x1' | '2x2' | '3x3'
+export type FeedMode = '1x1' | '2x2'
 
 export type PostItem = {
   id: string
@@ -324,25 +324,6 @@ export default function FeedGrid({
       </div>
     )
   }
+  return null
 
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      {posts.slice(0, 9).map((post) => {
-        const image = getPostImages(post)[0]
-
-        return (
-          <div key={post.id}>
-            <div className="relative h-[190px] w-full overflow-hidden rounded-[18px] bg-[#dddddd]">
-              <img
-                src={image}
-                alt={post.author}
-                className="h-full w-full object-cover"
-                draggable={false}
-              />
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
 }

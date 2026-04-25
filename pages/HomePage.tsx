@@ -221,10 +221,8 @@ export default function HomePage({
     setIsFeedCapsulePressed(true)
 
     setFeedMode((prev) => {
-      if (prev === '1x1') return '2x2'
-      if (prev === '2x2') return '3x3'
-      return '1x1'
-    })
+  return prev === '1x1' ? '2x2' : '1x1'
+})
 
     window.setTimeout(() => {
       setIsFeedCapsulePressed(false)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Grid2x2,
@@ -27,6 +27,11 @@ import SettingsPage from '@/pages/SettingsPage'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import type { CapsulePosition } from '@/app/page'
+
+import { Plus } from 'lucide-react'
+import { X } from 'lucide-react'
+
+import { supabase } from '@/lib/supabase'
 
 import { Link as LinkIcon } from 'lucide-react'
 
@@ -68,10 +73,30 @@ function MenuItem({ icon, label, onClick }: MenuItemProps) {
   )
 }
 
+
 export default function ProfilePage({
   feedCapsulePosition,
   onChangeFeedCapsulePosition,
 }: ProfilePageProps) {
+  
+  useEffect(() => {
+  const fetchProfile = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, bio')
+      .limit(1)
+
+    console.log('✅ PROFILE DATA:', data)
+    console.log('❌ PROFILE ERROR:', error)
+
+    if (data && data.length > 0) {
+      setProfile(data[0])
+    }
+  }
+
+  fetchProfile()
+}, [])
+
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [isLinkPortOpen, setIsLinkPortOpen] = useState(false)
@@ -79,6 +104,8 @@ export default function ProfilePage({
   const [showSettingsPage, setShowSettingsPage] = useState(false)
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
   const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
+
+  const [profile, setProfile] = useState<any>(null)
 
   const gridItems = Array.from({ length: 9 })
   const albumItems = Array.from({ length: 5 })
@@ -186,8 +213,12 @@ export default function ProfilePage({
             <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
 
             <div>
-              <div className="text-[18px] font-medium text-[#222]">Steven</div>
-              <div className="text-[18px] font-medium text-[#444]">steven_07</div>
+              <div className="text-[18px] font-medium text-[#222]">
+  {profile?.display_name || profile?.username || 'Loading...'}
+</div>
+              <div className="text-[18px] font-medium text-[#444]">
+  {profile?.username || 'Loading...'}
+</div>
             </div>
           </div>
 
@@ -198,9 +229,10 @@ export default function ProfilePage({
         </div>
 
         <div className="mb-3">
-          <div className="text-[16px] leading-[1.45] text-[#333]">HI 大家好</div>
-          <div className="text-[16px] leading-[1.45] text-[#333]">我今年20歲</div>
-        </div>
+  <div className="text-[16px] leading-[1.45] text-[#333]">
+    {profile?.bio || 'Loading...'}
+  </div>
+</div>
 
         <div className="mb-4 flex items-center">
 
@@ -503,11 +535,11 @@ export default function ProfilePage({
           <div className="text-[18px] font-medium">LINKPORT</div>
 
           <button
-            onClick={() => setIsLinkPortOpen(false)}
-            className="absolute right-0 top-0 text-[20px]"
-          >
-            ✕
-          </button>
+  onClick={() => setIsLinkPortOpen(false)}
+  className="absolute right-0 top-0 flex h-[32px] w-[32px] items-center justify-center rounded-full hover:bg-[#e5e5e5]"
+>
+  <X size={23} />
+</button>
         </div>
 
         <div className="mb-4 h-[1px] bg-[#ddd]" />
@@ -531,9 +563,9 @@ export default function ProfilePage({
   </div>
 
   <div className="flex w-[160px] items-center gap-3 text-[#666]">
-    <span className="text-[22px]">＋</span>
-    <span>新增</span>
-  </div>
+  <Plus size={23} />
+  <span>新增</span>
+</div>
 
 </div>
       </motion.div>
