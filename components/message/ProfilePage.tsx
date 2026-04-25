@@ -28,6 +28,8 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import type { CapsulePosition } from '@/app/page'
 
+import { Link as LinkIcon } from 'lucide-react'
+
 type ProfilePageProps = {
   onCloseMenu?: () => void
   feedCapsulePosition: CapsulePosition
@@ -196,30 +198,25 @@ export default function ProfilePage({
           <div className="text-[16px] leading-[1.45] text-[#333]">我今年20歲</div>
         </div>
 
-        <button
-  type="button"
-  className=" mb-4 inline-flex h-[32px] min-w-[120px] items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-5 text-[14px] leading-none whitespace-nowrap text-[#222]"
->
-  LINKPORT
-</button>
+        <div className="mb-4 flex items-center">
 
-        <div className="mt-4 mb-4 flex items-center gap-6 text-[15px] text-[#333]">
-          <div className="flex items-center gap-2">
-            <Camera size={18} />
-            <span>20</span>
-          </div>
+  {/* LINKPORT */}
+  <button
+    type="button"
+    className="inline-flex h-[32px] items-center gap-2 rounded-[18px] border-[3px] border-[#8f8f8f] bg-transparent px-6 text-[14px] text-[#8B5CF6]"
+  >
+    <LinkIcon size={16}/>
+    <span className="text-[#8B5CF6]">LINKPORT</span>
+  </button>
 
-          
-          <div className="flex items-center gap-2">
-            <Tag size={18} />
-            <span>單身</span>
-          </div>
+  {/* 👉 關鍵：這行 */}
+  <div className="ml-8 flex items-center gap-1 text-[14px] text-[#444]">
+    <MapPin size={16} />
+    <span>台灣, 台北</span>
+  </div>
 
-          <div className="flex items-center gap-2">
-            <MapPin size={18} />
-            <span>台灣, 台北</span>
-          </div>
-        </div>
+</div>
+
 
         <div className="mb-4 flex w-full items-center gap-3">
           

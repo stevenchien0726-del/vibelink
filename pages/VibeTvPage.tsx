@@ -68,29 +68,44 @@ export default function VibeTvPage() {
           </div>
 
           {/* Hero Banner */}
-          <div className="mb-4 overflow-hidden rounded-[20px]">
-            <div
-              ref={bannerRef}
-              onScroll={handleBannerScroll}
-              data-horizontal-scroll="true"
-              className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto touch-pan-x overscroll-x-contain"
-            >
-              {bannerColors.map((color, index) => (
-                <div
-                  key={index}
-                  className="relative h-[200px] min-w-full shrink-0 snap-center"
-                  style={{ backgroundColor: color }}
-                >
-                  <div className="absolute right-4 top-4 rounded-full bg-black/15 px-3 py-1 text-[14px] text-[#555]">
-                    {index + 1}/{bannerColors.length}
-                  </div>
-                </div>
-              ))}
-            </div>
+<div className="mb-4">
+  <div className="overflow-hidden rounded-[20px]">
+    <div
+      ref={bannerRef}
+      onScroll={handleBannerScroll}
+      data-horizontal-scroll="true"
+      className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto touch-pan-x overscroll-x-contain"
+    >
+      {bannerColors.map((color, index) => (
+        <div
+          key={index}
+          className="relative h-[200px] min-w-full shrink-0 snap-center"
+          style={{ backgroundColor: color }}
+        >
+          <div className="absolute right-4 top-4 rounded-full bg-black/15 px-3 py-1 text-[14px] text-[#555]">
+            {index + 1}/{bannerColors.length}
           </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div className="mt-2 flex justify-center gap-2">
+  {bannerColors.map((_, index) => (
+    <div
+      key={index}
+      className={`h-[6px] w-[6px] rounded-full transition-all duration-300 ${
+        currentBanner === index
+          ? 'bg-[#8b5cf6]'   // 紫色
+          : 'bg-[#d1d1d1]'   // 灰色
+      }`}
+    />
+  ))}
+</div>
+</div>
 
           {/* Section */}
-          <section className="mb-6">
+          <section className="mt-6">
             <h2 className="mb-3 text-[20px] font-semibold text-[#222]">Vibe TV精選</h2>
 
             <div
@@ -108,7 +123,7 @@ export default function VibeTvPage() {
           </section>
 
           {/* Section */}
-          <section>
+          <section className="mt-6">
             <h2 className="mb-3 text-[20px] font-semibold text-[#222]">Top10影集</h2>
 
             <div
@@ -125,7 +140,7 @@ export default function VibeTvPage() {
           </section>
 
           {/* Section */}
-          <section>
+          <section className="mt-6">
             <h2 className="mb-3 text-[20px] font-semibold text-[#222]">Top10電影</h2>
 
             <div
