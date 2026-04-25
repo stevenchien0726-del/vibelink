@@ -17,11 +17,7 @@ import {
   Grid3x3,
   Settings,
   Megaphone,
-  Camera,
-  Smile,
-  Tag,
   MapPin,
-  CircleHelp,
 } from 'lucide-react'
 import SettingsPage from '@/pages/SettingsPage'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'

@@ -15,6 +15,7 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import type { CapsulePosition } from '@/app/page'
 import AIStoryRow from '@/components/AIStoryRow'
 
+import { Bell, HeartIcon } from 'lucide-react'
 
 import FeedGrid, { type FeedMode, type PostItem } from '@/components/home/sections/feed/FeedGrid'
 
