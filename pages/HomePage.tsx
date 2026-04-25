@@ -8,8 +8,6 @@ import {
   useMotionValue,
   useTransform,
 } from 'framer-motion'
-import { Bell, HeartIcon } from 'lucide-react'
-import FeedGrid from '@/components/home/sections/feed/FeedGrid'
 import SearchPage from '@/pages/SearchPage'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import FriendInvitePage from '@/pages/FriendInvitePage'
@@ -17,16 +15,9 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import type { CapsulePosition } from '@/app/page'
 import AIStoryRow from '@/components/AIStoryRow'
 
-type FeedMode = '1x1' | '2x2' | '3x3'
 
-type PostItem = {
-  id: string
-  author: string
-  text: string
-  likes: number
-  images: string[]
-  aiTags: string[]
-}
+import FeedGrid, { type FeedMode, type PostItem } from '@/components/home/sections/feed/FeedGrid'
+
 
 type StoryItem = {
   id: string
