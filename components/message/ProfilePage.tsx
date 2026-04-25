@@ -46,6 +46,7 @@ const activeColor = '#d89ad0'
 const inactiveColor = '#222'
 const MEMBERSHIP_URL = 'https://vibelink-j9m5-nrpr52s4p-stevenchien0726-dels-projects.vercel.app/'
 
+
 function openMembershipSite() {
   window.open(MEMBERSHIP_URL, '_blank')
 }
@@ -73,6 +74,7 @@ export default function ProfilePage({
 }: ProfilePageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [isLinkPortOpen, setIsLinkPortOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const [showSettingsPage, setShowSettingsPage] = useState(false)
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
@@ -151,17 +153,19 @@ export default function ProfilePage({
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[90px]">
         <div className="fixed top-0 left-1/2 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
   <div className="flex items-center justify-between">
-    <button
-      type="button"
-      onClick={() => {
-        setIsUploadOpen(false)
-        setIsMenuOpen((prev) => !prev)
-      }}
-      className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
-    >
-      <Menu size={18} />
-      <span>{isMenuOpen ? 'CLOSE' : 'MENU'}</span>
-    </button>
+    <motion.button
+  type="button"
+  onClick={() => {
+    setIsUploadOpen(false)
+    setIsMenuOpen((prev) => !prev)
+  }}
+  whileTap={{ scale: 0.9 }}
+  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+  className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
+>
+  <Menu size={18} />
+  <span>{isMenuOpen ? 'CLOSE' : 'MENU'}</span>
+</motion.button>
 
     <button
       type="button"
@@ -201,13 +205,22 @@ export default function ProfilePage({
         <div className="mb-4 flex items-center">
 
   {/* LINKPORT */}
-  <button
-    type="button"
-    className="inline-flex h-[32px] items-center gap-2 rounded-[18px] border-[3px] border-[#8f8f8f] bg-transparent px-6 text-[14px] text-[#8B5CF6]"
-  >
-    <LinkIcon size={16}/>
-    <span className="text-[#8B5CF6]">LINKPORT</span>
-  </button>
+  <motion.button
+  type="button"
+  onClick={() => setIsLinkPortOpen(true)}
+  whileTap={{ scale: 0.9 }} // 👈 按下去縮
+  initial={{ scale: 1 }}
+  animate={{ scale: 1 }}
+  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+  className="
+    inline-flex h-[32px] items-center gap-2
+    rounded-[18px] border-[3px] border-[#8f8f8f]
+    bg-transparent px-6 text-[14px] text-[#8B5CF6]
+  "
+>
+  <LinkIcon size={16}/>
+  <span className="text-[#8B5CF6]">LINKPORT</span>
+</motion.button>
 
   {/* 👉 關鍵：這行 */}
   <div className="ml-8 flex items-center gap-1 text-[14px] text-[#444]">
@@ -380,8 +393,8 @@ export default function ProfilePage({
 
   {/* 第4頁（收藏） */}
   <div className="w-full shrink-0">
-    <div className="mb-3 rounded-[16px] bg-[#e3e3e3] px-4 py-[10px]">
-      <div className="flex items-center justify-between">
+    
+      <div className="mb-4 mt-3 flex items-center justify-between">
         <span className="text-[16px] font-medium text-[#111]">
           我的收藏
         </span>
@@ -414,7 +427,7 @@ export default function ProfilePage({
           </button>
         </div>
       </div>
-    </div>
+    
 
     <div className="grid grid-cols-3 gap-[2px]">
       {gridItems.map((_, index) => (
@@ -459,6 +472,74 @@ export default function ProfilePage({
           />
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+  {isLinkPortOpen && (
+    <>
+      {/* 背景遮罩 */}
+      <motion.div
+        className="fixed inset-0 z-[200] bg-black/30"
+        onClick={() => setIsLinkPortOpen(false)}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      />
+
+      {/* 底部 Sheet */}
+      <motion.div
+        className="fixed bottom-0 left-1/2 z-[210] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[#f3f3f3] px-5 pt-4 pb-6"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+      >
+        {/* 上方拉條 */}
+        <div className="mb-3 flex justify-center">
+          <div className="h-[4px] w-[40px] rounded-full bg-[#bbb]" />
+        </div>
+
+        {/* Header */}
+        <div className="relative mb-4 text-center">
+          <div className="text-[18px] font-medium">LINKPORT</div>
+
+          <button
+            onClick={() => setIsLinkPortOpen(false)}
+            className="absolute right-0 top-0 text-[20px]"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="mb-4 h-[1px] bg-[#ddd]" />
+
+        {/* Link list */}
+        <div className="flex flex-col items-center gap-7 text-[18px]">
+
+  <div className="flex w-[160px] items-center gap-3">
+    <LinkIcon size={20} />
+    <span>Instagram</span>
+  </div>
+
+  <div className="flex w-[160px] items-center gap-3">
+    <LinkIcon size={20} />
+    <span>TIKTOK</span>
+  </div>
+
+  <div className="flex w-[160px] items-center gap-3">
+    <LinkIcon size={20} />
+    <span>Onlyfans</span>
+  </div>
+
+  <div className="flex w-[160px] items-center gap-3 text-[#666]">
+    <span className="text-[22px]">＋</span>
+    <span>新增</span>
+  </div>
+
+</div>
+      </motion.div>
+    </>
+  )}
+</AnimatePresence>
 
       <AnimatePresence>
         {isMenuOpen && (
