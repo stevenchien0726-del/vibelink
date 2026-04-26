@@ -1,13 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useMemo, useRef, useState } from 'react'
 import {
   Check,
-  ChevronDown,
-  Mail,
   PencilLine,
-  Plus,
   Search,
   UserRound,
   Users,
@@ -18,10 +14,6 @@ import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPa
 type MessagePageProps = {
   onOpenMenu?: () => void
 }
-
-const tabs = ['全部', '最愛', '追蹤中'] as const
-
-const accounts = [{ id: 'a1', name: 'Sky_07_21' }]
 
 const searchAccounts = [
   { id: 'u1', name: 'Ryan_88', sub: '最近追蹤' },
@@ -40,10 +32,6 @@ const groupMembers = [
 
 export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
-  const [isFriendInviteOpen, setIsFriendInviteOpen] = useState(false)
-
-  const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false)
-  const [selectedAccountId, setSelectedAccountId] = useState(accounts[0].id)
   const [isTopCapsulePressed, setIsTopCapsulePressed] = useState(false)
 
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false)
@@ -57,39 +45,8 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
     'g3',
   ])
 
-  const [isTabBarPressed, setIsTabBarPressed] = useState(false)
-  const [activeTab, setActiveTab] = useState(0)
-
   const [isTopBarHidden, setIsTopBarHidden] = useState(false)
-const lastScrollYRef = useRef(0)
-
-  const accountSwitcherRef = useRef<HTMLDivElement | null>(null)
-  const tabTouchStartX = useRef<number | null>(null)
-  const tabTouchStartY = useRef<number | null>(null)
-  const tabTouchDeltaX = useRef(0)
-  const tabTouchDeltaY = useRef(0)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        accountSwitcherRef.current &&
-        !accountSwitcherRef.current.contains(event.target as Node)
-      ) {
-        setIsAccountSwitcherOpen(false)
-      }
-    }
-
-    if (isAccountSwitcherOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isAccountSwitcherOpen])
-
-  const selectedAccount =
-    accounts.find((account) => account.id === selectedAccountId) ?? accounts[0]
+  const lastScrollYRef = useRef(0)
 
   const filteredAccounts = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
@@ -119,21 +76,18 @@ const lastScrollYRef = useRef(0)
   function openSearchPanel() {
     triggerTopCapsuleFeedback()
     closeAllTopPanels()
-    setIsAccountSwitcherOpen(false)
     setIsSearchPanelOpen(true)
   }
 
   function openEditPanel() {
     triggerTopCapsuleFeedback()
     closeAllTopPanels()
-    setIsAccountSwitcherOpen(false)
     setIsEditPanelOpen(true)
   }
 
   function openCreateGroupPanel() {
     triggerTopCapsuleFeedback()
     closeAllTopPanels()
-    setIsAccountSwitcherOpen(false)
     setIsCreateGroupOpen(true)
   }
 
@@ -145,148 +99,79 @@ const lastScrollYRef = useRef(0)
     )
   }
 
-  function goToTab(index: number) {
-  if (index < 0 || index >= tabs.length) return
-  setActiveTab(index)
-}
+  function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
+    const currentY = e.currentTarget.scrollTop
+    const lastY = lastScrollYRef.current
 
-  function canAllowOuterPageSwipe(deltaX: number) {
-    const atFirstTab = activeTab === 0
-    const atLastTab = activeTab === 2
-
-    if (deltaX > 0 && atFirstTab) return true
-    if (deltaX < 0 && atLastTab) return true
-
-    return false
-  }
-
-  function handleTabTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-    const touch = e.touches[0]
-    tabTouchStartX.current = touch.clientX
-    tabTouchStartY.current = touch.clientY
-    tabTouchDeltaX.current = 0
-    tabTouchDeltaY.current = 0
-  }
-
-  function handleTabTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-  if (tabTouchStartX.current == null || tabTouchStartY.current == null) return
-
-  const touch = e.touches[0]
-  const deltaX = touch.clientX - tabTouchStartX.current
-  const deltaY = touch.clientY - tabTouchStartY.current
-
-  tabTouchDeltaX.current = deltaX
-  tabTouchDeltaY.current = deltaY
-
-  const absX = Math.abs(deltaX)
-  const absY = Math.abs(deltaY)
-  const isMostlyHorizontal = absX > absY
-
-  if (!isMostlyHorizontal) return
-
-  // 只要這一區在做水平滑動，就先擋外層 page swipe
-  e.stopPropagation()
-
-  // 邊界時也不要讓整頁切出去
-  if (absX > 8) {
-    e.preventDefault()
-  }
-}
-
-  function handleTabTouchEnd() {
-  const deltaX = tabTouchDeltaX.current
-  const deltaY = tabTouchDeltaY.current
-  const absX = Math.abs(deltaX)
-  const absY = Math.abs(deltaY)
-  const isMostlyHorizontal = absX > absY
-
-
-  if (isMostlyHorizontal && absX > 50) {
-    if (deltaX < 0) {
-      goToTab(activeTab + 1)
-    } else {
-      goToTab(activeTab - 1)
+    if (currentY > lastY + 8 && currentY > 40) {
+      setIsTopBarHidden(true)
     }
+
+    if (currentY < lastY - 8) {
+      setIsTopBarHidden(false)
+    }
+
+    lastScrollYRef.current = currentY
   }
-
-  tabTouchStartX.current = null
-  tabTouchStartY.current = null
-  tabTouchDeltaX.current = 0
-  tabTouchDeltaY.current = 0
-}
-
-function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
-  const currentY = e.currentTarget.scrollTop
-  const lastY = lastScrollYRef.current
-
-  if (currentY > lastY + 8 && currentY > 40) {
-    setIsTopBarHidden(true)
-  }
-
-  if (currentY < lastY - 8) {
-    setIsTopBarHidden(false)
-  }
-
-  lastScrollYRef.current = currentY
-}
 
   return (
     <div
-  onScroll={handleMessageScroll}
-  className="relative flex h-screen flex-col overflow-y-auto bg-transparent px-4 pt-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
->
+      onScroll={handleMessageScroll}
+      className="relative flex h-screen flex-col overflow-y-auto bg-transparent px-4 pt-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
       <div className="relative flex-1 px-0 pb-4 pt-[70px]">
         <div
-  className={`fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-    isTopBarHidden ? '-translate-y-full' : 'translate-y-0'
-  }`}
->
-          <div className="flex items-center justify-between rounded-full bg-[#d9d9d9] px-4 py-[10px]">
+          className={`fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            isTopBarHidden ? '-translate-y-full' : 'translate-y-0'
+          }`}
+        >
+          <div
+            className="flex items-center justify-between rounded-full bg-[#d9d9d9] px-4 py-[10px] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+            style={{
+              transform: isTopCapsulePressed ? 'scale(1.03)' : 'scale(1)',
+              transformOrigin: 'center center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                closeAllTopPanels()
+                setIsPeopleLibraryOpen(true)
+              }}
+              className="flex items-center gap-2 rounded-full px-3 py-[6px] transition active:scale-[0.96]"
+            >
+              <UserRound size={22} strokeWidth={2.3} />
+              <span className="text-[15px] font-medium text-[#111]">
+                People Library
+              </span>
+            </button>
 
-  {/* 左：People Library */}
-  <button
-    type="button"
-    onClick={() => {
-      closeAllTopPanels()
-      setIsAccountSwitcherOpen(false)
-      setIsPeopleLibraryOpen(true)
-    }}
-    className="flex items-center gap-2 rounded-full px-3 py-[6px] transition active:scale-[0.96]"
-  >
-    <UserRound size={22} strokeWidth={2.3} />
-    <span className="text-[15px] font-medium text-[#111]">
-      People Library
-    </span>
-  </button>
+            <div className="flex items-center gap-6 pl-3">
+              <button
+                type="button"
+                onClick={openSearchPanel}
+                className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
+              >
+                <Search size={22} strokeWidth={2.5} />
+              </button>
 
-  {/* 右：功能 icon */}
-  <div className="flex items-center gap-6 pl-3">
-    <button
-      type="button"
-      onClick={openSearchPanel}
-      className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
-    >
-      <Search size={22} strokeWidth={2.5} />
-    </button>
+              <button
+                type="button"
+                onClick={openEditPanel}
+                className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
+              >
+                <PencilLine size={22} strokeWidth={2.5} />
+              </button>
 
-    <button
-      type="button"
-      onClick={openEditPanel}
-      className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
-    >
-      <PencilLine size={22} strokeWidth={2.5} />
-    </button>
-
-    <button
-      type="button"
-      onClick={openCreateGroupPanel}
-      className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
-    >
-      <Users size={22} strokeWidth={2.5} />
-    </button>
-  </div>
-
-</div>
+              <button
+                type="button"
+                onClick={openCreateGroupPanel}
+                className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
+              >
+                <Users size={22} strokeWidth={2.5} />
+              </button>
+            </div>
+          </div>
         </div>
 
         {hasAnyTopPanelOpen && (
@@ -296,7 +181,7 @@ function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
               onClick={closeAllTopPanels}
             />
 
-            <div className="fixed left-1/2 top-[140px] z-[70] w-[calc(100%-32px)] max-w-[398px] -translate-x-1/2">
+            <div className="fixed left-1/2 top-[92px] z-[70] w-[calc(100%-32px)] max-w-[398px] -translate-x-1/2">
               <div
                 className="animate-[fadeIn_0.2s_ease-out]"
                 onClick={(e) => e.stopPropagation()}
@@ -381,7 +266,7 @@ function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
                           編輯訊息介面
                         </div>
                         <div className="mt-1 text-[12px] text-[#666]">
-                          管理釘選/隱藏/訊息排序
+                          管理釘選 / 隱藏 / 訊息排序
                         </div>
                       </div>
 
@@ -399,7 +284,20 @@ function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
                         <button
                           type="button"
                           className="flex items-center justify-between rounded-[22px] bg-white/45 px-4 py-4 text-left active:scale-[0.99]"
-                        />
+                        >
+                          <span className="text-[15px] text-[#111]">
+                            釘選重要聊天
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex items-center justify-between rounded-[22px] bg-white/45 px-4 py-4 text-left active:scale-[0.99]"
+                        >
+                          <span className="text-[15px] text-[#111]">
+                            隱藏低互動聊天
+                          </span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -520,113 +418,22 @@ function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
           </>
         )}
 
-
-        <motion.div
-  className="relative mb-4 h-[54px] rounded-full bg-[#CACACA] p-[4px]"
-  animate={{
-    scale: isTabBarPressed ? 0.985 : 1,
-  }}
-  transition={{
-    duration: 0.16,
-    ease: [0.22, 1, 0.36, 1],
-  }}
-  onTouchStart={() => setIsTabBarPressed(true)}
-  onTouchEnd={() => setIsTabBarPressed(false)}
-  onTouchCancel={() => setIsTabBarPressed(false)}
-  onMouseDown={() => setIsTabBarPressed(true)}
-  onMouseUp={() => setIsTabBarPressed(false)}
-  onMouseLeave={() => setIsTabBarPressed(false)}
->
-  <div className="relative grid h-full grid-cols-3">
-    <div
-      className="pointer-events-none absolute top-0 bottom-0 rounded-full bg-[#d9d9d9] transition-all duration-300 ease-out"
-      style={{
-        left: `${activeTab * 33.3333}%`,
-        width: '33.3333%',
-      }}
-    />
-
-    {tabs.map((tab, index) => (
-      <motion.button
-        key={tab}
-        type="button"
-        onClick={() => goToTab(index)}
-        whileTap={{ scale: 0.97 }}
-        transition={{
-          duration: 0.12,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-        className="relative z-[2] flex h-full items-center justify-center rounded-full text-[18px] text-[#111]"
-      >
-        {tab}
-      </motion.button>
-    ))}
-  </div>
-</motion.div>
-
-        <div
-  data-no-page-swipe="true"
-  className="overflow-hidden touch-pan-y"
-  onTouchStart={handleTabTouchStart}
-  onTouchMove={handleTabTouchMove}
-  onTouchEnd={handleTabTouchEnd}
->
-          <div
-            className="flex w-full transition-transform duration-300 ease-out"
-            style={{
-              transform: `translateX(-${activeTab * 100}%)`,
-            }}
-          >
-            <div className="w-full shrink-0">
-              <div className="flex flex-col gap-7">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <button
-                    key={`all-${index}`}
-                    type="button"
-                    className="flex items-center gap-4 text-left"
-                  >
-                    <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="w-full shrink-0">
-              <div className="flex flex-col gap-7">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <button
-                    key={`favorite-${index}`}
-                    type="button"
-                    className="flex items-center gap-4 text-left"
-                  >
-                    <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="w-full shrink-0">
-              <div className="flex flex-col gap-7">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <button
-                    key={`following-${index}`}
-                    type="button"
-                    className="flex items-center gap-4 text-left"
-                  >
-                    <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+        <div className="flex flex-col gap-7 pt-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <button
+              key={`message-${index}`}
+              type="button"
+              className="flex items-center gap-4 text-left"
+            >
+              <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
+            </button>
+          ))}
         </div>
       </div>
 
       {isPeopleLibraryOpen && (
         <PeopleLibraryPage onClose={() => setIsPeopleLibraryOpen(false)} />
       )}
-
-      
     </div>
   )
 }
