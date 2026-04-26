@@ -626,9 +626,7 @@ function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
         <PeopleLibraryPage onClose={() => setIsPeopleLibraryOpen(false)} />
       )}
 
-      {isFriendInviteOpen && (
-        <FriendInvitePage onClose={() => setIsFriendInviteOpen(false)} />
-      )}
+      
     </div>
   )
 }

@@ -133,7 +133,6 @@ export default function HomePage({
   const [feedMode, setFeedMode] = useState<FeedMode>('1x1')
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false)
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
-  const [isFriendInviteOpen, setIsFriendInviteOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [searchText, setSearchText] = useState('')
@@ -628,11 +627,6 @@ export default function HomePage({
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {isFriendInviteOpen && (
-          <FriendInvitePage onClose={() => setIsFriendInviteOpen(false)} />
-        )}
-      </AnimatePresence>
     </div>
   )
 }
