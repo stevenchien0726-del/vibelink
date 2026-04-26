@@ -1,18 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+
+import CreatePostBox, {
+  type CreatePostBoxRef,
+  type CreatedPostPayload,
+} from '@/components/CreatePostBox'
 
 type UploadTab = 'video' | 'post' | 'album'
 
 type UploadFullPageProps = {
   onClose: () => void
+  onPostCreated?: (post: CreatedPostPayload) => void
 }
 
 export default function UploadFullPage({
   onClose,
+  onPostCreated,
 }: UploadFullPageProps) {
   const [activeTab, setActiveTab] = useState<UploadTab>('post')
+  const createPostRef = useRef<CreatePostBoxRef>(null)
 
   return (
     <motion.div
@@ -64,6 +72,11 @@ export default function UploadFullPage({
 
             <button
               type="button"
+              onClick={() => {
+                if (activeTab === 'post') {
+                  createPostRef.current?.submitPost()
+                }
+              }}
               style={{
                 height: '40px',
                 minWidth: '120px',
@@ -83,61 +96,25 @@ export default function UploadFullPage({
             </button>
           </div>
 
+          <div className="h-[72px] shrink-0" />
           <div className="flex-1" />
+
+          {activeTab === 'post' && (
+            <div className="mb-0">
+              <CreatePostBox
+                ref={createPostRef}
+                onSuccess={(post) => {
+                  onPostCreated?.(post)
+                  onClose()
+                }}
+              />
+            </div>
+          )}
+
+          <div className="h-[24px] shrink-0" />
 
           <div className="pb-2">
             <AnimatePresence mode="wait">
-              {activeTab === 'post' && (
-                <motion.div
-                  key="post-actions"
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 12 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-4 flex flex-col items-center gap-3"
-                >
-                  <button
-                    type="button"
-                    style={{
-                      height: '40px',
-                      minWidth: '180px',
-                      padding: '0 24px',
-                      borderRadius: '12px',
-                      background: '#e1e1e1',
-                      color: '#111111',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: 'none',
-                    }}
-                  >
-                    我的手機相簿
-                  </button>
-
-                  <button
-                    type="button"
-                    style={{
-                      height: '40px',
-                      minWidth: '180px',
-                      padding: '0 24px',
-                      borderRadius: '12px',
-                      background: '#e1e1e1',
-                      color: '#111111',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: 'none',
-                    }}
-                  >
-                    打開相機
-                  </button>
-                </motion.div>
-              )}
-
               {activeTab === 'video' && (
                 <motion.div
                   key="video-actions"
@@ -241,61 +218,59 @@ export default function UploadFullPage({
               )}
             </AnimatePresence>
 
-            <div
-  className="relative grid grid-cols-3 rounded-[18px] bg-[#dddddd] p-[4px]"
->
-  <motion.div
-    className="absolute top-[4px] bottom-[4px] rounded-[14px] bg-[#f0f0f0]"
-    animate={{
-      left:
-        activeTab === 'video'
-          ? '4px'
-          : activeTab === 'post'
-          ? 'calc(33.333% + 1.5px)'
-          : 'calc(66.666% - 1px)',
-      width: 'calc(33.333% - 2.7px)',
-    }}
-    transition={{
-      type: 'spring',
-      stiffness: 360,
-      damping: 30,
-      mass: 0.9,
-    }}
-  />
+            <div className="relative grid grid-cols-3 rounded-[18px] bg-[#dddddd] p-[4px]">
+              <motion.div
+                className="absolute top-[4px] bottom-[4px] rounded-[14px] bg-[#f0f0f0]"
+                animate={{
+                  left:
+                    activeTab === 'video'
+                      ? '4px'
+                      : activeTab === 'post'
+                      ? 'calc(33.333% + 1.5px)'
+                      : 'calc(66.666% - 1px)',
+                  width: 'calc(33.333% - 2.7px)',
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 360,
+                  damping: 30,
+                  mass: 0.9,
+                }}
+              />
 
-  <button
-    type="button"
-    onClick={() => setActiveTab('video')}
-    className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
-    style={{
-      color: activeTab === 'video' ? '#111111' : '#666666',
-    }}
-  >
-    短影片
-  </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('video')}
+                className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
+                style={{
+                  color: activeTab === 'video' ? '#111111' : '#666666',
+                }}
+              >
+                短影片
+              </button>
 
-  <button
-    type="button"
-    onClick={() => setActiveTab('post')}
-    className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
-    style={{
-      color: activeTab === 'post' ? '#111111' : '#666666',
-    }}
-  >
-    貼文
-  </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('post')}
+                className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
+                style={{
+                  color: activeTab === 'post' ? '#111111' : '#666666',
+                }}
+              >
+                貼文
+              </button>
 
-  <button
-    type="button"
-    onClick={() => setActiveTab('album')}
-    className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
-    style={{
-      color: activeTab === 'album' ? '#111111' : '#666666',
-    }}
-  >
-    限時動態
-  </button>
-</div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('album')}
+                className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
+                style={{
+                  color: activeTab === 'album' ? '#111111' : '#666666',
+                }}
+              >
+                限時動態
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>

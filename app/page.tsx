@@ -8,6 +8,7 @@ import ProfilePage from '@/components/message/ProfilePage'
 import VibeTvPage from '@/pages/VibeTvPage'
 import BottomNav from '@/components/home/ui/nav/BottomNav'
 
+
 export type AppPage = 'home' | 'ai' | 'message' | 'profile' | 'tv'
 export type CapsulePosition = '左' | '中' | '右'
 

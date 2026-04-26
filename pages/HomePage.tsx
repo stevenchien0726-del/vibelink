@@ -18,6 +18,7 @@ import { Bell, HeartIcon } from 'lucide-react'
 
 import FeedGrid, { type FeedMode, type PostItem } from '@/components/home/sections/feed/FeedGrid'
 
+import { supabase } from '@/lib/supabase'
 
 type StoryItem = {
   id: string
@@ -26,6 +27,12 @@ type StoryItem = {
 
 type HomePageProps = {
   feedCapsulePosition: CapsulePosition
+}
+
+type CreatedPostPayload = {
+  id: string
+  caption: string
+  imageUrl: string
 }
 
 const mockPosts: PostItem[] = [
@@ -131,6 +138,24 @@ export default function HomePage({
   feedCapsulePosition,
 }: HomePageProps) {
   const [feedMode, setFeedMode] = useState<FeedMode>('1x1')
+  const [realPosts, setRealPosts] = useState<PostItem[]>([])
+  useEffect(() => {
+  loadPosts()
+}, [])
+
+function handlePostCreated(post: CreatedPostPayload) {
+  const newPost: PostItem = {
+    id: post.id,
+    author: 'Vibelink User',
+    text: post.caption || '',
+    likes: 0,
+    images: [post.imageUrl],
+    aiTags: ['真實發文'],
+  }
+
+  setRealPosts((prev) => [newPost, ...prev])
+}
+
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false)
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -160,6 +185,52 @@ export default function HomePage({
   const storyCardOpacity = useTransform(storyDragY, [0, 320], [1, 0.72])
   const storyOverlayOpacity = useTransform(storyDragY, [0, 320], [1, 0.86])
 
+  async function loadPosts() {
+  const { data, error } = await supabase
+    .from('posts')
+    .select(`
+      id,
+      caption,
+      created_at,
+      profiles (
+        username,
+        display_name,
+        avatar_url
+      ),
+      post_images (
+        image_url,
+        order_index
+      )
+    `)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('讀取 posts 失敗:', error)
+    return
+  }
+
+
+  const mappedPosts: PostItem[] = (data ?? []).map((post: any) => {
+    const images = [...(post.post_images ?? [])]
+      .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+      .map((img) => img.image_url)
+
+    return {
+      id: post.id,
+      author:
+        post.profiles?.display_name ||
+        post.profiles?.username ||
+        'Vibelink User',
+      text: post.caption || '',
+      likes: 0,
+      images,
+      aiTags: ['真實發文'],
+    }
+  })
+
+  setRealPosts(mappedPosts)
+}
+  
   useEffect(() => {
     function handleScroll() {
       const currentY = window.scrollY || window.pageYOffset
@@ -561,15 +632,14 @@ export default function HomePage({
 
             )}
       </AnimatePresence>
-    </motion.div>
-                
-
-            
-          
+    </motion.div> 
 
     <AnimatePresence>
       {isUploadOpen && (
-        <UploadFullPage onClose={() => setIsUploadOpen(false)} />
+        <UploadFullPage
+  onClose={() => setIsUploadOpen(false)}
+  onPostCreated={handlePostCreated}
+/>
       )}
     </AnimatePresence>
 
@@ -582,10 +652,10 @@ export default function HomePage({
   data-block-page-swipe="true"
 >
   <FeedGrid
-    posts={mockPosts}
-    feedMode={feedMode}
-    setFeedMode={setFeedMode}
-  />
+  posts={realPosts.length > 0 ? realPosts : mockPosts}
+  feedMode={feedMode}
+  setFeedMode={setFeedMode}
+/>
 </section>
 
         <div className="pointer-events-none fixed bottom-[96px] left-0 right-0 z-[24] mx-auto w-full max-w-[430px] px-4">
