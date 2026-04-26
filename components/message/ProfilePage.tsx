@@ -380,8 +380,8 @@ export default function ProfilePage({
 
     {/* 第3頁（精選限動） */}
   <div className="w-full shrink-0">
-    <div className="mb-3 flex items-center justify-between px-[2px]">
-      <span className="text-[22px] font-medium">
+    <div className="mb-3 mt-2 flex items-center justify-between px-[2px]">
+      <span className="text-[16px] font-medium">
         <span className="ml-[1px] text-[#111]">精選限動</span>
       </span>
 
@@ -422,7 +422,7 @@ export default function ProfilePage({
   {/* 第4頁（收藏） */}
   <div className="w-full shrink-0">
     
-      <div className="mb-4 mt-3 flex items-center justify-between">
+      <div className="mb-3 mt-2 flex items-center justify-between">
         <span className="text-[16px] font-medium text-[#111]">
           我的收藏
         </span>

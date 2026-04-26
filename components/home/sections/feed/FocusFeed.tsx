@@ -55,26 +55,7 @@ export default function FocusFeed({
           </button>
         </div>
 
-        <button className="h-[46px] rounded-full bg-[#d9d9d9] px-4 flex items-center gap-2 text-[18px] font-medium leading-none shrink-0">
-          <svg width="28" height="20" viewBox="0 0 34 24" fill="none">
-            <rect
-              x="1.5"
-              y="1.5"
-              width="31"
-              height="21"
-              rx="2.5"
-              stroke="black"
-              strokeWidth="3"
-            />
-            <path
-              d="M4 4L17 14L30 4"
-              stroke="black"
-              strokeWidth="3"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <span>發送邀請</span>
-        </button>
+        
       </section>
 
       <section className="px-5 pt-6 pb-28 relative z-10">

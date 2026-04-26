@@ -360,11 +360,8 @@ export default function AIStoryRow() {
 
   return (
     <>
-      <div className="px-3 pt-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-[15px] font-semibold text-black">限時動態</div>
-        </div>
-
+      <div className="px-3 pt-2">
+        
         <div
           data-no-page-swipe="true"
           className="scrollbar-hide flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory touch-pan-x"

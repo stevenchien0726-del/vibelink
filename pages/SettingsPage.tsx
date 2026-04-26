@@ -176,7 +176,7 @@ export default function SettingsPage({
               </span>
 
               <span className="text-[16px] font-medium text-[#222]">
-                自由化版面膠囊位置
+                版面模式膠囊
               </span>
             </div>
 
@@ -272,25 +272,27 @@ export default function SettingsPage({
             <Divider />
 
             <SettingsRow
+              icon={<MessageCircle size={21} strokeWidth={2.1} />}
+              label="訊息和留言"
+              onClick={onMessagesClick}
+            />
+
+            
+            <Divider />
+
+            <SettingsRow
               icon={<Ban size={21} strokeWidth={2.1} />}
               label="已封鎖"
               onClick={onBlockedClick}
             />
 
+            
             <Divider />
 
             <SettingsRow
               icon={<Globe size={21} strokeWidth={2.1} />}
               label="語言"
               onClick={onLanguageClick}
-            />
-
-            <Divider />
-
-            <SettingsRow
-              icon={<MessageCircle size={21} strokeWidth={2.1} />}
-              label="訊息和留言"
-              onClick={onMessagesClick}
             />
           </div>
         </div>

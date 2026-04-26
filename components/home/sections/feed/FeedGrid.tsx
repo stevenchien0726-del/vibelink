@@ -269,13 +269,7 @@ export default function FeedGrid({
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[14px] font-medium text-[#222] transition active:scale-[0.96]"
-                >
-                  <Mail size={18} strokeWidth={2.1} />
-                  <span>發送邀請</span>
-                </button>
+                
               </div>
 
               <div className="mt-3 text-[16px] text-[#444]">{post.text}</div>
