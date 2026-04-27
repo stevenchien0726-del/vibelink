@@ -437,7 +437,7 @@ const finalQuery =
         <div key={user.id} className="space-y-3">
           {/* 候選人標題 + 分析 */}
           <div className="px-1">
-            <div className="mb-1 text-[15px] font-semibold text-[#1f1f1f]">
+            <div className="mb-2 text-[15px] font-semibold text-[#1f1f1f]">
   {user.name}
 </div>
 
@@ -445,19 +445,10 @@ const finalQuery =
   {getCandidateDescription(user)}
 </div>
 
-            <div className="mt-2 text-[13px] leading-[1.45] text-[#3a3a3a]">
-              社群照片感：{user.tags.join('、')}
-            </div>
           </div>
 
           {/* 候選人相片牆 */}
-<div className="space-y-2">
-  <div className="text-[16px] font-medium text-[#6b4f7f]">
-    {user.name} 的相片牆
-  </div>
-
-
- 
+<div className="space-y-3">
 
   <div
   data-horizontal-scroll="true"
