@@ -20,31 +20,28 @@ const plans = [
     features: {
       vibeTv: [
         { label: '可觀看 Vibe TV 所有內容', included: true },
-        { label: '最多3部裝置同時觀看', included: true },
+        { label: '最多4部裝置同時觀看', included: true },
       ],
       vibelink: [
-        { label: 'AI雷達無限使用', included: true },
+        { label: 'AI雷達:每周GPT-5 mini 模型上限20則，達到次數轉GPT-5 nano每周額外100則', included: true },
         { label: 'Vibelink 零廣告體驗', included: false },
       ],
-      vibebook: [{ label: '無限閱讀', included: false }],
     },
   },
   {
     id: 'premium',
     name: 'Vibe Premium',
-    price: 390,
+    price: 420,
     accent: 'from-fuchsia-500 to-pink-500',
     recommended: true,
     features: {
       vibeTv: [
-        { label: '可觀看 Vibe TV 所有內容', included: true },
-        { label: '最多4部裝置同時觀看', included: true },
+        { label: '含Vibe Plus所有Vibe TV體驗', included: true },
       ],
       vibelink: [
-        { label: 'AI雷達無限使用', included: true },
+        { label: 'AI雷達:每周GPT-5模型上限30則，達到次數轉GPT-5 mini 模型無限使用', included: true },
         { label: 'Vibelink 零廣告體驗', included: true },
       ],
-      vibebook: [{ label: '無限閱讀', included: true }],
     },
   },
 ] as const
@@ -78,9 +75,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     icon = <Film className="h-5 w-5 text-current" />
   } else if (children === 'Vibelink') {
     icon = <Heart className="h-5 w-5 text-current" />
-  } else if (children === 'VIBEBOOK') {
-    icon = <BookOpen className="h-5 w-5 text-current" />
-  }
 
   return (
     <div className="flex items-center gap-2 text-[18px] font-semibold italic text-white">
@@ -134,12 +128,6 @@ function PlanCard({
           ))}
         </div>
 
-        <div className="space-y-3 border-t border-white/12 pt-4">
-          <SectionTitle>VIBEBOOK</SectionTitle>
-          {plan.features.vibebook.map((feature) => (
-            <FeatureRow key={feature.label} {...feature} />
-          ))}
-        </div>
       </div>
 
       <button

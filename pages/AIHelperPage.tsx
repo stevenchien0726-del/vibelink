@@ -489,7 +489,9 @@ const finalQuery =
 
 {showWalls && (
   <div className="space-y-4 pt-4">
-    {/* 第一行：更多人選照片牆 */}
+    
+    
+    {/* 更多人選照片牆 */}
     <div className="space-y-2">
       <div className="flex items-center gap-1 text-[14px] text-[#3d3d3d]">
         <span>更多人選</span>
@@ -505,7 +507,7 @@ const finalQuery =
   onWheel={stopWheelPropagation}
 >
         <div className="flex gap-3 px-1 select-none">
-          {Array.from({ length: 10 }).map((_, photoIndex) => {
+          {Array.from({ length: 8 }).map((_, photoIndex) => {
   const imagePool = isSkySeedSearch
   ? SKY_MORE_WALL_IMAGES
   : [
@@ -525,7 +527,7 @@ const imgSrc = imagePool[photoIndex % imagePool.length]
                 type="button"
                 className="shrink-0"
               >
-                <div className="h-[138px] w-[96px] overflow-hidden rounded-[16px] bg-[#ead8f5]">
+                <div className="h-[160px] w-[110px] overflow-hidden rounded-[16px] bg-[#ead8f5]">
                   <img
                     src={imgSrc}
                     alt={`photo ${photoIndex + 1}`}
@@ -540,60 +542,8 @@ const imgSrc = imagePool[photoIndex % imagePool.length]
         </div>
       </div>
     </div>
-
-    {/* 第二行：相似的人 */}
-    <div className="space-y-2">
-      <div className="flex items-center gap-1 text-[14px] text-[#3d3d3d]">
-        <span>相似的人</span>
-      </div>
-
-      <div
-  data-horizontal-scroll="true"
-  className="-mx-1 overflow-x-auto pb-1 no-scrollbar touch-pan-x"
-  onTouchStart={stopSwipePropagation}
-  onTouchMove={stopSwipePropagation}
-  onPointerDown={stopPointerPropagation}
-  onPointerMove={stopPointerPropagation}
-  onWheel={stopWheelPropagation}
->
-        <div className="flex gap-3 px-1 select-none">
-  {Array.from({ length: 10 }).map((_, photoIndex) => {
-
-  const imagePool = isSkySeedSearch
-  ? SKY_SIMILAR_IMAGES
-  : [
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQBZgg...',
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRf8fU...',
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSg9Qi...',
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdRo2...',
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeON3...',
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxwqx...',
-    ]
-
-const imgSrc = imagePool[photoIndex % imagePool.length]
-
-  return (
-    <button
-      key={`similar-wall-${photoIndex}`}
-      type="button"
-      className="shrink-0"
-    >
-      <div className="h-[138px] w-[96px] overflow-hidden rounded-[16px] bg-[#ead8f5]">
-        <img
-          src={imgSrc}
-          alt={`similar photo ${photoIndex + 1}`}
-          className="h-full w-full object-cover"
-        />
-      </div>
-    </button>
-  )
-})}
-</div>
-      </div>
-    </div>
-  </div>
-)}
-
+  
+    
 {/* 更多提示詞 */}
 {showMorePrompts && (
   <div className="mt-6 px-1">
@@ -627,12 +577,14 @@ const imgSrc = imagePool[photoIndex % imagePool.length]
     </div>
   </div>
 )}
-
     </div>
   )}
 </div>
+)}
+</div>
 </div>
 </main>
+    
 
           {/* Fixed Input row */}
 {/* Fixed Input row */}

@@ -137,10 +137,38 @@ const storyPagesMap: Record<string, { title: string; bg: string }[]> = {
 export default function HomePage({
   feedCapsulePosition,
 }: HomePageProps) {
+  
+  const [toast, setToast] = useState<string | null>(null)
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  
   const [feedMode, setFeedMode] = useState<FeedMode>('1x1')
   const [realPosts, setRealPosts] = useState<PostItem[]>([])
   useEffect(() => {
   loadPosts()
+
+  supabase.auth.getSession().then(({ data }) => {
+  console.log('當前 session:', data.session)
+
+  if (!data.session) {
+    setIsAuthModalOpen(true) // ✅ 加這行
+  }
+})
+
+  const { data: listener } = supabase.auth.onAuthStateChange(
+  (_event, session) => {
+    console.log('登入狀態變化:', session)
+
+    if (session) {
+  console.log('登入成功 ✅')
+  setIsAuthModalOpen(false) // ✅ 關閉 modal
+}
+  }
+)
+
+  return () => {
+    listener.subscription.unsubscribe()
+  }
 }, [])
 
 function handlePostCreated(post: CreatedPostPayload) {
@@ -154,6 +182,17 @@ function handlePostCreated(post: CreatedPostPayload) {
   }
 
   setRealPosts((prev) => [newPost, ...prev])
+
+  // ✅ 顯示 Toast
+  setToast('發文成功')
+
+  // ✅ 自動關閉 Upload
+  setIsUploadOpen(false)
+
+  // ✅ 1.8 秒後消失
+  setTimeout(() => {
+    setToast(null)
+  }, 1800)
 }
 
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false)
@@ -198,9 +237,8 @@ function handlePostCreated(post: CreatedPostPayload) {
         avatar_url
       ),
       post_images (
-        image_url,
-        order_index
-      )
+  image_url
+)
     `)
     .order('created_at', { ascending: false })
 
@@ -211,9 +249,7 @@ function handlePostCreated(post: CreatedPostPayload) {
 
 
   const mappedPosts: PostItem[] = (data ?? []).map((post: any) => {
-    const images = [...(post.post_images ?? [])]
-      .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
-      .map((img) => img.image_url)
+    const images = (post.post_images ?? []).map((img: any) => img.image_url)
 
     return {
       id: post.id,
@@ -270,6 +306,34 @@ function handlePostCreated(post: CreatedPostPayload) {
     setIsStoryPaused(false)
     storyDragY.set(0)
   }, [storyDragY])
+
+  async function handleLogin() {
+  const { error } = await supabase.auth.signInWithOtp({
+    email: 'stevenchien0726@gmail.com',
+  })
+
+  if (error) {
+    console.error(error)
+    setToast('登入信寄送失敗')
+    return
+  }
+
+  setToast('登入信已寄出')
+}
+
+async function handleGoogleLogin() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: 'http://localhost:3000',
+    },
+  })
+
+  if (error) {
+    console.error(error)
+    setToast('Google 登入失敗')
+  }
+}
 
   function handleSubmitSearch() {
     const trimmed = searchText.trim()
@@ -605,6 +669,9 @@ function handlePostCreated(post: CreatedPostPayload) {
 
     {/* 右：功能膠囊 */}
   <div className="flex h-[40px] items-center gap-6 rounded-full bg-[#e5e5e5] px-4 shadow-inner">
+
+    
+
     <button
       type="button"
       onClick={() => setIsSearchOpen(true)}
@@ -696,6 +763,69 @@ function handlePostCreated(post: CreatedPostPayload) {
           />
         )}
       </AnimatePresence>
+
+
+<AnimatePresence>
+  {isAuthModalOpen && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-6 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 18, scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        className="w-full max-w-[340px] rounded-[28px] bg-white p-6 shadow-2xl"
+      >
+        <div className="mb-5 text-center">
+          <img
+            src="/vibelink-logo.png"
+            alt="Vibelink"
+            className="mx-auto mb-3 h-[48px]"
+          />
+          <h2 className="text-[22px] font-semibold text-[#222]">
+            登入 Vibelink
+          </h2>
+          <p className="mt-2 text-[14px] text-[#777]">
+            登入後即可發文與使用完整功能
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          className="flex h-[48px] w-full items-center justify-center gap-3 rounded-full border border-[#ddd] bg-white text-[15px] font-medium text-[#222] shadow-sm active:scale-[0.97]"
+        >
+          <span className="text-[18px]">G</span>
+          GOOGLE 帳戶登入
+        </button>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+<AnimatePresence>
+  {toast && (
+    <motion.div
+      initial={{ opacity: 0, y: 40, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 20, scale: 0.96 }}
+      transition={{
+        type: 'spring',
+        stiffness: 400,
+        damping: 30,
+      }}
+      className="fixed bottom-[110px] left-1/2 z-[999] -translate-x-1/2"
+    >
+      <div className="rounded-full bg-black/80 px-5 py-2 text-[14px] text-white shadow-lg backdrop-blur-md">
+        {toast}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
     </div>
   )

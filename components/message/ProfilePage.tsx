@@ -250,12 +250,6 @@ export default function ProfilePage({
   <span className="text-[#8B5CF6]">LINKPORT</span>
 </motion.button>
 
-  {/* 👉 關鍵：這行 */}
-  <div className="ml-8 flex items-center gap-1 text-[14px] text-[#444]">
-    <MapPin size={16} />
-    <span>台灣, 台北</span>
-  </div>
-
 </div>
 
 

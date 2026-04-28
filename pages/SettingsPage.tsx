@@ -217,27 +217,6 @@ export default function SettingsPage({
               </div>
             </LayoutGroup>
 
-            <div className="my-5 h-px bg-[#8f8f8f]" />
-
-            <div className="flex items-center justify-between py-1">
-              <div className="flex items-center gap-3">
-                <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
-                  <MapPin size={19} strokeWidth={2.1} />
-                </span>
-
-                <span className="text-[16px] font-medium text-[#222]">
-                  顯示IP所在城市
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-[16px] text-[#222]">
-                  {showCity ? '開啟中' : '關閉中'}
-                </span>
-
-                <Switch checked={showCity} onClick={handleToggleShowCity} />
-              </div>
-            </div>
 
             <div className="my-5 h-px bg-[#8f8f8f]" />
 
