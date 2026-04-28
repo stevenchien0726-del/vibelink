@@ -6,7 +6,6 @@ import {
   X,
   Film,
   Heart,
-  BookOpen,
 } from 'lucide-react'
 
 const plans = [
@@ -75,6 +74,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     icon = <Film className="h-5 w-5 text-current" />
   } else if (children === 'Vibelink') {
     icon = <Heart className="h-5 w-5 text-current" />
+  }
 
   return (
     <div className="flex items-center gap-2 text-[18px] font-semibold italic text-white">
