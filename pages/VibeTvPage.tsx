@@ -28,12 +28,12 @@ export default function VibeTvPage() {
     <div className="min-h-screen bg-[#f3f3f3] pb-[110px]">
       <div className="mx-auto w-full max-w-[430px]">
         {/* Fixed Top Actions */}
-        <div className="fixed top-0 left-1/2 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-3 pt-4 pb-3 backdrop-blur-md">
+       <div className="fixed top-0 left-1/2 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-3 pt-4 pb-3 backdrop-blur-md">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => {
-  window.open('https://vibe-membership-web.vercel.app', '_blank', 'noopener,noreferrer')
+  window.open('https://vibe-membership-web.vercel.app', '_blank')
 }}
               className="flex h-10 items-center justify-center gap-2 rounded-full bg-[#d9d9d9] px-4 text-[18px] font-medium text-[#111]"
             >
