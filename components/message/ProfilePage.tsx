@@ -690,13 +690,13 @@ async function loadMyPosts() {
                 <MenuItem icon={<Clock3 size={22} />} label="典藏內容" />
 
                 <MenuItem
-                  icon={<Ticket size={22} />}
-                  label="Vibe會員"
-                  onClick={() => {
-                    setIsMenuOpen(false)
-                    openMembershipSite()
-                  }}
-                />
+  icon={<Ticket size={22} />}
+  label="Vibe會員"
+  onClick={() => {
+    setIsMenuOpen(false)
+    openLink(MEMBERSHIP_URL)
+  }}
+/>
 
                 <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
 
