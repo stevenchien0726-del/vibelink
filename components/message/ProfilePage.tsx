@@ -693,9 +693,9 @@ async function loadMyPosts() {
   icon={<Ticket size={22} />}
   label="Vibe會員"
   onClick={() => {
-    setIsMenuOpen(false)
-    openLink(MEMBERSHIP_URL)
-  }}
+  setIsMenuOpen(false)
+  window.open('https://vibe-membership-web.vercel.app', '_blank', 'noopener,noreferrer')
+}}
 />
 
                 <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
