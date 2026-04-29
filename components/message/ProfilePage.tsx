@@ -53,7 +53,7 @@ type MenuItemProps = {
 
 const activeColor = '#d89ad0'
 const inactiveColor = '#222'
-const MEMBERSHIP_URL = 'https://vibelink-j9m5-ie84efeex-stevenchien0726-dels-projects.vercel.app/'
+const MEMBERSHIP_URL = 'https://vibelink-j9m5-in4d5b0eo-stevenchien0726-dels-projects.vercel.app/'
 
 
 function openMembershipSite() {

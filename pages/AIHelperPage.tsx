@@ -98,7 +98,7 @@ const SKY_SIMILAR_IMAGES = [
   '/sky-similar/5.jpg',
 ]
 
-const MEMBERSHIP_URL = 'https://vibelink-j9m5-ie84efeex-stevenchien0726-dels-projects.vercel.app/'
+const MEMBERSHIP_URL = 'https://vibelink-j9m5-in4d5b0eo-stevenchien0726-dels-projects.vercel.app/'
 const DRAWER_WIDTH = 320
 
 function openMembershipSite() {
