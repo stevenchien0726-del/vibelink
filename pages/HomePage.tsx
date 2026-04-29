@@ -20,6 +20,8 @@ import FeedGrid, { type FeedMode, type PostItem } from '@/components/home/sectio
 
 import { supabase } from '@/lib/supabase'
 
+import { ensureUserProfile } from '@/lib/profile'
+
 type StoryItem = {
   id: string
   author: string
@@ -138,6 +140,7 @@ export default function HomePage({
   feedCapsulePosition,
 }: HomePageProps) {
   
+
   const [toast, setToast] = useState<string | null>(null)
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
@@ -147,21 +150,30 @@ export default function HomePage({
   useEffect(() => {
   loadPosts()
 
-  supabase.auth.getSession().then(({ data }) => {
+  supabase.auth.getSession().then(async ({ data }) => {
   console.log('當前 session:', data.session)
 
   if (!data.session) {
-    setIsAuthModalOpen(true) // ✅ 加這行
+    setIsAuthModalOpen(true)
+    return
   }
+
+  setIsAuthModalOpen(false)
+
+  const profile = await ensureUserProfile()
+  console.log('目前登入者 Profile:', profile)
 })
 
   const { data: listener } = supabase.auth.onAuthStateChange(
-  (_event, session) => {
+  async (_event, session) => {
     console.log('登入狀態變化:', session)
 
     if (session) {
   console.log('登入成功 ✅')
-  setIsAuthModalOpen(false) // ✅ 關閉 modal
+  setIsAuthModalOpen(false)
+
+  const profile = await ensureUserProfile()
+  console.log('目前登入者 Profile:', profile)
 }
   }
 )

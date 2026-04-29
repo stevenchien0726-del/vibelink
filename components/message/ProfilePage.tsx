@@ -17,12 +17,18 @@ import {
   Grid3x3,
   Settings,
   Megaphone,
-  MapPin,
+Heart,
+MessageCircle,
+Send,
+ChevronLeft,
+MoreHorizontal,
 } from 'lucide-react'
 import SettingsPage from '@/pages/SettingsPage'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import type { CapsulePosition } from '@/app/page'
+
+import { PlaySquare } from 'lucide-react'
 
 import { Plus } from 'lucide-react'
 import { X } from 'lucide-react'
@@ -30,6 +36,8 @@ import { X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 import { Link as LinkIcon } from 'lucide-react'
+
+import WideMenuSheet from '@/components/WideMenuSheet'
 
 type ProfilePageProps = {
   onCloseMenu?: () => void
@@ -76,21 +84,12 @@ export default function ProfilePage({
 }: ProfilePageProps) {
   
   useEffect(() => {
-  const fetchProfile = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, username, bio')
-      .limit(1)
-
-    console.log('✅ PROFILE DATA:', data)
-    console.log('❌ PROFILE ERROR:', error)
-
-    if (data && data.length > 0) {
-      setProfile(data[0])
-    }
+  async function init() {
+    await loadMyProfile()
+    await loadMyPosts()
   }
 
-  fetchProfile()
+  init()
 }, [])
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -103,12 +102,74 @@ export default function ProfilePage({
 
   const [profile, setProfile] = useState<any>(null)
 
-  const gridItems = Array.from({ length: 9 })
   const albumItems = Array.from({ length: 5 })
 
   const tabTouchStartX = useRef<number | null>(null)
   const tabTouchDeltaX = useRef(0)
   const albumScrollRef = useRef<HTMLDivElement | null>(null)
+
+  const [myPosts, setMyPosts] = useState<any[]>([])
+  const [selectedPost, setSelectedPost] = useState<any>(null)
+  const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
+
+  const gridItems = myPosts
+
+  async function loadMyProfile() {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    console.error('尚未登入')
+    return
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
+  if (error) {
+    console.error('讀取 profile 失敗:', error)
+    return
+  }
+
+  setProfile(data)
+}
+
+async function loadMyPosts() {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    console.error('尚未登入')
+    return
+  }
+
+  const { data, error } = await supabase
+    .from('posts')
+    .select(`
+      id,
+      caption,
+      created_at,
+      post_images (
+        image_url
+      )
+    `)
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('讀取我的貼文失敗:', error)
+    return
+  }
+
+  setMyPosts(data ?? [])
+}
 
   function goToTab(index: number) {
     if (index < 0 || index > 3) return
@@ -218,10 +279,19 @@ export default function ProfilePage({
             </div>
           </div>
 
-          <div className="pr-1 text-right">
-            <div className="text-[18px] text-[#222]">5萬</div>
-            <div className="text-[18px] text-[#222]">粉絲</div>
-          </div>
+          <div className="flex gap-10 pr-4">
+  {/* 貼文 */}
+  <div className="flex flex-col items-center">
+    <div className="text-[18px] text-[#222]">{myPosts.length}</div>
+    <div className="text-[14px] text-[#666]">貼文</div>
+  </div>
+
+  {/* 粉絲 */}
+  <div className="flex flex-col items-center">
+    <div className="text-[18px] text-[#222]">5萬</div>
+    <div className="text-[14px] text-[#666]">粉絲</div>
+  </div>
+</div>
         </div>
 
         <div className="mb-3">
@@ -292,11 +362,11 @@ export default function ProfilePage({
               onClick={() => goToTab(1)}
               className="flex h-[34px] items-center justify-center"
             >
-              <Clapperboard
-                size={20}
-                className="transition-colors duration-200"
-                color={activeTab === 1 ? activeColor : inactiveColor}
-              />
+              <PlaySquare
+  size={20}
+  className="transition-colors duration-200"
+  color={activeTab === 1 ? activeColor : inactiveColor}
+/>
             </button>
 
             <button
@@ -351,26 +421,34 @@ export default function ProfilePage({
   {/* 第1頁 */}
   <div className="w-full shrink-0">
     <div className="grid grid-cols-3 gap-[2px]">
-      {gridItems.map((_, index) => (
-        <div
-          key={`grid-1-${index}`}
-          className="h-[190px] bg-[#d9d9d9]"
+      {gridItems.map((post) => {
+  const image = post.post_images?.[0]?.image_url
+
+  return (
+    <button
+  type="button"
+  key={post.id}
+  onClick={() => setSelectedPost(post)}
+  className="h-[190px] bg-[#d9d9d9]"
+>
+      {image && (
+        <img
+          src={image}
+          className="h-full w-full object-cover"
         />
-      ))}
+      )}
+    </button>
+  )
+})}
     </div>
   </div>
 
-  {/* 第2頁 */}
-  <div className="w-full shrink-0">
-    <div className="grid grid-cols-3 gap-[2px]">
-      {gridItems.map((_, index) => (
-        <div
-          key={`grid-2-${index}`}
-          className="h-[190px] bg-[#d9d9d9]"
-        />
-      ))}
-    </div>
+  {/* 第2頁：短影片 */}
+<div className="w-full shrink-0">
+  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
+    尚無短影片
   </div>
+</div>
 
     {/* 第3頁（精選限動） */}
   <div className="w-full shrink-0">
@@ -452,12 +530,20 @@ export default function ProfilePage({
     
 
     <div className="grid grid-cols-3 gap-[2px]">
-      {gridItems.map((_, index) => (
-        <div
-          key={`grid-3-${index}`}
-          className="h-[190px] bg-[#d9d9d9]"
+      {gridItems.map((post) => {
+  const image = post.post_images?.[0]?.image_url
+
+  return (
+    <div key={post.id} className="h-[190px] bg-[#d9d9d9]">
+      {image && (
+        <img
+          src={image}
+          className="h-full w-full object-cover"
         />
-      ))}
+      )}
+    </div>
+  )
+})}
     </div>
   </div>
 </div>
@@ -640,6 +726,129 @@ export default function ProfilePage({
     />
   )}
 </AnimatePresence>
+    
+    <AnimatePresence>
+  {selectedPost && (
+    <motion.div
+      className="fixed inset-0 z-[500] bg-[#f3f3f3]"
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+    >
+      {/* Top Bar */}
+      <div className="fixed left-1/2 top-0 z-[510] flex h-[58px] w-full max-w-[430px] -translate-x-1/2 items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
+        <button
+          type="button"
+          onClick={() => {
+  setIsPostMenuOpen(false)
+  setSelectedPost(null)
+}}
+          className="flex h-10 w-10 items-center justify-center rounded-full active:scale-90"
+        >
+          <ChevronLeft />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsPostMenuOpen(true)}
+          className="flex h-10 items-center gap-2 rounded-full px-2 active:scale-95"
+        >
+          <MoreHorizontal size={22} strokeWidth={2.4} />
+          <span className="text-[15px] font-medium">MENU</span>
+        </button>
+      </div>
+
+      <div className="mx-auto h-full w-full max-w-[430px] overflow-y-auto pt-[58px] pb-[120px]">
+        {/* Author */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
+            <div className="text-[15px] font-medium text-[#222]">
+              {profile?.display_name || profile?.username || 'Vibelink User'}
+            </div>
+          </div>
+        </div>
+
+        {/* Image */}
+        <div className="px-3">
+          <img
+            src={selectedPost.post_images?.[0]?.image_url}
+            className="w-full rounded-[18px] object-cover"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-between px-4 pt-4">
+          <div className="flex items-center gap-5">
+            <button type="button" className="active:scale-90">
+              <Heart size={25} strokeWidth={2.1} />
+            </button>
+
+            <button type="button" className="active:scale-90">
+              <MessageCircle size={25} strokeWidth={2.1} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-5">
+            <button type="button" className="active:scale-90">
+              <Send size={24} strokeWidth={2.1} />
+            </button>
+
+            <button type="button" className="active:scale-90">
+              <Bookmark size={25} strokeWidth={2.1} />
+            </button>
+          </div>
+        </div>
+
+        {/* Caption */}
+        {selectedPost.caption && (
+          <div className="px-4 pt-3 text-[15px] text-[#222]">
+            {selectedPost.caption}
+          </div>
+        )}
+
+        {/* Comments */}
+        <div className="mt-5 border-t border-[#ddd] px-4 pt-4">
+          <div className="mb-4 text-[15px] font-medium text-[#222]">
+            留言
+          </div>
+
+          <div className="flex flex-col gap-4 pb-8">
+            <div className="text-[14px] text-[#999]">
+              尚無留言，成為第一個留言的人
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Comment Input */}
+      <div className="fixed bottom-0 left-1/2 z-[510] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 py-3 backdrop-blur-md">
+        <div className="flex h-[46px] items-center gap-3 rounded-full bg-white px-4 shadow-sm">
+          <div className="h-[28px] w-[28px] rounded-full bg-[#d6d6d6]" />
+          <input
+            placeholder="加入留言..."
+            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#999]"
+          />
+          <button className="text-[14px] font-medium text-[#8B5CF6]">
+            發送
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+  {isPostMenuOpen && (
+    <WideMenuSheet
+  variant="mine"
+  onClose={() => setIsPostMenuOpen(false)}
+/>
+  )}
+</AnimatePresence>
+
+    </motion.div>
+  )}
+</AnimatePresence>
+    
     </div>
   )
 }

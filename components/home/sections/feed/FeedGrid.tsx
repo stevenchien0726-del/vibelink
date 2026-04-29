@@ -5,8 +5,9 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Heart,
   MessageCircle,
-  Mail,
   MoreHorizontal,
+  Send,
+  Bookmark,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -183,7 +184,10 @@ export default function FeedGrid({
 
                   <AnimatePresence>
                     {openMenuPostId === post.id && (
-                      <WideMenuSheet onClose={() => setOpenMenuPostId(null)} />
+                      <WideMenuSheet
+  variant="other"
+  onClose={() => setOpenMenuPostId(null)}
+/>
                     )}
                   </AnimatePresence>
                 </div>
@@ -227,6 +231,7 @@ export default function FeedGrid({
           <div className="absolute right-4 top-4 rounded-full bg-black/10 px-3 py-1 text-[14px] text-[#555] backdrop-blur-sm">
             {index + 1}/{postImages.length}
           </div>
+          
         </div>
       ))}
     </motion.div>
@@ -255,22 +260,36 @@ export default function FeedGrid({
 
 
               <div className="mt-5 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-1.5 text-[16px] text-[#555]">
-                    <Heart size={22} className="text-[#d77eea]" />
-                    <span>{post.likes}</span>
-                  </div>
+  <div className="flex items-center gap-6">
+    <div className="flex items-center gap-1.5 text-[16px] text-[#555]">
+      <Heart size={22} className="text-[#d77eea]" />
+      <span>{post.likes}</span>
+    </div>
 
-                  <button
-                    type="button"
-                    className="flex items-center text-[#222] transition active:scale-95"
-                  >
-                    <MessageCircle size={22} />
-                  </button>
-                </div>
+    <button
+      type="button"
+      className="flex items-center text-[#222] transition active:scale-95"
+    >
+      <MessageCircle size={22} />
+    </button>
+  </div>
 
-                
-              </div>
+  <div className="flex items-center gap-6">
+    <button
+      type="button"
+      className="flex items-center text-[#222] transition active:scale-95"
+    >
+      <Send size={22} strokeWidth={2.1} />
+    </button>
+
+    <button
+      type="button"
+      className="flex items-center text-[#222] transition active:scale-95"
+    >
+      <Bookmark size={22} strokeWidth={2.1} />
+    </button>
+  </div>
+</div>
 
               <div className="mt-3 text-[16px] text-[#444]">{post.text}</div>
 
