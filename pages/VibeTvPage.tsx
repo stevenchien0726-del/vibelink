@@ -3,16 +3,11 @@
 import { useRef, useState } from 'react'
 import { Ticket, ChevronRight } from 'lucide-react'
 
-const bannerColors = ['#d9d9d9', '#cfcfcf', '#c4c4c4']
-const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app'
-const VIBETV_APP_URL = 'https://vibetv-app-qrq4-mslailoeg-stevenchien0726-dels-projects.vercel.app/'
+import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
 
-function openMembershipSite() {
-  window.open(MEMBERSHIP_URL, '_blank')
-}
-function openVibeTvApp() {
-  window.open(VIBETV_APP_URL, '_blank')
-}
+const bannerColors = ['#d9d9d9', '#cfcfcf', '#c4c4c4']
+
+
 
 export default function VibeTvPage() {
   const [currentBanner, setCurrentBanner] = useState(0)
@@ -37,7 +32,7 @@ export default function VibeTvPage() {
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={openMembershipSite}
+              onClick={() => openLink(MEMBERSHIP_URL)}
               className="flex h-10 items-center justify-center gap-2 rounded-full bg-[#d9d9d9] px-4 text-[18px] font-medium text-[#111]"
             >
               <Ticket className="h-[18px] w-[18px]" strokeWidth={2.2} />
@@ -46,7 +41,7 @@ export default function VibeTvPage() {
 
             <button
   type="button"
-  onClick={openVibeTvApp}
+  onClick={() => openLink(VIBETV_APP_URL)}
   className="flex h-10 items-center justify-center rounded-full bg-[#d9d9d9] px-5 text-[18px] font-medium text-[#111]"
 >
   <span>VibeTV APP</span>

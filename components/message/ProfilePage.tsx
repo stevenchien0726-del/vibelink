@@ -28,6 +28,8 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import type { CapsulePosition } from '@/app/page'
 
+import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
+
 import { PlaySquare } from 'lucide-react'
 
 import { Plus } from 'lucide-react'
@@ -53,12 +55,7 @@ type MenuItemProps = {
 
 const activeColor = '#d89ad0'
 const inactiveColor = '#222'
-const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app'
 
-
-function openMembershipSite() {
-  window.open(MEMBERSHIP_URL, '_blank')
-}
 
 function MenuItem({ icon, label, onClick }: MenuItemProps) {
   return (

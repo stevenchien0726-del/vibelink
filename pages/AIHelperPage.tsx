@@ -7,6 +7,8 @@ import { fakeAiSearch } from '@/lib/fakeAiSearch'
 import { FakeUser, fakeUsers } from '../data/fakeUsers'
 import { X } from 'lucide-react'
 
+import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
+
 type HistoryItem = {
   id: string
   title: string
@@ -98,7 +100,6 @@ const SKY_SIMILAR_IMAGES = [
   '/sky-similar/5.jpg',
 ]
 
-const MEMBERSHIP_URL = 'https://vibelink-j9m5.vercel.app'
 const DRAWER_WIDTH = 320
 
 function openMembershipSite() {
@@ -380,7 +381,7 @@ const finalQuery =
 
         <button
           type="button"
-          onClick={openMembershipSite}
+          onClick={() => openLink(MEMBERSHIP_URL)}
           className="flex min-w-0 items-center gap-[4px] bg-transparent"
         >
           <span className="truncate text-[17px] font-medium tracking-[-0.2px] text-[#111]">
@@ -696,7 +697,7 @@ const imgSrc = imagePool[photoIndex % imagePool.length]
               <div className="border-b border-[#ececec] px-4 pb-4 pt-5">
                 <button
                   type="button"
-                  onClick={openMembershipSite}
+                  onClick={() => openLink(MEMBERSHIP_URL)}
                   className="mb-2 flex items-center gap-[4px] bg-transparent"
                 >
                   <span className="text-[22px] font-medium text-[#111]">
