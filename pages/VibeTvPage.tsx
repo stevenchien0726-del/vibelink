@@ -32,7 +32,9 @@ export default function VibeTvPage() {
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => openLink(MEMBERSHIP_URL)}
+              onClick={() => {
+  window.open('https://vibe-membership-web.vercel.app', '_blank', 'noopener,noreferrer')
+}}
               className="flex h-10 items-center justify-center gap-2 rounded-full bg-[#d9d9d9] px-4 text-[18px] font-medium text-[#111]"
             >
               <Ticket className="h-[18px] w-[18px]" strokeWidth={2.2} />
