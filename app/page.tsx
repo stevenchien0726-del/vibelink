@@ -1,11 +1,11 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import HomePage from '@/pages/HomePage'
-import AIHelperPage from '@/pages/AIHelperPage'
-import MessagePage from '@/pages/MessagePage'
-import ProfilePage from '@/components/message/ProfilePage'
-import VibeTvPage from '@/pages/VibeTvPage'
+import HomePage from '../pages/HomePage'
+import AIHelperPage from '../pages/AIHelperPage'
+import MessagePage from '../pages/MessagePage'
+import ProfilePage from '../components/message/ProfilePage'
+import VibeTvPage from '../pages/VibeTvPage'
 import BottomNav from '@/components/home/ui/nav/BottomNav'
 
 

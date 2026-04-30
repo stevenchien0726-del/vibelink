@@ -23,7 +23,7 @@ Send,
 ChevronLeft,
 MoreHorizontal,
 } from 'lucide-react'
-import SettingsPage from '@/pages/SettingsPage'
+
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import type { CapsulePosition } from '@/app/page'
@@ -486,7 +486,13 @@ async function deleteSelectedPost() {
           className="h-full w-full object-cover"
         />
       )}
+      {post.post_images?.length > 1 && (
+  <div className="absolute right-2 top-2 text-white text-xs bg-black/50 px-2 py-[2px] rounded-full">
+    {post.post_images.length}
+  </div>
+)}
     </button>
+
   )
 })}
     </div>
@@ -601,7 +607,20 @@ async function deleteSelectedPost() {
 
       <AnimatePresence>
         {isUploadOpen && (
-          <UploadFullPage onClose={() => setIsUploadOpen(false)} />
+          <UploadFullPage
+  onClose={() => setIsUploadOpen(false)}
+  onPostCreated={(post) => {
+    setMyPosts((prev) => [
+      {
+        ...post,
+        post_images: post.imageUrls.map((url) => ({
+          image_url: url,
+        })),
+      },
+      ...prev,
+    ])
+  }}
+/>
         )}
       </AnimatePresence>
 
@@ -821,36 +840,40 @@ async function deleteSelectedPost() {
 
         {/* Image */}
         <div className="px-3">
-  <div
-    data-horizontal-scroll="true"
-    className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto rounded-[18px]"
-    onScroll={(e) => {
-      const el = e.currentTarget
-      const index = Math.round(el.scrollLeft / el.clientWidth)
-      setSelectedPostImageIndex(index)
-    }}
-  >
-    {(selectedPost.post_images ?? []).map((image: any, index: number) => (
-      <img
-        key={`${image.image_url}-${index}`}
-        src={image.image_url}
-        className="w-full shrink-0 snap-center object-cover"
+  <div className="relative overflow-hidden rounded-[18px]">
+    <motion.div
+      className="flex"
+      animate={{ x: `-${selectedPostImageIndex * 100}%` }}
+      transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+    >
+      {selectedPost.post_images?.map((img: any, index: number) => (
+        <div
+          key={index}
+          className="w-full shrink-0 grow-0 basis-full"
+        >
+          <img
+            src={img.image_url}
+            className="w-full object-cover"
+          />
+        </div>
+      ))}
+    </motion.div>
+  </div>
+
+  {/* dots */}
+  <div className="mt-3 flex justify-center gap-2">
+    {selectedPost.post_images?.map((_: any, index: number) => (
+      <button
+        key={index}
+        onClick={() => setSelectedPostImageIndex(index)}
+        className={`h-[7px] w-[7px] rounded-full ${
+          selectedPostImageIndex === index
+            ? 'bg-[#c86cff]'
+            : 'bg-[#ddd]'
+        }`}
       />
     ))}
   </div>
-
-  {(selectedPost.post_images?.length ?? 0) > 1 && (
-    <div className="mt-2 flex justify-center gap-2">
-      {selectedPost.post_images.map((_: any, index: number) => (
-        <div
-          key={index}
-          className={`h-[6px] w-[6px] rounded-full transition-all ${
-            selectedPostImageIndex === index ? 'bg-[#8B5CF6]' : 'bg-[#d1d1d1]'
-          }`}
-        />
-      ))}
-    </div>
-  )}
 </div>
 
         {/* Actions */}
