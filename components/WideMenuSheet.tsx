@@ -15,9 +15,14 @@ import {
 type Props = {
   onClose: () => void
   variant?: 'mine' | 'other'
+  onDelete?: () => void
 }
 
-export default function WideMenuSheet({ onClose, variant = 'other' }: Props) {
+export default function WideMenuSheet({
+  onClose,
+  variant = 'other',
+  onDelete,
+}: Props) {
   const [mounted, setMounted] = useState(false)
   const [closing, setClosing] = useState(false)
 
@@ -77,10 +82,17 @@ export default function WideMenuSheet({ onClose, variant = 'other' }: Props) {
                 <span className="text-[16px] text-[#111]">典藏貼文</span>
               </button>
 
-              <button className="flex items-center gap-7 text-red-500">
-                <Trash2 size={20} />
-                <span className="text-[16px]">刪除貼文</span>
-              </button>
+              <button
+  type="button"
+  onClick={() => {
+  onDelete?.()
+  handleClose()
+}}
+  className="flex items-center gap-7 text-red-500"
+>
+  <Trash2 size={20} />
+  <span className="text-[16px]">刪除貼文</span>
+</button>
             </div>
           </div>
         ) : (

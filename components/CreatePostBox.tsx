@@ -11,6 +11,7 @@ export type CreatedPostPayload = {
   id: string
   caption: string
   imageUrl: string
+  imageUrls: string[]
 }
 
 type CreatePostBoxProps = {
@@ -20,29 +21,34 @@ type CreatePostBoxProps = {
 const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
   function CreatePostBox({ onSuccess }, ref) {
     const [caption, setCaption] = useState('')
-    const [file, setFile] = useState<File | null>(null)
-    const [previewUrl, setPreviewUrl] = useState('')
+    const [files, setFiles] = useState<File[]>([])
+    const [previewUrls, setPreviewUrls] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
-      if (!file) {
-        setPreviewUrl('')
+      if (files.length === 0) {
+        setPreviewUrls([])
         return
       }
 
-      const objectUrl = URL.createObjectURL(file)
-      setPreviewUrl(objectUrl)
+      const objectUrls = files.map((file) => URL.createObjectURL(file))
+      setPreviewUrls(objectUrls)
 
       return () => {
-        URL.revokeObjectURL(objectUrl)
+        objectUrls.forEach((url) => URL.revokeObjectURL(url))
       }
-    }, [file])
+    }, [files])
 
     async function submitPost() {
       if (loading) return
 
-      if (!file) {
+      if (files.length === 0) {
         alert('請先選擇圖片')
+        return
+      }
+
+      if (files.length > 10) {
+        alert('一次最多只能上傳 10 張圖片')
         return
       }
 
@@ -59,24 +65,29 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
           return
         }
 
-        const safeFileName = file.name.replace(/\s+/g, '-')
-        const filePath = `${user.id}/${Date.now()}-${safeFileName}`
+        const uploadedImageUrls: string[] = []
 
-        const { error: uploadError } = await supabase.storage
-          .from('post-images')
-          .upload(filePath, file)
+        for (const file of files) {
+          const fileExt = file.name.split('.').pop() || 'png'
+          const safeFileName = `${crypto.randomUUID()}.${fileExt}`
+          const filePath = `${user.id}/${Date.now()}-${safeFileName}`
 
-        if (uploadError) {
-          console.error(uploadError)
-          alert('圖片上傳失敗')
-          return
+          const { error: uploadError } = await supabase.storage
+            .from('post-images')
+            .upload(filePath, file)
+
+          if (uploadError) {
+            console.error(uploadError)
+            alert('圖片上傳失敗')
+            return
+          }
+
+          const { data: publicUrlData } = supabase.storage
+            .from('post-images')
+            .getPublicUrl(filePath)
+
+          uploadedImageUrls.push(publicUrlData.publicUrl)
         }
-
-        const { data: publicUrlData } = supabase.storage
-          .from('post-images')
-          .getPublicUrl(filePath)
-
-        const imageUrl = publicUrlData.publicUrl
 
         const { data: postData, error: postError } = await supabase
           .from('posts')
@@ -93,12 +104,14 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
           return
         }
 
+        const imageRows = uploadedImageUrls.map((imageUrl) => ({
+          post_id: postData.id,
+          image_url: imageUrl,
+        }))
+
         const { error: imageError } = await supabase
           .from('post_images')
-          .insert({
-            post_id: postData.id,
-            image_url: imageUrl,
-          })
+          .insert(imageRows)
 
         if (imageError) {
           console.error(imageError)
@@ -109,11 +122,12 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
         const createdPost: CreatedPostPayload = {
           id: postData.id,
           caption,
-          imageUrl,
+          imageUrl: uploadedImageUrls[0],
+          imageUrls: uploadedImageUrls,
         }
 
         setCaption('')
-        setFile(null)
+        setFiles([])
         onSuccess?.(createdPost)
       } finally {
         setLoading(false)
@@ -126,21 +140,34 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
 
     return (
       <div className="w-full rounded-2xl bg-white p-4 shadow-sm">
-        {previewUrl && (
-          <div className="relative mb-3 overflow-hidden rounded-2xl bg-[#eeeeee]">
-            <img
-              src={previewUrl}
-              alt="預覽圖片"
-              className="max-h-[360px] w-full object-cover"
-            />
+        {previewUrls.length > 0 && (
+          <div className="mb-3 grid grid-cols-3 gap-2">
+            {previewUrls.map((url, index) => (
+              <div
+                key={url}
+                className="relative aspect-square overflow-hidden rounded-2xl bg-[#eeeeee]"
+              >
+                <img
+                  src={url}
+                  alt={`預覽圖片 ${index + 1}`}
+                  className="h-full w-full object-cover"
+                />
 
-            <button
-              type="button"
-              onClick={() => setFile(null)}
-              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-[18px] text-white"
-            >
-              ×
-            </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiles((prev) => prev.filter((_, i) => i !== index))
+                  }}
+                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-[16px] text-white"
+                >
+                  ×
+                </button>
+
+                <div className="absolute bottom-2 right-2 rounded-full bg-black/55 px-2 py-[2px] text-[11px] text-white">
+                  {index + 1}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -152,14 +179,24 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
         />
 
         <label className="mt-2 flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-[#eeeeee] text-[15px] font-medium text-[#222] active:scale-[0.98]">
-          上傳相片
+          上傳相片（1–10張）
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            multiple
+            onChange={(e) => {
+              const selectedFiles = Array.from(e.target.files ?? []).slice(0, 10)
+              setFiles(selectedFiles)
+            }}
             className="hidden"
           />
         </label>
+
+        {files.length > 0 && (
+          <p className="mt-2 text-center text-xs text-[#777]">
+            已選擇 {files.length} / 10 張
+          </p>
+        )}
 
         {loading && (
           <p className="mt-3 text-center text-sm text-[#777]">發文中...</p>

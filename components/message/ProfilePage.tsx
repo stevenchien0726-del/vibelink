@@ -108,6 +108,7 @@ export default function ProfilePage({
   const [myPosts, setMyPosts] = useState<any[]>([])
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
+  const [selectedPostImageIndex, setSelectedPostImageIndex] = useState(0)
 
   const gridItems = myPosts
 
@@ -166,6 +167,54 @@ async function loadMyPosts() {
   }
 
   setMyPosts(data ?? [])
+}
+
+async function deleteSelectedPost() {
+  if (!selectedPost?.id) return
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    alert('請先登入')
+    return
+  }
+
+  const { data: deletedImages, error: imageDeleteError } = await supabase
+    .from('post_images')
+    .delete()
+    .eq('post_id', selectedPost.id)
+    .select()
+
+  if (imageDeleteError) {
+    console.error('刪除圖片資料失敗:', imageDeleteError)
+    alert('刪除圖片資料失敗')
+    return
+  }
+
+  const { data: deletedPosts, error: postDeleteError } = await supabase
+    .from('posts')
+    .delete()
+    .eq('id', selectedPost.id)
+    .eq('user_id', user.id)
+    .select()
+
+  if (postDeleteError) {
+    console.error('刪除貼文失敗:', postDeleteError)
+    alert('刪除貼文失敗')
+    return
+  }
+
+  if (!deletedPosts || deletedPosts.length === 0) {
+    alert('資料庫沒有刪到貼文，請檢查 Supabase RLS DELETE policy')
+    return
+  }
+
+  setMyPosts((prev) => prev.filter((post) => post.id !== selectedPost.id))
+  setIsPostMenuOpen(false)
+  setSelectedPost(null)
 }
 
   function goToTab(index: number) {
@@ -425,7 +474,10 @@ async function loadMyPosts() {
     <button
   type="button"
   key={post.id}
-  onClick={() => setSelectedPost(post)}
+  onClick={() => {
+  setSelectedPost(post)
+  setSelectedPostImageIndex(0)
+}}
   className="h-[190px] bg-[#d9d9d9]"
 >
       {image && (
@@ -769,11 +821,37 @@ async function loadMyPosts() {
 
         {/* Image */}
         <div className="px-3">
-          <img
-            src={selectedPost.post_images?.[0]?.image_url}
-            className="w-full rounded-[18px] object-cover"
-          />
-        </div>
+  <div
+    data-horizontal-scroll="true"
+    className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto rounded-[18px]"
+    onScroll={(e) => {
+      const el = e.currentTarget
+      const index = Math.round(el.scrollLeft / el.clientWidth)
+      setSelectedPostImageIndex(index)
+    }}
+  >
+    {(selectedPost.post_images ?? []).map((image: any, index: number) => (
+      <img
+        key={`${image.image_url}-${index}`}
+        src={image.image_url}
+        className="w-full shrink-0 snap-center object-cover"
+      />
+    ))}
+  </div>
+
+  {(selectedPost.post_images?.length ?? 0) > 1 && (
+    <div className="mt-2 flex justify-center gap-2">
+      {selectedPost.post_images.map((_: any, index: number) => (
+        <div
+          key={index}
+          className={`h-[6px] w-[6px] rounded-full transition-all ${
+            selectedPostImageIndex === index ? 'bg-[#8B5CF6]' : 'bg-[#d1d1d1]'
+          }`}
+        />
+      ))}
+    </div>
+  )}
+</div>
 
         {/* Actions */}
         <div className="flex items-center justify-between px-4 pt-4">
@@ -836,9 +914,10 @@ async function loadMyPosts() {
       <AnimatePresence>
   {isPostMenuOpen && (
     <WideMenuSheet
-  variant="mine"
-  onClose={() => setIsPostMenuOpen(false)}
-/>
+      variant="mine"
+      onClose={() => setIsPostMenuOpen(false)}
+      onDelete={deleteSelectedPost}
+    />
   )}
 </AnimatePresence>
 
