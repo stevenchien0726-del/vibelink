@@ -22,6 +22,7 @@ MessageCircle,
 Send,
 ChevronLeft,
 MoreHorizontal,
+Copy,
 } from 'lucide-react'
 
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
@@ -116,7 +117,9 @@ export default function ProfilePage({
   const postImageTouchStartX = useRef<number | null>(null)
   const postImageTouchDeltaX = useRef(0)
 
-  const gridItems = myPosts
+  const gridItems = myPosts.filter(
+  (post) => post.post_images?.length > 0
+)
 
   async function ensureMyProfile() {
   const {
@@ -478,7 +481,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
           <div className="flex gap-10 pr-4">
   {/* 貼文 */}
   <div className="flex flex-col items-center">
-    <div className="text-[18px] text-[#222]">{myPosts.length}</div>
+    <div className="text-[18px] text-[#222]">{gridItems.length}</div>
     <div className="text-[14px] text-[#666]">貼文</div>
   </div>
 
@@ -642,8 +645,8 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
         />
       )}
       {post.post_images?.length > 1 && (
-  <div className="absolute right-2 top-2 text-white text-xs bg-black/50 px-2 py-[2px] rounded-full">
-    {post.post_images.length}
+  <div className="absolute right-2 top-2 flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/45 text-white">
+    <Copy size={15} strokeWidth={2.3} />
   </div>
 )}
     </button>
