@@ -4,7 +4,7 @@
 export const MEMBERSHIP_URL = 'https://vibe-membership-web.vercel.app'
 
 // ✅ VibeTV App（如果有固定網址也放這）
-export const VIBETV_APP_URL = 'https://vibetv-app.vercel.app'
+export const VIBETV_APP_URL = 'https://vibetv-app-qrq4.vercel.app/'
 
 // 🔧 開啟新分頁（統一用）
 export function openLink(url: string) {
