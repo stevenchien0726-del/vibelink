@@ -183,11 +183,10 @@ async function updateProfile() {
   const { error } = await supabase
     .from('profiles')
     .update({
-      display_name: profile?.display_name || '',
-      username: profile?.username || '',
-      bio: profile?.bio || '',
-      updated_at: new Date().toISOString(),
-    })
+  display_name: profile?.display_name || '',
+  username: profile?.username || '',
+  bio: profile?.bio || '',
+})
     .eq('id', user.id)
 
   if (error) {
