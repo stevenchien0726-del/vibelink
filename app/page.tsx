@@ -1,16 +1,13 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import HomePage from '../pages/HomePage'
-
-import FeedPage from '@/components/feed/FeedPage'
-
 import AIHelperPage from '../pages/AIHelperPage'
 import MessagePage from '../pages/MessagePage'
 import ProfilePage from '../components/message/ProfilePage'
 import VibeTvPage from '../pages/VibeTvPage'
 import BottomNav from '@/components/home/ui/nav/BottomNav'
-
+import { isInAppBrowser } from '@/lib/detectInAppBrowser'
 
 export type AppPage = 'home' | 'ai' | 'message' | 'profile' | 'tv'
 export type CapsulePosition = '左' | '中' | '右'
@@ -19,14 +16,18 @@ const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
 export default function Page() {
   const [page, setPage] = useState<AppPage>('home')
+
+  const [showWarning, setShowWarning] = useState(false)
+
+  useEffect(() => {
+    if (isInAppBrowser()) {
+      setShowWarning(true)
+    }
+  }, [])
+
   const [swipeOffset, setSwipeOffset] = useState(0)
   const [isDraggingPage, setIsDraggingPage] = useState(false)
   const [isSnapAnimating, setIsSnapAnimating] = useState(false)
-
-  const [selectedUser, setSelectedUser] = useState<{
-  name: string
-  avatar: string
-} | null>(null)
 
   const [feedCapsulePosition, setFeedCapsulePosition] =
     useState<CapsulePosition>('中')
@@ -292,6 +293,12 @@ export default function Page() {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
+
+      {showWarning && (
+  <div className="fixed left-1/2 top-0 z-[9999] w-full max-w-[430px] -translate-x-1/2 bg-black px-4 py-3 text-center text-sm text-white">
+    ⚠️ 請點右上角「在瀏覽器開啟」或複製連結到 Chrome / Safari，才能使用 Google 登入
+  </div>
+)}
       <div
         className={`min-h-screen ${
           isDraggingPage
