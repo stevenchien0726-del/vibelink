@@ -35,6 +35,7 @@ type CreatedPostPayload = {
   id: string
   caption: string
   imageUrl: string
+  imageUrls: string[]
 }
 
 const mockPosts: PostItem[] = [
@@ -189,7 +190,7 @@ function handlePostCreated(post: CreatedPostPayload) {
     author: 'Vibelink User',
     text: post.caption || '',
     likes: 0,
-    images: [post.imageUrl],
+    images: post.imageUrls?.length ? post.imageUrls : [post.imageUrl],
     aiTags: ['真實發文'],
   }
 
@@ -260,7 +261,8 @@ function handlePostCreated(post: CreatedPostPayload) {
   }
 
 
-  const mappedPosts: PostItem[] = (data ?? []).map((post: any) => {
+  const mappedPosts: PostItem[] = (data ?? [])
+  .map((post: any) => {
     const images = (post.post_images ?? []).map((img: any) => img.image_url)
 
     return {
@@ -275,6 +277,7 @@ function handlePostCreated(post: CreatedPostPayload) {
       aiTags: ['真實發文'],
     }
   })
+  .filter((post) => post.images.length > 0)
 
   setRealPosts(mappedPosts)
 }
@@ -731,7 +734,7 @@ async function handleGoogleLogin() {
   data-block-page-swipe="true"
 >
   <FeedGrid
-  posts={realPosts.length > 0 ? realPosts : mockPosts}
+  posts={realPosts}
   feedMode={feedMode}
   setFeedMode={setFeedMode}
 />

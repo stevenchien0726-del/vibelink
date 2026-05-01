@@ -302,7 +302,9 @@ export default function Page() {
         }`}
         style={pageTranslateStyle}
       >
-        {page === 'home' && <FeedPage />}
+        {page === 'home' && (
+  <HomePage feedCapsulePosition={feedCapsulePosition} />
+)}
 
         {page === 'ai' && <AIHelperPage />}
 
