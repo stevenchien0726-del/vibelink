@@ -624,10 +624,15 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
     <button
   type="button"
   key={post.id}
-  onClick={() => {
-  setSelectedPost(post)
-  setSelectedPostImageIndex(0)
-}}
+  onClick={(e) => {
+    e.stopPropagation()
+
+    const image = post.post_images?.[0]?.image_url
+    if (!image) return
+
+    setSelectedPost(post)
+    setSelectedPostImageIndex(0)
+  }}
   className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
 >
       {image && (
@@ -1053,7 +1058,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 </AnimatePresence>
     
     <AnimatePresence>
-  {selectedPost && (
+  {selectedPost?.post_images?.length > 0 && (
     <motion.div
       className="fixed inset-0 z-[500] bg-[#f3f3f3]"
       initial={{ x: '100%' }}
