@@ -98,6 +98,7 @@ export default function ProfilePage({
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
   const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   const [profile, setProfile] = useState<any>(null)
 
@@ -169,6 +170,47 @@ export default function ProfilePage({
   setProfile(createdProfile)
 }
 
+async function uploadAvatar(file: File) {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    alert('請先登入')
+    return
+  }
+
+  setAvatarUploading(true)
+
+  const fileExt = file.name.split('.').pop()
+  const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, {
+      upsert: true,
+    })
+
+  if (uploadError) {
+    console.error('上傳頭像失敗:', uploadError)
+    alert('上傳頭像失敗')
+    setAvatarUploading(false)
+    return
+  }
+
+  const { data } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(filePath)
+
+  setProfile((prev: any) => ({
+    ...prev,
+    avatar_url: data.publicUrl,
+  }))
+
+  setAvatarUploading(false)
+}
+
 async function updateProfile() {
   const {
     data: { user },
@@ -186,6 +228,7 @@ async function updateProfile() {
   display_name: profile?.display_name || '',
   username: profile?.username || '',
   bio: profile?.bio || '',
+  avatar_url: profile?.avatar_url || null,
 })
     .eq('id', user.id)
 
@@ -375,7 +418,14 @@ async function deleteSelectedPost() {
           
         <div className="mb-3 flex items-start justify-between">
           <div className="flex gap-3">
-            <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
+            <div className="h-[58px] w-[58px] overflow-hidden rounded-full bg-[#d9d9d9]">
+  {profile?.avatar_url && (
+    <img
+      src={profile.avatar_url}
+      className="h-full w-full object-cover"
+    />
+  )}
+</div>
 
             <div>
               <div className="text-[18px] font-medium text-[#222]">
@@ -699,9 +749,29 @@ async function deleteSelectedPost() {
           </button>
         </div>
 
-        <div className="mb-6 flex justify-center">
-          <div className="h-[86px] w-[86px] rounded-full bg-[#d9d9d9]" />
-        </div>
+        <div className="mb-6 flex flex-col items-center gap-3">
+  <div className="h-[86px] w-[86px] overflow-hidden rounded-full bg-[#d9d9d9]">
+    {profile?.avatar_url && (
+      <img
+        src={profile.avatar_url}
+        className="h-full w-full object-cover"
+      />
+    )}
+  </div>
+
+  <label className="cursor-pointer text-[15px] font-medium text-[#8B5CF6]">
+    {avatarUploading ? '上傳中...' : '更換頭像'}
+    <input
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(e) => {
+        const file = e.target.files?.[0]
+        if (file) uploadAvatar(file)
+      }}
+    />
+  </label>
+</div>
 
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-2 text-[14px] text-[#666]">
