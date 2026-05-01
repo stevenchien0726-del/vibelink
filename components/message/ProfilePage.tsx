@@ -113,6 +113,9 @@ export default function ProfilePage({
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
   const [selectedPostImageIndex, setSelectedPostImageIndex] = useState(0)
 
+  const postImageTouchStartX = useRef<number | null>(null)
+  const postImageTouchDeltaX = useRef(0)
+
   const gridItems = myPosts
 
   async function ensureMyProfile() {
@@ -320,6 +323,41 @@ async function deleteSelectedPost() {
   setMyPosts((prev) => prev.filter((post) => post.id !== selectedPost.id))
   setIsPostMenuOpen(false)
   setSelectedPost(null)
+}
+
+function handlePostImageTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+  e.stopPropagation()
+
+  const touch = e.touches[0]
+  postImageTouchStartX.current = touch.clientX
+  postImageTouchDeltaX.current = 0
+}
+
+function handlePostImageTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+  e.stopPropagation()
+
+  if (postImageTouchStartX.current == null) return
+
+  const touch = e.touches[0]
+  postImageTouchDeltaX.current = touch.clientX - postImageTouchStartX.current
+}
+
+function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+  e.stopPropagation()
+
+  const deltaX = postImageTouchDeltaX.current
+  const total = selectedPost?.post_images?.length || 0
+
+  if (Math.abs(deltaX) > 50 && total > 1) {
+    if (deltaX < 0) {
+      setSelectedPostImageIndex((prev) => Math.min(prev + 1, total - 1))
+    } else {
+      setSelectedPostImageIndex((prev) => Math.max(prev - 1, 0))
+    }
+  }
+
+  postImageTouchStartX.current = null
+  postImageTouchDeltaX.current = 0
 }
 
   function goToTab(index: number) {
@@ -1059,7 +1097,13 @@ async function deleteSelectedPost() {
 
         {/* Image */}
         <div className="px-3">
-  <div className="relative overflow-hidden rounded-[18px]">
+  <div
+  data-no-page-swipe="true"
+  className="relative overflow-hidden rounded-[18px] touch-pan-y"
+  onTouchStart={handlePostImageTouchStart}
+  onTouchMove={handlePostImageTouchMove}
+  onTouchEnd={handlePostImageTouchEnd}
+>
     <motion.div
       className="flex"
       animate={{ x: `-${selectedPostImageIndex * 100}%` }}
