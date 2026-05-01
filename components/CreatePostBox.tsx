@@ -16,10 +16,11 @@ export type CreatedPostPayload = {
 
 type CreatePostBoxProps = {
   onSuccess?: (post: CreatedPostPayload) => void
+  onReadyChange?: (ready: boolean) => void
 }
 
 const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
-  function CreatePostBox({ onSuccess }, ref) {
+  function CreatePostBox({ onSuccess, onReadyChange }, ref) {
     const [caption, setCaption] = useState('')
     const [files, setFiles] = useState<File[]>([])
     const [previewUrls, setPreviewUrls] = useState<string[]>([])
@@ -38,6 +39,10 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
         objectUrls.forEach((url) => URL.revokeObjectURL(url))
       }
     }, [files])
+
+    useEffect(() => {
+  onReadyChange?.(files.length > 0)
+}, [files])
 
     async function submitPost() {
       if (loading) return

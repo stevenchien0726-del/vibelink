@@ -21,6 +21,7 @@ export default function UploadFullPage({
 }: UploadFullPageProps) {
   const [activeTab, setActiveTab] = useState<UploadTab>('post')
   const createPostRef = useRef<CreatePostBoxRef>(null)
+  const [isReadyToPost, setIsReadyToPost] = useState(false)
 
   return (
     <motion.div
@@ -71,19 +72,23 @@ export default function UploadFullPage({
             </button>
 
             <button
-              type="button"
-              onClick={() => {
-                if (activeTab === 'post') {
-                  createPostRef.current?.submitPost()
-                }
-              }}
+  type="button"
+  disabled={!isReadyToPost}
+  onClick={() => {
+    if (!isReadyToPost) return
+
+    if (activeTab === 'post') {
+      createPostRef.current?.submitPost()
+    }
+  }}
               style={{
                 height: '40px',
                 minWidth: '120px',
                 padding: '0 24px',
                 borderRadius: '14px',
-                background: '#efd6f4',
-                color: '#cfafd7',
+                background: isReadyToPost ? '#c86cff' : '#efd6f4',
+color: isReadyToPost ? '#ffffff' : '#cfafd7',
+opacity: isReadyToPost ? 1 : 0.7,
                 fontSize: '15px',
                 fontWeight: 500,
                 display: 'flex',
@@ -102,12 +107,13 @@ export default function UploadFullPage({
           {activeTab === 'post' && (
             <div className="mb-0">
               <CreatePostBox
-                ref={createPostRef}
-                onSuccess={(post) => {
-                  onPostCreated?.(post)
-                  onClose()
-                }}
-              />
+  ref={createPostRef}
+  onReadyChange={(ready) => setIsReadyToPost(ready)}
+  onSuccess={(post) => {
+    onPostCreated?.(post)
+    onClose()
+  }}
+/>
             </div>
           )}
 
@@ -127,19 +133,20 @@ export default function UploadFullPage({
                   <button
                     type="button"
                     style={{
-                      height: '40px',
-                      minWidth: '180px',
-                      padding: '0 24px',
-                      borderRadius: '12px',
-                      background: '#e1e1e1',
-                      color: '#111111',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: 'none',
-                    }}
+  height: '40px',
+  minWidth: '180px',
+  padding: '0 24px',
+  borderRadius: '12px',
+  background: '#e1e1e1',
+  color: '#111111',
+  fontSize: '16px',
+  fontWeight: 500,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: 'none',
+}}
+
                   >
                     選擇短影片
                   </button>

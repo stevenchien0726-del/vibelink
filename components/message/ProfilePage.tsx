@@ -628,7 +628,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   setSelectedPost(post)
   setSelectedPostImageIndex(0)
 }}
-  className="h-[190px] bg-[#d9d9d9]"
+  className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
 >
       {image && (
         <img
