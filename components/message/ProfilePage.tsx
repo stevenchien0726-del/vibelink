@@ -83,7 +83,7 @@ export default function ProfilePage({
   
   useEffect(() => {
   async function init() {
-    await loadMyProfile()
+    await ensureMyProfile()
     await loadMyPosts()
   }
 
@@ -113,7 +113,7 @@ export default function ProfilePage({
 
   const gridItems = myPosts
 
-  async function loadMyProfile() {
+  async function ensureMyProfile() {
   const {
     data: { user },
     error: userError,
@@ -124,18 +124,48 @@ export default function ProfilePage({
     return
   }
 
-  const { data, error } = await supabase
+  const { data: existingProfile, error: selectError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
-  if (error) {
-    console.error('讀取 profile 失敗:', error)
+  if (selectError) {
+    console.error('讀取 profile 失敗:', selectError)
     return
   }
 
-  setProfile(data)
+  if (existingProfile) {
+    setProfile(existingProfile)
+    return
+  }
+
+  const fallbackName =
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    user.email?.split('@')[0] ||
+    'Vibelink User'
+
+  const newProfile = {
+    id: user.id,
+    username: `user_${user.id.slice(0, 5)}`,
+    display_name: fallbackName,
+    avatar_url: user.user_metadata?.avatar_url || null,
+    bio: '',
+  }
+
+  const { data: createdProfile, error: insertError } = await supabase
+    .from('profiles')
+    .insert(newProfile)
+    .select()
+    .single()
+
+  if (insertError) {
+    console.error('建立 profile 失敗:', insertError)
+    return
+  }
+
+  setProfile(createdProfile)
 }
 
 async function loadMyPosts() {
