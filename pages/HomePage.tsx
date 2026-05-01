@@ -192,6 +192,7 @@ function handlePostCreated(post: CreatedPostPayload) {
     likes: 0,
     images: post.imageUrls?.length ? post.imageUrls : [post.imageUrl],
     aiTags: ['真實發文'],
+    isMine: true,
   }
 
   setRealPosts((prev) => [newPost, ...prev])
@@ -238,12 +239,19 @@ function handlePostCreated(post: CreatedPostPayload) {
   const storyOverlayOpacity = useTransform(storyDragY, [0, 320], [1, 0.86])
 
   async function loadPosts() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  
+
   const { data, error } = await supabase
     .from('posts')
     .select(`
-      id,
-      caption,
-      created_at,
+  id,
+  caption,
+  created_at,
+  user_id,
       profiles (
         username,
         display_name,
@@ -261,6 +269,27 @@ function handlePostCreated(post: CreatedPostPayload) {
   }
 
 
+  const postIds = (data ?? []).map((post: any) => post.id)
+
+const { data: likeRows } = await supabase
+  .from('likes')
+  .select('post_id, user_id')
+  .in('post_id', postIds)
+
+const likeCountMap = new Map<string, number>()
+const likedSet = new Set<string>()
+
+;(likeRows ?? []).forEach((like: any) => {
+  likeCountMap.set(
+    like.post_id,
+    (likeCountMap.get(like.post_id) ?? 0) + 1
+  )
+
+  if (like.user_id === user?.id) {
+    likedSet.add(like.post_id)
+  }
+})
+
   const mappedPosts: PostItem[] = (data ?? [])
   .map((post: any) => {
     const images = (post.post_images ?? []).map((img: any) => img.image_url)
@@ -272,9 +301,11 @@ function handlePostCreated(post: CreatedPostPayload) {
         post.profiles?.username ||
         'Vibelink User',
       text: post.caption || '',
-      likes: 0,
+      likes: likeCountMap.get(post.id) ?? 0,
+isLiked: likedSet.has(post.id),
       images,
       aiTags: ['真實發文'],
+      isMine: post.user_id === user?.id,
     }
   })
   .filter((post) => post.images.length > 0)

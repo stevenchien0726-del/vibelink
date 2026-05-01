@@ -114,6 +114,9 @@ export default function ProfilePage({
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
   const [selectedPostImageIndex, setSelectedPostImageIndex] = useState(0)
 
+  const [selectedPostLiked, setSelectedPostLiked] = useState(false)
+const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
+
   const postImageTouchStartX = useRef<number | null>(null)
   const postImageTouchDeltaX = useRef(0)
 
@@ -277,7 +280,35 @@ async function loadMyPosts() {
     return
   }
 
-  setMyPosts(data ?? [])
+const postIds = (data ?? []).map((post: any) => post.id)
+
+const { data: likeRows } = await supabase
+  .from('likes')
+  .select('post_id, user_id')
+  .in('post_id', postIds)
+
+const likeCountMap = new Map<string, number>()
+const likedSet = new Set<string>()
+
+;(likeRows ?? []).forEach((like: any) => {
+  likeCountMap.set(
+    like.post_id,
+    (likeCountMap.get(like.post_id) ?? 0) + 1
+  )
+
+  if (like.user_id === user.id) {
+    likedSet.add(like.post_id)
+  }
+})
+
+const postsWithLikes = (data ?? []).map((post: any) => ({
+  ...post,
+  likes: likeCountMap.get(post.id) ?? 0,
+  isLiked: likedSet.has(post.id),
+}))
+
+setMyPosts(postsWithLikes)
+
 }
 
 async function deleteSelectedPost() {
@@ -326,6 +357,37 @@ async function deleteSelectedPost() {
   setMyPosts((prev) => prev.filter((post) => post.id !== selectedPost.id))
   setIsPostMenuOpen(false)
   setSelectedPost(null)
+}
+
+async function toggleSelectedPostLike() {
+  if (!selectedPost?.id) return
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  if (selectedPostLiked) {
+    setSelectedPostLiked(false)
+    setSelectedPostLikeCount((prev) => Math.max(0, prev - 1))
+
+    await supabase
+      .from('likes')
+      .delete()
+      .eq('post_id', selectedPost.id)
+      .eq('user_id', user.id)
+
+    return
+  }
+
+  setSelectedPostLiked(true)
+  setSelectedPostLikeCount((prev) => prev + 1)
+
+  await supabase.from('likes').insert({
+    post_id: selectedPost.id,
+    user_id: user.id,
+  })
 }
 
 function handlePostImageTouchStart(e: React.TouchEvent<HTMLDivElement>) {
@@ -634,7 +696,9 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
     if (!image) return
 
     setSelectedPost(post)
-    setSelectedPostImageIndex(0)
+setSelectedPostImageIndex(0)
+setSelectedPostLiked(!!post.isLiked)
+setSelectedPostLikeCount(post.likes ?? 0)
   }}
   className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
 >
@@ -1119,14 +1183,14 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
     >
       {selectedPost.post_images?.map((img: any, index: number) => (
         <div
-          key={index}
-          className="w-full shrink-0 grow-0 basis-full"
-        >
-          <img
-            src={img.image_url}
-            className="w-full object-cover"
-          />
-        </div>
+  key={index}
+  className="h-[530px] w-full shrink-0 grow-0 basis-full overflow-hidden bg-black"
+>
+  <img
+    src={img.image_url}
+    className="h-full w-full object-cover"
+  />
+</div>
       ))}
     </motion.div>
   </div>
@@ -1150,9 +1214,21 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
         {/* Actions */}
         <div className="flex items-center justify-between px-4 pt-4">
           <div className="flex items-center gap-5">
-            <button type="button" className="active:scale-90">
-              <Heart size={25} strokeWidth={2.1} />
-            </button>
+            <button
+  type="button"
+  onClick={toggleSelectedPostLike}
+  className="flex items-center gap-1.5 active:scale-90"
+>
+  <Heart
+    size={25}
+    color="#c86cff"
+    fill={selectedPostLiked ? '#c86cff' : 'none'}
+    strokeWidth={2.1}
+  />
+  <span className="text-[15px] text-[#555]">
+    {selectedPostLikeCount}
+  </span>
+</button>
 
             <button type="button" className="active:scale-90">
               <MessageCircle size={25} strokeWidth={2.1} />
