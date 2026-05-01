@@ -26,6 +26,7 @@ MoreHorizontal,
 
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
+import SettingsPage from '@/pages/SettingsPage'
 import type { CapsulePosition } from '@/app/page'
 
 import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
