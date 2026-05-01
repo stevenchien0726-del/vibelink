@@ -1,7 +1,7 @@
 // src/lib/links.ts
 
 // ✅ Vibe會員（固定 Production 網址）
-export const MEMBERSHIP_URL = 'https://vibe-membership-v2.vercel.app'
+export const MEMBERSHIP_URL = 'https://vibe-membership-web.vercel.app'
 
 // ✅ VibeTV App（如果有固定網址也放這）
 export const VIBETV_APP_URL = 'https://vibetv-app.vercel.app'

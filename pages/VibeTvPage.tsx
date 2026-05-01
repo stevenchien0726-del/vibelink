@@ -33,7 +33,7 @@ export default function VibeTvPage() {
             <button
               type="button"
               onClick={() => {
-  window.open('https://vibe-membership-v2.vercel.app', '_blank')
+  window.open('https://vibe-membership-web.vercel.app/', '_blank')
 }}
               className="flex h-10 items-center justify-center gap-2 rounded-full bg-[#d9d9d9] px-4 text-[18px] font-medium text-[#111]"
             >
