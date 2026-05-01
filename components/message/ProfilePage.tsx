@@ -97,6 +97,7 @@ export default function ProfilePage({
   const [showSettingsPage, setShowSettingsPage] = useState(false)
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
   const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
 
   const [profile, setProfile] = useState<any>(null)
 
@@ -166,6 +167,37 @@ export default function ProfilePage({
   }
 
   setProfile(createdProfile)
+}
+
+async function updateProfile() {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    alert('請先登入')
+    return
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      display_name: profile?.display_name || '',
+      username: profile?.username || '',
+      bio: profile?.bio || '',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', user.id)
+
+  if (error) {
+    console.error('更新 profile 失敗:', error)
+    alert('更新失敗')
+    return
+  }
+
+  alert('更新成功')
+  setIsEditProfileOpen(false)
 }
 
 async function loadMyPosts() {
@@ -402,14 +434,14 @@ async function deleteSelectedPost() {
 
         <div className="mb-4 flex w-full items-center gap-3">
           
-
           <button
-            type="button"
-            className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
-            style={{ WebkitAppearance: 'none', appearance: 'none' }}
-          >
-            編輯檔案
-          </button>
+  type="button"
+  onClick={() => setIsEditProfileOpen(true)}
+  className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
+  style={{ WebkitAppearance: 'none', appearance: 'none' }}
+>
+  編輯檔案
+</button>
 
           <button
             type="button"
@@ -635,6 +667,93 @@ async function deleteSelectedPost() {
 </div>
         </div>
       </div>
+
+<AnimatePresence>
+  {isEditProfileOpen && (
+    <motion.div
+      className="fixed inset-0 z-[650] bg-[#f3f3f3]"
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+    >
+      <div className="mx-auto w-full max-w-[430px] px-4 pt-5">
+        <div className="mb-6 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setIsEditProfileOpen(false)}
+            className="text-[16px] text-[#222]"
+          >
+            取消
+          </button>
+
+          <div className="text-[18px] font-medium text-[#111]">
+            編輯檔案
+          </div>
+
+          <button
+            type="button"
+            onClick={updateProfile}
+            className="text-[16px] font-medium text-[#8B5CF6]"
+          >
+            儲存
+          </button>
+        </div>
+
+        <div className="mb-6 flex justify-center">
+          <div className="h-[86px] w-[86px] rounded-full bg-[#d9d9d9]" />
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <label className="flex flex-col gap-2 text-[14px] text-[#666]">
+            顯示名稱
+            <input
+              value={profile?.display_name || ''}
+              onChange={(e) =>
+                setProfile((prev: any) => ({
+                  ...prev,
+                  display_name: e.target.value,
+                }))
+              }
+              className="h-[46px] rounded-[14px] border border-[#ddd] bg-white px-4 text-[16px] text-[#222] outline-none"
+              placeholder="輸入顯示名稱"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2 text-[14px] text-[#666]">
+            使用者名稱
+            <input
+              value={profile?.username || ''}
+              onChange={(e) =>
+                setProfile((prev: any) => ({
+                  ...prev,
+                  username: e.target.value,
+                }))
+              }
+              className="h-[46px] rounded-[14px] border border-[#ddd] bg-white px-4 text-[16px] text-[#222] outline-none"
+              placeholder="輸入 username"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2 text-[14px] text-[#666]">
+            自我介紹
+            <textarea
+              value={profile?.bio || ''}
+              onChange={(e) =>
+                setProfile((prev: any) => ({
+                  ...prev,
+                  bio: e.target.value,
+                }))
+              }
+              className="min-h-[120px] rounded-[14px] border border-[#ddd] bg-white px-4 py-3 text-[16px] text-[#222] outline-none"
+              placeholder="輸入自我介紹"
+            />
+          </label>
+        </div>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       <AnimatePresence>
         {isUploadOpen && (
