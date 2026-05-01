@@ -2,6 +2,9 @@
 
 import { useRef, useState } from 'react'
 import HomePage from '../pages/HomePage'
+
+import FeedPage from '@/components/feed/FeedPage'
+
 import AIHelperPage from '../pages/AIHelperPage'
 import MessagePage from '../pages/MessagePage'
 import ProfilePage from '../components/message/ProfilePage'
@@ -299,9 +302,7 @@ export default function Page() {
         }`}
         style={pageTranslateStyle}
       >
-        {page === 'home' && (
-          <HomePage feedCapsulePosition={feedCapsulePosition} />
-        )}
+        {page === 'home' && <FeedPage />}
 
         {page === 'ai' && <AIHelperPage />}
 
