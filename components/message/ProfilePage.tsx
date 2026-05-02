@@ -280,35 +280,8 @@ async function loadMyPosts() {
     return
   }
 
-const postIds = (data ?? []).map((post: any) => post.id)
 
-const { data: likeRows } = await supabase
-  .from('likes')
-  .select('post_id, user_id')
-  .in('post_id', postIds)
-
-const likeCountMap = new Map<string, number>()
-const likedSet = new Set<string>()
-
-;(likeRows ?? []).forEach((like: any) => {
-  likeCountMap.set(
-    like.post_id,
-    (likeCountMap.get(like.post_id) ?? 0) + 1
-  )
-
-  if (like.user_id === user.id) {
-    likedSet.add(like.post_id)
-  }
-})
-
-const postsWithLikes = (data ?? []).map((post: any) => ({
-  ...post,
-  likes: likeCountMap.get(post.id) ?? 0,
-  isLiked: likedSet.has(post.id),
-}))
-
-setMyPosts(postsWithLikes)
-
+  
 }
 
 async function deleteSelectedPost() {
@@ -1196,10 +1169,13 @@ setSelectedPostLikeCount(post.likes ?? 0)
   </div>
 
   {/* dots */}
+  {/* dots：只有 2 張以上才顯示 */}
+{selectedPost.post_images?.length > 1 && (
   <div className="mt-3 flex justify-center gap-2">
-    {selectedPost.post_images?.map((_: any, index: number) => (
+    {selectedPost.post_images.map((_: any, index: number) => (
       <button
         key={index}
+        type="button"
         onClick={() => setSelectedPostImageIndex(index)}
         className={`h-[7px] w-[7px] rounded-full ${
           selectedPostImageIndex === index
@@ -1209,6 +1185,7 @@ setSelectedPostLikeCount(post.likes ?? 0)
       />
     ))}
   </div>
+)}
 </div>
 
         {/* Actions */}

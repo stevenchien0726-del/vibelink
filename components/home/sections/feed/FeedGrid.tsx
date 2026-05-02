@@ -351,27 +351,25 @@ export default function FeedGrid({
 </AnimatePresence>
                   </div>
 
-                  <div className="absolute -bottom-[18px] left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2">
-                    {postImages.map((_, index) => (
-                      <button
-                        key={`${post.id}-dot-${index}`}
-                        type="button"
-                        onClick={() =>
-                          goToSlide(post.id, index, postImages.length)
-                        }
-                        aria-label={`Go to slide ${index + 1}`}
-                        className="flex h-[10px] items-center justify-center p-0"
-                      >
-                        <span
-                          className={`block h-[7px] w-[7px] rounded-full transition-all duration-250 ${
-                            currentSlide === index
-                              ? 'bg-[#c86cff]'
-                              : 'bg-[#d8b4f8]'
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
+                  {postImages.length > 1 && (
+  <div className="absolute -bottom-[18px] left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2">
+    {postImages.map((_, index) => (
+      <button
+        key={`${post.id}-dot-${index}`}
+        type="button"
+        onClick={() => goToSlide(post.id, index, postImages.length)}
+        aria-label={`Go to slide ${index + 1}`}
+        className="flex h-[10px] items-center justify-center p-0"
+      >
+        <span
+          className={`block h-[7px] w-[7px] rounded-full transition-all duration-250 ${
+            currentSlide === index ? 'bg-[#c86cff]' : 'bg-[#d8b4f8]'
+          }`}
+        />
+      </button>
+    ))}
+  </div>
+)}
                 </div>
 
                 <div className="mt-5 flex items-center justify-between gap-3">
