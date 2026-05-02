@@ -24,12 +24,14 @@ export type PostItem = {
   aiTags: string[]
   isMine?: boolean
   isLiked?: boolean
+isSaved?: boolean
 }
 
 type FeedGridProps = {
   posts?: PostItem[]
   feedMode?: FeedMode
   setFeedMode?: (mode: FeedMode) => void
+  onOpenPost?: (post: PostItem) => void
 }
 
 const FALLBACK_IMAGE =
@@ -40,12 +42,15 @@ const LIKE_COLOR = '#c86cff'
 export default function FeedGrid({
   posts = [],
   feedMode = '1x1',
+  onOpenPost,
 }: FeedGridProps) {
   const [slideMap, setSlideMap] = useState<Record<string, number>>({})
   const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null)
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({})
   const [likeCountMap, setLikeCountMap] = useState<Record<string, number>>({})
   const [bigHeartPostId, setBigHeartPostId] = useState<string | null>(null)
+
+  const [savedMap, setSavedMap] = useState<Record<string, boolean>>({})
 
   const touchStartXRef = useRef<number | null>(null)
   const touchStartYRef = useRef<number | null>(null)
@@ -59,15 +64,18 @@ export default function FeedGrid({
 
   useEffect(() => {
   const nextCounts: Record<string, number> = {}
-  const nextLiked: Record<string, boolean> = {}
+const nextLiked: Record<string, boolean> = {}
+const nextSaved: Record<string, boolean> = {}
 
   posts.forEach((post) => {
     nextCounts[post.id] = post.likes ?? 0
     nextLiked[post.id] = !!post.isLiked
+    nextSaved[post.id] = !!post.isSaved
   })
 
   setLikeCountMap(nextCounts)
   setLikedMap(nextLiked)
+  setSavedMap(nextSaved)
 }, [posts])
 
   const getPostImages = (post: PostItem) => {
@@ -129,6 +137,41 @@ export default function FeedGrid({
   if (error) {
     console.error('新增 like 失敗:', error)
   }
+}
+
+async function toggleSave(postId: string) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  const isSaved = !!savedMap[postId]
+
+  setSavedMap((prev) => ({
+    ...prev,
+    [postId]: !isSaved,
+  }))
+
+  if (isSaved) {
+    const { error } = await supabase
+      .from('saved_posts')
+      .delete()
+      .eq('post_id', postId)
+      .eq('user_id', user.id)
+
+    if (error) console.error('取消收藏失敗:', error)
+    return
+  }
+
+  const { error } = await supabase.from('saved_posts').insert({
+    post_id: postId,
+    user_id: user.id,
+  })
+
+if (error) {
+  console.error('新增收藏失敗:', JSON.stringify(error, null, 2))
+}
 }
 
   const goToSlide = (postId: string, nextIndex: number, imageLength: number) => {
@@ -389,28 +432,34 @@ export default function FeedGrid({
                     </button>
 
                     <button
-                      type="button"
-                      className="flex items-center text-[#222] transition active:scale-95"
-                    >
-                      <MessageCircle size={22} />
-                    </button>
+  type="button"
+  className="flex items-center text-[#222] transition active:scale-95"
+>
+  <MessageCircle size={22} />
+</button>
                   </div>
 
                   <div className="flex items-center gap-6">
-                    <button
-                      type="button"
-                      className="flex items-center text-[#222] transition active:scale-95"
-                    >
-                      <Send size={22} strokeWidth={2.1} />
-                    </button>
+  <button
+    type="button"
+    className="flex items-center text-[#222] transition active:scale-95"
+  >
+    <Send size={22} strokeWidth={2.1} />
+  </button>
 
-                    <button
-                      type="button"
-                      className="flex items-center text-[#222] transition active:scale-95"
-                    >
-                      <Bookmark size={22} strokeWidth={2.1} />
-                    </button>
-                  </div>
+  <button
+    type="button"
+    onClick={() => toggleSave(post.id)}
+    className="flex items-center text-[#222] transition active:scale-95"
+  >
+    <Bookmark
+      size={22}
+      color="#c86cff"
+      fill={savedMap[post.id] ? '#c86cff' : 'none'}
+      strokeWidth={2.1}
+    />
+  </button>
+</div>
                 </div>
 
                 <div className="mt-3 text-[16px] text-[#444]">
@@ -454,18 +503,20 @@ export default function FeedGrid({
             const image = getPostImages(post)[0]
 
             return (
-              <motion.div
-                layout
-                key={post.id}
-                className="relative h-[280px] w-full overflow-hidden rounded-[20px] bg-[#dddddd]"
-              >
-                <img
-                  src={image}
-                  alt={post.author}
-                  className="h-full w-full object-cover"
-                  draggable={false}
-                />
-              </motion.div>
+              <motion.button
+  type="button"
+  layout
+  key={post.id}
+  onClick={() => onOpenPost?.(post)}
+  className="relative h-[280px] w-full overflow-hidden rounded-[20px] bg-[#dddddd]"
+>
+  <img
+    src={image}
+    alt={post.author}
+    className="h-full w-full object-cover"
+    draggable={false}
+  />
+</motion.button>
             )
           })}
         </motion.div>

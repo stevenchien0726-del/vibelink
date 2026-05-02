@@ -14,7 +14,15 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import type { CapsulePosition } from '@/app/page'
 import AIStoryRow from '@/components/AIStoryRow'
 
-import { Bell, HeartIcon } from 'lucide-react'
+import {
+  Bell,
+  Heart,
+  MessageCircle,
+  Send,
+  Bookmark,
+  ChevronLeft,
+  MoreHorizontal,
+} from 'lucide-react'
 
 import FeedGrid, { type FeedMode, type PostItem } from '@/components/home/sections/feed/FeedGrid'
 
@@ -148,6 +156,13 @@ export default function HomePage({
   
   const [feedMode, setFeedMode] = useState<FeedMode>('1x1')
   const [realPosts, setRealPosts] = useState<PostItem[]>([])
+  const [selectedPost, setSelectedPost] = useState<PostItem | null>(null)
+
+const [selectedPostLiked, setSelectedPostLiked] = useState(false)
+const [selectedPostSaved, setSelectedPostSaved] = useState(false)
+const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
+
+const detailTouchStartXRef = useRef<number | null>(null)
   useEffect(() => {
   loadPosts()
 
@@ -193,6 +208,7 @@ function handlePostCreated(post: CreatedPostPayload) {
     images: post.imageUrls?.length ? post.imageUrls : [post.imageUrl],
     aiTags: ['真實發文'],
     isMine: true,
+    isSaved: false,
   }
 
   setRealPosts((prev) => [newPost, ...prev])
@@ -276,8 +292,14 @@ const { data: likeRows } = await supabase
   .select('post_id, user_id')
   .in('post_id', postIds)
 
+const { data: savedRows } = await supabase
+  .from('saved_posts')
+  .select('post_id, user_id')
+  .in('post_id', postIds)
+
 const likeCountMap = new Map<string, number>()
 const likedSet = new Set<string>()
+const savedSet = new Set<string>()
 
 ;(likeRows ?? []).forEach((like: any) => {
   likeCountMap.set(
@@ -287,6 +309,12 @@ const likedSet = new Set<string>()
 
   if (like.user_id === user?.id) {
     likedSet.add(like.post_id)
+  }
+})
+
+;(savedRows ?? []).forEach((saved: any) => {
+  if (saved.user_id === user?.id) {
+    savedSet.add(saved.post_id)
   }
 })
 
@@ -303,6 +331,7 @@ const likedSet = new Set<string>()
       text: post.caption || '',
       likes: likeCountMap.get(post.id) ?? 0,
 isLiked: likedSet.has(post.id),
+isSaved: savedSet.has(post.id),
       images,
       aiTags: ['真實發文'],
       isMine: post.user_id === user?.id,
@@ -388,17 +417,97 @@ async function handleGoogleLogin() {
     setIsSearchPageOpen(true)
   }
 
-  function handleCycleFeedMode() {
-    setIsFeedCapsulePressed(true)
+function handleCycleFeedMode() {
+  setIsFeedCapsulePressed(true)
 
-    setFeedMode((prev) => {
-  return prev === '1x1' ? '2x2' : '1x1'
-})
+  setFeedMode((prev) => {
+    return prev === '1x1' ? '2x2' : '1x1'
+  })
 
-    window.setTimeout(() => {
-      setIsFeedCapsulePressed(false)
-    }, 320)
+  window.setTimeout(() => {
+    setIsFeedCapsulePressed(false)
+  }, 320)
+}
+
+function handleDetailTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+  const target = e.target as HTMLElement
+
+  if (target.closest('[data-detail-image-area="true"]')) {
+    detailTouchStartXRef.current = null
+    return
   }
+
+  detailTouchStartXRef.current = e.touches[0].clientX
+}
+
+function handleDetailTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+  const startX = detailTouchStartXRef.current
+  if (startX == null) return
+
+  const endX = e.changedTouches[0].clientX
+  const deltaX = endX - startX
+
+  // 左滑關閉
+  if (deltaX < -70) {
+    setSelectedPost(null)
+  }
+
+  detailTouchStartXRef.current = null
+}
+
+function openDetailPost(post: PostItem) {
+  setSelectedPost(post)
+  setSelectedPostLiked(!!post.isLiked)
+  setSelectedPostSaved(!!post.isSaved)
+  setSelectedPostLikeCount(post.likes ?? 0)
+}
+
+async function toggleDetailLike() {
+  if (!selectedPost?.id) return
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const nextLiked = !selectedPostLiked
+  setSelectedPostLiked(nextLiked)
+  setSelectedPostLikeCount((prev) => Math.max(0, prev + (nextLiked ? 1 : -1)))
+
+  if (nextLiked) {
+    await supabase.from('likes').insert({
+      post_id: selectedPost.id,
+      user_id: user.id,
+    })
+  } else {
+    await supabase
+      .from('likes')
+      .delete()
+      .eq('post_id', selectedPost.id)
+      .eq('user_id', user.id)
+  }
+}
+
+async function toggleDetailSave() {
+  if (!selectedPost?.id) return
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const nextSaved = !selectedPostSaved
+  setSelectedPostSaved(nextSaved)
+
+  if (nextSaved) {
+    await supabase.from('saved_posts').insert({
+      post_id: selectedPost.id,
+      user_id: user.id,
+    })
+  } else {
+    await supabase
+      .from('saved_posts')
+      .delete()
+      .eq('post_id', selectedPost.id)
+      .eq('user_id', user.id)
+  }
+}
 
   function handlePrevStoryPage() {
     if (storyPage > 0) {
@@ -768,6 +877,7 @@ async function handleGoogleLogin() {
   posts={realPosts}
   feedMode={feedMode}
   setFeedMode={setFeedMode}
+  onOpenPost={openDetailPost}
 />
 </section>
 
@@ -799,7 +909,103 @@ async function handleGoogleLogin() {
         </div>
       </main>
 
-      
+<AnimatePresence>
+  {selectedPost && (
+    <motion.div
+      className="fixed inset-0 z-[700] bg-[#f3f3f3]"
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+      onTouchStart={handleDetailTouchStart}
+      onTouchEnd={handleDetailTouchEnd}
+    >
+      <div className="mx-auto h-full w-full max-w-[430px] overflow-y-auto pb-[110px]">
+        <div className="sticky top-0 z-[20] flex h-[56px] items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setSelectedPost(null)}
+            className="flex h-10 w-10 items-center justify-center rounded-full active:scale-90"
+          >
+            <ChevronLeft size={26} />
+          </button>
+
+          <button
+            type="button"
+            className="flex h-10 items-center gap-2 rounded-full px-2 active:scale-95"
+          >
+            <MoreHorizontal size={22} strokeWidth={2.4} />
+            <span className="text-[15px] font-medium">MENU</span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
+          <div className="text-[15px] font-medium text-[#222]">
+            {selectedPost.author}
+          </div>
+        </div>
+
+        <div data-detail-image-area="true" className="px-3">
+          <div className="overflow-hidden rounded-[18px] bg-[#ddd]">
+            <img
+              src={selectedPost.images[0]}
+              className="w-full object-cover"
+              draggable={false}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between px-4 pt-4">
+          <div className="flex items-center gap-5">
+            <button onClick={toggleDetailLike} className="flex items-center gap-1.5 active:scale-90">
+  <Heart
+    size={25}
+    color="#c86cff"
+    fill={selectedPostLiked ? '#c86cff' : 'none'}
+  />
+  <span className="text-[15px] text-[#555]">{selectedPostLikeCount}</span>
+</button>
+
+            <button className="active:scale-90">
+              <MessageCircle size={25} strokeWidth={2.1} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-5">
+            <button className="active:scale-90">
+              <Send size={24} strokeWidth={2.1} />
+            </button>
+
+            <button onClick={toggleDetailSave} className="active:scale-90">
+  <Bookmark
+    size={25}
+    color="#c86cff"
+    fill={selectedPostSaved ? '#c86cff' : 'none'}
+    strokeWidth={2.1}
+  />
+</button>
+          </div>
+        </div>
+
+        {selectedPost.text && (
+          <div className="px-4 pt-3 text-[15px] text-[#222]">
+            {selectedPost.text}
+          </div>
+        )}
+
+        <div className="mt-5 border-t border-[#ddd] px-4 pt-4">
+          <div className="mb-4 text-[15px] font-medium text-[#222]">
+            留言
+          </div>
+          <div className="text-[14px] text-[#999]">
+            尚無留言，成為第一個留言的人
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       <AnimatePresence>
         {isPeopleLibraryOpen && (

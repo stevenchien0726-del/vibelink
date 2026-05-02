@@ -86,6 +86,7 @@ export default function ProfilePage({
   async function init() {
     await ensureMyProfile()
     await loadMyPosts()
+await loadSavedPosts()
   }
 
   init()
@@ -110,12 +111,16 @@ export default function ProfilePage({
   const albumScrollRef = useRef<HTMLDivElement | null>(null)
 
   const [myPosts, setMyPosts] = useState<any[]>([])
+  const [savedPosts, setSavedPosts] = useState<any[]>([])
+
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
   const [selectedPostImageIndex, setSelectedPostImageIndex] = useState(0)
 
   const [selectedPostLiked, setSelectedPostLiked] = useState(false)
 const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
+
+  const [selectedPostSaved, setSelectedPostSaved] = useState(false)
 
   const postImageTouchStartX = useRef<number | null>(null)
   const postImageTouchDeltaX = useRef(0)
@@ -280,8 +285,97 @@ async function loadMyPosts() {
     return
   }
 
+  const postIds = (data ?? []).map((post: any) => post.id)
 
-  
+  const { data: likeRows } =
+    postIds.length > 0
+      ? await supabase
+          .from('likes')
+          .select('post_id, user_id')
+          .in('post_id', postIds)
+      : { data: [] }
+
+  const likeCountMap = new Map<string, number>()
+  const likedSet = new Set<string>()
+
+  ;(likeRows ?? []).forEach((like: any) => {
+    likeCountMap.set(
+      like.post_id,
+      (likeCountMap.get(like.post_id) ?? 0) + 1
+    )
+
+    if (like.user_id === user.id) {
+      likedSet.add(like.post_id)
+    }
+  })
+
+  const postsWithLikes = (data ?? []).map((post: any) => ({
+    ...post,
+    likes: likeCountMap.get(post.id) ?? 0,
+    isLiked: likedSet.has(post.id),
+  }))
+
+  setMyPosts(postsWithLikes)
+}
+
+async function loadSavedPosts() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  const { data, error } = await supabase
+    .from('saved_posts')
+    .select(`
+      post_id,
+      posts (
+        id,
+        caption,
+        post_images (
+          image_url
+        )
+      )
+    `)
+    .eq('user_id', user.id)
+
+  if (error) {
+    console.error('讀取收藏失敗:', error)
+    return
+  }
+
+  const posts = (data ?? [])
+    .map((item: any) => item.posts)
+    .filter(Boolean)
+
+  setSavedPosts(posts)
+}
+
+async function openSelectedPost(post: any) {
+  const { data: images, error } = await supabase
+    .from('post_images')
+    .select('image_url')
+    .eq('post_id', post.id)
+
+  if (error) {
+    console.error('讀取貼文圖片失敗:', error)
+    return
+  }
+
+  const fullPost = {
+    ...post,
+    post_images: images ?? post.post_images ?? [],
+  }
+
+  console.log('打開貼文完整圖片數:', fullPost.post_images.length, fullPost.post_images)
+
+  setSelectedPost(fullPost)
+  setSelectedPostImageIndex(0)
+  setSelectedPostLiked(!!post.isLiked)
+  setSelectedPostLikeCount(post.likes ?? 0)
+  setSelectedPostSaved(
+  savedPosts.some((savedPost) => savedPost.id === post.id)
+)
 }
 
 async function deleteSelectedPost() {
@@ -358,6 +452,39 @@ async function toggleSelectedPostLike() {
   setSelectedPostLikeCount((prev) => prev + 1)
 
   await supabase.from('likes').insert({
+    post_id: selectedPost.id,
+    user_id: user.id,
+  })
+}
+
+async function toggleSelectedPostSave() {
+  if (!selectedPost?.id) return
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  if (selectedPostSaved) {
+    setSelectedPostSaved(false)
+    setSavedPosts((prev) =>
+      prev.filter((post) => post.id !== selectedPost.id)
+    )
+
+    await supabase
+      .from('saved_posts')
+      .delete()
+      .eq('post_id', selectedPost.id)
+      .eq('user_id', user.id)
+
+    return
+  }
+
+  setSelectedPostSaved(true)
+  setSavedPosts((prev) => [selectedPost, ...prev])
+
+  await supabase.from('saved_posts').insert({
     post_id: selectedPost.id,
     user_id: user.id,
   })
@@ -656,7 +783,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   <div className="w-full shrink-0">
     <div className="grid grid-cols-3 gap-[2px]">
       {gridItems.map((post) => {
-  const image = post.post_images?.[0]?.image_url
+  const image = post?.post_images?.[0]?.image_url
 
   return (
     <button
@@ -665,13 +792,10 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   onClick={(e) => {
     e.stopPropagation()
 
-    const image = post.post_images?.[0]?.image_url
+    const image = post?.post_images?.[0]?.image_url
     if (!image) return
 
-    setSelectedPost(post)
-setSelectedPostImageIndex(0)
-setSelectedPostLiked(!!post.isLiked)
-setSelectedPostLikeCount(post.likes ?? 0)
+    openSelectedPost(post)
   }}
   className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
 >
@@ -780,18 +904,35 @@ setSelectedPostLikeCount(post.likes ?? 0)
     
 
     <div className="grid grid-cols-3 gap-[2px]">
-      {gridItems.map((post) => {
-  const image = post.post_images?.[0]?.image_url
+      {savedPosts.map((post) => {
+  const image = post?.post_images?.[0]?.image_url
 
   return (
-    <div key={post.id} className="h-[190px] bg-[#d9d9d9]">
+    <button
+      type="button"
+      key={post.id}
+      onClick={(e) => {
+        e.stopPropagation()
+
+        if (!image) return
+
+        openSelectedPost(post)
+      }}
+      className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
+    >
       {image && (
         <img
           src={image}
           className="h-full w-full object-cover"
         />
       )}
-    </div>
+
+      {post.post_images?.length > 1 && (
+        <div className="absolute right-2 top-2 flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/45 text-white">
+          <Copy size={15} strokeWidth={2.3} />
+        </div>
+      )}
+    </button>
   )
 })}
     </div>
@@ -912,16 +1053,28 @@ setSelectedPostLikeCount(post.likes ?? 0)
           <UploadFullPage
   onClose={() => setIsUploadOpen(false)}
   onPostCreated={(post) => {
-    setMyPosts((prev) => [
-      {
-        ...post,
-        post_images: post.imageUrls.map((url) => ({
-          image_url: url,
-        })),
-      },
-      ...prev,
-    ])
-  }}
+  const imageUrls =
+    post.imageUrls?.length
+      ? post.imageUrls
+      : post.imageUrl
+        ? [post.imageUrl]
+        : []
+
+  setMyPosts((prev) => [
+    {
+      ...post,
+      caption: post.caption || '',
+      post_images: imageUrls.map((url) => ({
+        image_url: url,
+      })),
+      likes: 0,
+      isLiked: false,
+    },
+    ...prev,
+  ])
+
+  loadMyPosts()
+}}
 />
         )}
       </AnimatePresence>
@@ -1166,26 +1319,24 @@ setSelectedPostLikeCount(post.likes ?? 0)
 </div>
       ))}
     </motion.div>
-  </div>
 
-  {/* dots */}
-  {/* dots：只有 2 張以上才顯示 */}
 {selectedPost.post_images?.length > 1 && (
-  <div className="mt-3 flex justify-center gap-2">
+  <div className="absolute bottom-4 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-[7px]">
     {selectedPost.post_images.map((_: any, index: number) => (
       <button
         key={index}
         type="button"
         onClick={() => setSelectedPostImageIndex(index)}
-        className={`h-[7px] w-[7px] rounded-full ${
+        className={`h-[8px] rounded-full transition-all ${
           selectedPostImageIndex === index
-            ? 'bg-[#c86cff]'
-            : 'bg-[#ddd]'
+            ? 'w-[18px] bg-[#c86cff]'
+            : 'w-[8px] bg-white/90'
         }`}
       />
     ))}
   </div>
 )}
+</div>
 </div>
 
         {/* Actions */}
@@ -1208,8 +1359,8 @@ setSelectedPostLikeCount(post.likes ?? 0)
 </button>
 
             <button type="button" className="active:scale-90">
-              <MessageCircle size={25} strokeWidth={2.1} />
-            </button>
+  <MessageCircle size={25} strokeWidth={2.1} />
+</button>
           </div>
 
           <div className="flex items-center gap-5">
@@ -1217,9 +1368,18 @@ setSelectedPostLikeCount(post.likes ?? 0)
               <Send size={24} strokeWidth={2.1} />
             </button>
 
-            <button type="button" className="active:scale-90">
-              <Bookmark size={25} strokeWidth={2.1} />
-            </button>
+            <button
+  type="button"
+  onClick={toggleSelectedPostSave}
+  className="active:scale-90"
+>
+  <Bookmark
+    size={25}
+    color="#c86cff"
+    fill={selectedPostSaved ? '#c86cff' : 'none'}
+    strokeWidth={2.1}
+  />
+</button>
           </div>
         </div>
 
