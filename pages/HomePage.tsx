@@ -1026,10 +1026,10 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 >
   <div className="relative w-full aspect-square overflow-hidden rounded-[18px] bg-[#ddd]">
     <motion.div
-      className="flex w-full"
-      animate={{ x: `-${detailImageIndex * 100}%` }}
-      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-    >
+  className="flex h-full w-full"
+  animate={{ x: `-${detailImageIndex * 100}%` }}
+  transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+>
       {selectedPost.images.map((image, index) => (
         <div
   key={`${selectedPost.id}-detail-${index}`}
@@ -1037,9 +1037,9 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 >
           <img
   src={image}
-  className="w-full h-full object-cover"
-            draggable={false}
-          />
+  className="block h-full w-full object-cover"
+  draggable={false}
+/>
         </div>
       ))}
     </motion.div>
