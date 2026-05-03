@@ -1405,18 +1405,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
       </div>
 
       {/* Comment Input */}
-      <div className="fixed bottom-0 left-1/2 z-[510] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 py-3 backdrop-blur-md">
-        <div className="flex h-[46px] items-center gap-3 rounded-full bg-white px-4 shadow-sm">
-          <div className="h-[28px] w-[28px] rounded-full bg-[#d6d6d6]" />
-          <input
-            placeholder="加入留言..."
-            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#999]"
-          />
-          <button className="text-[14px] font-medium text-[#8B5CF6]">
-            發送
-          </button>
-        </div>
-      </div>
+      
 
       <AnimatePresence>
   {isPostMenuOpen && (

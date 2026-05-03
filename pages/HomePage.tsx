@@ -46,6 +46,18 @@ type CreatedPostPayload = {
   imageUrls: string[]
 }
 
+type CommentItem = {
+  id: string
+  content: string
+  created_at: string
+  user_id: string
+  profiles?: {
+    display_name?: string | null
+    username?: string | null
+    avatar_url?: string | null
+  } | null
+}
+
 const mockPosts: PostItem[] = [
   {
     id: 'p1',
@@ -161,6 +173,10 @@ export default function HomePage({
 const [selectedPostLiked, setSelectedPostLiked] = useState(false)
 const [selectedPostSaved, setSelectedPostSaved] = useState(false)
 const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
+
+const [comments, setComments] = useState<CommentItem[]>([])
+const [commentText, setCommentText] = useState('')
+const [commentLoading, setCommentLoading] = useState(false)
 
 const [detailImageIndex, setDetailImageIndex] = useState(0)
 const detailImageTouchStartXRef = useRef<number | null>(null)
@@ -458,12 +474,40 @@ function handleDetailTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   detailTouchStartXRef.current = null
 }
 
+async function loadComments(postId: string) {
+  const { data, error } = await supabase
+    .from('comments')
+    .select(`
+      id,
+      content,
+      created_at,
+      user_id,
+      profiles (
+        display_name,
+        username,
+        avatar_url
+      )
+    `)
+    .eq('post_id', postId)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('讀取留言失敗:', error)
+    return
+  }
+
+  setComments((data ?? []) as CommentItem[])
+}
+
 function openDetailPost(post: PostItem) {
   setSelectedPost(post)
   setSelectedPostLiked(!!post.isLiked)
   setSelectedPostSaved(!!post.isSaved)
   setSelectedPostLikeCount(post.likes ?? 0)
   setDetailImageIndex(0)
+  setCommentText('')
+  setComments([])
+  loadComments(post.id)
 }
 
 async function toggleDetailLike() {
@@ -508,32 +552,70 @@ async function toggleDetailSave() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
+  const postId = selectedPost.id
   const nextSaved = !selectedPostSaved
+
   setSelectedPostSaved(nextSaved)
 
   setRealPosts((prev) =>
-  prev.map((post) =>
-    post.id === selectedPost.id
-      ? {
-          ...post,
-          isSaved: nextSaved,
-        }
-      : post
+    prev.map((post) =>
+      post.id === postId
+        ? {
+            ...post,
+            isSaved: nextSaved,
+          }
+        : post
+    )
   )
-)
- 
+
   if (nextSaved) {
     await supabase.from('saved_posts').insert({
-      post_id: selectedPost.id,
+      post_id: postId,
       user_id: user.id,
     })
   } else {
     await supabase
       .from('saved_posts')
       .delete()
-      .eq('post_id', selectedPost.id)
+      .eq('post_id', postId)
       .eq('user_id', user.id)
   }
+}
+
+async function submitComment() {
+  
+  if (!selectedPost?.id) return
+
+  const text = commentText.trim()
+  if (!text) return
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+  setToast('請先登入')
+  setIsAuthModalOpen(true)
+  return
+}
+
+  setCommentLoading(true)
+
+  const { error } = await supabase.from('comments').insert({
+    post_id: selectedPost.id,
+    user_id: user.id,
+    content: text,
+  })
+
+  if (error) {
+    console.error('送出留言失敗:', error)
+    setCommentLoading(false)
+    return
+  }
+
+  setCommentText('')
+  await loadComments(selectedPost.id)
+  setCommentLoading(false)
 }
 
 function handleDetailImageTouchStart(e: React.TouchEvent<HTMLDivElement>) {
@@ -1104,13 +1186,67 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
         )}
 
         <div className="mt-5 border-t border-[#ddd] px-4 pt-4">
-          <div className="mb-4 text-[15px] font-medium text-[#222]">
-            留言
+  <div className="mb-4 text-[15px] font-medium text-[#222]">
+    留言
+  </div>
+
+  <div className="mb-4 flex gap-2">
+    <input
+      value={commentText}
+      onChange={(e) => setCommentText(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') submitComment()
+      }}
+      placeholder="新增留言..."
+      className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[#222] outline-none"
+    />
+
+    <button
+      type="button"
+      onClick={submitComment}
+      disabled={commentLoading || !commentText.trim()}
+      className={`h-[42px] rounded-full px-4 text-[14px] font-medium ${
+        commentText.trim()
+          ? 'bg-[#c86cff] text-white'
+          : 'bg-[#e5e5e5] text-[#999]'
+      }`}
+    >
+      送出
+    </button>
+  </div>
+
+  {comments.length === 0 ? (
+    <div className="text-[14px] text-[#999]">
+      尚無留言，成為第一個留言的人
+    </div>
+  ) : (
+    <div className="flex flex-col gap-4">
+      {comments.map((comment) => (
+        <div key={comment.id} className="flex gap-3">
+          <div className="h-[32px] w-[32px] overflow-hidden rounded-full bg-[#d6d6d6]">
+            {comment.profiles?.avatar_url && (
+              <img
+                src={comment.profiles.avatar_url}
+                className="h-full w-full object-cover"
+              />
+            )}
           </div>
-          <div className="text-[14px] text-[#999]">
-            尚無留言，成為第一個留言的人
+
+          <div className="flex-1">
+            <div className="text-[13px] font-medium text-[#222]">
+              {comment.profiles?.display_name ||
+                comment.profiles?.username ||
+                'Vibelink User'}
+            </div>
+            <div className="mt-1 text-[14px] text-[#444]">
+              {comment.content}
+            </div>
           </div>
         </div>
+      ))}
+    </div>
+  )}
+</div>
       </div>
     </motion.div>
   )}
