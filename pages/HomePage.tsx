@@ -162,6 +162,10 @@ const [selectedPostLiked, setSelectedPostLiked] = useState(false)
 const [selectedPostSaved, setSelectedPostSaved] = useState(false)
 const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
 
+const [detailImageIndex, setDetailImageIndex] = useState(0)
+const detailImageTouchStartXRef = useRef<number | null>(null)
+const detailImageTouchStartYRef = useRef<number | null>(null)
+
 const detailTouchStartXRef = useRef<number | null>(null)
   useEffect(() => {
   loadPosts()
@@ -460,6 +464,7 @@ function openDetailPost(post: PostItem) {
   setSelectedPostLiked(!!post.isLiked)
   setSelectedPostSaved(!!post.isSaved)
   setSelectedPostLikeCount(post.likes ?? 0)
+  setDetailImageIndex(0)
 }
 
 async function toggleDetailLike() {
@@ -471,6 +476,18 @@ async function toggleDetailLike() {
   const nextLiked = !selectedPostLiked
   setSelectedPostLiked(nextLiked)
   setSelectedPostLikeCount((prev) => Math.max(0, prev + (nextLiked ? 1 : -1)))
+
+  setRealPosts((prev) =>
+  prev.map((post) =>
+    post.id === selectedPost.id
+      ? {
+          ...post,
+          isLiked: nextLiked,
+          likes: Math.max(0, (post.likes ?? 0) + (nextLiked ? 1 : -1)),
+        }
+      : post
+  )
+)
 
   if (nextLiked) {
     await supabase.from('likes').insert({
@@ -495,6 +512,17 @@ async function toggleDetailSave() {
   const nextSaved = !selectedPostSaved
   setSelectedPostSaved(nextSaved)
 
+  setRealPosts((prev) =>
+  prev.map((post) =>
+    post.id === selectedPost.id
+      ? {
+          ...post,
+          isSaved: nextSaved,
+        }
+      : post
+  )
+)
+ 
   if (nextSaved) {
     await supabase.from('saved_posts').insert({
       post_id: selectedPost.id,
@@ -507,6 +535,42 @@ async function toggleDetailSave() {
       .eq('post_id', selectedPost.id)
       .eq('user_id', user.id)
   }
+}
+
+function handleDetailImageTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+  e.stopPropagation()
+
+  detailImageTouchStartXRef.current = e.touches[0].clientX
+  detailImageTouchStartYRef.current = e.touches[0].clientY
+}
+
+function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+  e.stopPropagation()
+
+  if (!selectedPost) return
+
+  const startX = detailImageTouchStartXRef.current
+  const startY = detailImageTouchStartYRef.current
+  if (startX == null || startY == null) return
+
+  const endX = e.changedTouches[0].clientX
+  const endY = e.changedTouches[0].clientY
+
+  const deltaX = endX - startX
+  const deltaY = endY - startY
+
+  if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY)) {
+    if (deltaX < 0) {
+      setDetailImageIndex((prev) =>
+        Math.min(prev + 1, selectedPost.images.length - 1)
+      )
+    } else {
+      setDetailImageIndex((prev) => Math.max(prev - 1, 0))
+    }
+  }
+
+  detailImageTouchStartXRef.current = null
+  detailImageTouchStartYRef.current = null
 }
 
   function handlePrevStoryPage() {
@@ -912,7 +976,8 @@ async function toggleDetailSave() {
 <AnimatePresence>
   {selectedPost && (
     <motion.div
-      className="fixed inset-0 z-[700] bg-[#f3f3f3]"
+  data-block-page-swipe="true"
+  className="fixed inset-0 z-[700] bg-[#f3f3f3]"
       initial={{ x: '100%' }}
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
@@ -946,15 +1011,53 @@ async function toggleDetailSave() {
           </div>
         </div>
 
-        <div data-detail-image-area="true" className="px-3">
-          <div className="overflow-hidden rounded-[18px] bg-[#ddd]">
-            <img
-              src={selectedPost.images[0]}
-              className="w-full object-cover"
-              draggable={false}
-            />
-          </div>
+        <div
+  data-detail-image-area="true"
+  data-block-page-swipe="true"
+  className="px-3"
+  onTouchStart={handleDetailImageTouchStart}
+  onTouchEnd={handleDetailImageTouchEnd}
+>
+  <div className="relative overflow-visible rounded-[18px] bg-[#ddd]">
+    <motion.div
+      className="flex"
+      animate={{ x: `-${detailImageIndex * 100}%` }}
+      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+    >
+      {selectedPost.images.map((image, index) => (
+        <div
+          key={`${selectedPost.id}-detail-${index}`}
+          className="w-full shrink-0"
+        >
+          <img
+            src={image}
+            className="w-full object-cover"
+            draggable={false}
+          />
         </div>
+      ))}
+    </motion.div>
+
+    {selectedPost.images.length > 1 && (
+      <div className="absolute right-3 top-3 rounded-full bg-black/20 px-3 py-1 text-[14px] text-[#444] backdrop-blur-sm">
+        {detailImageIndex + 1}/{selectedPost.images.length}
+      </div>
+    )}
+
+    {selectedPost.images.length > 1 && (
+      <div className="absolute bottom-[-18px] left-1/2 z-[30] flex -translate-x-1/2 gap-2">
+        {selectedPost.images.map((_, index) => (
+          <span
+            key={index}
+            className={`h-[7px] w-[7px] rounded-full ${
+              detailImageIndex === index ? 'bg-[#c86cff]' : 'bg-white/80'
+            }`}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+</div>
 
         <div className="flex items-center justify-between px-4 pt-4">
           <div className="flex items-center gap-5">
