@@ -451,10 +451,9 @@ function handleDetailTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   const endX = e.changedTouches[0].clientX
   const deltaX = endX - startX
 
-  // 左滑關閉
-  if (deltaX < -70) {
-    setSelectedPost(null)
-  }
+  if (deltaX > 70) {
+  setSelectedPost(null)
+}
 
   detailTouchStartXRef.current = null
 }
@@ -542,6 +541,11 @@ function handleDetailImageTouchStart(e: React.TouchEvent<HTMLDivElement>) {
 
   detailImageTouchStartXRef.current = e.touches[0].clientX
   detailImageTouchStartYRef.current = e.touches[0].clientY
+}
+
+function handleDetailImageTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+  e.stopPropagation()
+  e.preventDefault()
 }
 
 function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
@@ -977,7 +981,7 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   {selectedPost && (
     <motion.div
   data-block-page-swipe="true"
-  className="fixed inset-0 z-[700] bg-[#f3f3f3]"
+  className="fixed inset-0 z-[700] overflow-x-hidden bg-[#f3f3f3]"
       initial={{ x: '100%' }}
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
@@ -985,7 +989,7 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
       onTouchStart={handleDetailTouchStart}
       onTouchEnd={handleDetailTouchEnd}
     >
-      <div className="mx-auto h-full w-full max-w-[430px] overflow-y-auto pb-[110px]">
+      <div className="mx-auto h-full w-full max-w-[430px] overflow-x-hidden overflow-y-auto pb-[110px]">
         <div className="sticky top-0 z-[20] flex h-[56px] items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
           <button
             type="button"
@@ -1015,12 +1019,14 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   data-detail-image-area="true"
   data-block-page-swipe="true"
   className="px-3"
+  style={{ touchAction: 'pan-y' }}
   onTouchStart={handleDetailImageTouchStart}
+  onTouchMove={handleDetailImageTouchMove}
   onTouchEnd={handleDetailImageTouchEnd}
 >
-  <div className="relative overflow-visible rounded-[18px] bg-[#ddd]">
+  <div className="relative overflow-hidden rounded-[18px] bg-[#ddd]">
     <motion.div
-      className="flex"
+      className="flex w-full"
       animate={{ x: `-${detailImageIndex * 100}%` }}
       transition={{ type: 'spring', stiffness: 360, damping: 34 }}
     >
@@ -1043,20 +1049,20 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
         {detailImageIndex + 1}/{selectedPost.images.length}
       </div>
     )}
-
-    {selectedPost.images.length > 1 && (
-      <div className="absolute bottom-[-18px] left-1/2 z-[30] flex -translate-x-1/2 gap-2">
-        {selectedPost.images.map((_, index) => (
-          <span
-            key={index}
-            className={`h-[7px] w-[7px] rounded-full ${
-              detailImageIndex === index ? 'bg-[#c86cff]' : 'bg-white/80'
-            }`}
-          />
-        ))}
-      </div>
-    )}
   </div>
+
+  {selectedPost.images.length > 1 && (
+    <div className="mt-2 flex justify-center gap-2">
+      {selectedPost.images.map((_, index) => (
+        <span
+          key={index}
+          className={`h-[7px] w-[7px] rounded-full ${
+            detailImageIndex === index ? 'bg-[#c86cff]' : 'bg-[#ddd]'
+          }`}
+        />
+      ))}
+    </div>
+  )}
 </div>
 
         <div className="flex items-center justify-between px-4 pt-4">
