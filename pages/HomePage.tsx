@@ -1354,7 +1354,6 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
           onClick={handleGoogleLogin}
           className="flex h-[48px] w-full items-center justify-center gap-3 rounded-full border border-[#ddd] bg-white text-[15px] font-medium text-[#222] shadow-sm active:scale-[0.97]"
         >
-          <span className="text-[18px]">G</span>
           GOOGLE 帳戶登入
         </button>
       </motion.div>
