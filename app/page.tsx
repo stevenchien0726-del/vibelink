@@ -30,7 +30,21 @@ export default function Page() {
   const [isSnapAnimating, setIsSnapAnimating] = useState(false)
 
   const [feedCapsulePosition, setFeedCapsulePosition] =
-    useState<CapsulePosition>('中')
+  useState<CapsulePosition>(() => {
+    if (typeof window === 'undefined') return '中'
+
+    const saved = localStorage.getItem('feedCapsulePosition')
+
+    if (saved === '左' || saved === '中' || saved === '右') {
+      return saved
+    }
+
+    return '中'
+  })
+
+  useEffect(() => {
+  localStorage.setItem('feedCapsulePosition', feedCapsulePosition)
+}, [feedCapsulePosition])
 
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
