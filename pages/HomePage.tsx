@@ -191,6 +191,8 @@ const [detailImageIndex, setDetailImageIndex] = useState(0)
 const detailImageTouchStartXRef = useRef<number | null>(null)
 const detailImageTouchStartYRef = useRef<number | null>(null)
 
+const detailLastTapTimeRef = useRef(0)
+
 const detailTouchStartXRef = useRef<number | null>(null)
   useEffect(() => {
   loadPosts()
@@ -284,6 +286,8 @@ function handlePostCreated(post: CreatedPostPayload) {
   const storyCardScale = useTransform(storyDragY, [0, 320], [1, 0.94])
   const storyCardOpacity = useTransform(storyDragY, [0, 320], [1, 0.72])
   const storyOverlayOpacity = useTransform(storyDragY, [0, 320], [1, 0.86])
+
+  const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
 
   async function loadPosts() {
   const {
@@ -524,6 +528,20 @@ function openCommentSheet(post: PostItem) {
   setIsCommentSheetOpen(true)
 }
 
+function handleDetailDoubleLike() {
+  if (!selectedPost) return
+
+  if (!selectedPostLiked) {
+    toggleDetailLike()
+  }
+
+  setDetailBigHeartVisible(true)
+
+  setTimeout(() => {
+    setDetailBigHeartVisible(false)
+  }, 700)
+}
+
 async function toggleDetailLike() {
   const activePostId = selectedPost?.id || commentSheetPost?.id
 if (!activePostId) return
@@ -685,7 +703,22 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   const deltaX = endX - startX
   const deltaY = endY - startY
 
-  if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY)) {
+  const absX = Math.abs(deltaX)
+const absY = Math.abs(deltaY)
+
+const isTap = absX < 12 && absY < 12
+const now = Date.now()
+
+if (isTap) {
+  if (now - detailLastTapTimeRef.current < 280) {
+    handleDetailDoubleLike()
+    detailLastTapTimeRef.current = 0
+  } else {
+    detailLastTapTimeRef.current = now
+  }
+}
+
+  if (absX > 45 && absX > absY) {
     if (deltaX < 0) {
       setDetailImageIndex((prev) =>
         Math.min(prev + 1, selectedPost.images.length - 1)
@@ -1147,45 +1180,68 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   onTouchMove={handleDetailImageTouchMove}
   onTouchEnd={handleDetailImageTouchEnd}
 >
-  <div className="relative w-full aspect-square overflow-hidden rounded-[18px] bg-[#ddd]">
-    <motion.div
-  className="flex h-full w-full"
-  animate={{ x: `-${detailImageIndex * 100}%` }}
-  transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+  <div
+  onDoubleClick={handleDetailDoubleLike}
+  className="relative w-full aspect-square overflow-hidden rounded-[18px] bg-[#ddd]"
 >
-      {selectedPost.images.map((image, index) => (
-        <div
-  key={`${selectedPost.id}-detail-${index}`}
-  className="w-full shrink-0 h-full"
->
-          <img
-  src={image}
-  className="block h-full w-full object-cover"
-  draggable={false}
-/>
-        </div>
-      ))}
-    </motion.div>
 
-    {selectedPost.images.length > 1 && (
-      <div className="absolute right-3 top-3 rounded-full bg-black/20 px-3 py-1 text-[14px] text-[#444] backdrop-blur-sm">
-        {detailImageIndex + 1}/{selectedPost.images.length}
-      </div>
-    )}
-  </div>
-
-  {selectedPost.images.length > 1 && (
-    <div className="mt-2 flex justify-center gap-2">
-      {selectedPost.images.map((_, index) => (
-        <span
-          key={index}
-          className={`h-[7px] w-[7px] rounded-full ${
-            detailImageIndex === index ? 'bg-[#c86cff]' : 'bg-[#ddd]'
-          }`}
+  {/* ✅ 圖片滑動 */}
+  <motion.div
+    className="flex h-full w-full"
+    animate={{ x: `-${detailImageIndex * 100}%` }}
+    transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+  >
+    {selectedPost.images.map((image, index) => (
+      <div
+        key={`${selectedPost.id}-detail-${index}`}
+        className="w-full shrink-0 h-full"
+      >
+        <img
+          src={image}
+          className="block h-full w-full object-cover"
+          draggable={false}
         />
-      ))}
+      </div>
+    ))}
+  </motion.div>
+
+  {/* ✅ 愛心動畫（正確位置） */}
+  <AnimatePresence>
+    {detailBigHeartVisible && (
+      <motion.div
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{
+          scale: [0.6, 1.5, 1.2],
+          opacity: [0, 1, 0],
+        }}
+        transition={{ duration: 0.6 }}
+        className="pointer-events-none absolute inset-0 z-[80] flex items-center justify-center"
+      >
+        <Heart size={90} fill="#c86cff" color="#c86cff" />
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+    {/* 頁數 */}
+  {selectedPost.images.length > 1 && (
+    <div className="absolute right-3 top-3 rounded-full bg-black/20 px-3 py-1 text-[14px] text-[#444] backdrop-blur-sm">
+      {detailImageIndex + 1}/{selectedPost.images.length}
     </div>
   )}
+</div>
+
+{selectedPost.images.length > 1 && (
+  <div className="mt-2 flex justify-center gap-2">
+    {selectedPost.images.map((_, index) => (
+      <span
+        key={index}
+        className={`h-[7px] w-[7px] rounded-full ${
+          detailImageIndex === index ? 'bg-[#c86cff]' : 'bg-[#ddd]'
+        }`}
+      />
+    ))}
+  </div>
+)}
 </div>
 
         <div className="flex items-center justify-between px-4 pt-4">

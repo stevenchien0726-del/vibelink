@@ -59,6 +59,9 @@ export default function FeedGrid({
   const isHorizontalGestureRef = useRef(false)
   const activeTouchPostIdRef = useRef<string | null>(null)
 
+  const lastTapPostIdRef = useRef<string | null>(null)
+const lastTapTimeRef = useRef(0)
+
   useEffect(() => {
     setSlideMap({})
     setOpenMenuPostId(null)
@@ -245,6 +248,32 @@ if (error) {
 
     const shouldSlide = absX > 36 && absX > absY * 1.1
     const currentSlide = getCurrentSlide(postId)
+
+    const isTap = absX < 12 && absY < 12
+const now = Date.now()
+
+if (isTap) {
+  if (
+    lastTapPostIdRef.current === postId &&
+    now - lastTapTimeRef.current < 280
+  ) {
+    if (!likedMap[postId]) {
+      toggleLike(postId)
+    }
+
+    setBigHeartPostId(postId)
+
+    setTimeout(() => {
+      setBigHeartPostId(null)
+    }, 700)
+
+    lastTapPostIdRef.current = null
+    lastTapTimeRef.current = 0
+  } else {
+    lastTapPostIdRef.current = postId
+    lastTapTimeRef.current = now
+  }
+}
 
     if (shouldSlide) {
       if (deltaX < 0) {

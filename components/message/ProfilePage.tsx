@@ -124,6 +124,7 @@ export default function ProfilePage({
   const [selectedPostImageIndex, setSelectedPostImageIndex] = useState(0)
 
   const [selectedPostLiked, setSelectedPostLiked] = useState(false)
+  const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
 const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
 
   const [selectedPostSaved, setSelectedPostSaved] = useState(false)
@@ -138,6 +139,7 @@ const [isCommentMenuOpen, setIsCommentMenuOpen] = useState(false)
 
   const postImageTouchStartX = useRef<number | null>(null)
   const postImageTouchDeltaX = useRef(0)
+  const postImageLastTapTimeRef = useRef(0)
 
   const gridItems = myPosts.filter(
   (post) => post.post_images?.length > 0
@@ -444,6 +446,20 @@ async function deleteSelectedPost() {
   setSelectedPost(null)
 }
 
+function handleSelectedPostDoubleLike() {
+  if (!selectedPost) return
+
+  if (!selectedPostLiked) {
+    toggleSelectedPostLike()
+  }
+
+  setDetailBigHeartVisible(true)
+
+  setTimeout(() => {
+    setDetailBigHeartVisible(false)
+  }, 700)
+}
+
 async function toggleSelectedPostLike() {
   if (!selectedPost?.id) return
 
@@ -607,7 +623,19 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   const deltaX = postImageTouchDeltaX.current
   const total = selectedPost?.post_images?.length || 0
 
-  if (Math.abs(deltaX) > 50 && total > 1) {
+  const absX = Math.abs(deltaX)
+  const now = Date.now()
+
+  if (absX < 12) {
+    if (now - postImageLastTapTimeRef.current < 280) {
+      handleSelectedPostDoubleLike()
+      postImageLastTapTimeRef.current = 0
+    } else {
+      postImageLastTapTimeRef.current = now
+    }
+  }
+
+  if (absX > 50 && total > 1) {
     if (deltaX < 0) {
       setSelectedPostImageIndex((prev) => Math.min(prev + 1, total - 1))
     } else {
