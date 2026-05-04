@@ -568,7 +568,7 @@ if (!activePostId) return
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  const postId = selectedPost.id
+  const postId = activePostId
   const nextSaved = !selectedPostSaved
 
   setSelectedPostSaved(nextSaved)
