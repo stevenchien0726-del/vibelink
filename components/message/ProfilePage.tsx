@@ -84,10 +84,16 @@ export default function ProfilePage({
   
   useEffect(() => {
   async function init() {
-    await ensureMyProfile()
-    await loadMyPosts()
-await loadSavedPosts()
-  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  setCurrentUserId(user?.id ?? null)
+
+  await ensureMyProfile()
+  await loadMyPosts()
+  await loadSavedPosts()
+}
 
   init()
 }, [])
@@ -121,6 +127,14 @@ await loadSavedPosts()
 const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
 
   const [selectedPostSaved, setSelectedPostSaved] = useState(false)
+
+  const [comments, setComments] = useState<any[]>([])
+const [commentText, setCommentText] = useState('')
+const [commentLoading, setCommentLoading] = useState(false)
+
+const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+const [selectedComment, setSelectedComment] = useState<any>(null)
+const [isCommentMenuOpen, setIsCommentMenuOpen] = useState(false)
 
   const postImageTouchStartX = useRef<number | null>(null)
   const postImageTouchDeltaX = useRef(0)
@@ -268,15 +282,16 @@ async function loadMyPosts() {
   }
 
   const { data, error } = await supabase
-    .from('posts')
-    .select(`
-      id,
-      caption,
-      created_at,
-      post_images (
-        image_url
-      )
-    `)
+  .from('posts')
+  .select(`
+    id,
+    caption,
+    created_at,
+    user_id,
+    post_images (
+      image_url
+    )
+  `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -376,6 +391,9 @@ async function openSelectedPost(post: any) {
   setSelectedPostSaved(
   savedPosts.some((savedPost) => savedPost.id === post.id)
 )
+setCommentText('')
+setComments([])
+loadComments(post.id)
 }
 
 async function deleteSelectedPost() {
@@ -488,6 +506,82 @@ async function toggleSelectedPostSave() {
     post_id: selectedPost.id,
     user_id: user.id,
   })
+}
+
+async function loadComments(postId: string) {
+  const { data, error } = await supabase
+    .from('comments')
+    .select(`
+      id,
+      content,
+      created_at,
+      user_id
+    `)
+    .eq('post_id', postId)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('讀取留言失敗:', error)
+    return
+  }
+
+  setComments(data ?? [])
+}
+
+async function submitComment() {
+  if (!selectedPost?.id) return
+
+  const text = commentText.trim()
+  if (!text) return
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    alert('請先登入')
+    return
+  }
+
+  setCommentLoading(true)
+
+  const { error } = await supabase.from('comments').insert({
+    post_id: selectedPost.id,
+    user_id: user.id,
+    content: text,
+  })
+
+  if (error) {
+    console.error('送出留言失敗:', error)
+    setCommentLoading(false)
+    return
+  }
+
+  setCommentText('')
+  await loadComments(selectedPost.id)
+  setCommentLoading(false)
+}
+
+async function deleteComment() {
+  if (!selectedComment?.id) return
+
+  const { error } = await supabase
+    .from('comments')
+    .delete()
+    .eq('id', selectedComment.id)
+
+  if (error) {
+    console.error('刪除留言失敗:', error)
+    alert('刪除留言失敗，請檢查 comments DELETE RLS')
+    return
+  }
+
+  setComments((prev) =>
+    prev.filter((comment) => comment.id !== selectedComment.id)
+  )
+
+  setIsCommentMenuOpen(false)
+  setSelectedComment(null)
 }
 
 function handlePostImageTouchStart(e: React.TouchEvent<HTMLDivElement>) {
@@ -1391,21 +1485,135 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
         )}
 
         {/* Comments */}
-        <div className="mt-5 border-t border-[#ddd] px-4 pt-4">
-          <div className="mb-4 text-[15px] font-medium text-[#222]">
-            留言
-          </div>
+<div className="mt-5 border-t border-[#ddd] px-4 pt-4">
+  <div className="mb-4 text-[15px] font-medium text-[#222]">
+    留言
+  </div>
 
-          <div className="flex flex-col gap-4 pb-8">
-            <div className="text-[14px] text-[#999]">
-              尚無留言，成為第一個留言的人
-            </div>
-          </div>
-        </div>
+  <div className="mb-4 flex gap-2">
+    <input
+      value={commentText}
+      onChange={(e) => setCommentText(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') submitComment()
+      }}
+      placeholder="新增留言..."
+      className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[#222] outline-none"
+    />
+
+    <button
+      type="button"
+      onClick={submitComment}
+      disabled={commentLoading || !commentText.trim()}
+      className={`h-[42px] rounded-full px-4 text-[14px] font-medium ${
+        commentText.trim()
+          ? 'bg-[#c86cff] text-white'
+          : 'bg-[#e5e5e5] text-[#999]'
+      }`}
+    >
+      送出
+    </button>
+  </div>
+
+  {comments.length === 0 ? (
+    <div className="text-[14px] text-[#999]">
+      尚無留言，成為第一個留言的人
+    </div>
+  ) : (
+    <div className="flex flex-col gap-4 pb-8">
+      {comments.map((comment) => (
+        <div key={comment.id} className="flex gap-3">
+  <div className="h-[32px] w-[32px] overflow-hidden rounded-full bg-[#d6d6d6]">
+    {comment.profiles?.avatar_url && (
+      <img
+        src={comment.profiles.avatar_url}
+        className="h-full w-full object-cover"
+      />
+    )}
+  </div>
+
+  <div className="flex-1">
+    <div className="text-[13px] font-medium text-[#222]">
+      {comment.profiles?.display_name ||
+        comment.profiles?.username ||
+        'Vibelink User'}
+    </div>
+
+    <div className="mt-1 text-[14px] text-[#444]">
+      {comment.content}
+    </div>
+  </div>
+
+  <button
+    type="button"
+    onClick={() => {
+  setSelectedComment(comment)
+  requestAnimationFrame(() => {
+    setIsCommentMenuOpen(true)
+  })
+}}
+    className="flex h-[20px] w-[20px] items-center justify-center rounded-full active:scale-90 mt-[0px] mr-[2px]"
+  >
+    <MoreHorizontal size={20} strokeWidth={2} />
+  </button>
+</div>
+      ))}
+    </div>
+  )}
+</div>
       </div>
 
       {/* Comment Input */}
-      
+      <AnimatePresence>
+  {isCommentMenuOpen && selectedComment && (
+    <>
+      <motion.div
+        className="fixed inset-0 z-[620] bg-black/20"
+        onClick={() => {
+          setIsCommentMenuOpen(false)
+          setSelectedComment(null)
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      />
+
+      <motion.div
+        className="fixed bottom-0 left-1/2 z-[630] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[#f3f3f3] px-5 pt-4 pb-8 shadow-[0_-10px_30px_rgba(0,0,0,0.12)]"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+      >
+        <div className="mb-4 flex justify-center">
+          <div className="h-[4px] w-[40px] rounded-full bg-[#bbb]" />
+        </div>
+
+        {selectedComment.user_id === selectedPost?.user_id ? (
+          <button
+            type="button"
+            onClick={deleteComment}
+            className="flex h-[52px] w-full items-center justify-center rounded-[16px] text-[16px] font-medium text-red-500 active:bg-black/5"
+          >
+            刪除留言
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              alert('已收到檢舉')
+              setIsCommentMenuOpen(false)
+              setSelectedComment(null)
+            }}
+            className="flex h-[52px] w-full items-center justify-center rounded-[16px] text-[16px] font-medium text-[#222] active:bg-black/5"
+          >
+            檢舉留言
+          </button>
+        )}
+      </motion.div>
+    </>
+  )}
+</AnimatePresence>
 
       <AnimatePresence>
   {isPostMenuOpen && (

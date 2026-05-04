@@ -32,6 +32,7 @@ type FeedGridProps = {
   feedMode?: FeedMode
   setFeedMode?: (mode: FeedMode) => void
   onOpenPost?: (post: PostItem) => void
+  onOpenComments?: (post: PostItem) => void   // ✅ 新增
 }
 
 const FALLBACK_IMAGE =
@@ -43,6 +44,7 @@ export default function FeedGrid({
   posts = [],
   feedMode = '1x1',
   onOpenPost,
+  onOpenComments,
 }: FeedGridProps) {
   const [slideMap, setSlideMap] = useState<Record<string, number>>({})
   const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null)
@@ -433,6 +435,10 @@ if (error) {
 
                     <button
   type="button"
+  onClick={(e) => {
+    e.stopPropagation() // 🔥 防止觸發 onOpenPost
+    onOpenComments?.(post)
+  }}
   className="flex items-center text-[#222] transition active:scale-95"
 >
   <MessageCircle size={22} />

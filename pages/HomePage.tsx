@@ -170,6 +170,8 @@ export default function HomePage({
   const [realPosts, setRealPosts] = useState<PostItem[]>([])
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null)
 
+  const [commentSheetPost, setCommentSheetPost] = useState<PostItem | null>(null)
+
 const [selectedPostLiked, setSelectedPostLiked] = useState(false)
 const [selectedPostSaved, setSelectedPostSaved] = useState(false)
 const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
@@ -177,6 +179,13 @@ const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
 const [comments, setComments] = useState<CommentItem[]>([])
 const [commentText, setCommentText] = useState('')
 const [commentLoading, setCommentLoading] = useState(false)
+const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+const [selectedComment, setSelectedComment] = useState<CommentItem | null>(null)
+const [isCommentMenuOpen, setIsCommentMenuOpen] = useState(false)
+
+const [isCommentSheetOpen, setIsCommentSheetOpen] = useState(false)
+
+const commentSectionRef = useRef<HTMLDivElement | null>(null)
 
 const [detailImageIndex, setDetailImageIndex] = useState(0)
 const detailImageTouchStartXRef = useRef<number | null>(null)
@@ -188,6 +197,8 @@ const detailTouchStartXRef = useRef<number | null>(null)
 
   supabase.auth.getSession().then(async ({ data }) => {
   console.log('當前 session:', data.session)
+
+  setCurrentUserId(data.session?.user?.id ?? null)
 
   if (!data.session) {
     setIsAuthModalOpen(true)
@@ -481,12 +492,7 @@ async function loadComments(postId: string) {
       id,
       content,
       created_at,
-      user_id,
-      profiles (
-        display_name,
-        username,
-        avatar_url
-      )
+      user_id
     `)
     .eq('post_id', postId)
     .order('created_at', { ascending: true })
@@ -510,8 +516,17 @@ function openDetailPost(post: PostItem) {
   loadComments(post.id)
 }
 
+function openCommentSheet(post: PostItem) {
+  setCommentSheetPost(post)
+  setCommentText('')
+  setComments([])
+  loadComments(post.id)
+  setIsCommentSheetOpen(true)
+}
+
 async function toggleDetailLike() {
-  if (!selectedPost?.id) return
+  const activePostId = selectedPost?.id || commentSheetPost?.id
+if (!activePostId) return
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
@@ -534,7 +549,7 @@ async function toggleDetailLike() {
 
   if (nextLiked) {
     await supabase.from('likes').insert({
-      post_id: selectedPost.id,
+      post_id: activePostId,
       user_id: user.id,
     })
   } else {
@@ -547,7 +562,8 @@ async function toggleDetailLike() {
 }
 
 async function toggleDetailSave() {
-  if (!selectedPost?.id) return
+  const activePostId = selectedPost?.id || commentSheetPost?.id
+if (!activePostId) return
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
@@ -582,6 +598,28 @@ async function toggleDetailSave() {
   }
 }
 
+async function deleteComment() {
+  if (!selectedComment?.id) return
+
+  const { error } = await supabase
+    .from('comments')
+    .delete()
+    .eq('id', selectedComment.id)
+
+  if (error) {
+    console.error('刪除留言失敗:', error)
+    alert('刪除留言失敗，請檢查 comments DELETE RLS')
+    return
+  }
+
+  setComments((prev) =>
+    prev.filter((comment) => comment.id !== selectedComment.id)
+  )
+
+  setSelectedComment(null)
+  setIsCommentMenuOpen(false)
+}
+
 async function submitComment() {
   
   if (!selectedPost?.id) return
@@ -599,10 +637,11 @@ async function submitComment() {
   return
 }
 
+
   setCommentLoading(true)
 
   const { error } = await supabase.from('comments').insert({
-    post_id: selectedPost.id,
+    post_id: activePostId,
     user_id: user.id,
     content: text,
   })
@@ -614,7 +653,7 @@ async function submitComment() {
   }
 
   setCommentText('')
-  await loadComments(selectedPost.id)
+  await loadComments(activePostId)
   setCommentLoading(false)
 }
 
@@ -1028,6 +1067,7 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   feedMode={feedMode}
   setFeedMode={setFeedMode}
   onOpenPost={openDetailPost}
+  onOpenComments={openCommentSheet}
 />
 </section>
 
@@ -1164,9 +1204,17 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
           </div>
 
           <div className="flex items-center gap-5">
-            <button className="active:scale-90">
-              <Send size={24} strokeWidth={2.1} />
-            </button>
+            <button
+  onClick={() => {
+    commentSectionRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }}
+  className="active:scale-90"
+>
+  <MessageCircle size={25} strokeWidth={2.1} />
+</button>
 
             <button onClick={toggleDetailSave} className="active:scale-90">
   <Bookmark
@@ -1185,7 +1233,10 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
           </div>
         )}
 
-        <div className="mt-5 border-t border-[#ddd] px-4 pt-4">
+          <div
+  ref={commentSectionRef}
+  className="mt-5 border-t border-[#ddd] px-4 pt-4"
+>
   <div className="mb-4 text-[15px] font-medium text-[#222]">
     留言
   </div>
@@ -1223,31 +1274,37 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
     <div className="flex flex-col gap-4">
       {comments.map((comment) => (
         <div key={comment.id} className="flex gap-3">
-          <div className="h-[32px] w-[32px] overflow-hidden rounded-full bg-[#d6d6d6]">
-            {comment.profiles?.avatar_url && (
-              <img
-                src={comment.profiles.avatar_url}
-                className="h-full w-full object-cover"
-              />
-            )}
-          </div>
+  <div className="h-[32px] w-[32px] rounded-full bg-[#d6d6d6]" />
 
-          <div className="flex-1">
-            <div className="text-[13px] font-medium text-[#222]">
-              {comment.profiles?.display_name ||
-                comment.profiles?.username ||
-                'Vibelink User'}
-            </div>
-            <div className="mt-1 text-[14px] text-[#444]">
-              {comment.content}
-            </div>
-          </div>
-        </div>
+  <div className="flex-1">
+    <div className="text-[13px] font-medium text-[#222]">
+      Vibelink User
+    </div>
+
+    <div className="mt-1 text-[14px] text-[#444]">
+      {comment.content}
+    </div>
+  </div>
+
+  <button
+    type="button"
+    onClick={() => {
+      setSelectedComment(comment)
+      requestAnimationFrame(() => {
+        setIsCommentMenuOpen(true)
+      })
+    }}
+    className="mr-[-6px] mt-[2px] flex h-[36px] w-[36px] items-center justify-center rounded-full active:scale-90"
+  >
+    <MoreHorizontal size={20} strokeWidth={2.2} />
+  </button>
+</div>
       ))}
     </div>
   )}
 </div>
       </div>
+      
     </motion.div>
   )}
 </AnimatePresence>
@@ -1301,6 +1358,138 @@ function handleDetailImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
         </button>
       </motion.div>
     </motion.div>
+  )}
+</AnimatePresence>
+
+<AnimatePresence>
+  {isCommentSheetOpen && commentSheetPost && (
+    <>
+      <motion.div
+        className="fixed inset-0 z-[760] bg-black/20"
+        onClick={() => {
+  setIsCommentSheetOpen(false)
+  setCommentSheetPost(null)
+}}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      />
+
+      <motion.div
+        className="fixed bottom-0 left-1/2 z-[770] flex max-h-[78vh] w-full max-w-[430px] -translate-x-1/2 flex-col rounded-t-[26px] bg-[#f3f3f3] px-4 pt-4 pb-6 shadow-[0_-10px_30px_rgba(0,0,0,0.12)]"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+      >
+        <div className="mb-3 flex justify-center">
+          <div className="h-[4px] w-[42px] rounded-full bg-[#bbb]" />
+        </div>
+
+        <div className="mb-4 text-center text-[16px] font-medium text-[#222]">
+          留言
+        </div>
+
+        <div className="flex-1 overflow-y-auto pb-4">
+          {comments.length === 0 ? (
+            <div className="pt-4 text-[14px] text-[#999]">
+              尚無留言，成為第一個留言的人
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex gap-3">
+                  <div className="h-[32px] w-[32px] rounded-full bg-[#d6d6d6]" />
+
+                  <div className="flex-1">
+                    <div className="text-[13px] font-medium text-[#222]">
+                      Vibelink User
+                    </div>
+                    <div className="mt-1 text-[14px] text-[#444]">
+                      {comment.content}
+                    </div>
+                  </div>
+
+                  <div className="relative">
+  <button
+    type="button"
+    onClick={() => {
+      setSelectedComment(comment)
+      setIsCommentMenuOpen((prev) =>
+        selectedComment?.id === comment.id ? !prev : true
+      )
+    }}
+    className="mr-[-6px] mt-[2px] flex h-[36px] w-[36px] items-center justify-center rounded-full active:scale-90"
+  >
+    <MoreHorizontal size={20} strokeWidth={2.2} />
+  </button>
+
+  <AnimatePresence>
+    {isCommentMenuOpen && selectedComment?.id === comment.id && (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: -4 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: -4 }}
+        transition={{ duration: 0.16 }}
+        className="absolute right-1 top-[34px] z-[950] w-[132px] overflow-hidden rounded-[16px] border border-[#ddd] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
+      >
+        {comment.user_id === currentUserId ? (
+          <button
+            type="button"
+            onClick={deleteComment}
+            className="flex h-[44px] w-full items-center justify-center text-[14px] font-medium text-red-500 active:bg-black/5"
+          >
+            刪除留言
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              alert('已收到檢舉')
+              setIsCommentMenuOpen(false)
+              setSelectedComment(null)
+            }}
+            className="flex h-[44px] w-full items-center justify-center text-[14px] font-medium text-[#222] active:bg-black/5"
+          >
+            檢舉留言
+          </button>
+        )}
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2 border-t border-[#ddd] pt-3">
+          <input
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submitComment()
+            }}
+            placeholder="新增留言..."
+            className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[#222] outline-none"
+          />
+
+          <button
+            type="button"
+            onClick={submitComment}
+            disabled={commentLoading || !commentText.trim()}
+            className={`h-[42px] rounded-full px-4 text-[14px] font-medium ${
+              commentText.trim()
+                ? 'bg-[#c86cff] text-white'
+                : 'bg-[#e5e5e5] text-[#999]'
+            }`}
+          >
+            送出
+          </button>
+        </div>
+      </motion.div>
+    </>
   )}
 </AnimatePresence>
 
