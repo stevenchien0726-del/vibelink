@@ -14,6 +14,8 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import type { CapsulePosition } from '@/app/page'
 import AIStoryRow from '@/components/AIStoryRow'
 
+import WideMenuSheet from '@/components/WideMenuSheet'
+
 import ShareSheet from '@/components/ShareSheet'
 
 import {
@@ -196,6 +198,8 @@ const detailImageTouchStartYRef = useRef<number | null>(null)
 const detailLastTapTimeRef = useRef(0)
 
 const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
+
+const [isDetailMenuOpen, setIsDetailMenuOpen] = useState(false)
 
 const detailTouchStartXRef = useRef<number | null>(null)
   useEffect(() => {
@@ -927,7 +931,7 @@ if (isTap) {
   <div className="relative min-h-screen w-full overflow-hidden bg-[#f5f5f5]">
 
     <motion.div
-      className="fixed top-0 left-1/2 z-[40] h-[60px] w-full max-w-[430px] -translate-x-1/2 bg-[rgba(245,245,245,0.96)] px-[14px] py-[8px] backdrop-blur-md"
+      className="fixed top-0 left-1/2 z-[500] pointer-events-auto h-[60px] w-full max-w-[430px] -translate-x-1/2 bg-[rgba(245,245,245,0.96)] px-[14px] py-[8px] backdrop-blur-md"
       ref={searchRef}
       animate={{
         y: isTopBarVisible || isSearchOpen ? 0 : -72,
@@ -1154,19 +1158,26 @@ if (isTap) {
         <div className="sticky top-0 z-[20] flex h-[56px] items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
           <button
             type="button"
-            onClick={() => setSelectedPost(null)}
+            onClick={() => {
+  setIsDetailMenuOpen(false)
+  setSelectedPost(null)
+}}
             className="flex h-10 w-10 items-center justify-center rounded-full active:scale-90"
           >
             <ChevronLeft size={26} />
           </button>
 
-          <button
-            type="button"
-            className="flex h-10 items-center gap-2 rounded-full px-2 active:scale-95"
-          >
-            <MoreHorizontal size={22} strokeWidth={2.4} />
-            <span className="text-[15px] font-medium">MENU</span>
-          </button>
+          <div className="relative">
+  <button
+    type="button"
+    onClick={() => setIsDetailMenuOpen(true)}
+    className="flex h-10 items-center gap-2 rounded-full px-2 active:scale-95"
+  >
+    <MoreHorizontal size={22} strokeWidth={2.4} />
+    <span className="text-[15px] font-medium">MENU</span>
+  </button>
+
+</div>
         </div>
 
         <div className="flex items-center gap-3 px-4 py-3">
@@ -1550,6 +1561,13 @@ if (isTap) {
     </>
   )}
 </AnimatePresence>
+
+{isDetailMenuOpen && selectedPost && (
+  <WideMenuSheet
+    variant={selectedPost.isMine ? 'mine' : 'other'}
+    onClose={() => setIsDetailMenuOpen(false)}
+  />
+)}
 
 <ShareSheet
   open={isShareSheetOpen}
