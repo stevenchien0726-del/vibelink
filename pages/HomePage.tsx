@@ -537,7 +537,7 @@ if (!activePostId) return
 
   setRealPosts((prev) =>
   prev.map((post) =>
-    post.id === selectedPost.id
+    post.id === activePostId
       ? {
           ...post,
           isLiked: nextLiked,
@@ -556,7 +556,7 @@ if (!activePostId) return
     await supabase
       .from('likes')
       .delete()
-      .eq('post_id', selectedPost.id)
+      .eq('post_id', activePostId)
       .eq('user_id', user.id)
   }
 }
@@ -622,7 +622,8 @@ async function deleteComment() {
 
 async function submitComment() {
   
-  if (!selectedPost?.id) return
+  const activePostId = selectedPost?.id || commentSheetPost?.id
+if (!activePostId) return
 
   const text = commentText.trim()
   if (!text) return
