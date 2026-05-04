@@ -9,18 +9,6 @@ import { X } from 'lucide-react'
 
 import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
 
-type HistoryItem = {
-  id: string
-  title: string
-}
-
-const historyItems: HistoryItem[] = [
-  { id: 'h1', title: '幫我找可愛奶狗弟弟' },
-  { id: 'h2', title: '喜歡大自然的女生' },
-  { id: 'h3', title: '身材性感內建男模特' },
-  { id: 'h4', title: '想找今晚可以聊天的人' },
-]
-
 const suggestionItems = [
   '幫我找可愛奶狗弟弟',
   '喜歡大自然的女生',
@@ -366,18 +354,10 @@ const finalQuery =
     <div className="relative min-h-screen w-full overflow-hidden bg-[#f5f5f5]">
       {/* Top bar */}
       <div
-  className={`fixed top-0 left-1/2 z-[40] flex h-[60px] w-full max-w-[430px] -translate-x-1/2 items-center justify-between bg-[rgba(245,245,245,0.96)] px-4 backdrop-blur-md transition-transform duration-300 ${
+  className={`fixed top-0 left-1/2 z-[40] flex h-[60px] w-full max-w-[430px] -translate-x-1/2 items-center justify-center bg-[rgba(245,245,245,0.96)] px-4 backdrop-blur-md transition-transform duration-300 ${
     showTopBar ? 'translate-y-0' : '-translate-y-full'
   }`}
 >
-        <button
-          type="button"
-          aria-label="Open history"
-          onClick={openDrawer}
-          className="grid h-10 w-10 place-items-center bg-transparent text-[#111]"
-        >
-          <MenuIcon />
-        </button>
 
         <button
           type="button"
@@ -390,7 +370,6 @@ const finalQuery =
           <ChevronRightIcon />
         </button>
 
-        <div className="w-10" />
       </div>
 
       {/* Main content */}
@@ -695,39 +674,10 @@ const imgSrc = imagePool[photoIndex % imagePool.length]
               }}
             >
               <div className="border-b border-[#ececec] px-4 pb-4 pt-5">
-                <button
-                  type="button"
-                  onClick={() => openLink(MEMBERSHIP_URL)}
-                  className="mb-2 flex items-center gap-[4px] bg-transparent"
-                >
-                  <span className="text-[22px] font-medium text-[#111]">
-                    Vibe Plus
-                  </span>
-                  <ChevronRightIcon />
-                </button>
-
-                <div className="pb-1 pt-6">
-                  <span className="text-[16px] font-medium text-[#888]">
-                     過去30天的聊天
-                  </span>
-                </div>
+                
               </div>
 
-              <div className="flex flex-col gap-3 px-4 py-4">
-                {historyItems.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setInputValue(item.title)
-                      closeDrawer()
-                    }}
-                    className="rounded-[12px] bg-[#f5f5f5] px-3 py-3 text-left text-[14px] text-[#222] hover:bg-[#ededed]"
-                  >
-                    {item.title}
-                  </button>
-                ))}
-              </div>
+              
             </motion.aside>
           </>
         )}
