@@ -42,6 +42,7 @@ import { supabase } from '@/lib/supabase'
 import { Link as LinkIcon } from 'lucide-react'
 
 import WideMenuSheet from '@/components/WideMenuSheet'
+import ShareSheet from '@/components/ShareSheet'
 
 type ProfilePageProps = {
   onCloseMenu?: () => void
@@ -136,6 +137,7 @@ const [commentLoading, setCommentLoading] = useState(false)
 const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 const [selectedComment, setSelectedComment] = useState<any>(null)
 const [isCommentMenuOpen, setIsCommentMenuOpen] = useState(false)
+const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
 
   const postImageTouchStartX = useRef<number | null>(null)
   const postImageTouchDeltaX = useRef(0)
@@ -1486,9 +1488,13 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
           </div>
 
           <div className="flex items-center gap-5">
-            <button type="button" className="active:scale-90">
-              <Send size={24} strokeWidth={2.1} />
-            </button>
+            <button
+  type="button"
+  onClick={() => setIsShareSheetOpen(true)}
+  className="active:scale-90"
+>
+  <Send size={24} strokeWidth={2.1} />
+</button>
 
             <button
   type="button"
@@ -1657,6 +1663,11 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   )}
 </AnimatePresence>
     
+    <ShareSheet
+  open={isShareSheetOpen}
+  onClose={() => setIsShareSheetOpen(false)}
+/>
+
     </div>
   )
 }

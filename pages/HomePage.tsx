@@ -14,6 +14,8 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import type { CapsulePosition } from '@/app/page'
 import AIStoryRow from '@/components/AIStoryRow'
 
+import ShareSheet from '@/components/ShareSheet'
+
 import {
   Bell,
   Heart,
@@ -192,6 +194,8 @@ const detailImageTouchStartXRef = useRef<number | null>(null)
 const detailImageTouchStartYRef = useRef<number | null>(null)
 
 const detailLastTapTimeRef = useRef(0)
+
+const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
 
 const detailTouchStartXRef = useRef<number | null>(null)
   useEffect(() => {
@@ -1102,6 +1106,7 @@ if (isTap) {
   setFeedMode={setFeedMode}
   onOpenPost={openDetailPost}
   onOpenComments={openCommentSheet}
+  onOpenShare={() => setIsShareSheetOpen(true)}
 />
 </section>
 
@@ -1260,18 +1265,15 @@ if (isTap) {
             </button>
           </div>
 
-          <div className="flex items-center gap-5">
+                    <div className="flex items-center gap-5">
             <button
-  onClick={() => {
-    commentSectionRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    })
-  }}
-  className="active:scale-90"
->
-  <MessageCircle size={25} strokeWidth={2.1} />
-</button>
+              type="button"
+              onClick={() => setIsShareSheetOpen(true)}
+              className="active:scale-90"
+            >
+              <Send size={25} strokeWidth={2.1} />
+            </button>
+            
 
             <button onClick={toggleDetailSave} className="active:scale-90">
   <Bookmark
@@ -1548,6 +1550,11 @@ if (isTap) {
     </>
   )}
 </AnimatePresence>
+
+<ShareSheet
+  open={isShareSheetOpen}
+  onClose={() => setIsShareSheetOpen(false)}
+/>
 
 <AnimatePresence>
   {toast && (

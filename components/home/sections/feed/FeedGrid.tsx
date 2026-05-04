@@ -32,7 +32,8 @@ type FeedGridProps = {
   feedMode?: FeedMode
   setFeedMode?: (mode: FeedMode) => void
   onOpenPost?: (post: PostItem) => void
-  onOpenComments?: (post: PostItem) => void   // ✅ 新增
+  onOpenComments?: (post: PostItem) => void
+  onOpenShare?: (post: PostItem) => void
 }
 
 const FALLBACK_IMAGE =
@@ -45,6 +46,7 @@ export default function FeedGrid({
   feedMode = '1x1',
   onOpenPost,
   onOpenComments,
+  onOpenShare,
 }: FeedGridProps) {
   const [slideMap, setSlideMap] = useState<Record<string, number>>({})
   const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null)
@@ -476,11 +478,15 @@ if (isTap) {
 
                   <div className="flex items-center gap-6">
   <button
-    type="button"
-    className="flex items-center text-[#222] transition active:scale-95"
-  >
-    <Send size={22} strokeWidth={2.1} />
-  </button>
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation()
+    onOpenShare?.(post)
+  }}
+  className="flex items-center text-[#222] transition active:scale-95"
+>
+  <Send size={22} strokeWidth={2.1} />
+</button>
 
   <button
     type="button"
