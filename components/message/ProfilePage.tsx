@@ -44,6 +44,8 @@ import { Link as LinkIcon } from 'lucide-react'
 import WideMenuSheet from '@/components/WideMenuSheet'
 import ShareSheet from '@/components/ShareSheet'
 
+import LinkPortSheet from '@/components/profile/LinkPortSheet'
+
 type ProfilePageProps = {
   onCloseMenu?: () => void
   feedCapsulePosition: CapsulePosition
@@ -91,6 +93,8 @@ export default function ProfilePage({
 
   setCurrentUserId(user?.id ?? null)
 
+  setProfileUserId(user?.id ?? null)
+
   await ensureMyProfile()
   await loadMyPosts()
   await loadSavedPosts()
@@ -135,6 +139,7 @@ const [commentText, setCommentText] = useState('')
 const [commentLoading, setCommentLoading] = useState(false)
 
 const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+const [profileUserId, setProfileUserId] = useState<string | null>(null)
 const [selectedComment, setSelectedComment] = useState<any>(null)
 const [isCommentMenuOpen, setIsCommentMenuOpen] = useState(false)
 const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
@@ -1228,73 +1233,12 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-  {isLinkPortOpen && (
-    <>
-      {/* 背景遮罩 */}
-      <motion.div
-        className="fixed inset-0 z-[200] bg-black/30"
-        onClick={() => setIsLinkPortOpen(false)}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      />
-
-      {/* 底部 Sheet */}
-      <motion.div
-        className="fixed bottom-0 left-1/2 z-[210] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[#f3f3f3] px-5 pt-4 pb-6"
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-      >
-        {/* 上方拉條 */}
-        <div className="mb-3 flex justify-center">
-          <div className="h-[4px] w-[40px] rounded-full bg-[#bbb]" />
-        </div>
-
-        {/* Header */}
-        <div className="relative mb-4 text-center">
-          <div className="text-[18px] font-medium">LINKPORT</div>
-
-          <button
-  onClick={() => setIsLinkPortOpen(false)}
-  className="absolute right-0 top-0 flex h-[32px] w-[32px] items-center justify-center rounded-full hover:bg-[#e5e5e5]"
->
-  <X size={23} />
-</button>
-        </div>
-
-        <div className="mb-4 h-[1px] bg-[#ddd]" />
-
-        {/* Link list */}
-        <div className="flex flex-col items-center gap-7 text-[18px]">
-
-  <div className="flex w-[160px] items-center gap-3">
-    <LinkIcon size={20} />
-    <span>Instagram</span>
-  </div>
-
-  <div className="flex w-[160px] items-center gap-3">
-    <LinkIcon size={20} />
-    <span>TIKTOK</span>
-  </div>
-
-  <div className="flex w-[160px] items-center gap-3">
-    <LinkIcon size={20} />
-    <span>Onlyfans</span>
-  </div>
-
-  <div className="flex w-[160px] items-center gap-3 text-[#666]">
-  <Plus size={23} />
-  <span>新增</span>
-</div>
-
-</div>
-      </motion.div>
-    </>
-  )}
-</AnimatePresence>
+      <LinkPortSheet
+  open={isLinkPortOpen}
+  onClose={() => setIsLinkPortOpen(false)}
+  userId={currentUserId!}
+  isOwner={true}
+/>
 
       <AnimatePresence>
         {isMenuOpen && (

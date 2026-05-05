@@ -23,12 +23,6 @@ const searchAccounts = [
   { id: 'u5', name: 'Neo_77', sub: '官方推薦' },
 ]
 
-const groupMembers = [
-  { id: 'g1', name: 'Ryan_88' },
-  { id: 'g2', name: 'Leo_wave' },
-  { id: 'g3', name: 'Mina.day' },
-  { id: 'g4', name: 'Vibe_Alice' },
-]
 
 export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
@@ -146,7 +140,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
               </span>
             </button>
 
-            <div className="flex items-center gap-6 pl-3">
+            <div className="flex items-center gap-6 pl-1">
               <button
                 type="button"
                 onClick={openSearchPanel}
@@ -156,20 +150,13 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
               </button>
 
               <button
-                type="button"
-                onClick={openEditPanel}
-                className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
-              >
-                <PencilLine size={22} strokeWidth={2.5} />
-              </button>
+  type="button"
+  onClick={openEditPanel}
+  className="flex h-[26px] w-[26px] items-center justify-center -ml-5 active:scale-95"
+>
+  <PencilLine size={22} strokeWidth={2.5} />
+</button>
 
-              <button
-                type="button"
-                onClick={openCreateGroupPanel}
-                className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
-              >
-                <Users size={22} strokeWidth={2.5} />
-              </button>
             </div>
           </div>
         </div>
@@ -303,116 +290,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
                   </div>
                 )}
 
-                {isCreateGroupOpen && (
-                  <div className="overflow-hidden rounded-[30px] bg-[#e9e9e9]/95 shadow-[0_14px_30px_rgba(0,0,0,0.14)] backdrop-blur-md">
-                    <div className="flex items-center justify-between px-4 pt-4">
-                      <div>
-                        <div className="text-[18px] font-medium text-[#111]">
-                          建立群組
-                        </div>
-                        <div className="mt-1 text-[12px] text-[#666]">
-                          輸入群組名稱並選擇成員
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setIsCreateGroupOpen(false)}
-                        className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/60 active:scale-95"
-                      >
-                        <X size={22} strokeWidth={2.4} className="text-black" />
-                      </button>
-                    </div>
-
-                    <div className="p-4 pt-3">
-                      <div className="mb-4 flex h-[46px] items-center rounded-full bg-white/65 px-4">
-                        <Users
-                          size={19}
-                          strokeWidth={2.3}
-                          className="text-black"
-                        />
-                        <input
-                          value={groupName}
-                          onChange={(e) => setGroupName(e.target.value)}
-                          placeholder="輸入群組名稱"
-                          className="ml-3 w-full bg-transparent text-[15px] text-[#111] outline-none placeholder:text-[#777]"
-                        />
-                      </div>
-
-                      <div className="mb-4 flex flex-wrap gap-2">
-                        {selectedGroupMembers.map((memberId) => {
-                          const member = groupMembers.find(
-                            (item) => item.id === memberId
-                          )
-                          if (!member) return null
-
-                          return (
-                            <div
-                              key={member.id}
-                              className="rounded-full bg-[#d8b3d8] px-3 py-[7px] text-[13px] text-[#111]"
-                            >
-                              {member.name}
-                            </div>
-                          )
-                        })}
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        {groupMembers.map((member) => {
-                          const isSelected = selectedGroupMembers.includes(
-                            member.id
-                          )
-
-                          return (
-                            <button
-                              key={member.id}
-                              type="button"
-                              onClick={() => toggleGroupMember(member.id)}
-                              className="flex items-center justify-between rounded-[20px] bg-white/45 px-3 py-3 text-left active:scale-[0.99]"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#d9d9d9]">
-                                  <UserRound
-                                    size={22}
-                                    strokeWidth={2.1}
-                                    className="text-black"
-                                  />
-                                </div>
-
-                                <div className="text-[15px] font-medium text-[#111]">
-                                  {member.name}
-                                </div>
-                              </div>
-
-                              <div
-                                className={`flex h-[22px] w-[22px] items-center justify-center rounded-full border ${
-                                  isSelected
-                                    ? 'border-[#7c3aed] bg-[#7c3aed]'
-                                    : 'border-black/20 bg-transparent'
-                                }`}
-                              >
-                                {isSelected && (
-                                  <Check
-                                    size={13}
-                                    strokeWidth={3}
-                                    className="text-white"
-                                  />
-                                )}
-                              </div>
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      <button
-                        type="button"
-                        className="mt-4 flex h-[46px] w-full items-center justify-center rounded-full bg-[#d8b3d8] text-[15px] font-medium text-[#111] active:scale-[0.99]"
-                      >
-                        建立群組
-                      </button>
-                    </div>
-                  </div>
-                )}
+                
               </div>
             </div>
           </>

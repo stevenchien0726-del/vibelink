@@ -1,12 +1,16 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import CreatePostBox, {
   type CreatePostBoxRef,
   type CreatedPostPayload,
 } from '@/components/CreatePostBox'
+
+import CreateShortVideoBox, {
+  type CreateShortVideoBoxRef,
+} from '@/components/CreateShortVideoBox'
 
 type UploadTab = 'video' | 'post' | 'album'
 
@@ -20,8 +24,14 @@ export default function UploadFullPage({
   onPostCreated,
 }: UploadFullPageProps) {
   const [activeTab, setActiveTab] = useState<UploadTab>('post')
-  const createPostRef = useRef<CreatePostBoxRef>(null)
   const [isReadyToPost, setIsReadyToPost] = useState(false)
+
+  const createPostRef = useRef<CreatePostBoxRef>(null)
+  const createShortVideoRef = useRef<CreateShortVideoBoxRef>(null)
+
+  useEffect(() => {
+    setIsReadyToPost(false)
+  }, [activeTab])
 
   return (
     <motion.div
@@ -72,23 +82,27 @@ export default function UploadFullPage({
             </button>
 
             <button
-  type="button"
-  disabled={!isReadyToPost}
-  onClick={() => {
-    if (!isReadyToPost) return
+              type="button"
+              disabled={!isReadyToPost}
+              onClick={() => {
+                if (!isReadyToPost) return
 
-    if (activeTab === 'post') {
-      createPostRef.current?.submitPost()
-    }
-  }}
+                if (activeTab === 'post') {
+                  createPostRef.current?.submitPost()
+                }
+
+                if (activeTab === 'video') {
+                  createShortVideoRef.current?.submitVideo()
+                }
+              }}
               style={{
                 height: '40px',
                 minWidth: '120px',
                 padding: '0 24px',
                 borderRadius: '14px',
                 background: isReadyToPost ? '#c86cff' : '#efd6f4',
-color: isReadyToPost ? '#ffffff' : '#cfafd7',
-opacity: isReadyToPost ? 1 : 0.7,
+                color: isReadyToPost ? '#ffffff' : '#cfafd7',
+                opacity: isReadyToPost ? 1 : 0.7,
                 fontSize: '15px',
                 fontWeight: 500,
                 display: 'flex',
@@ -104,127 +118,101 @@ opacity: isReadyToPost ? 1 : 0.7,
           <div className="h-[72px] shrink-0" />
           <div className="flex-1" />
 
-          {activeTab === 'post' && (
-            <div className="mb-0">
-              <CreatePostBox
-  ref={createPostRef}
-  onReadyChange={(ready) => setIsReadyToPost(ready)}
-  onSuccess={(post) => {
-    onPostCreated?.(post)
-    onClose()
-  }}
-/>
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {activeTab === 'video' && (
+              <motion.div
+                key="video-content"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 12 }}
+                transition={{ duration: 0.2 }}
+                className="mb-4"
+              >
+                <CreateShortVideoBox
+                  ref={createShortVideoRef}
+                  onReadyChange={(ready) => setIsReadyToPost(ready)}
+                  onSuccess={() => {
+                    onClose()
+                  }}
+                />
+              </motion.div>
+            )}
+
+            {activeTab === 'post' && (
+              <motion.div
+                key="post-content"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 12 }}
+                transition={{ duration: 0.2 }}
+                className="mb-0"
+              >
+                <CreatePostBox
+                  ref={createPostRef}
+                  onReadyChange={(ready) => setIsReadyToPost(ready)}
+                  onSuccess={(post) => {
+                    onPostCreated?.(post)
+                    onClose()
+                  }}
+                />
+              </motion.div>
+            )}
+
+            {activeTab === 'album' && (
+              <motion.div
+                key="album-actions"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 12 }}
+                transition={{ duration: 0.2 }}
+                className="mb-4 flex flex-col items-center gap-3"
+              >
+                <button
+                  type="button"
+                  style={{
+                    height: '40px',
+                    minWidth: '180px',
+                    padding: '0 24px',
+                    borderRadius: '12px',
+                    background: '#e1e1e1',
+                    color: '#111111',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
+                  }}
+                >
+                  選擇相片
+                </button>
+
+                <button
+                  type="button"
+                  style={{
+                    height: '40px',
+                    minWidth: '180px',
+                    padding: '0 24px',
+                    borderRadius: '12px',
+                    background: '#e1e1e1',
+                    color: '#111111',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
+                  }}
+                >
+                  打開相機
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="h-[24px] shrink-0" />
 
           <div className="pb-2">
-            <AnimatePresence mode="wait">
-              {activeTab === 'video' && (
-                <motion.div
-                  key="video-actions"
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 12 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-4 flex flex-col items-center gap-3"
-                >
-                  <button
-                    type="button"
-                    style={{
-  height: '40px',
-  minWidth: '180px',
-  padding: '0 24px',
-  borderRadius: '12px',
-  background: '#e1e1e1',
-  color: '#111111',
-  fontSize: '16px',
-  fontWeight: 500,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  border: 'none',
-}}
-
-                  >
-                    選擇短影片
-                  </button>
-
-                  <button
-                    type="button"
-                    style={{
-                      height: '40px',
-                      minWidth: '180px',
-                      padding: '0 24px',
-                      borderRadius: '12px',
-                      background: '#e1e1e1',
-                      color: '#111111',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: 'none',
-                    }}
-                  >
-                    立即錄影
-                  </button>
-                </motion.div>
-              )}
-
-              {activeTab === 'album' && (
-                <motion.div
-                  key="album-actions"
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 12 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-4 flex flex-col items-center gap-3"
-                >
-                  <button
-                    type="button"
-                    style={{
-                      height: '40px',
-                      minWidth: '180px',
-                      padding: '0 24px',
-                      borderRadius: '12px',
-                      background: '#e1e1e1',
-                      color: '#111111',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: 'none',
-                    }}
-                  >
-                    選擇相片
-                  </button>
-
-                  <button
-                    type="button"
-                    style={{
-                      height: '40px',
-                      minWidth: '180px',
-                      padding: '0 24px',
-                      borderRadius: '12px',
-                      background: '#e1e1e1',
-                      color: '#111111',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: 'none',
-                    }}
-                  >
-                    打開相機
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             <div className="relative grid grid-cols-3 rounded-[18px] bg-[#dddddd] p-[4px]">
               <motion.div
                 className="absolute top-[4px] bottom-[4px] rounded-[14px] bg-[#f0f0f0]"
