@@ -27,6 +27,7 @@ export type PostItem = {
   isLiked?: boolean
 isSaved?: boolean
 user_id?: string
+type?: 'post' | 'video'
 }
 
 type FeedGridProps = {
@@ -107,82 +108,81 @@ const nextSaved: Record<string, boolean> = {}
     return likeCountMap[post.id] ?? post.likes ?? 0
   }
 
-  async function toggleLike(postId: string) {
+  async function toggleLike(post: PostItem) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) return
 
-  const isLiked = !!likedMap[postId]
+  const isVideo = post.videoUrl || post.type === 'video'
+  const isLiked = !!likedMap[post.id]
 
   setLikedMap((prev) => ({
     ...prev,
-    [postId]: !isLiked,
+    [post.id]: !isLiked,
   }))
 
   setLikeCountMap((prev) => ({
     ...prev,
-    [postId]: Math.max(0, (prev[postId] ?? 0) + (isLiked ? -1 : 1)),
+    [post.id]: Math.max(0, (prev[post.id] ?? 0) + (isLiked ? -1 : 1)),
   }))
 
   if (isLiked) {
     const { error } = await supabase
-      .from('likes')
+      .from(isVideo ? 'short_video_likes' : 'likes')
       .delete()
-      .eq('post_id', postId)
+      .eq(isVideo ? 'short_video_id' : 'post_id', post.id)
       .eq('user_id', user.id)
 
-    if (error) {
-      console.error('取消 like 失敗:', error)
-    }
-
+    if (error) console.error('取消 like 失敗:', error)
     return
   }
 
-  const { error } = await supabase.from('likes').insert({
-    post_id: postId,
-    user_id: user.id,
-  })
+  const { error } = await supabase
+    .from(isVideo ? 'short_video_likes' : 'likes')
+    .insert({
+      [isVideo ? 'short_video_id' : 'post_id']: post.id,
+      user_id: user.id,
+    })
 
-  if (error) {
-    console.error('新增 like 失敗:', error)
-  }
+  if (error) console.error('新增 like 失敗:', error)
 }
 
-async function toggleSave(postId: string) {
+async function toggleSave(post: PostItem) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) return
 
-  const isSaved = !!savedMap[postId]
+  const isVideo = post.videoUrl || post.type === 'video'
+  const isSaved = !!savedMap[post.id]
 
   setSavedMap((prev) => ({
     ...prev,
-    [postId]: !isSaved,
+    [post.id]: !isSaved,
   }))
 
   if (isSaved) {
     const { error } = await supabase
-      .from('saved_posts')
+      .from(isVideo ? 'saved_short_videos' : 'saved_posts')
       .delete()
-      .eq('post_id', postId)
+      .eq(isVideo ? 'short_video_id' : 'post_id', post.id)
       .eq('user_id', user.id)
 
     if (error) console.error('取消收藏失敗:', error)
     return
   }
 
-  const { error } = await supabase.from('saved_posts').insert({
-    post_id: postId,
-    user_id: user.id,
-  })
+  const { error } = await supabase
+    .from(isVideo ? 'saved_short_videos' : 'saved_posts')
+    .insert({
+      [isVideo ? 'short_video_id' : 'post_id']: post.id,
+      user_id: user.id,
+    })
 
-if (error) {
-  console.error('新增收藏失敗:', JSON.stringify(error, null, 2))
-}
+  if (error) console.error('新增收藏失敗:', error)
 }
 
   const goToSlide = (postId: string, nextIndex: number, imageLength: number) => {
@@ -230,10 +230,11 @@ if (error) {
   }
 
   function handleCarouselTouchEnd(
-    e: React.TouchEvent<HTMLDivElement>,
-    postId: string,
-    imageLength: number
-  ) {
+  e: React.TouchEvent<HTMLDivElement>,
+  post: PostItem,
+  imageLength: number
+) {
+  const postId = post.id
     const startX = touchStartXRef.current
     const startY = touchStartYRef.current
 
@@ -264,7 +265,7 @@ if (isTap) {
     now - lastTapTimeRef.current < 280
   ) {
     if (!likedMap[postId]) {
-      toggleLike(postId)
+      toggleLike(post)
     }
 
     setBigHeartPostId(postId)
@@ -360,7 +361,7 @@ if (isTap) {
                     data-horizontal-scroll="true"
                     onDoubleClick={() => {
   if (!likedMap[post.id]) {
-  toggleLike(post.id)
+  toggleLike(post)
 }
   setBigHeartPostId(post.id)
 
@@ -373,8 +374,8 @@ if (isTap) {
                     }
                     onTouchMoveCapture={handleCarouselTouchMove}
                     onTouchEndCapture={(e) =>
-                      handleCarouselTouchEnd(e, post.id, postImages.length)
-                    }
+  handleCarouselTouchEnd(e, post, postImages.length)
+}
                     style={{ touchAction: 'pan-y' }}
                   >
                     <motion.div
@@ -387,7 +388,10 @@ if (isTap) {
                       }}
                     >
                       {post.videoUrl ? (
-  <div className="relative h-[446px] w-full shrink-0 grow-0 basis-full bg-black">
+  <div
+  onClick={() => onOpenPost?.(post)}
+  className="relative h-[446px] w-full shrink-0 grow-0 basis-full bg-black"
+>
     <video
       src={post.videoUrl}
       controls
@@ -467,7 +471,7 @@ if (isTap) {
     <div className="flex items-center gap-6">
       <button
         type="button"
-        onClick={() => toggleLike(post.id)}
+        onClick={() => toggleLike(post)}
         className="flex items-center gap-1.5 text-[16px] text-[#555] transition active:scale-95"
       >
         <Heart
@@ -505,7 +509,7 @@ if (isTap) {
 
       <button
         type="button"
-        onClick={() => toggleSave(post.id)}
+        onClick={() => toggleSave(post)}
         className="flex items-center text-[#222] transition active:scale-95"
       >
         <Bookmark

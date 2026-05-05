@@ -380,7 +380,7 @@ async function loadSavedPosts() {
 
   if (!user) return
 
-  const { data, error } = await supabase
+  const { data: photoSavedRows, error: photoError } = await supabase
     .from('saved_posts')
     .select(`
       post_id,
@@ -394,16 +394,51 @@ async function loadSavedPosts() {
     `)
     .eq('user_id', user.id)
 
-  if (error) {
-    console.error('讀取收藏失敗:', error)
+  if (photoError) {
+    console.error('讀取照片收藏失敗:', photoError)
     return
   }
 
-  const posts = (data ?? [])
+  const { data: videoSavedRows, error: videoError } = await supabase
+    .from('saved_short_videos')
+    .select(`
+      short_video_id,
+      short_videos (
+        id,
+        caption,
+        video_url,
+        created_at,
+        user_id
+      )
+    `)
+    .eq('user_id', user.id)
+
+  if (videoError) {
+    console.error('讀取短影片收藏失敗:', videoError)
+    return
+  }
+
+  const photoPosts = (photoSavedRows ?? [])
     .map((item: any) => item.posts)
     .filter(Boolean)
+    .map((post: any) => ({
+      ...post,
+      type: 'post',
+    }))
 
-  setSavedPosts(posts)
+  const videoPosts = (videoSavedRows ?? [])
+    .map((item: any) => item.short_videos)
+    .filter(Boolean)
+    .map((video: any) => ({
+      id: video.id,
+      caption: video.caption,
+      video_url: video.video_url,
+      created_at: video.created_at,
+      user_id: video.user_id,
+      type: 'video',
+    }))
+
+  setSavedPosts([...videoPosts, ...photoPosts])
 }
 
 async function openSelectedPost(post: any) {
@@ -952,10 +987,13 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   onClick={(e) => {
     e.stopPropagation()
 
-    const image = post?.post_images?.[0]?.image_url
-    if (!image) return
+    const isVideo = post.type === 'video' || !!post.video_url
+const image = post?.post_images?.[0]?.image_url
 
-    openSelectedPost(post)
+if (isVideo) return
+if (!image) return
+
+openSelectedPost(post)
   }}
   className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
 >
@@ -1089,6 +1127,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 
     <div className="grid grid-cols-3 gap-[2px]">
       {savedPosts.map((post) => {
+  const isVideo = post.type === 'video' || !!post.video_url
   const image = post?.post_images?.[0]?.image_url
 
   return (
@@ -1104,12 +1143,22 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
       }}
       className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
     >
-      {image && (
-        <img
-          src={image}
-          className="h-full w-full object-cover"
-        />
-      )}
+      {isVideo ? (
+  <video
+    src={post.video_url}
+    muted
+    playsInline
+    preload="metadata"
+    className="h-full w-full object-cover"
+  />
+) : (
+  image && (
+    <img
+      src={image}
+      className="h-full w-full object-cover"
+    />
+  )
+)}
 
       {post.post_images?.length > 1 && (
         <div className="absolute right-2 top-2 flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/45 text-white">

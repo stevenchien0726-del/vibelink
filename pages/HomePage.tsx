@@ -18,6 +18,8 @@ import WideMenuSheet from '@/components/WideMenuSheet'
 
 import ShareSheet from '@/components/ShareSheet'
 
+import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
+
 import {
   Bell,
   Heart,
@@ -201,6 +203,9 @@ const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
 
 const [isDetailMenuOpen, setIsDetailMenuOpen] = useState(false)
 
+const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
+const [shortVideoStartId, setShortVideoStartId] = useState<string | undefined>()
+
 const detailTouchStartXRef = useRef<number | null>(null)
   useEffect(() => {
   async function initHome() {
@@ -378,7 +383,8 @@ isLiked: likedSet.has(post.id),
 isSaved: savedSet.has(post.id),
       images,
       aiTags: ['真實發文'],
-      isMine: post.user_id === user?.id,
+type: 'post',
+isMine: post.user_id === user?.id,
     }
   })
   .filter((post) => post.images.length > 0)
@@ -387,44 +393,84 @@ isSaved: savedSet.has(post.id),
 }
 
 async function loadShortVideos(user?: any) {
-
   const { data, error } = await supabase
-  .from('short_videos')
-  .select(`
-    id,
-    caption,
-    video_url,
-    created_at,
-    user_id
-  `)
-  .order('created_at', { ascending: false })
+    .from('short_videos')
+    .select(`
+      id,
+      caption,
+      video_url,
+      created_at,
+      user_id
+    `)
+    .order('created_at', { ascending: false })
 
   if (error) {
     console.error('讀取短影片失敗:', error)
     return
   }
 
+  const videoIds = (data ?? []).map((video: any) => video.id)
+
+  const { data: likeRows } =
+    videoIds.length > 0
+      ? await supabase
+          .from('short_video_likes')
+          .select('short_video_id, user_id')
+          .in('short_video_id', videoIds)
+      : { data: [] }
+
+  const { data: savedRows } =
+    videoIds.length > 0
+      ? await supabase
+          .from('saved_short_videos')
+          .select('short_video_id, user_id')
+          .in('short_video_id', videoIds)
+      : { data: [] }
+
+  const likeCountMap = new Map<string, number>()
+  const likedSet = new Set<string>()
+  const savedSet = new Set<string>()
+
+  ;(likeRows ?? []).forEach((like: any) => {
+    likeCountMap.set(
+      like.short_video_id,
+      (likeCountMap.get(like.short_video_id) ?? 0) + 1
+    )
+
+    if (like.user_id === user?.id) {
+      likedSet.add(like.short_video_id)
+    }
+  })
+
+  ;(savedRows ?? []).forEach((saved: any) => {
+    if (saved.user_id === user?.id) {
+      savedSet.add(saved.short_video_id)
+    }
+  })
+
   const { data: myProfile } = await supabase
-  .from('profiles')
-  .select('username, display_name')
-  .eq('id', user?.id)
-  .maybeSingle()
-  
+    .from('profiles')
+    .select('username, display_name')
+    .eq('id', user?.id)
+    .maybeSingle()
+
   const mappedVideos: PostItem[] = (data ?? []).map((video: any) => ({
-  id: video.id,
-  user_id: video.user_id,
-  author:
-    video.user_id === user?.id
-      ? myProfile?.display_name || myProfile?.username || 'Vibelink User'
-      : 'Vibelink User',
-  text: video.caption || '',
-  likes: 0,
-  images: [],
-  videoUrl: video.video_url,
-  aiTags: ['短影片'],
-  isMine: video.user_id === user?.id,
-  isSaved: false,
-}))
+    id: video.id,
+    user_id: video.user_id,
+    author:
+      video.user_id === user?.id
+        ? myProfile?.display_name || myProfile?.username || 'Vibelink User'
+        : 'Vibelink User',
+    text: video.caption || '',
+    likes: likeCountMap.get(video.id) ?? 0,
+    images: [],
+    videoUrl: video.video_url,
+    type: 'video',
+    aiTags: ['短影片'],
+    isMine: video.user_id === user?.id,
+    isLiked: likedSet.has(video.id),
+    isSaved: savedSet.has(video.id),
+  }))
 
   setRealPosts((prev) => {
     const photoPosts = prev.filter((post: any) => !post.videoUrl)
@@ -446,6 +492,81 @@ async function handleDeletePost(post: PostItem) {
   }
 
   setRealPosts((prev) => prev.filter((p) => p.id !== post.id))
+}
+
+async function toggleShortVideoLike(post: PostItem) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  const isLiked = !!post.isLiked
+  const nextLiked = !isLiked
+
+  setRealPosts((prev) =>
+    prev.map((item) =>
+      item.id === post.id
+        ? {
+            ...item,
+            isLiked: nextLiked,
+            likes: Math.max(0, (item.likes ?? 0) + (nextLiked ? 1 : -1)),
+          }
+        : item
+    )
+  )
+
+  if (isLiked) {
+    await supabase
+      .from('short_video_likes')
+      .delete()
+      .eq('short_video_id', post.id)
+      .eq('user_id', user.id)
+
+    return
+  }
+
+  await supabase.from('short_video_likes').insert({
+    short_video_id: post.id,
+    user_id: user.id,
+  })
+}
+
+async function toggleShortVideoSave(post: PostItem) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  const isSaved = !!post.isSaved
+  const nextSaved = !isSaved
+
+  setRealPosts((prev) =>
+    prev.map((item) =>
+      item.id === post.id
+        ? {
+            ...item,
+            isSaved: nextSaved,
+          }
+        : item
+    )
+  )
+
+  if (isSaved) {
+    await supabase
+      .from('saved_short_videos')
+      .delete()
+      .eq('short_video_id', post.id)
+      .eq('user_id', user.id)
+
+    return
+  }
+
+  await supabase.from('saved_short_videos').insert({
+    short_video_id: post.id,
+    user_id: user.id,
+  })
 }
 
   useEffect(() => {
@@ -560,16 +681,19 @@ function handleDetailTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   detailTouchStartXRef.current = null
 }
 
-async function loadComments(postId: string) {
+async function loadComments(postId: string, type?: 'post' | 'video') {
+  const tableName = type === 'video' ? 'short_video_comments' : 'comments'
+  const idColumn = type === 'video' ? 'short_video_id' : 'post_id'
+
   const { data, error } = await supabase
-    .from('comments')
+    .from(tableName)
     .select(`
       id,
       content,
       created_at,
       user_id
     `)
-    .eq('post_id', postId)
+    .eq(idColumn, postId)
     .order('created_at', { ascending: true })
 
   if (error) {
@@ -588,14 +712,17 @@ function openDetailPost(post: PostItem) {
   setDetailImageIndex(0)
   setCommentText('')
   setComments([])
-  loadComments(post.id)
+
+  loadComments(post.id, post.type === 'video' || post.videoUrl ? 'video' : 'post')
 }
 
 function openCommentSheet(post: PostItem) {
   setCommentSheetPost(post)
   setCommentText('')
   setComments([])
-  loadComments(post.id)
+
+  loadComments(post.id, post.type === 'video' || post.videoUrl ? 'video' : 'post')
+
   setIsCommentSheetOpen(true)
 }
 
@@ -715,9 +842,10 @@ async function deleteComment() {
 }
 
 async function submitComment() {
-  
-  const activePostId = selectedPost?.id || commentSheetPost?.id
-if (!activePostId) return
+  const activePost = selectedPost || commentSheetPost
+  const activePostId = activePost?.id
+
+  if (!activePostId) return
 
   const text = commentText.trim()
   if (!text) return
@@ -735,8 +863,12 @@ if (!activePostId) return
 
   setCommentLoading(true)
 
-  const { error } = await supabase.from('comments').insert({
-    post_id: activePostId,
+  const isVideo = activePost?.type === 'video' || !!activePost?.videoUrl
+
+const { error } = await supabase
+  .from(isVideo ? 'short_video_comments' : 'comments')
+  .insert({
+    [isVideo ? 'short_video_id' : 'post_id']: activePostId,
     user_id: user.id,
     content: text,
   })
@@ -748,7 +880,7 @@ if (!activePostId) return
   }
 
   setCommentText('')
-  await loadComments(activePostId)
+  await loadComments(activePostId, isVideo ? 'video' : 'post')
   setCommentLoading(false)
 }
 
@@ -1183,7 +1315,15 @@ await loadShortVideos(user)
   posts={realPosts}
   feedMode={feedMode}
   setFeedMode={setFeedMode}
-  onOpenPost={openDetailPost}
+  onOpenPost={(post) => {
+  if (post.type === 'video' || post.videoUrl) {
+    setShortVideoStartId(post.id)
+    setIsShortVideoPageOpen(true)
+    return
+  }
+
+  openDetailPost(post)
+}}
   onOpenComments={openCommentSheet}
   onOpenShare={() => setIsShareSheetOpen(true)}
 onDeletePost={handleDeletePost}
@@ -1648,6 +1788,19 @@ onDeletePost={handleDeletePost}
 <ShareSheet
   open={isShareSheetOpen}
   onClose={() => setIsShareSheetOpen(false)}
+/>
+
+<ShortVideoFullPage
+  open={isShortVideoPageOpen}
+  videos={realPosts.filter(
+    (post) => post.type === 'video' || post.videoUrl
+  )}
+  initialVideoId={shortVideoStartId}
+  onClose={() => setIsShortVideoPageOpen(false)}
+  onLike={toggleShortVideoLike}
+  onComment={openCommentSheet}
+  onShare={() => setIsShareSheetOpen(true)}
+  onSave={toggleShortVideoSave}
 />
 
 <AnimatePresence>
