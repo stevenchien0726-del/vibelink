@@ -383,7 +383,7 @@ isLiked: likedSet.has(post.id),
 isSaved: savedSet.has(post.id),
       images,
       aiTags: ['真實發文'],
-type: 'post',
+type: 'post' as const,
 isMine: post.user_id === user?.id,
     }
   })
