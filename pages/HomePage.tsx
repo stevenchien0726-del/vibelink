@@ -203,23 +203,29 @@ const [isDetailMenuOpen, setIsDetailMenuOpen] = useState(false)
 
 const detailTouchStartXRef = useRef<number | null>(null)
   useEffect(() => {
-  loadPosts()
+  async function initHome() {
+    const { data } = await supabase.auth.getSession()
+    const user = data.session?.user ?? null
 
-  supabase.auth.getSession().then(async ({ data }) => {
-  console.log('當前 session:', data.session)
+    console.log('當前 session:', data.session)
 
-  setCurrentUserId(data.session?.user?.id ?? null)
+    setCurrentUserId(user?.id ?? null)
 
-  if (!data.session) {
-    setIsAuthModalOpen(true)
-    return
+    if (!data.session) {
+      setIsAuthModalOpen(true)
+      return
+    }
+
+    setIsAuthModalOpen(false)
+
+    const profile = await ensureUserProfile()
+    console.log('目前登入者 Profile:', profile)
+
+        await loadPosts(user)
+    await loadShortVideos(user)
   }
 
-  setIsAuthModalOpen(false)
-
-  const profile = await ensureUserProfile()
-  console.log('目前登入者 Profile:', profile)
-})
+  initHome()
 
   const { data: listener } = supabase.auth.onAuthStateChange(
   async (_event, session) => {
@@ -297,30 +303,25 @@ function handlePostCreated(post: CreatedPostPayload) {
 
   const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
 
-  async function loadPosts() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  
+  async function loadPosts(user?: any) {
 
   const { data, error } = await supabase
-    .from('posts')
-    .select(`
+  .from('posts')
+  .select(`
   id,
   caption,
   created_at,
   user_id,
-      profiles (
-        username,
-        display_name,
-        avatar_url
-      ),
-      post_images (
-  image_url
-)
-    `)
-    .order('created_at', { ascending: false })
+  profiles (
+    username,
+    display_name,
+    avatar_url
+  ),
+  post_images (
+    image_url
+  )
+`)
+  .order('created_at', { ascending: false })
 
   if (error) {
     console.error('讀取 posts 失敗:', error)
@@ -384,7 +385,69 @@ isSaved: savedSet.has(post.id),
 
   setRealPosts(mappedPosts)
 }
+
+async function loadShortVideos(user?: any) {
+
+  const { data, error } = await supabase
+  .from('short_videos')
+  .select(`
+    id,
+    caption,
+    video_url,
+    created_at,
+    user_id
+  `)
+  .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('讀取短影片失敗:', error)
+    return
+  }
+
+  const { data: myProfile } = await supabase
+  .from('profiles')
+  .select('username, display_name')
+  .eq('id', user?.id)
+  .maybeSingle()
   
+  const mappedVideos: PostItem[] = (data ?? []).map((video: any) => ({
+  id: video.id,
+  user_id: video.user_id,
+  author:
+    video.user_id === user?.id
+      ? myProfile?.display_name || myProfile?.username || 'Vibelink User'
+      : 'Vibelink User',
+  text: video.caption || '',
+  likes: 0,
+  images: [],
+  videoUrl: video.video_url,
+  aiTags: ['短影片'],
+  isMine: video.user_id === user?.id,
+  isSaved: false,
+}))
+
+  setRealPosts((prev) => {
+    const photoPosts = prev.filter((post: any) => !post.videoUrl)
+    return [...mappedVideos, ...photoPosts]
+  })
+}
+
+async function handleDeletePost(post: PostItem) {
+  if (!post.id) return
+
+  const { error } = await supabase
+    .from(post.videoUrl ? 'short_videos' : 'posts')
+    .delete()
+    .eq('id', post.id)
+
+  if (error) {
+    console.error('刪除失敗:', error)
+    return
+  }
+
+  setRealPosts((prev) => prev.filter((p) => p.id !== post.id))
+}
+
   useEffect(() => {
     function handleScroll() {
       const currentY = window.scrollY || window.pageYOffset
@@ -552,6 +615,11 @@ function handleDetailDoubleLike() {
 
 async function toggleDetailLike() {
   const activePostId = selectedPost?.id || commentSheetPost?.id
+
+if (!activePostId) {
+  console.log('❌ 沒有 postId')
+  return
+}
 if (!activePostId) return
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -1090,7 +1158,14 @@ if (isTap) {
     <AnimatePresence>
       {isUploadOpen && (
         <UploadFullPage
-  onClose={() => setIsUploadOpen(false)}
+  onClose={async () => {
+  setIsUploadOpen(false)
+  const { data } = await supabase.auth.getSession()
+const user = data.session?.user ?? null
+
+await loadPosts(user)
+await loadShortVideos(user)
+}}
   onPostCreated={handlePostCreated}
 />
       )}
@@ -1111,6 +1186,7 @@ if (isTap) {
   onOpenPost={openDetailPost}
   onOpenComments={openCommentSheet}
   onOpenShare={() => setIsShareSheetOpen(true)}
+onDeletePost={handleDeletePost}
 />
 </section>
 

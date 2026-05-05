@@ -97,7 +97,8 @@ export default function ProfilePage({
 
   await ensureMyProfile()
   await loadMyPosts()
-  await loadSavedPosts()
+await loadMyShortVideos()
+await loadSavedPosts()
 }
 
   init()
@@ -122,6 +123,9 @@ export default function ProfilePage({
   const albumScrollRef = useRef<HTMLDivElement | null>(null)
 
   const [myPosts, setMyPosts] = useState<any[]>([])
+  const [myShortVideos, setMyShortVideos] = useState<any[]>([])
+  const [selectedShortVideo, setSelectedShortVideo] = useState<any>(null)
+
   const [savedPosts, setSavedPosts] = useState<any[]>([])
 
   const [selectedPost, setSelectedPost] = useState<any>(null)
@@ -340,6 +344,33 @@ async function loadMyPosts() {
   }))
 
   setMyPosts(postsWithLikes)
+}
+
+async function loadMyShortVideos() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  const { data, error } = await supabase
+    .from('short_videos')
+    .select(`
+      id,
+      caption,
+      video_url,
+      created_at,
+      user_id
+    `)
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('讀取我的短影片失敗:', error)
+    return
+  }
+
+  setMyShortVideos(data ?? [])
 }
 
 async function loadSavedPosts() {
@@ -948,9 +979,33 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 
   {/* 第2頁：短影片 */}
 <div className="w-full shrink-0">
-  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
-    尚無短影片
-  </div>
+  {myShortVideos.length === 0 ? (
+    <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
+      尚無短影片
+    </div>
+  ) : (
+    <div className="grid grid-cols-3 gap-[2px]">
+      {myShortVideos.map((video) => (
+  <button
+    type="button"
+    key={video.id}
+    onClick={(e) => {
+      e.stopPropagation()
+      setSelectedShortVideo(video)
+    }}
+    className="relative h-[190px] overflow-hidden bg-black"
+  >
+    <video
+      src={video.video_url}
+      muted
+      playsInline
+      preload="metadata"
+      className="h-full w-full object-cover"
+    />
+  </button>
+))}
+    </div>
+  )}
 </div>
 
     {/* 第3頁（精選限動） */}
@@ -1180,7 +1235,10 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
       <AnimatePresence>
         {isUploadOpen && (
           <UploadFullPage
-  onClose={() => setIsUploadOpen(false)}
+  onClose={() => {
+    setIsUploadOpen(false)
+    loadMyShortVideos()
+  }}
   onPostCreated={(post) => {
   const imageUrls =
     post.imageUrls?.length
@@ -1612,6 +1670,50 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   onClose={() => setIsShareSheetOpen(false)}
 />
 
+    <AnimatePresence>
+  {selectedShortVideo && (
+    <motion.div
+      className="fixed inset-0 z-[700] bg-black"
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+    >
+      <div className="mx-auto flex h-full w-full max-w-[430px] flex-col">
+        <div className="flex h-[56px] items-center justify-between px-4 text-white">
+          <button
+            type="button"
+            onClick={() => setSelectedShortVideo(null)}
+            className="text-[16px]"
+          >
+            CLOSE
+          </button>
+
+          <div className="text-[15px] font-medium">短影片</div>
+
+          <div className="w-[48px]" />
+        </div>
+
+        <div className="flex flex-1 items-center justify-center">
+          <video
+            src={selectedShortVideo.video_url}
+            controls
+            autoPlay
+            playsInline
+            className="max-h-full w-full bg-black object-contain"
+          />
+        </div>
+
+        {selectedShortVideo.caption && (
+          <div className="px-4 pb-8 pt-3 text-[15px] text-white">
+            {selectedShortVideo.caption}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+    
     </div>
   )
 }

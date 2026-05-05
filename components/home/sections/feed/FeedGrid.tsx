@@ -21,10 +21,12 @@ export type PostItem = {
   text: string
   likes: number
   images: string[]
+  videoUrl?: string
   aiTags: string[]
   isMine?: boolean
   isLiked?: boolean
 isSaved?: boolean
+user_id?: string
 }
 
 type FeedGridProps = {
@@ -33,7 +35,8 @@ type FeedGridProps = {
   setFeedMode?: (mode: FeedMode) => void
   onOpenPost?: (post: PostItem) => void
   onOpenComments?: (post: PostItem) => void
-  onOpenShare?: (post: PostItem) => void
+onOpenShare?: (post: PostItem) => void
+onDeletePost?: (post: PostItem) => void
 }
 
 const FALLBACK_IMAGE =
@@ -47,6 +50,7 @@ export default function FeedGrid({
   onOpenPost,
   onOpenComments,
   onOpenShare,
+  onDeletePost,
 }: FeedGridProps) {
   const [slideMap, setSlideMap] = useState<Record<string, number>>({})
   const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null)
@@ -323,14 +327,14 @@ if (isTap) {
 
                   <div className="relative">
                     <button
-                      type="button"
-                      onClick={() =>
-                        setOpenMenuPostId((prev) =>
-                          prev === post.id ? null : post.id
-                        )
-                      }
-                      className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[#222] transition active:scale-[0.96]"
-                    >
+  type="button"
+  onClick={() =>
+    setOpenMenuPostId((prev) =>
+      prev === post.id ? null : post.id
+    )
+  }
+  className="flex h-[38px] items-center gap-2 rounded-full bg-[#e3e3e3] px-4 text-[#222] transition active:scale-[0.96]"
+>
                       <MoreHorizontal size={17} strokeWidth={2.3} />
                       <span className="text-[14px] font-medium tracking-[0.2px]">
                         MENU
@@ -340,9 +344,10 @@ if (isTap) {
                     <AnimatePresence>
                       {openMenuPostId === post.id && (
                         <WideMenuSheet
-                          variant={post.isMine ? 'mine' : 'other'}
-                          onClose={() => setOpenMenuPostId(null)}
-                        />
+  variant={post.isMine ? 'mine' : 'other'}
+  onClose={() => setOpenMenuPostId(null)}
+  onDelete={() => onDeletePost?.(post)}
+/>
                       )}
                     </AnimatePresence>
                   </div>
@@ -381,25 +386,36 @@ if (isTap) {
                         damping: 34,
                       }}
                     >
-                      {postImages.map((image, index) => (
-                        <div
-                          key={`${post.id}-${index}`}
-                          className="relative h-[446px] w-full shrink-0 grow-0 basis-full select-none bg-[#dddddd]"
-                        >
-                          <img
-                            src={image}
-                            alt={`${post.author} ${index + 1}`}
-                            className="pointer-events-none h-full w-full object-cover"
-                            draggable={false}
-                          />
+                      {post.videoUrl ? (
+  <div className="relative h-[446px] w-full shrink-0 grow-0 basis-full bg-black">
+    <video
+      src={post.videoUrl}
+      controls
+      playsInline
+      className="h-full w-full object-cover"
+    />
+  </div>
+) : (
+  postImages.map((image, index) => (
+    <div
+      key={`${post.id}-${index}`}
+      className="relative h-[446px] w-full shrink-0 grow-0 basis-full select-none bg-[#dddddd]"
+    >
+      <img
+        src={image}
+        alt={`${post.author} ${index + 1}`}
+        className="pointer-events-none h-full w-full object-cover"
+        draggable={false}
+      />
 
-                          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/8" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/8" />
 
-                          <div className="absolute right-4 top-4 rounded-full bg-black/10 px-3 py-1 text-[14px] text-[#555] backdrop-blur-sm">
-                            {index + 1}/{postImages.length}
-                          </div>
-                        </div>
-                      ))}
+      <div className="absolute right-4 top-4 rounded-full bg-black/10 px-3 py-1 text-[14px] text-[#555] backdrop-blur-sm">
+        {index + 1}/{postImages.length}
+      </div>
+    </div>
+  ))
+)}
                     </motion.div>
 
                     <AnimatePresence>
@@ -446,61 +462,61 @@ if (isTap) {
     ))}
   </div>
 )}
-                </div>
 
-                <div className="mt-5 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-6">
-                    <button
-                      type="button"
-                      onClick={() => toggleLike(post.id)}
-                      className="flex items-center gap-1.5 text-[16px] text-[#555] transition active:scale-95"
-                    >
-                      <Heart
-                        size={22}
-                        color={LIKE_COLOR}
-                        fill={isLiked ? LIKE_COLOR : 'none'}
-                        strokeWidth={2.2}
-                      />
-                      <span>{likeCount}</span>
-                    </button>
+   <div className="mt-5 flex items-center justify-between gap-3">
+    <div className="flex items-center gap-6">
+      <button
+        type="button"
+        onClick={() => toggleLike(post.id)}
+        className="flex items-center gap-1.5 text-[16px] text-[#555] transition active:scale-95"
+      >
+        <Heart
+          size={22}
+          color={LIKE_COLOR}
+          fill={isLiked ? LIKE_COLOR : 'none'}
+          strokeWidth={2.2}
+        />
+        <span>{likeCount}</span>
+      </button>
 
-                    <button
-  type="button"
-  onClick={(e) => {
-    e.stopPropagation() // 🔥 防止觸發 onOpenPost
-    onOpenComments?.(post)
-  }}
-  className="flex items-center text-[#222] transition active:scale-95"
->
-  <MessageCircle size={22} />
-</button>
-                  </div>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          onOpenComments?.(post)
+        }}
+        className="flex items-center text-[#222] transition active:scale-95"
+      >
+        <MessageCircle size={22} />
+      </button>
+    </div>
 
-                  <div className="flex items-center gap-6">
-  <button
-  type="button"
-  onClick={(e) => {
-    e.stopPropagation()
-    onOpenShare?.(post)
-  }}
-  className="flex items-center text-[#222] transition active:scale-95"
->
-  <Send size={22} strokeWidth={2.1} />
-</button>
+    <div className="flex items-center gap-6">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          onOpenShare?.(post)
+        }}
+        className="flex items-center text-[#222] transition active:scale-95"
+      >
+        <Send size={22} strokeWidth={2.1} />
+      </button>
 
-  <button
-    type="button"
-    onClick={() => toggleSave(post.id)}
-    className="flex items-center text-[#222] transition active:scale-95"
-  >
-    <Bookmark
-      size={22}
-      color="#c86cff"
-      fill={savedMap[post.id] ? '#c86cff' : 'none'}
-      strokeWidth={2.1}
-    />
-  </button>
-</div>
+      <button
+        type="button"
+        onClick={() => toggleSave(post.id)}
+        className="flex items-center text-[#222] transition active:scale-95"
+      >
+        <Bookmark
+          size={22}
+          color="#c86cff"
+          fill={savedMap[post.id] ? '#c86cff' : 'none'}
+          strokeWidth={2.1}
+        />
+      </button>
+    </div>
+  </div>
                 </div>
 
                 <div className="mt-3 text-[16px] text-[#444]">
@@ -508,9 +524,9 @@ if (isTap) {
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="text-[12px] font-semibold text-[#666]">
-                    AI標籤
-                  </span>
+  <span className="text-[12px] font-semibold text-[#666]">
+    AI標籤
+  </span>
 
                   {postTags.slice(0, 3).map((tag) => (
                     <span
@@ -540,26 +556,36 @@ if (isTap) {
           transition={{ type: 'spring', stiffness: 320, damping: 30 }}
           className="grid grid-cols-2 gap-2"
         >
-          {posts.slice(0, 6).map((post) => {
-            const image = getPostImages(post)[0]
+          {posts.map((post) => {
+  const image = getPostImages(post)[0]
 
-            return (
-              <motion.button
-  type="button"
-  layout
-  key={post.id}
-  onClick={() => onOpenPost?.(post)}
-  className="relative h-[280px] w-full overflow-hidden rounded-[20px] bg-[#dddddd]"
->
-  <img
-    src={image}
-    alt={post.author}
-    className="h-full w-full object-cover"
-    draggable={false}
-  />
-</motion.button>
-            )
-          })}
+  return (
+    <motion.button
+      type="button"
+      layout
+      key={post.id}
+      onClick={() => onOpenPost?.(post)}
+      className="relative h-[280px] w-full overflow-hidden rounded-[20px] bg-[#dddddd]"
+    >
+      {post.videoUrl ? (
+        <video
+          src={post.videoUrl}
+          muted
+          playsInline
+          preload="metadata"
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <img
+          src={image}
+          alt={post.author}
+          className="h-full w-full object-cover"
+          draggable={false}
+        />
+      )}
+    </motion.button>
+  )
+})}
         </motion.div>
       </AnimatePresence>
     )

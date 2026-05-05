@@ -88,58 +88,74 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
     }
 
     async function submitVideo() {
-      if (!file || loading) return
+  if (!file || loading) return
 
-      setLoading(true)
-      setErrorText('')
+  setLoading(true)
+  setErrorText('')
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser()
+  console.log('開始上傳影片')
 
-      if (userError || !user) {
-        setErrorText('請先登入')
-        setLoading(false)
-        return
-      }
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
 
-      const fileExt = file.name.split('.').pop()
-      const filePath = `${user.id}/${Date.now()}.${fileExt}`
+  console.log('user:', user)
 
-      const { error: uploadError } = await supabase.storage
-        .from('short-videos')
-        .upload(filePath, file)
+  if (userError || !user) {
+    console.error('user error', userError)
+    setErrorText('請先登入')
+    setLoading(false)
+    return
+  }
 
-      if (uploadError) {
-        console.error(uploadError)
-        setErrorText('影片上傳失敗')
-        setLoading(false)
-        return
-      }
+  const fileExt = file.name.split('.').pop()
+  const filePath = `${user.id}/${Date.now()}.${fileExt}`
 
-      const { data: publicUrlData } = supabase.storage
-        .from('short-videos')
-        .getPublicUrl(filePath)
+  console.log('upload path:', filePath)
 
-      const { error: insertError } = await supabase.from('short_videos').insert({
-        user_id: user.id,
-        video_url: publicUrlData.publicUrl,
-        caption: caption.trim(),
-      })
+  const { error: uploadError } = await supabase.storage
+    .from('short-videos')
+    .upload(filePath, file)
 
-      if (insertError) {
-        console.error(insertError)
-        setErrorText('短影片資料儲存失敗')
-        setLoading(false)
-        return
-      }
+  if (uploadError) {
+    console.error('upload error:', uploadError)
+    setErrorText('影片上傳失敗')
+    setLoading(false)
+    return
+  }
 
-      setLoading(false)
-      setFile(null)
-      setCaption('')
-      onSuccess?.()
-    }
+  console.log('upload success')
+
+  const { data: publicUrlData } = supabase.storage
+    .from('short-videos')
+    .getPublicUrl(filePath)
+
+  console.log('public url:', publicUrlData)
+
+const publicUrl = publicUrlData.publicUrl
+
+const { error: insertError } = await supabase.from('posts').insert({
+  user_id: user.id,
+  caption,
+  video_url: publicUrl,
+  post_type: 'video',
+})
+
+  if (insertError) {
+    console.error('insert error:', insertError)
+    setErrorText('資料寫入失敗')
+    setLoading(false)
+    return
+  }
+
+  console.log('insert success')
+
+  setLoading(false)
+  setFile(null)
+  setCaption('')
+  onSuccess?.()
+}
 
     useImperativeHandle(ref, () => ({
       submitVideo,

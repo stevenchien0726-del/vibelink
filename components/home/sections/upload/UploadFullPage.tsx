@@ -132,8 +132,8 @@ export default function UploadFullPage({
                   ref={createShortVideoRef}
                   onReadyChange={(ready) => setIsReadyToPost(ready)}
                   onSuccess={() => {
-                    onClose()
-                  }}
+  onClose()
+}}
                 />
               </motion.div>
             )}
