@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  AnimatePresence,
-  motion,
-  PanInfo,
-  useMotionValue,
-  animate,
-} from 'framer-motion'
-import { useRef } from 'react'
+import { AnimatePresence, animate, motion, useMotionValue } from 'framer-motion'
 import { Heart, MessageCircle, Send, Bookmark, X } from 'lucide-react'
 import type { PostItem } from './FeedGrid'
 
@@ -32,72 +25,72 @@ export default function ShortVideoFullPage({
   onShare,
   onSave,
 }: Props) {
+  const dragX = useMotionValue(0)
+
   if (!open) return null
 
   const foundIndex = videos.findIndex((video) => video.id === initialVideoId)
   const startIndex = foundIndex >= 0 ? foundIndex : 0
-  const dragStartXRef = useRef(0)
-  const dragX = useMotionValue(0)
-  
+
   const orderedVideos = [
     ...videos.slice(startIndex),
     ...videos.slice(0, startIndex),
   ]
 
-  return (
-    <AnimatePresence>
-      <motion.div
-  data-block-page-swipe="true"
-  className="fixed inset-0 z-[9999] h-[100dvh] w-screen overflow-hidden bg-black"
-  initial={{ x: '100%' }}
-animate={{ x: 0 }}
-exit={{ x: '100%' }}
-style={{ x: dragX }}
-transition={{
-  type: 'spring',
-  stiffness: 360,
-  damping: 34,
-}}
-  onPanStart={(_, info: PanInfo) => {
-  dragStartXRef.current = info.point.x
-}}
-onPan={(_, info: PanInfo) => {
-  if (info.offset.x > 0) {
-    dragX.set(info.offset.x)
-  }
-}}
-  onPanEnd={(_, info: PanInfo) => {
-  const deltaX = info.offset.x
-
-  // 關閉
-  if (deltaX > 120) {
+  function closeWithAnimation() {
     animate(dragX, window.innerWidth, {
       duration: 0.22,
       ease: 'easeOut',
       onComplete: () => {
-        onClose()
         dragX.set(0)
+        onClose()
       },
     })
-
-    return
   }
 
-  // 回彈
-  animate(dragX, 0, {
-    type: 'spring',
-    stiffness: 380,
-    damping: 34,
-  })
-}}
->
-        <div className="h-[100dvh] w-screen overflow-y-auto snap-y snap-mandatory bg-black">
+  function resetDrag() {
+    animate(dragX, 0, {
+      type: 'spring',
+      stiffness: 420,
+      damping: 36,
+    })
+  }
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        data-block-page-swipe="true"
+        className="fixed inset-0 z-[9999] h-[100dvh] w-screen overflow-hidden bg-black"
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        style={{ x: dragX }}
+        transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+        drag="x"
+        dragDirectionLock
+        dragElastic={0.12}
+        dragMomentum={false}
+        dragConstraints={{ left: 0, right: 360 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.x > 110 || info.velocity.x > 650) {
+            closeWithAnimation()
+            return
+          }
+
+          resetDrag()
+        }}
+      >
+        <div
+          data-block-page-swipe="true"
+          className="h-[100dvh] w-screen overflow-y-auto snap-y snap-mandatory bg-black"
+        >
           {orderedVideos.map((video) => {
             const videoSrc = video.videoUrl || (video as any).video_url
 
             return (
               <section
                 key={video.id}
+                data-block-page-swipe="true"
                 className="relative h-[100dvh] w-screen snap-start overflow-hidden bg-black"
               >
                 {videoSrc ? (
@@ -113,7 +106,7 @@ onPan={(_, info: PanInfo) => {
                     onLoadedData={(e) =>
                       e.currentTarget.play().catch(() => {})
                     }
-                    className="fixed left-0 top-0 z-[10] h-[100dvh] w-[430px] object-cover bg-black"
+                    className="fixed left-0 top-0 z-[10] h-[100dvh] w-[430px] bg-black object-cover"
                   />
                 ) : (
                   <div className="fixed left-0 top-0 z-[10] flex h-[100dvh] w-[430px] items-center justify-center bg-black text-white">
@@ -125,7 +118,7 @@ onPan={(_, info: PanInfo) => {
 
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={closeWithAnimation}
                   className="fixed left-[372px] top-[24px] z-[99999] flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/85 text-black shadow-md active:scale-90"
                 >
                   <X size={22} />
