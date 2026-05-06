@@ -60,14 +60,11 @@ export default function ShortVideoFullPage({
     <AnimatePresence>
       <motion.div
         data-block-page-swipe="true"
-        className="fixed inset-0 z-[9999] h-[100dvh] w-screen overflow-hidden bg-black"
+        className="fixed inset-0 z-[9999] h-[100dvh] w-full overflow-hidden bg-black"
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
-        style={{
-  x: dragX,
-  touchAction: 'pan-y',
-}}
+        style={{ x: dragX }}
         transition={{ type: 'spring', stiffness: 360, damping: 34 }}
         drag="x"
         dragDirectionLock
@@ -85,7 +82,11 @@ export default function ShortVideoFullPage({
       >
         <div
           data-block-page-swipe="true"
-          className="h-[100dvh] w-screen overflow-y-auto snap-y snap-mandatory bg-black"
+          className="mx-auto h-[100dvh] w-full max-w-[430px] overflow-y-auto overflow-x-hidden snap-y snap-mandatory bg-black"
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
+          }}
         >
           {orderedVideos.map((video) => {
             const videoSrc = video.videoUrl || (video as any).video_url
@@ -94,12 +95,12 @@ export default function ShortVideoFullPage({
               <section
                 key={video.id}
                 data-block-page-swipe="true"
-                className="relative h-[100dvh] w-screen snap-start overflow-hidden bg-black"
+                className="relative h-[100dvh] w-full snap-start snap-always overflow-hidden bg-black"
               >
                 {videoSrc ? (
                   <video
-  key={videoSrc}
-  src={videoSrc}
+                    key={videoSrc}
+                    src={videoSrc}
                     autoPlay
                     muted
                     loop
@@ -108,25 +109,25 @@ export default function ShortVideoFullPage({
                     onLoadedData={(e) =>
                       e.currentTarget.play().catch(() => {})
                     }
-                    className="fixed left-0 top-0 z-[10] h-[100dvh] w-[430px] bg-black object-cover"
+                    className="absolute inset-0 z-[10] h-full w-full bg-black object-cover"
                   />
                 ) : (
-                  <div className="fixed left-0 top-0 z-[10] flex h-[100dvh] w-[430px] items-center justify-center bg-black text-white">
+                  <div className="absolute inset-0 z-[10] flex items-center justify-center bg-black text-white">
                     找不到影片 URL
                   </div>
                 )}
 
-                <div className="pointer-events-none fixed left-0 top-0 z-[20] h-[100dvh] w-[430px] bg-gradient-to-b from-black/20 via-transparent to-black/55" />
+                <div className="pointer-events-none absolute inset-0 z-[20] bg-gradient-to-b from-black/20 via-transparent to-black/55" />
 
                 <button
                   type="button"
                   onClick={closeWithAnimation}
-                  className="fixed left-[372px] top-[24px] z-[99999] flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/85 text-black shadow-md active:scale-90"
+                  className="absolute right-5 top-6 z-[50] flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/85 text-black shadow-md active:scale-90"
                 >
                   <X size={22} />
                 </button>
 
-                <div className="fixed bottom-[118px] left-[350px] z-[99999] flex flex-col items-center gap-6 text-white">
+                <div className="absolute bottom-[118px] right-5 z-[50] flex flex-col items-center gap-6 text-white">
                   <button
                     type="button"
                     className="h-[48px] w-[48px] rounded-full bg-[#c48ac8]"
@@ -159,7 +160,7 @@ export default function ShortVideoFullPage({
                   </button>
                 </div>
 
-                <div className="fixed bottom-[72px] left-[24px] z-[99999] w-[250px] text-white">
+                <div className="absolute bottom-[72px] left-6 z-[50] w-[250px] text-white">
                   <div className="mb-2 text-[15px] font-semibold">
                     {video.author || '用戶名'}
                   </div>
