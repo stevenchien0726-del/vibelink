@@ -573,12 +573,17 @@ if (isTap) {
     >
       {post.videoUrl ? (
         <video
-          src={post.videoUrl}
-          muted
-          playsInline
-          preload="metadata"
-          className="h-full w-full object-cover"
-        />
+  src={post.videoUrl}
+  muted
+  playsInline
+  preload="auto"
+  autoPlay
+  loop
+  className="h-full w-full object-cover bg-black"
+  onLoadedData={(e) => {
+    e.currentTarget.currentTime = 0.1
+  }}
+/>
       ) : (
         <img
           src={image}

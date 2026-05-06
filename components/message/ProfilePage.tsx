@@ -1034,12 +1034,17 @@ openSelectedPost(post)
     className="relative h-[190px] overflow-hidden bg-black"
   >
     <video
-      src={video.video_url}
-      muted
-      playsInline
-      preload="metadata"
-      className="h-full w-full object-cover"
-    />
+  src={video.video_url}
+  muted
+  playsInline
+  preload="auto"
+  autoPlay
+  loop
+  className="h-full w-full object-cover bg-black"
+  onLoadedData={(e) => {
+    e.currentTarget.currentTime = 0.1
+  }}
+/>
   </button>
 ))}
     </div>
@@ -1145,12 +1150,17 @@ openSelectedPost(post)
     >
       {isVideo ? (
   <video
-    src={post.video_url}
-    muted
-    playsInline
-    preload="metadata"
-    className="h-full w-full object-cover"
-  />
+  src={post.video_url}
+  muted
+  playsInline
+  preload="auto"
+  autoPlay
+  loop
+  className="h-full w-full object-cover bg-black"
+  onLoadedData={(e) => {
+    e.currentTarget.currentTime = 0.1
+  }}
+/>
 ) : (
   image && (
     <img
