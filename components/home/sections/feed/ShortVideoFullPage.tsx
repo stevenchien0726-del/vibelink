@@ -131,8 +131,8 @@ export default function ShortVideoFullPage({
                   <button
   type="button"
   onClick={() => {
-    onOpenUserProfile?.(video.user_id)
-  }}
+  console.log('前往用戶 Profile:', video.user_id)
+}}
   className="flex h-[48px] w-[48px] items-center justify-center rounded-full border-2 border-white bg-white shadow-[0_4px_14px_rgba(0,0,0,0.25)] active:scale-90"
 >
   <span className="text-[17px] font-semibold text-[#555]">
