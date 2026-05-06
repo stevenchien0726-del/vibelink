@@ -43,6 +43,7 @@ import { Link as LinkIcon } from 'lucide-react'
 
 import WideMenuSheet from '@/components/WideMenuSheet'
 import ShareSheet from '@/components/ShareSheet'
+import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
 
 import LinkPortSheet from '@/components/profile/LinkPortSheet'
 
@@ -124,7 +125,8 @@ await loadSavedPosts()
 
   const [myPosts, setMyPosts] = useState<any[]>([])
   const [myShortVideos, setMyShortVideos] = useState<any[]>([])
-  const [selectedShortVideo, setSelectedShortVideo] = useState<any>(null)
+  const [selectedShortVideoId, setSelectedShortVideoId] = useState<string | undefined>()
+const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 
   const [savedPosts, setSavedPosts] = useState<any[]>([])
 
@@ -370,7 +372,53 @@ async function loadMyShortVideos() {
     return
   }
 
-  setMyShortVideos(data ?? [])
+  const videoIds = (data ?? []).map((video: any) => video.id)
+
+const { data: likeRows } =
+  videoIds.length > 0
+    ? await supabase
+        .from('short_video_likes')
+        .select('short_video_id, user_id')
+        .in('short_video_id', videoIds)
+    : { data: [] }
+
+const { data: savedRows } =
+  videoIds.length > 0
+    ? await supabase
+        .from('saved_short_videos')
+        .select('short_video_id, user_id')
+        .in('short_video_id', videoIds)
+    : { data: [] }
+
+const likeCountMap = new Map<string, number>()
+const likedSet = new Set<string>()
+const savedSet = new Set<string>()
+
+;(likeRows ?? []).forEach((like: any) => {
+  likeCountMap.set(
+    like.short_video_id,
+    (likeCountMap.get(like.short_video_id) ?? 0) + 1
+  )
+
+  if (like.user_id === user.id) {
+    likedSet.add(like.short_video_id)
+  }
+})
+
+;(savedRows ?? []).forEach((saved: any) => {
+  if (saved.user_id === user.id) {
+    savedSet.add(saved.short_video_id)
+  }
+})
+
+setMyShortVideos(
+  (data ?? []).map((video: any) => ({
+    ...video,
+    likes: likeCountMap.get(video.id) ?? 0,
+    isLiked: likedSet.has(video.id),
+    isSaved: savedSet.has(video.id),
+  }))
+)
 }
 
 async function loadSavedPosts() {
@@ -1028,9 +1076,10 @@ openSelectedPost(post)
     type="button"
     key={video.id}
     onClick={(e) => {
-      e.stopPropagation()
-      setSelectedShortVideo(video)
-    }}
+  e.stopPropagation()
+  setSelectedShortVideoId(video.id)
+  setIsShortVideoPageOpen(true)
+}}
     className="relative h-[190px] overflow-hidden bg-black"
   >
     <video
@@ -1257,7 +1306,7 @@ openSelectedPost(post)
           </label>
 
           <label className="flex flex-col gap-2 text-[14px] text-[#666]">
-            使用者名稱
+            使用者ID
             <input
               value={profile?.username || ''}
               onChange={(e) =>
@@ -1313,7 +1362,7 @@ openSelectedPost(post)
       post_images: imageUrls.map((url) => ({
         image_url: url,
       })),
-      likes: 0,
+      likes: video.likes ?? 0,
       isLiked: false,
     },
     ...prev,
@@ -1729,49 +1778,35 @@ openSelectedPost(post)
   onClose={() => setIsShareSheetOpen(false)}
 />
 
-    <AnimatePresence>
-  {selectedShortVideo && (
-    <motion.div
-      className="fixed inset-0 z-[700] bg-black"
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-    >
-      <div className="mx-auto flex h-full w-full max-w-[430px] flex-col">
-        <div className="flex h-[56px] items-center justify-between px-4 text-white">
-          <button
-            type="button"
-            onClick={() => setSelectedShortVideo(null)}
-            className="text-[16px]"
-          >
-            CLOSE
-          </button>
-
-          <div className="text-[15px] font-medium">短影片</div>
-
-          <div className="w-[48px]" />
-        </div>
-
-        <div className="flex flex-1 items-center justify-center">
-          <video
-            src={selectedShortVideo.video_url}
-            controls
-            autoPlay
-            playsInline
-            className="max-h-full w-full bg-black object-contain"
-          />
-        </div>
-
-        {selectedShortVideo.caption && (
-          <div className="px-4 pb-8 pt-3 text-[15px] text-white">
-            {selectedShortVideo.caption}
-          </div>
-        )}
-      </div>
-    </motion.div>
-  )}
-</AnimatePresence>
+    <ShortVideoFullPage
+  open={isShortVideoPageOpen}
+  videos={myShortVideos.map((video) => ({
+    id: video.id,
+    user_id: video.user_id,
+    author: profile?.display_name || profile?.username || 'Vibelink User',
+    text: video.caption || '',
+    likes: 0,
+    images: [],
+    videoUrl: video.video_url,
+    type: 'video',
+    aiTags: ['短影片'],
+    isMine: true,
+    isLiked: !!video.isLiked,
+isSaved: !!video.isSaved,
+  }))}
+  initialVideoId={selectedShortVideoId}
+  onClose={() => setIsShortVideoPageOpen(false)}
+  onLike={async (video) => {
+  await loadMyShortVideos()
+}}
+  onComment={(video) => {
+    console.log('comment my short video:', video.id)
+  }}
+  onShare={() => setIsShareSheetOpen(true)}
+  onSave={async (video) => {
+  await loadMyShortVideos()
+}}
+/>
     
     </div>
   )
