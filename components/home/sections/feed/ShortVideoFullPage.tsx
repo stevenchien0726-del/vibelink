@@ -38,12 +38,20 @@ export default function ShortVideoFullPage({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[9999] h-[100dvh] w-screen overflow-hidden bg-black"
-        initial={{ x: '100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-      >
+  className="fixed inset-0 z-[9999] h-[100dvh] w-screen overflow-hidden bg-black"
+  initial={{ x: '100%' }}
+  animate={{ x: 0 }}
+  exit={{ x: '100%' }}
+  transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+  drag="x"
+  dragConstraints={{ left: 0, right: 0 }}
+  dragElastic={0.12}
+  onDragEnd={(_, info) => {
+    if (info.offset.x < -90 || info.velocity.x < -500) {
+      onClose()
+    }
+  }}
+>
         <div className="h-[100dvh] w-screen overflow-y-auto snap-y snap-mandatory bg-black">
           {orderedVideos.map((video) => {
             const videoSrc = video.videoUrl || (video as any).video_url
