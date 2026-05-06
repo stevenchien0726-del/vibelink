@@ -40,6 +40,8 @@ export default function ShortVideoFullPage({
   return (
     <AnimatePresence>
       <motion.div
+  data-block-page-swipe="true"
+  style={{ touchAction: 'pan-y' }}
   className="fixed inset-0 z-[9999] h-[100dvh] w-screen overflow-hidden bg-black"
   initial={{ x: '100%' }}
   animate={{ x: 0 }}
