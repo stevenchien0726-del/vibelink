@@ -1356,17 +1356,17 @@ openSelectedPost(post)
         : []
 
   setMyPosts((prev) => [
-    {
-      ...post,
-      caption: post.caption || '',
-      post_images: imageUrls.map((url) => ({
-        image_url: url,
-      })),
-      likes: video.likes ?? 0,
-      isLiked: false,
-    },
-    ...prev,
-  ])
+  {
+    ...post,
+    caption: post.caption || '',
+    post_images: imageUrls.map((url) => ({
+      image_url: url,
+    })),
+    likes: 0,
+    isLiked: false,
+  },
+  ...prev,
+])
 
   loadMyPosts()
 }}
@@ -1785,7 +1785,7 @@ openSelectedPost(post)
     user_id: video.user_id,
     author: profile?.display_name || profile?.username || 'Vibelink User',
     text: video.caption || '',
-    likes: 0,
+    likes: video.likes ?? 0,
     images: [],
     videoUrl: video.video_url,
     type: 'video',
