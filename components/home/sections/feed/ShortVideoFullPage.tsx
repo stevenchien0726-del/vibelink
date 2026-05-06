@@ -64,7 +64,10 @@ export default function ShortVideoFullPage({
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
-        style={{ x: dragX }}
+        style={{
+  x: dragX,
+  touchAction: 'pan-y',
+}}
         transition={{ type: 'spring', stiffness: 360, damping: 34 }}
         drag="x"
         dragDirectionLock
@@ -95,9 +98,8 @@ export default function ShortVideoFullPage({
               >
                 {videoSrc ? (
                   <video
-                    key={videoSrc}
-                    src={videoSrc}
-                    controls
+  key={videoSrc}
+  src={videoSrc}
                     autoPlay
                     muted
                     loop
