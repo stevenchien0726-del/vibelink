@@ -1,6 +1,6 @@
 'use client'
 
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, PanInfo } from 'framer-motion'
 import { Heart, MessageCircle, Send, Bookmark, X } from 'lucide-react'
 import type { PostItem } from './FeedGrid'
 
@@ -30,6 +30,8 @@ export default function ShortVideoFullPage({
   const foundIndex = videos.findIndex((video) => video.id === initialVideoId)
   const startIndex = foundIndex >= 0 ? foundIndex : 0
 
+  let dragStartX = 0
+  
   const orderedVideos = [
     ...videos.slice(startIndex),
     ...videos.slice(0, startIndex),
@@ -43,11 +45,14 @@ export default function ShortVideoFullPage({
   animate={{ x: 0 }}
   exit={{ x: '100%' }}
   transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-  drag="x"
-  dragConstraints={{ left: 0, right: 0 }}
-  dragElastic={0.12}
-  onDragEnd={(_, info) => {
-    if (info.offset.x < -90 || info.velocity.x < -500) {
+  onPanStart={(_, info: PanInfo) => {
+    dragStartX = info.point.x
+  }}
+  onPanEnd={(_, info: PanInfo) => {
+    const deltaX = info.point.x - dragStartX
+
+    // 左滑返回 feed
+    if (deltaX < -80) {
       onClose()
     }
   }}
