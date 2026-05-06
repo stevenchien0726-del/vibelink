@@ -1,6 +1,12 @@
 'use client'
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react'
 import { supabase } from '@/lib/supabase'
 
 export type CreateShortVideoBoxRef = {
@@ -17,189 +23,159 @@ const MAX_DURATION = 180
 const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
   function CreateShortVideoBox({ onReadyChange, onSuccess }, ref) {
     const inputRef = useRef<HTMLInputElement | null>(null)
+    const videoRef = useRef<HTMLVideoElement | null>(null)
 
     const [file, setFile] = useState<File | null>(null)
     const [previewUrl, setPreviewUrl] = useState('')
     const [caption, setCaption] = useState('')
-    const [loading, setLoading] = useState(false)
-    const [errorText, setErrorText] = useState('')
+    const [uploading, setUploading] = useState(false)
 
     useEffect(() => {
-      onReadyChange?.(!!file && !loading)
-    }, [file, loading, onReadyChange])
+      onReadyChange?.(!!file && !uploading)
+    }, [file, uploading, onReadyChange])
 
-    useEffect(() => {
-      if (!file) {
-        setPreviewUrl('')
-        return
-      }
-
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
-
-      return () => URL.revokeObjectURL(url)
-    }, [file])
-
-    async function checkVideoDuration(targetFile: File) {
-      return new Promise<number>((resolve, reject) => {
-        const video = document.createElement('video')
-        video.preload = 'metadata'
-
-        video.onloadedmetadata = () => {
-          window.URL.revokeObjectURL(video.src)
-          resolve(video.duration)
-        }
-
-        video.onerror = () => {
-          reject(new Error('無法讀取影片長度'))
-        }
-
-        video.src = URL.createObjectURL(targetFile)
-      })
-    }
-
-    async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    function handleSelectFile(e: React.ChangeEvent<HTMLInputElement>) {
       const selected = e.target.files?.[0]
       if (!selected) return
 
-      setErrorText('')
-
       if (!selected.type.startsWith('video/')) {
-        setErrorText('只能上傳影片檔')
-        setFile(null)
+        alert('請選擇影片檔')
         return
       }
 
-      try {
-        const duration = await checkVideoDuration(selected)
+      const url = URL.createObjectURL(selected)
 
-        if (duration > MAX_DURATION) {
-          setErrorText('短影片不能超過 3 分鐘')
+      const video = document.createElement('video')
+      video.preload = 'metadata'
+      video.src = url
+
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src)
+
+        if (video.duration > MAX_DURATION) {
+          alert('短影片不能超過 3 分鐘')
           setFile(null)
-          e.target.value = ''
+          setPreviewUrl('')
+          onReadyChange?.(false)
           return
         }
 
         setFile(selected)
-      } catch {
-        setErrorText('影片讀取失敗，請換一支影片')
-        setFile(null)
+        setPreviewUrl(url)
+        onReadyChange?.(true)
       }
     }
 
     async function submitVideo() {
-  if (!file || loading) return
+      if (!file || uploading) return
 
-  setLoading(true)
-  setErrorText('')
+      setUploading(true)
+      onReadyChange?.(false)
 
-  console.log('開始上傳影片')
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
+      if (userError || !user) {
+        console.error('取得使用者失敗:', userError)
+        alert('請先登入')
+        setUploading(false)
+        onReadyChange?.(true)
+        return
+      }
 
-  console.log('user:', user)
+      const ext = file.name.split('.').pop() || 'mp4'
+      const fileName = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`
 
-  if (userError || !user) {
-    console.error('user error', userError)
-    setErrorText('請先登入')
-    setLoading(false)
-    return
-  }
+      const { error: uploadError } = await supabase.storage
+        .from('short-videos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type,
+        })
 
-  const fileExt = file.name.split('.').pop()
-  const filePath = `${user.id}/${Date.now()}.${fileExt}`
+      if (uploadError) {
+        console.error('短影片上傳 Storage 失敗:', uploadError)
+        alert(`短影片上傳失敗：${uploadError.message}`)
+        setUploading(false)
+        onReadyChange?.(true)
+        return
+      }
 
-  console.log('upload path:', filePath)
+      const { data: publicUrlData } = supabase.storage
+        .from('short-videos')
+        .getPublicUrl(fileName)
 
-  const { error: uploadError } = await supabase.storage
-    .from('short-videos')
-    .upload(filePath, file)
+      const videoUrl = publicUrlData.publicUrl
 
-  if (uploadError) {
-    console.error('upload error:', uploadError)
-    setErrorText('影片上傳失敗')
-    setLoading(false)
-    return
-  }
+      const { error: insertError } = await supabase.from('short_videos').insert({
+        user_id: user.id,
+        caption: caption.trim(),
+        video_url: videoUrl,
+      })
 
-  console.log('upload success')
+      if (insertError) {
+        console.error('寫入 short_videos 失敗:', insertError)
+        alert(`資料庫寫入失敗：${insertError.message}`)
+        setUploading(false)
+        onReadyChange?.(true)
+        return
+      }
 
-  const { data: publicUrlData } = supabase.storage
-    .from('short-videos')
-    .getPublicUrl(filePath)
-
-  console.log('public url:', publicUrlData)
-
-const publicUrl = publicUrlData.publicUrl
-
-const { error: insertError } = await supabase.from('posts').insert({
-  user_id: user.id,
-  caption,
-  video_url: publicUrl,
-  post_type: 'video',
-})
-
-  if (insertError) {
-    console.error('insert error:', insertError)
-    setErrorText('資料寫入失敗')
-    setLoading(false)
-    return
-  }
-
-  console.log('insert success')
-
-  setLoading(false)
-  setFile(null)
-  setCaption('')
-  onSuccess?.()
-}
+      setUploading(false)
+      onReadyChange?.(false)
+      onSuccess?.()
+    }
 
     useImperativeHandle(ref, () => ({
       submitVideo,
     }))
 
     return (
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-6">
         <input
           ref={inputRef}
           type="file"
           accept="video/*"
           className="hidden"
-          onChange={handleFileChange}
+          onChange={handleSelectFile}
         />
 
-
-        {previewUrl && (
+        {previewUrl ? (
           <video
+            ref={videoRef}
             src={previewUrl}
             controls
             playsInline
-            className="max-h-[360px] w-full rounded-[18px] bg-black object-contain"
+            className="h-[360px] w-full max-w-[280px] rounded-[20px] bg-black object-cover"
           />
+        ) : (
+          <div className="flex h-[360px] w-full max-w-[280px] items-center justify-center rounded-[20px] bg-black text-white/70">
+            尚未選擇短影片
+          </div>
         )}
 
         <button
-  type="button"
-  onClick={() => inputRef.current?.click()}
-  className="flex h-[52px] w-full items-center justify-center rounded-[16px] border border-[#d6d6d6] bg-[#e3e3e3] px-6 text-[16px] font-medium text-[#111] shadow-sm active:scale-95"
->
-  選擇短影片
-</button>
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="h-[54px] w-full rounded-[18px] bg-[#eeeeee] text-[17px] font-medium text-[#111] shadow-sm active:scale-[0.98]"
+        >
+          選擇短影片
+        </button>
 
-        {file && (
-          <textarea
-            placeholder="寫點內容..."
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            className="mt-2 h-[84px] w-full resize-none rounded-[16px] border border-[#ddd] bg-white px-4 py-3 text-[15px] outline-none"
-          />
-        )}
+        <textarea
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          placeholder="寫點內容..."
+          className="min-h-[110px] w-full resize-none rounded-[18px] border border-[#e2e2e2] bg-white px-4 py-3 text-[15px] outline-none"
+        />
 
-        {errorText && (
-          <div className="text-[13px] text-red-500">{errorText}</div>
+        {uploading && (
+          <div className="text-[14px] text-[#777]">
+            影片上傳中...
+          </div>
         )}
       </div>
     )
