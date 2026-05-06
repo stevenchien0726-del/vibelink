@@ -129,9 +129,16 @@ export default function ShortVideoFullPage({
 
                 <div className="absolute bottom-[118px] right-5 z-[50] flex flex-col items-center gap-6 text-white">
                   <button
-                    type="button"
-                    className="h-[48px] w-[48px] rounded-full bg-[#c48ac8]"
-                  />
+  type="button"
+  onClick={() => {
+    onOpenUserProfile?.(video.user_id)
+  }}
+  className="flex h-[48px] w-[48px] items-center justify-center rounded-full border-2 border-white bg-white shadow-[0_4px_14px_rgba(0,0,0,0.25)] active:scale-90"
+>
+  <span className="text-[17px] font-semibold text-[#555]">
+    {(video.author || 'V').slice(0, 1)}
+  </span>
+</button>
 
                   <button type="button" onClick={() => onLike?.(video)}>
                     <Heart
