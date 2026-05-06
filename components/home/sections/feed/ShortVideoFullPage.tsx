@@ -1,6 +1,12 @@
 'use client'
 
-import { AnimatePresence, motion, PanInfo } from 'framer-motion'
+import {
+  AnimatePresence,
+  motion,
+  PanInfo,
+  useMotionValue,
+  animate,
+} from 'framer-motion'
 import { useRef } from 'react'
 import { Heart, MessageCircle, Send, Bookmark, X } from 'lucide-react'
 import type { PostItem } from './FeedGrid'
@@ -31,6 +37,7 @@ export default function ShortVideoFullPage({
   const foundIndex = videos.findIndex((video) => video.id === initialVideoId)
   const startIndex = foundIndex >= 0 ? foundIndex : 0
   const dragStartXRef = useRef(0)
+  const dragX = useMotionValue(0)
   
   const orderedVideos = [
     ...videos.slice(startIndex),
@@ -43,19 +50,45 @@ export default function ShortVideoFullPage({
   data-block-page-swipe="true"
   className="fixed inset-0 z-[9999] h-[100dvh] w-screen overflow-hidden bg-black"
   initial={{ x: '100%' }}
-  animate={{ x: 0 }}
-  exit={{ x: '100%' }}
-  transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+animate={{ x: 0 }}
+exit={{ x: '100%' }}
+style={{ x: dragX }}
+transition={{
+  type: 'spring',
+  stiffness: 360,
+  damping: 34,
+}}
   onPanStart={(_, info: PanInfo) => {
   dragStartXRef.current = info.point.x
 }}
-  onPanEnd={(_, info: PanInfo) => {
-  const deltaX = info.point.x - dragStartXRef.current
-
-  // 右滑返回 feed
-  if (deltaX > 80) {
-    onClose()
+onPan={(_, info: PanInfo) => {
+  if (info.offset.x > 0) {
+    dragX.set(info.offset.x)
   }
+}}
+  onPanEnd={(_, info: PanInfo) => {
+  const deltaX = info.offset.x
+
+  // 關閉
+  if (deltaX > 120) {
+    animate(dragX, window.innerWidth, {
+      duration: 0.22,
+      ease: 'easeOut',
+      onComplete: () => {
+        onClose()
+        dragX.set(0)
+      },
+    })
+
+    return
+  }
+
+  // 回彈
+  animate(dragX, 0, {
+    type: 'spring',
+    stiffness: 380,
+    damping: 34,
+  })
 }}
 >
         <div className="h-[100dvh] w-screen overflow-y-auto snap-y snap-mandatory bg-black">
