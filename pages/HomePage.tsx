@@ -1128,7 +1128,10 @@ if (isTap) {
   }
 
   return (
-  <div className="relative min-h-screen w-full overflow-hidden bg-[#f5f5f5]">
+  <div
+  data-auth-modal-open={isAuthModalOpen ? 'true' : 'false'}
+  className="relative min-h-screen w-full overflow-hidden bg-[#f5f5f5]"
+>
 
     <motion.div
       className="fixed top-0 left-1/2 z-[500] pointer-events-auto h-[60px] w-full max-w-[430px] -translate-x-1/2 bg-[rgba(245,245,245,0.96)] px-[14px] py-[8px] backdrop-blur-md"
@@ -1611,7 +1614,10 @@ onDeletePost={handleDeletePost}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-6 backdrop-blur-sm"
+      className="fixed inset-0 z-[10000] flex touch-none items-center justify-center bg-black/40 px-6 backdrop-blur-sm"
+onTouchStart={(e) => e.stopPropagation()}
+onTouchMove={(e) => e.stopPropagation()}
+onTouchEnd={(e) => e.stopPropagation()}
     >
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.96 }}

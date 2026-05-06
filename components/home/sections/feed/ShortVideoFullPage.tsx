@@ -82,7 +82,7 @@ export default function ShortVideoFullPage({
       >
         <div
           data-block-page-swipe="true"
-          className="mx-auto h-[100dvh] w-full max-w-[430px] overflow-y-auto overflow-x-hidden snap-y snap-mandatory bg-black"
+          className="no-scrollbar mx-auto h-[100dvh] w-full max-w-[430px] overflow-y-auto overflow-x-hidden snap-y snap-mandatory bg-black"
           style={{
             WebkitOverflowScrolling: 'touch',
             touchAction: 'pan-y',
