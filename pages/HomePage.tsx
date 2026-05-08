@@ -35,6 +35,7 @@ import FeedGrid, { type FeedMode, type PostItem } from '@/components/home/sectio
 import { supabase } from '@/lib/supabase'
 
 import { ensureUserProfile } from '@/lib/profile'
+import { mockPosts } from '@/lib/mockPosts'
 
 type StoryItem = {
   id: string
@@ -63,81 +64,6 @@ type CommentItem = {
     avatar_url?: string | null
   } | null
 }
-
-const mockPosts: PostItem[] = [
-  {
-    id: 'p1',
-    author: 'Sky.07_21',
-    text: 'HI 大家好，今天是開心的一天',
-    likes: 50,
-    images: [
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80',
-      'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80',
-    ],
-    aiTags: ['自然感', '戶外', '療癒'],
-  },
-  {
-    id: 'p2',
-    author: 'Ryan_88',
-    text: '今天的配對牆先放生活照。',
-    likes: 27,
-    images: [
-      'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1200&q=80',
-      'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1200&q=80',
-      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=80',
-    ],
-    aiTags: ['森林感', '清新', '安靜感'],
-  },
-  {
-    id: 'p3',
-    author: 'Leo_wave',
-    text: '晚上想找人聊天。',
-    likes: 13,
-    images: [
-      'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=1200&q=80',
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80',
-      'https://images.unsplash.com/photo-1439853949127-fa647821eba0?w=1200&q=80',
-    ],
-    aiTags: ['山景', '放鬆感', '自然系'],
-  },
-  {
-    id: 'p4',
-    author: 'Ace_02',
-    text: '新照片更新。',
-    likes: 64,
-    images: [
-      'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=80',
-      'https://images.unsplash.com/photo-1494526585095-c41746248156?w=1200&q=80',
-      'https://images.unsplash.com/photo-1492447166138-50c3889fccb1?w=1200&q=80',
-    ],
-    aiTags: ['生活感', '戶外', '舒服感'],
-  },
-  {
-    id: 'p5',
-    author: 'Mason_v',
-    text: '來交朋友。',
-    likes: 32,
-    images: [
-      'https://images.unsplash.com/photo-1517423440428-a5a00ad493e8?w=1200&q=80',
-      'https://images.unsplash.com/photo-1472396961693-142e6e269027?w=1200&q=80',
-      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=80',
-    ],
-    aiTags: ['自然', '慢節奏', '療癒'],
-  },
-  {
-    id: 'p6',
-    author: 'Jay_noir',
-    text: '週末想出去走走。',
-    likes: 18,
-    images: [
-      'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80',
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80',
-      'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80',
-    ],
-    aiTags: ['旅行', '風景', '自由感'],
-  },
-]
 
 const mockStories: StoryItem[] = [
   { id: 's1', author: 'Sky.07_21' },
@@ -174,6 +100,7 @@ export default function HomePage({
   
   const [feedMode, setFeedMode] = useState<FeedMode>('1x1')
   const [realPosts, setRealPosts] = useState<PostItem[]>([])
+  const [mockSavedPostIds, setMockSavedPostIds] = useState<string[]>([])
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null)
 
   const [commentSheetPost, setCommentSheetPost] = useState<PostItem | null>(null)
@@ -207,6 +134,13 @@ const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 const [shortVideoStartId, setShortVideoStartId] = useState<string | undefined>()
 
 const detailTouchStartXRef = useRef<number | null>(null)
+useEffect(() => {
+  const saved = localStorage.getItem('vibelink_mock_saved_posts')
+
+  if (saved) {
+    setMockSavedPostIds(JSON.parse(saved))
+  }
+}, [])
   useEffect(() => {
   async function initHome() {
     const { data } = await supabase.auth.getSession()
@@ -682,6 +616,10 @@ function handleDetailTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 }
 
 async function loadComments(postId: string, type?: 'post' | 'video') {
+    if (postId.startsWith('mock-')) {
+    setComments([])
+    return
+  }
   const tableName = type === 'video' ? 'short_video_comments' : 'comments'
   const idColumn = type === 'video' ? 'short_video_id' : 'post_id'
 
@@ -748,6 +686,16 @@ if (!activePostId) {
   return
 }
 if (!activePostId) return
+if (selectedPost?.isMock) {
+  const nextLiked = !selectedPostLiked
+
+  setSelectedPostLiked(nextLiked)
+  setSelectedPostLikeCount((prev) =>
+    Math.max(0, prev + (nextLiked ? 1 : -1))
+  )
+
+  return
+}
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
@@ -784,13 +732,33 @@ if (!activePostId) return
 
 async function toggleDetailSave() {
   const activePostId = selectedPost?.id || commentSheetPost?.id
-if (!activePostId) return
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
+  if (!activePostId) return
 
   const postId = activePostId
   const nextSaved = !selectedPostSaved
+
+  // ✅ mock 貼文不打 Supabase
+  if (selectedPost?.isMock) {
+    const nextSavedIds = selectedPostSaved
+      ? mockSavedPostIds.filter((id) => id !== selectedPost.id)
+      : [...mockSavedPostIds, selectedPost.id]
+
+    setMockSavedPostIds(nextSavedIds)
+
+    localStorage.setItem(
+      'vibelink_mock_saved_posts',
+      JSON.stringify(nextSavedIds)
+    )
+
+    setSelectedPostSaved(nextSaved)
+    return
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
 
   setSelectedPostSaved(nextSaved)
 
@@ -1117,6 +1085,14 @@ if (isTap) {
     return () => clearInterval(interval)
   }, [selectedStory, storyPage, isStoryPaused])
 
+const mergedPosts = [
+  ...mockPosts.map((post) => ({
+    ...post,
+    isSaved: mockSavedPostIds.includes(post.id),
+  })),
+  ...realPosts,
+]
+
   if (isSearchPageOpen) {
     return (
       <SearchPage
@@ -1315,7 +1291,7 @@ await loadShortVideos(user)
   data-block-page-swipe="true"
 >
   <FeedGrid
-  posts={realPosts}
+  posts={mergedPosts}
   feedMode={feedMode}
   setFeedMode={setFeedMode}
   onOpenPost={(post) => {
@@ -1798,9 +1774,9 @@ onTouchEnd={(e) => e.stopPropagation()}
 
 <ShortVideoFullPage
   open={isShortVideoPageOpen}
-  videos={realPosts.filter(
-    (post) => post.type === 'video' || post.videoUrl
-  )}
+  videos={mergedPosts.filter(
+  (post) => post.type === 'video' || post.videoUrl
+)}
   initialVideoId={shortVideoStartId}
   onClose={() => setIsShortVideoPageOpen(false)}
   onLike={toggleShortVideoLike}

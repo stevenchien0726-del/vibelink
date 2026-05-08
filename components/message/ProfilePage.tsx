@@ -46,6 +46,7 @@ import ShareSheet from '@/components/ShareSheet'
 import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
 
 import LinkPortSheet from '@/components/profile/LinkPortSheet'
+import { mockPosts } from '@/lib/mockPosts'
 
 type ProfilePageProps = {
   onCloseMenu?: () => void
@@ -486,11 +487,43 @@ async function loadSavedPosts() {
       type: 'video',
     }))
 
-  setSavedPosts([...videoPosts, ...photoPosts])
+    const mockSavedIds =
+    typeof window !== 'undefined'
+      ? JSON.parse(localStorage.getItem('vibelink_mock_saved_posts') || '[]')
+      : []
+
+  const mockSavedPosts = mockPosts
+    .filter((post) => mockSavedIds.includes(post.id))
+    .map((post) => ({
+      id: post.id,
+      caption: post.text,
+      post_images: post.images.map((imageUrl) => ({
+        image_url: imageUrl,
+      })),
+      likes: post.likes ?? 0,
+      isLiked: !!post.isLiked,
+      isSaved: true,
+      isMock: true,
+      type: 'post',
+    }))
+
+  setSavedPosts([...mockSavedPosts, ...videoPosts, ...photoPosts])
 }
 
 async function openSelectedPost(post: any) {
+    if (post.isMock) {
+    setSelectedPost(post)
+    setSelectedPostImageIndex(0)
+    setSelectedPostLiked(!!post.isLiked)
+    setSelectedPostLikeCount(post.likes ?? 0)
+    setSelectedPostSaved(true)
+    setCommentText('')
+    setComments([])
+    return
+  }
+  
   const { data: images, error } = await supabase
+  
     .from('post_images')
     .select('image_url')
     .eq('post_id', post.id)
@@ -614,6 +647,33 @@ async function toggleSelectedPostLike() {
 
 async function toggleSelectedPostSave() {
   if (!selectedPost?.id) return
+
+  if (selectedPost.isMock) {
+  const saved = JSON.parse(
+    localStorage.getItem('vibelink_mock_saved_posts') || '[]'
+  )
+
+  const nextSaved = !selectedPostSaved
+
+  const nextSavedIds = nextSaved
+    ? [...new Set([...saved, selectedPost.id])]
+    : saved.filter((id: string) => id !== selectedPost.id)
+
+  localStorage.setItem(
+    'vibelink_mock_saved_posts',
+    JSON.stringify(nextSavedIds)
+  )
+
+  setSelectedPostSaved(nextSaved)
+
+  setSavedPosts((prev) =>
+    nextSaved
+      ? [selectedPost, ...prev]
+      : prev.filter((post) => post.id !== selectedPost.id)
+  )
+
+  return
+}
 
   const {
     data: { user },
@@ -1189,12 +1249,18 @@ openSelectedPost(post)
       type="button"
       key={post.id}
       onClick={(e) => {
-        e.stopPropagation()
+  e.stopPropagation()
 
-        if (!image) return
+  if (isVideo) {
+    setSelectedShortVideoId(post.id)
+    setIsShortVideoPageOpen(true)
+    return
+  }
 
-        openSelectedPost(post)
-      }}
+  if (!image) return
+
+  openSelectedPost(post)
+}}
       className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
     >
       {isVideo ? (

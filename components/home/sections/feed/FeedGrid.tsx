@@ -28,6 +28,7 @@ export type PostItem = {
 isSaved?: boolean
 user_id?: string
 type?: 'post' | 'video'
+isMock?: boolean
 }
 
 type FeedGridProps = {
@@ -109,6 +110,25 @@ const nextSaved: Record<string, boolean> = {}
   }
 
   async function toggleLike(post: PostItem) {
+  const isLiked = !!likedMap[post.id]
+  const nextLiked = !isLiked
+
+  setLikedMap((prev) => ({
+    ...prev,
+    [post.id]: nextLiked,
+  }))
+
+  setLikeCountMap((prev) => ({
+    ...prev,
+    [post.id]: Math.max(
+      0,
+      (prev[post.id] ?? post.likes ?? 0) + (nextLiked ? 1 : -1)
+    ),
+  }))
+
+  // fake post 不打 Supabase
+  if (post.isMock) return
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -116,17 +136,6 @@ const nextSaved: Record<string, boolean> = {}
   if (!user) return
 
   const isVideo = post.videoUrl || post.type === 'video'
-  const isLiked = !!likedMap[post.id]
-
-  setLikedMap((prev) => ({
-    ...prev,
-    [post.id]: !isLiked,
-  }))
-
-  setLikeCountMap((prev) => ({
-    ...prev,
-    [post.id]: Math.max(0, (prev[post.id] ?? 0) + (isLiked ? -1 : 1)),
-  }))
 
   if (isLiked) {
     const { error } = await supabase
@@ -150,6 +159,31 @@ const nextSaved: Record<string, boolean> = {}
 }
 
 async function toggleSave(post: PostItem) {
+  const isSaved = !!savedMap[post.id]
+  const nextSaved = !isSaved
+
+  setSavedMap((prev) => ({
+    ...prev,
+    [post.id]: nextSaved,
+  }))
+
+  if (post.isMock) {
+    const saved = JSON.parse(
+      localStorage.getItem('vibelink_mock_saved_posts') || '[]'
+    )
+
+    const nextSavedIds = nextSaved
+      ? [...new Set([...saved, post.id])]
+      : saved.filter((id: string) => id !== post.id)
+
+    localStorage.setItem(
+      'vibelink_mock_saved_posts',
+      JSON.stringify(nextSavedIds)
+    )
+
+    return
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -157,12 +191,6 @@ async function toggleSave(post: PostItem) {
   if (!user) return
 
   const isVideo = post.videoUrl || post.type === 'video'
-  const isSaved = !!savedMap[post.id]
-
-  setSavedMap((prev) => ({
-    ...prev,
-    [post.id]: !isSaved,
-  }))
 
   if (isSaved) {
     const { error } = await supabase
@@ -448,7 +476,7 @@ if (isTap) {
                   </div>
 
                   {postImages.length > 1 && (
-  <div className="absolute -bottom-[18px] left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2">
+  <div className="mt-3 flex justify-center gap-2">
     {postImages.map((_, index) => (
       <button
         key={`${post.id}-dot-${index}`}
