@@ -7,6 +7,8 @@ import { fakeAiSearch } from '@/lib/fakeAiSearch'
 import { FakeUser, fakeUsers } from '../data/fakeUsers'
 import { X } from 'lucide-react'
 
+import { searchAIRadarUsers } from '@/lib/aiRadar'
+
 import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
 
 const suggestionItems = [
@@ -244,15 +246,10 @@ function handlePickLibraryUser(payload: {
 
 const isSkySeedSearch = selectedLibraryUser?.id === 'user-1'
 
-function getCandidateDescription(user: FakeUser) {
-  if (isSkySeedSearch) {
-    return (
-      SKY_USER_ANALYSIS[user.id] ??
-      '整體偏自然、穩定、低刺激互動感，更像是會慢慢建立熟悉感的類型。'
-    )
-  }
+function getCandidateDescription(user: any) {
+  const tags = user.tags ?? user.vibe_tags ?? []
 
-  return `奶狗感、${user.tags.slice(0, 2).join('、')}、互動感偏高，整體氛圍偏可愛又帶一點主動感。`
+  return `奶狗感、${tags.slice(0, 2).join('、')}、互動感偏高，整體氛圍偏可愛又帶一點主動感`
 }
 
 const secondaryWallUsers =
@@ -300,7 +297,7 @@ const finalQuery =
   setTimeout(() => {
     const matchedUsers = isSkySeedSearch
   ? SKY_LIBRARY_RESULTS
-  : fakeAiSearch(finalQuery)
+  : searchAIRadarUsers(finalQuery)
 
     let nextAiText = ''
     if (matchedUsers.length > 0) {
@@ -442,7 +439,12 @@ const finalQuery =
 
     <div className="flex gap-3 px-1 select-none">
   {Array.from({ length: 5 }).map((_, photoIndex) => {
-    const imgSrc = user.images[photoIndex % user.images.length]
+    const userImages =
+  user.images && user.images.length > 0
+    ? user.images
+    : [user.image ?? user.avatar_url].filter(Boolean)
+
+const imgSrc = userImages[photoIndex % userImages.length]
 
     return (
       <button
