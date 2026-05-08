@@ -325,7 +325,7 @@ const finalQuery =
 
     typeText(nextAiText, () => {
   if (matchedUsers.length > 0) {
-    setResults(matchedUsers)
+    setResults(matchedUsers as any)
 
     setTimeout(() => {
       setShowCandidates(true)
@@ -445,6 +445,7 @@ const finalQuery =
     : [user.image ?? user.avatar_url].filter(Boolean)
 
 const imgSrc = userImages[photoIndex % userImages.length]
+
 
     return (
       <button
