@@ -442,7 +442,7 @@ const finalQuery =
     const userImages =
   user.images && user.images.length > 0
     ? user.images
-    : [user.image ?? user.avatar_url].filter(Boolean)
+    : [(user as any).image ?? (user as any).avatar_url].filter(Boolean)
 
 const imgSrc = userImages[photoIndex % userImages.length]
 
