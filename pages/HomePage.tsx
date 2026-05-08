@@ -34,6 +34,8 @@ import FeedGrid, { type FeedMode, type PostItem } from '@/components/home/sectio
 
 import { supabase } from '@/lib/supabase'
 
+import { MEMBERSHIP_URL, openLink } from '@/lib/links'
+
 import { ensureUserProfile } from '@/lib/profile'
 import { mockPosts, mockShortVideos } from '@/lib/mockPosts'
 
@@ -1212,22 +1214,34 @@ const mergedPosts = [
   className="absolute left-0 top-[46px] z-[200] w-[200px] rounded-[20px] border border-[#e4d7ea] bg-[#f3f3f3] p-4 shadow-[0_10px_26px_rgba(0,0,0,0.12)]"
 >
   <div className="flex flex-col gap-6">
-    <button
-      type="button"
-      className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
-    >
-      <FollowingIcon />
-      <span>追蹤中</span>
-    </button>
+  <button
+    type="button"
+    onClick={() => {
+      openLink(MEMBERSHIP_URL)
+      setIsTopMenuOpen(false)
+    }}
+    className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
+  >
+    <MembershipIcon />
+    <span>Vibe會員</span>
+  </button>
 
-    <button
-      type="button"
-      className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
-    >
-      <FavoriteIcon />
-      <span>最愛</span>
-    </button>
-  </div>
+  <button
+    type="button"
+    className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
+  >
+    <FollowingIcon />
+    <span>追蹤中</span>
+  </button>
+
+  <button
+    type="button"
+    className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
+  >
+    <FavoriteIcon />
+    <span>最愛</span>
+  </button>
+</div>
 </motion.div>
   )}
 </AnimatePresence>
@@ -1873,6 +1887,27 @@ function FavoriteIcon() {
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function MembershipIcon() {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M7 6.5h10a2 2 0 012 2v2.2a1.8 1.8 0 000 3.6V16a2 2 0 01-2 2H7a2 2 0 01-2-2v-1.7a1.8 1.8 0 000-3.6V8.5a2 2 0 012-2z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M12 8v8"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeDasharray="1.8 1.8"
       />
     </svg>
   )
