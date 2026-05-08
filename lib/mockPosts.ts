@@ -31,3 +31,25 @@ export const mockPosts: PostItem[] = mockUsers.map((user) => {
     isMock: true,
   }
 })
+
+export const mockShortVideos: PostItem[] = mockUsers.flatMap((user) =>
+  (user.short_videos ?? []).map((videoUrl, index) => {
+    const id = `${user.id}-video-${index}`
+
+    return {
+      id,
+      user_id: user.id,
+      author: user.display_name,
+      text: `${user.display_name} short vibe`,
+      likes: getStableLikeCount(id),
+      images: [],
+      videoUrl,
+      aiTags: user.vibe_tags,
+      type: 'video' as const,
+      isMine: false,
+      isLiked: false,
+      isSaved: false,
+      isMock: true,
+    }
+  })
+)

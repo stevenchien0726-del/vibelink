@@ -92,4 +92,71 @@ export const mockUsers: MockUser[] = [
       'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop',
     ],
   },
+{
+  id: 'mock-006',
+  username: 'zane.motion',
+  display_name: 'Zane',
+  avatar_url:
+    'https://images.unsplash.com/photo-1504593811423-6dd665756598?q=80&w=1200&auto=format&fit=crop',
+  bio: 'Street workout / Night city / Vibes',
+  city: 'Taipei',
+  vibe_tags: ['street', 'fitness', 'nightlife'],
+  images: [
+    'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop',
+  ],
+  short_videos: [
+    'https://www.w3schools.com/html/movie.mp4',
+  ],
+},
+
+{
+  id: 'mock-007',
+  username: 'sora.wave',
+  display_name: 'Sora',
+  avatar_url:
+    'https://images.unsplash.com/photo-1494790108755-2616b612b786?q=80&w=1200&auto=format&fit=crop',
+  bio: 'Beach girl / Summer / Chill',
+  city: 'Taipei',
+  vibe_tags: ['beach', 'summer', 'travel'],
+  images: [
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop',
+  ],
+  short_videos: [
+    'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+  ],
+},
+
+{
+  id: 'mock-008',
+  username: 'mika.rave',
+  display_name: 'Mika',
+  avatar_url:
+    'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1200&auto=format&fit=crop',
+  bio: 'Rave / Techno / Fashion',
+  city: 'Taipei',
+  vibe_tags: ['rave', 'techno', 'fashion'],
+  images: [
+    'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop',
+  ],
+  short_videos: [
+    'https://www.w3schools.com/html/mov_bbb.mp4',
+  ],
+},
+
+{
+  id: 'mock-009',
+  username: 'leo.kick',
+  display_name: 'Leo',
+  avatar_url:
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop',
+  bio: 'Gym / Boxing / Hustle',
+  city: 'Taipei',
+  vibe_tags: ['boxing', 'gym', 'alpha'],
+  images: [
+    'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop',
+  ],
+  short_videos: [
+    'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm',
+  ],
+}
 ]

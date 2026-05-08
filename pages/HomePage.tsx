@@ -35,7 +35,7 @@ import FeedGrid, { type FeedMode, type PostItem } from '@/components/home/sectio
 import { supabase } from '@/lib/supabase'
 
 import { ensureUserProfile } from '@/lib/profile'
-import { mockPosts } from '@/lib/mockPosts'
+import { mockPosts, mockShortVideos } from '@/lib/mockPosts'
 
 type StoryItem = {
   id: string
@@ -1086,6 +1086,7 @@ if (isTap) {
   }, [selectedStory, storyPage, isStoryPaused])
 
 const mergedPosts = [
+  ...mockShortVideos,
   ...mockPosts.map((post) => ({
     ...post,
     isSaved: mockSavedPostIds.includes(post.id),
