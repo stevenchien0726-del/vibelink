@@ -1,0 +1,423 @@
+'use client'
+
+import { useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
+import { FakeUser } from '../data/fakeUsers'
+
+import { searchAIRadarUsers } from '@/lib/aiRadar'
+
+import { MEMBERSHIP_URL, openLink } from '@/lib/links'
+
+import { SKY_LIBRARY_RESULTS } from '@/lib/mockSkyLibrary'
+import AIRadarLoadingOverlay from '@/components/airadar/AIRadarLoadingOverlay'
+import AIRadarMoreWall from '@/components/airadar/AIRadarMoreWall'
+
+import AIRadarResultCard from '@/components/airadar/AIRadarResultCard'
+import AIRadarPromptList from '@/components/airadar/AIRadarPromptList'
+
+import AIRadarTopBar from '@/components/airadar/AIRadarTopBar'
+import AIRadarInputBar from '@/components/airadar/AIRadarInputBar'
+
+const suggestionItems = [
+  '幫我找可愛奶狗弟弟',
+  '喜歡大自然的女生',
+  '身材性感內建男模特',
+]
+
+const SKY_USER_ANALYSIS: Record<string, string> = {
+  'sky-match-1':
+    '整體偏自然戶外與公路旅行感，聊天節奏慢，給人的感覺比較穩、比較耐看，也更像會陪你往外走走的人。',
+  'sky-match-2':
+    '山景與慢生活感很重，照片裡有一種成熟但不高冷的距離感，比較像是能安靜聊天、慢慢熟起來的類型。',
+  'sky-match-3':
+    '海風感和舒服感比較強，整體氣質偏溫和療癒，不是高刺激型，而是容易讓人放鬆、願意多聊幾句的類型。',
+}
+
+const SKY_MORE_PROMPTS = [
+  '幫我找比 Sky_07_21 更成熟一點的人',
+  '找和 Sky_07_21 一樣自然感強但更主動聊天的人',
+  '找偏安靜、戶外感、適合慢慢熟起來的人',
+]
+
+const SKY_MORE_WALL_IMAGES = [
+  '/sky-more/1.jpg',
+  '/sky-more/2.jpg',
+  '/sky-more/3.jpg',
+  '/sky-more/4.jpg',
+  '/sky-more/5.jpg',
+]
+
+export default function AIRadarPage() {
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [refreshCount, setRefreshCount] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const [inputValue, setInputValue] = useState('')
+
+  const [loading, setLoading] = useState(false)
+const [results, setResults] = useState<FakeUser[]>([])
+const [aiText, setAiText] = useState('')
+
+const [displayedAiText, setDisplayedAiText] = useState('')
+const [showCandidates, setShowCandidates] = useState(false)
+const [showWalls, setShowWalls] = useState(false)
+const [showMorePrompts, setShowMorePrompts] = useState(false)
+
+const [showTopBar, setShowTopBar] = useState(true)
+const lastScrollYRef = useRef(0)
+
+  const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
+  const [selectedLibraryUser, setSelectedLibraryUser] = useState<{
+  id: string
+  name: string
+  avatar: string
+} | null>(null)
+
+const [flyingUser, setFlyingUser] = useState<{
+  user: { id: string; name: string; avatar: string }
+  sourceRect: {
+    top: number
+    left: number
+    width: number
+    height: number
+  }
+  targetRect: {
+    top: number
+    left: number
+    width: number
+    height: number
+  }
+} | null>(null)
+
+const targetRef = useRef<HTMLDivElement | null>(null)
+
+const mainScrollRef = useRef<HTMLElement | null>(null)
+
+  const hasInput = inputValue.trim().length > 0 || !!selectedLibraryUser
+
+  function typeText(text: string, onDone?: () => void) {
+  setDisplayedAiText('')
+  let index = 0
+
+  const timer = setInterval(() => {
+    index += 1
+    setDisplayedAiText(text.slice(0, index))
+
+    if (index >= text.length) {
+      clearInterval(timer)
+      onDone?.()
+    }
+  }, 22)
+}
+
+const stopSwipePropagation = (e: React.TouchEvent<HTMLDivElement>) => {
+  e.stopPropagation()
+}
+
+const stopPointerPropagation = (e: React.PointerEvent<HTMLDivElement>) => {
+  e.stopPropagation()
+}
+
+const stopWheelPropagation = (e: React.WheelEvent<HTMLDivElement>) => {
+  e.stopPropagation()
+}
+
+function handlePickLibraryUser(payload: {
+  user: { id: string; name: string; avatar: string }
+  sourceRect: DOMRect
+}) {
+  const targetEl = targetRef.current
+
+  if (!targetEl) {
+    setSelectedLibraryUser(payload.user)
+    setIsPeopleLibraryOpen(false)
+    return
+  }
+
+  const targetRect = targetEl.getBoundingClientRect()
+
+  setFlyingUser({
+    user: payload.user,
+    sourceRect: {
+      top: payload.sourceRect.top,
+      left: payload.sourceRect.left,
+      width: payload.sourceRect.width,
+      height: payload.sourceRect.height,
+    },
+    targetRect: {
+      top: targetRect.top,
+      left: targetRect.left,
+      width: targetRect.width,
+      height: targetRect.height,
+    },
+  })
+
+  setIsPeopleLibraryOpen(false)
+}
+
+const isSkySeedSearch = selectedLibraryUser?.id === 'user-1'
+
+function getCandidateDescription(user: any) {
+  const tags = user.tags ?? user.vibe_tags ?? []
+
+  return `奶狗感、${tags.slice(0, 2).join('、')}、互動感偏高，整體氛圍偏可愛又帶一點主動感`
+}
+
+
+    const handleSubmit = async () => {
+  if (!hasInput && !selectedLibraryUser) return
+
+    setIsLoading(true)
+
+  setShowTopBar(true)
+
+  setLoading(true)
+  setResults([])
+  setRefreshCount(0)
+  setAiText('')
+  setDisplayedAiText('')
+  setShowCandidates(false)
+  setShowWalls(false)
+  setShowMorePrompts(false)
+
+  const currentInput = inputValue.trim()
+const finalQuery =
+  currentInput || (selectedLibraryUser ? `幫我找像 ${selectedLibraryUser.name} 的人` : '')
+
+  setTimeout(() => {
+    const matchedUsers = isSkySeedSearch
+  ? SKY_LIBRARY_RESULTS
+  : searchAIRadarUsers(finalQuery)
+
+    let nextAiText = ''
+    if (matchedUsers.length > 0) {
+  if (isSkySeedSearch) {
+    nextAiText =
+      '我幫你從「Sky_07_21」延伸找出幾位更偏自然感、安靜成熟、旅行與慢節奏氛圍的用戶。這次不是找同一種可愛互動型，而是往更耐看、比較適合長聊天與真實相處感的方向去擴散。'
+  } else if (selectedLibraryUser) {
+    nextAiText = `我幫你從「${selectedLibraryUser.name}」延伸找出幾位相似類型的用戶，整體更偏向情緒回饋感高、互動自然、照片氛圍接近的人選。`
+  } else {
+    nextAiText = `我幫你篩選出幾位符合「${finalQuery}」的用戶，整體更偏向情緒回饋感高、互動自然、照片氛圍容易產生好感的人選。`
+  }
+} else {
+  if (isSkySeedSearch) {
+    nextAiText =
+      '目前沒有找到完全符合 Sky_07_21 延伸方向的用戶，你可以再補一句像是「更成熟」、「更安靜」、「更有戶外感」這類描述。'
+  } else if (selectedLibraryUser) {
+    nextAiText = `目前沒有找到完全符合「${selectedLibraryUser.name} 相似類型」的用戶，你可以再補充想要的感覺。`
+  } else {
+    nextAiText = `目前沒有找到完全符合「${finalQuery}」的用戶，你可以換更簡短的描述再試一次。`
+  }
+}
+
+    setAiText(nextAiText)
+    setLoading(false)
+        setIsLoading(false)
+
+    typeText(nextAiText, () => {
+  if (matchedUsers.length > 0) {
+    setResults(matchedUsers as any)
+
+    setTimeout(() => {
+      setShowCandidates(true)
+    }, 120)
+
+    setTimeout(() => {
+      setShowWalls(true)
+    }, 260)
+
+    setTimeout(() => {
+      setShowMorePrompts(true)
+    }, 420)
+  } else {
+    setShowMorePrompts(true)
+  }
+
+})
+  }, 900)
+}
+
+  return (
+    <>
+      <AIRadarLoadingOverlay open={isLoading} />
+
+<AIRadarTopBar
+  showTopBar={showTopBar}
+  onClickVibePlus={() => openLink(MEMBERSHIP_URL)}
+/>
+
+      {/* Main content */}
+      <main
+  ref={mainScrollRef}
+  className="h-screen overflow-y-auto px-4 pt-[76px] pb-[170px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+>
+        <div className="flex min-h-[calc(100vh-76px)] flex-col">
+         
+          {/* suggestions */}
+
+          {!loading && !aiText && results.length === 0 && (
+  <div className="fixed bottom-[154px] left-1/2 z-[55] grid w-full max-w-[430px] -translate-x-1/2 grid-cols-3 gap-3 px-4">
+    {suggestionItems.map((item) => (
+      <button
+        key={item}
+        type="button"
+        onClick={() => setInputValue(item)}
+        className="min-h-[74px] rounded-[18px] bg-[rgba(255,255,255,0.72)] px-3 py-3 text-left shadow-[0_4px_14px_rgba(0,0,0,0.05)] backdrop-blur-[6px] transition active:scale-[0.98]"
+      >
+        <span className="block text-[14px] leading-[1.3] text-[#111]">
+          {item}
+        </span>
+      </button>
+    ))}
+  </div>
+)}
+
+{/* AI Result 區 */}
+<div className="mb-4 space-y-3">
+  
+
+  {displayedAiText && (
+  <div className="rounded-[18px] bg-[#ead8f5] px-4 py-3 text-[14px] leading-[1.45] text-[#3f2c4f] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+    {displayedAiText}
+  </div>
+)}
+   
+
+  {showCandidates && results.length > 0 && (
+  <div className="space-y-4">
+    {results.slice(0, 2).map((user) => (
+      <AIRadarResultCard
+        key={user.id}
+        user={user}
+        getCandidateDescription={getCandidateDescription}
+        onTouchStart={stopSwipePropagation}
+        onTouchMove={stopSwipePropagation}
+        onPointerDown={stopPointerPropagation}
+        onPointerMove={stopPointerPropagation}
+        onWheel={stopWheelPropagation}
+      />
+    ))}
+    </div>
+)}
+
+{showWalls && (
+  <div className="space-y-4 pt-4">
+    
+<AIRadarMoreWall
+  refreshKey={refreshKey}
+  refreshCount={refreshCount}
+  isSkySeedSearch={isSkySeedSearch}
+  skyImages={SKY_MORE_WALL_IMAGES}
+  onRefresh={() => {
+    if (refreshCount >= 2) return
+
+    setIsLoading(true)
+
+    setTimeout(() => {
+      setRefreshKey((prev) => prev + 1)
+      setRefreshCount((prev) => prev + 1)
+
+      setIsLoading(false)
+    }, 1000)
+  }}
+  onTouchStart={stopSwipePropagation}
+  onTouchMove={stopSwipePropagation}
+  onPointerDown={stopPointerPropagation}
+  onPointerMove={stopPointerPropagation}
+  onWheel={stopWheelPropagation}
+/>
+    
+{showMorePrompts && (
+  <AIRadarPromptList
+    prompts={
+      isSkySeedSearch
+        ? SKY_MORE_PROMPTS
+        : [
+            '幫我找更成熟一點的奶狗男生',
+            '找夜生活但個性溫柔的人',
+            '想找高互動感、會主動聊天的人',
+          ]
+    }
+    onSelectPrompt={(prompt) => {
+      setInputValue(prompt)
+
+      setTimeout(() => {
+        handleSubmit()
+      }, 100)
+    }}
+  />
+)}
+        </div>
+  )}
+</div>
+</div>
+</main>
+          
+<AIRadarInputBar
+  inputValue={inputValue}
+  setInputValue={setInputValue}
+  selectedLibraryUser={selectedLibraryUser}
+  setSelectedLibraryUser={setSelectedLibraryUser}
+  onOpenPeopleLibrary={() => setIsPeopleLibraryOpen(true)}
+  onSubmit={handleSubmit}
+  hasInput={hasInput}
+  targetRef={targetRef}
+/>
+
+      {/* People Library */}
+      {isPeopleLibraryOpen && (
+  <PeopleLibraryPage
+    onClose={() => setIsPeopleLibraryOpen(false)}
+    onPickUser={handlePickLibraryUser}
+  />
+)}
+    
+    <AnimatePresence>
+  {flyingUser && (
+    <motion.div
+      initial={{
+        position: 'fixed',
+        top: flyingUser.sourceRect.top,
+        left: flyingUser.sourceRect.left,
+        width: flyingUser.sourceRect.width,
+        height: flyingUser.sourceRect.height,
+        borderRadius: 999,
+        zIndex: 999,
+        opacity: 1,
+      }}
+      animate={{
+        top: flyingUser.targetRect.top,
+        left: flyingUser.targetRect.left,
+        width: flyingUser.targetRect.width,
+        height: flyingUser.targetRect.height,
+        borderRadius: 999,
+        opacity: 1,
+      }}
+      exit={{ opacity: 0 }}
+      transition={{
+        duration: 0.42,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      onAnimationComplete={() => {
+        setSelectedLibraryUser(flyingUser.user)
+        setFlyingUser(null)
+      }}
+      className="pointer-events-none overflow-hidden bg-[#D9D9D9] shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+    >
+      <div className="flex h-full w-full items-center gap-2 px-[12px]">
+        <img
+          src={flyingUser.user.avatar}
+          alt={flyingUser.user.name}
+          className="h-[30px] w-[30px] rounded-full object-cover"
+        />
+        <span className="min-w-0 truncate text-[13px] text-[#222]">
+          {flyingUser.user.name}
+        </span>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+    </>
+  )
+}

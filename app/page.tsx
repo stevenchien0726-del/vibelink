@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import HomePage from '../pages/HomePage'
-import AIHelperPage from '../pages/AIHelperPage'
+import AIHelperPage from '../pages/AIRadarPage'
 import MessagePage from '../pages/MessagePage'
 import ProfilePage from '../components/message/ProfilePage'
 import VibeTvPage from '../pages/VibeTvPage'

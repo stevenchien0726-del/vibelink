@@ -82,16 +82,19 @@ useEffect(() => {
   async function fetchUser() {
     const { data, error } = await supabase
   .from('profiles')
-  .select('*')
-
+  .select('id, username, display_name, avatar_url')
+.order('created_at', { ascending: false })
 
     if (data && data.length > 0) {
   const firstUser = data[0]
 
   setRecentUser({
-    id: firstUser.id,
-    name: firstUser.username,
-    avatar:
+  id: firstUser.id,
+  name:
+    firstUser.display_name ||
+    firstUser.username ||
+    'Vibelink User',
+  avatar:
       'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
   })
 }
