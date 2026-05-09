@@ -11,6 +11,7 @@ export type MockUser = {
   bio: string
   vibe_tags: string[]
   city: string
+  gender?: 'male' | 'female'
   images: string[]
   short_videos?: string[]
 }
@@ -74,6 +75,7 @@ export const baseMockUsers: MockUser[] = [
       'https://images.unsplash.com/photo-1494790108755-2616b612b786?q=80&w=1200&auto=format&fit=crop',
     bio: 'Beach sunset / Europe vibe / Cafe hopping',
     city: 'Taipei',
+    gender: 'female',
     vibe_tags: ['beach', 'travel', 'europe', 'cafe'],
     images: [
       'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop',
@@ -89,6 +91,7 @@ export const baseMockUsers: MockUser[] = [
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop',
     bio: 'Running / Gym / Healthy life',
     city: 'Taipei',
+    gender: 'female',
     vibe_tags: ['fitness', 'running', 'gym'],
     images: [
       'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop',
@@ -104,6 +107,7 @@ export const baseMockUsers: MockUser[] = [
       'https://images.unsplash.com/photo-1504593811423-6dd665756598?q=80&w=1200&auto=format&fit=crop',
     bio: 'Street workout / Night city / Vibes',
     city: 'Taipei',
+    gender: 'male',
     vibe_tags: ['street', 'fitness', 'nightlife'],
     images: [
       'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop',
@@ -138,6 +142,7 @@ export const baseMockUsers: MockUser[] = [
       'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1200&auto=format&fit=crop',
     bio: 'Rave / Techno / Fashion',
     city: 'Taipei',
+    gender: 'female',
     vibe_tags: ['rave', 'techno', 'fashion'],
     images: [
       'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop',
@@ -155,6 +160,7 @@ export const baseMockUsers: MockUser[] = [
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop',
     bio: 'Gym / Boxing / Hustle',
     city: 'Taipei',
+    gender: 'female',
     vibe_tags: ['boxing', 'gym', 'alpha'],
     images: [
       'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop',
