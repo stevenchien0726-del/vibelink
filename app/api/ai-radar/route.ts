@@ -7,17 +7,13 @@ import { searchAIRadarUsers } from '@/lib/aiRadar'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-
     const query = body?.query ?? ''
 
     if (!query) {
-      return NextResponse.json({
-        ok: false,
-      })
+      return NextResponse.json({ ok: false })
     }
 
     const parsedQuery = await openaiParseQuery(query)
-
     const matchedUsers = searchAIRadarUsers(parsedQuery)
 
     const aiReply = await generateAIRadarReply({
@@ -33,10 +29,15 @@ export async function POST(req: Request) {
       aiReply,
     })
   } catch (error) {
-    console.error(error)
+    console.error('AI Radar API route failed:', error)
 
-    return NextResponse.json({
-      ok: false,
-    })
+    return NextResponse.json(
+      {
+        ok: false,
+        matchedUsers: [],
+        aiReply: 'AI 雷達目前連線不穩，請再試一次。',
+      },
+      { status: 500 }
+    )
   }
 }
