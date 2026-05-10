@@ -1,6 +1,9 @@
 // src/lib/aiRadar.ts
 
 import { mockUsers } from './mockUsers'
+import type { AIRadarParsedQuery } from './ai-radar/aiRadarParser'
+
+import { AI_RADAR_SEMANTIC_ALIAS } from './ai-radar/aiRadarSemanticMap'
 
 export type AIRadarResult = {
   id: string
@@ -37,9 +40,22 @@ function normalizeText(text: string) {
   return text.toLowerCase().trim()
 }
 
-function extractQueryTags(query: string) {
-  const normalizedQuery = normalizeText(query)
+function extractQueryTags(parsedQuery: AIRadarParsedQuery) {
+  const normalizedQuery = normalizeText(parsedQuery.raw)
   const tags = new Set<string>()
+
+  parsedQuery.tags.forEach((tag) => tags.add(normalizeText(tag)))
+  parsedQuery.tags.forEach((tag) => {
+  const semanticTags = AI_RADAR_SEMANTIC_ALIAS[tag]
+
+  if (semanticTags) {
+    semanticTags.forEach((semanticTag) => {
+      tags.add(normalizeText(semanticTag))
+    })
+  }
+})
+  parsedQuery.vibes.forEach((vibe) => tags.add(normalizeText(vibe)))
+  parsedQuery.keywords.forEach((keyword) => tags.add(normalizeText(keyword)))
 
   Object.entries(keywordMap).forEach(([keyword, mappedTags]) => {
     if (normalizedQuery.includes(keyword.toLowerCase())) {
@@ -52,13 +68,17 @@ function extractQueryTags(query: string) {
     .filter(Boolean)
     .forEach((word) => tags.add(word))
 
-  return Array.from(tags)
+  return Array.from(tags).filter(Boolean)
 }
 
-export function searchAIRadarUsers(query: string): AIRadarResult[] {
-  const queryTags = extractQueryTags(query)
+export function searchAIRadarUsers(
+  parsedQuery: AIRadarParsedQuery
+): AIRadarResult[] {
+  if (!parsedQuery.raw.trim()) return []
 
-  if (!query.trim()) return []
+  const queryTags = extractQueryTags(parsedQuery)
+  const queryCity = parsedQuery.city?.toLowerCase()
+  const genderHint = parsedQuery.genderHint
 
   return mockUsers
     .map((user) => {
@@ -78,6 +98,18 @@ export function searchAIRadarUsers(query: string): AIRadarResult[] {
         if (user.vibe_tags.includes(tag)) score += 5
         if (userText.includes(tag)) score += 2
       })
+
+      if (queryCity && normalizeText(user.city).includes(queryCity)) {
+        score += 8
+      }
+
+      if (genderHint === 'male' && userText.includes('male')) {
+        score += 6
+      }
+
+      if (genderHint === 'female' && userText.includes('female')) {
+        score += 6
+      }
 
       return {
         id: `${user.id}-ai-radar`,

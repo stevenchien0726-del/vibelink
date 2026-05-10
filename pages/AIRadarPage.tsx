@@ -2,6 +2,9 @@
 
 import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+
+import { BrushCleaning, Mic } from 'lucide-react'
+
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import { FakeUser } from '../data/fakeUsers'
 
@@ -18,6 +21,9 @@ import AIRadarPromptList from '@/components/airadar/AIRadarPromptList'
 
 import AIRadarTopBar from '@/components/airadar/AIRadarTopBar'
 import AIRadarInputBar from '@/components/airadar/AIRadarInputBar'
+import { openaiParseQuery } from '@/lib/ai-radar/openaiParseQuery'
+
+import { generateAIRadarReply } from '@/lib/ai-radar/generateAIRadarReply'
 
 const suggestionItems = [
   '幫我找可愛奶狗弟弟',
@@ -54,6 +60,7 @@ export default function AIRadarPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   const [inputValue, setInputValue] = useState('')
+  const [isListening, setIsListening] = useState(false)
 
   const [loading, setLoading] = useState(false)
 const [results, setResults] = useState<FakeUser[]>([])
@@ -158,12 +165,69 @@ function handlePickLibraryUser(payload: {
 
 const isSkySeedSearch = selectedLibraryUser?.id === 'user-1'
 
-function getCandidateDescription(user: any) {
-  const tags = user.tags ?? user.vibe_tags ?? []
-
-  return `奶狗感、${tags.slice(0, 2).join('、')}、互動感偏高，整體氛圍偏可愛又帶一點主動感`
+function handleClearInput() {
+  setInputValue('')
+  setSelectedLibraryUser(null)
 }
 
+function handleVoiceInput() {
+  const SpeechRecognition =
+    (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+
+  if (!SpeechRecognition) {
+    alert('目前瀏覽器不支援語音輸入，建議使用 Chrome 測試。')
+    return
+  }
+
+  const recognition = new SpeechRecognition()
+
+  recognition.lang = 'zh-TW'
+  recognition.interimResults = false
+  recognition.maxAlternatives = 1
+
+  setIsListening(true)
+
+  recognition.onresult = (event: any) => {
+    const transcript = event.results?.[0]?.[0]?.transcript ?? ''
+
+    if (transcript) {
+      setInputValue(transcript)
+    }
+  }
+
+  recognition.onerror = () => {
+    setIsListening(false)
+  }
+
+  recognition.onend = () => {
+    setIsListening(false)
+  }
+
+  recognition.start()
+}
+
+function getCandidateDescription(user: any) {
+  const tags = user.tags ?? user.vibe_tags ?? []
+  const tagText = tags.slice(0, 3).join('、')
+
+  if (tags.includes('nightlife') || tags.includes('techno') || tags.includes('rave') || tags.includes('dj')) {
+    return `${user.display_name} 偏夜生活與音樂派對感，標籤包含 ${tagText}，適合喜歡高能量社交的人。`
+  }
+
+  if (tags.includes('gym') || tags.includes('fitness') || tags.includes('workout')) {
+    return `${user.display_name} 偏健身與運動生活感，標籤包含 ${tagText}，整體比較自律、有活力。`
+  }
+
+  if (tags.includes('coffee') || tags.includes('cafe')) {
+    return `${user.display_name} 偏咖啡與生活感，標籤包含 ${tagText}，整體氛圍比較日常、放鬆。`
+  }
+
+  if (tags.includes('dance') || tags.includes('kpop')) {
+    return `${user.display_name} 偏舞蹈與韓系感，標籤包含 ${tagText}，互動氛圍比較活潑。`
+  }
+
+  return `${user.display_name} 和你的搜尋條件有部分重疊，標籤包含 ${tagText}。`
+}
 
     const handleSubmit = async () => {
   if (!hasInput && !selectedLibraryUser) return
@@ -185,10 +249,20 @@ function getCandidateDescription(user: any) {
 const finalQuery =
   currentInput || (selectedLibraryUser ? `幫我找像 ${selectedLibraryUser.name} 的人` : '')
 
-  setTimeout(() => {
-    const matchedUsers = isSkySeedSearch
-  ? SKY_LIBRARY_RESULTS
-  : searchAIRadarUsers(finalQuery)
+    const parsedQuery = await openaiParseQuery(finalQuery)
+
+  console.log('AI Radar OpenAI parsed:', parsedQuery)
+
+  setTimeout(async () => {
+  const matchedUsers = isSkySeedSearch
+    ? SKY_LIBRARY_RESULTS
+    : searchAIRadarUsers(parsedQuery)
+
+  const aiReplyText = await generateAIRadarReply({
+    query: finalQuery,
+    parsedQuery,
+    users: matchedUsers,
+  })
 
     let nextAiText = ''
     if (matchedUsers.length > 0) {
@@ -198,7 +272,7 @@ const finalQuery =
   } else if (selectedLibraryUser) {
     nextAiText = `我幫你從「${selectedLibraryUser.name}」延伸找出幾位相似類型的用戶，整體更偏向情緒回饋感高、互動自然、照片氛圍接近的人選。`
   } else {
-    nextAiText = `我幫你篩選出幾位符合「${finalQuery}」的用戶，整體更偏向情緒回饋感高、互動自然、照片氛圍容易產生好感的人選。`
+    nextAiText = aiReplyText
   }
 } else {
   if (isSkySeedSearch) {
@@ -354,6 +428,28 @@ const finalQuery =
 </div>
 </main>
           
+{aiText && (
+  <div className="fixed bottom-[148px] left-1/2 z-[70] flex w-full max-w-[430px] -translate-x-1/2 justify-end gap-3 px-6">
+    <button
+      type="button"
+      onClick={handleClearInput}
+      className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-white/35 text-black shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95"
+    >
+      <BrushCleaning size={22} strokeWidth={2} />
+    </button>
+
+    <button
+      type="button"
+      onClick={handleVoiceInput}
+      className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-white/35 text-black shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95 ${
+        isListening ? 'ring-2 ring-purple-400' : ''
+      }`}
+    >
+      <Mic size={22} strokeWidth={2} />
+    </button>
+  </div>
+)}
+
 <AIRadarInputBar
   inputValue={inputValue}
   setInputValue={setInputValue}
