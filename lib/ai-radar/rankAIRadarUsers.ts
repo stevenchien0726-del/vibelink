@@ -4,7 +4,7 @@ import type { MockUser } from '@/lib/mockUsers'
 import type { AIRadarParsedQuery } from './aiRadarParser'
 import { AI_RADAR_SEMANTIC_ALIAS } from './aiRadarSemanticMap'
 
-import { AI_RADAR_TAG_WEIGHTS } from '../aiRadarWeights'
+import { AI_RADAR_TAG_WEIGHTS } from './aiRadarWeights'
 import { scoreAIRadarSemanticProfile } from '../scoreAIRadarSemanticProfile'
 
 const TAG_ALIAS = AI_RADAR_SEMANTIC_ALIAS
