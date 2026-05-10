@@ -10,6 +10,7 @@ export type MockUser = {
   avatar_url: string
   bio: string
   vibe_tags: string[]
+  semantic_profile?: string[]
   city: string
   gender?: 'male' | 'female'
   images: string[]
@@ -25,7 +26,22 @@ export const baseMockUsers: MockUser[] = [
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop',
     bio: 'Gym / Beach / Coffee / Chill House',
     city: 'Taipei',
-    vibe_tags: ['gym', 'beach', 'streetwear', 'coffee'],
+    gender: 'male',
+    vibe_tags: [
+  'gym',
+  'beach',
+  'streetwear',
+  'coffee',
+  'korean',
+  'softboy',
+  'clean',
+  'gentle',
+  'cute',
+],
+semantic_profile: [
+  'korean softboy clean gentle cute boyfriend vibe',
+  'gym beach streetwear coffee lifestyle',
+],
     images: [
       'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=1200&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1200&auto=format&fit=crop',
@@ -44,7 +60,17 @@ export const baseMockUsers: MockUser[] = [
       'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=1200&auto=format&fit=crop',
     bio: 'KPOP dancer / Seoul vibe / Fashion',
     city: 'Taipei',
-    vibe_tags: ['kpop', 'dance', 'fashion', 'cute'],
+    gender: 'female',
+    vibe_tags: [
+  'kpop',
+  'dance',
+  'fashion',
+  'cute',
+  'clean',
+  'aesthetic',
+  'influencer',
+  'korean',
+],
     images: [
       'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1200&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop',
@@ -76,7 +102,15 @@ export const baseMockUsers: MockUser[] = [
     bio: 'Beach sunset / Europe vibe / Cafe hopping',
     city: 'Taipei',
     gender: 'female',
-    vibe_tags: ['beach', 'travel', 'europe', 'cafe'],
+    vibe_tags: [
+  'beach',
+  'travel',
+  'europe',
+  'cafe',
+  'clean',
+  'lifestyle',
+  'aesthetic',
+],
     images: [
       'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1200&auto=format&fit=crop',
@@ -108,7 +142,19 @@ export const baseMockUsers: MockUser[] = [
     bio: 'Street workout / Night city / Vibes',
     city: 'Taipei',
     gender: 'male',
-    vibe_tags: ['street', 'fitness', 'nightlife'],
+    vibe_tags: [
+  'street',
+  'fitness',
+  'nightlife',
+  'clean',
+  'gentle',
+  'softboy',
+  'korean',
+],
+semantic_profile: [
+  'clean gentle softboy korean street workout night city',
+  'fitness nightlife street vibe',
+],
     images: [
       'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop',
     ],

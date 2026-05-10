@@ -2,21 +2,12 @@
 
 import type { MockUser } from '@/lib/mockUsers'
 import type { AIRadarParsedQuery } from './aiRadarParser'
+import { AI_RADAR_SEMANTIC_ALIAS } from './aiRadarSemanticMap'
 
-const TAG_ALIAS: Record<string, string[]> = {
-  健身: ['gym', 'fitness'],
-  海邊: ['beach'],
-  旅行: ['travel'],
-  咖啡: ['coffee'],
-  街舞: ['dance'],
-  KPOP: ['kpop'],
-  穿搭: ['fashion', 'streetwear'],
-  音樂祭: ['festival', 'edm'],
+import { AI_RADAR_TAG_WEIGHTS } from '../aiRadarWeights'
+import { scoreAIRadarSemanticProfile } from '../scoreAIRadarSemanticProfile'
 
-  可愛: ['cute'],
-  性感: ['sexy'],
-  腹肌: ['gym', 'fitness'],
-}
+const TAG_ALIAS = AI_RADAR_SEMANTIC_ALIAS
 
 export type AIRadarRankedUser = MockUser & {
   aiScore: number
@@ -27,6 +18,13 @@ export function rankAIRadarUsers(
   users: MockUser[],
   parsed: AIRadarParsedQuery
 ): AIRadarRankedUser[] {
+  const searchTags =
+    'canonicalTags' in parsed &&
+    Array.isArray(parsed.canonicalTags) &&
+    parsed.canonicalTags.length > 0
+      ? parsed.canonicalTags
+      : parsed.tags
+
   return users
     .map((user) => {
       let score = 0
@@ -49,18 +47,25 @@ export function rankAIRadarUsers(
         )
       }
 
-      for (const tag of parsed.tags) {
-        const aliases = TAG_ALIAS[tag] || []
+      for (const tag of searchTags) {
+        const aliases = TAG_ALIAS[tag] || [tag]
 
         const matched = user.vibe_tags.some((userTag) =>
           aliases.includes(userTag.toLowerCase())
         )
 
         if (matched) {
-          score += 15
-          matchedReasons.push(`興趣符合：${tag}`)
-        }
+  const weight = AI_RADAR_TAG_WEIGHTS[tag] || 15
+
+  score += weight
+  matchedReasons.push(`興趣符合：${tag} +${weight}`)
+}
       }
+
+const semanticScore = scoreAIRadarSemanticProfile(user, parsed)
+
+score += semanticScore.score
+matchedReasons.push(...semanticScore.reasons)
 
       return {
         ...user,

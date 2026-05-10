@@ -1,4 +1,4 @@
-// src/app/api/ai-radar/parse/route.ts
+// src/app/api/ai-radar/embed/route.ts
 
 import { NextResponse } from 'next/server'
 import { openai } from '@/lib/openai'
@@ -6,61 +6,38 @@ import { openai } from '@/lib/openai'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
+    const text = body.text
 
-    const query = body.query
-
-    if (!query) {
+    if (!text || typeof text !== 'string') {
       return NextResponse.json(
-        { error: 'Missing query' },
+        { success: false, error: 'Missing text' },
         { status: 400 }
       )
     }
 
-    const response = await openai.responses.create({
-      model: 'gpt-5.4-mini',
-
-      input: [
-        {
-          role: 'system',
-          content: `
-你是 Vibelink AI Radar 的 Query Parser。
-
-請把使用者自然語言轉成搜尋 JSON。
-
-只回傳 JSON。
-
-格式：
-
-{
-  "raw": string,
-  "city": string | null,
-  "genderHint": "male" | "female" | null,
-  "tags": string[],
-  "vibes": string[],
-  "keywords": string[]
-}
-`,
-        },
-        {
-          role: 'user',
-          content: query,
-        },
-      ],
+    const response = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: text,
+      encoding_format: 'float',
     })
-
-    const text = response.output_text
 
     return NextResponse.json({
       success: true,
-      rawText: text,
+      embedding: response.data[0].embedding,
+      dimensions: response.data[0].embedding.length,
+      usage: response.usage,
     })
   } catch (error) {
-    console.error(error)
+    console.error('AI Radar embedding error:', error)
+
+    const message =
+      error instanceof Error ? error.message : 'Unknown error'
 
     return NextResponse.json(
       {
         success: false,
-        error: 'OpenAI parse failed',
+        error: 'Embedding failed',
+        message,
       },
       { status: 500 }
     )
