@@ -96,10 +96,10 @@ function normalizeParsedQuery(
 export async function openaiParseQuery(
   query: string
 ): Promise<AIRadarParsedQuery> {
-  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+  const apiKey = process.env.OPENAI_API_KEY
 
   if (!apiKey) {
-    console.warn('Missing NEXT_PUBLIC_OPENAI_API_KEY')
+    console.warn('Missing OPENAI_API_KEY')
     return createEmptyParsedQuery(query)
   }
 

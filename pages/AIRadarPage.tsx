@@ -21,9 +21,6 @@ import AIRadarPromptList from '@/components/airadar/AIRadarPromptList'
 
 import AIRadarTopBar from '@/components/airadar/AIRadarTopBar'
 import AIRadarInputBar from '@/components/airadar/AIRadarInputBar'
-import { openaiParseQuery } from '@/lib/ai-radar/openaiParseQuery'
-
-import { generateAIRadarReply } from '@/lib/ai-radar/generateAIRadarReply'
 
 const suggestionItems = [
   '幫我找可愛奶狗弟弟',
@@ -249,20 +246,26 @@ function getCandidateDescription(user: any) {
 const finalQuery =
   currentInput || (selectedLibraryUser ? `幫我找像 ${selectedLibraryUser.name} 的人` : '')
 
-    const parsedQuery = await openaiParseQuery(finalQuery)
+    const response = await fetch('/api/ai-radar', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    query: finalQuery,
+  }),
+})
 
-  console.log('AI Radar OpenAI parsed:', parsedQuery)
+const data = await response.json()
 
-  setTimeout(async () => {
+console.log('AI Radar API result:', data)
+
+setTimeout(async () => {
   const matchedUsers = isSkySeedSearch
     ? SKY_LIBRARY_RESULTS
-    : searchAIRadarUsers(parsedQuery)
+    : data?.matchedUsers ?? []
 
-  const aiReplyText = await generateAIRadarReply({
-    query: finalQuery,
-    parsedQuery,
-    users: matchedUsers,
-  })
+  const aiReplyText = data?.aiReply ?? ''
 
     let nextAiText = ''
     if (matchedUsers.length > 0) {

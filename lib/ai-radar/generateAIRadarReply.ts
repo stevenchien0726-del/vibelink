@@ -53,10 +53,10 @@ export async function generateAIRadarReply({
   parsedQuery: AIRadarParsedQuery
   users: AIRadarReplyUser[]
 }): Promise<string> {
-  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+  const apiKey = process.env.OPENAI_API_KEY
 
   if (!apiKey) {
-    console.warn('Missing NEXT_PUBLIC_OPENAI_API_KEY')
+    console.warn('Missing OPENAI_API_KEY')
     return fallbackReply(query, users)
   }
 
