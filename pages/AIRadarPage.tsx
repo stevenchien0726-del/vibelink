@@ -246,19 +246,40 @@ function getCandidateDescription(user: any) {
 const finalQuery =
   currentInput || (selectedLibraryUser ? `幫我找像 ${selectedLibraryUser.name} 的人` : '')
 
-    const response = await fetch('/api/ai-radar', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    query: finalQuery,
-  }),
-})
+    let data: any = null
 
-const data = await response.json()
+try {
+  const controller = new AbortController()
 
-console.log('AI Radar API result:', data)
+  const timeoutId = setTimeout(() => {
+    controller.abort()
+  }, 15000)
+
+  const response = await fetch('/api/ai-radar', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: finalQuery,
+    }),
+    signal: controller.signal,
+  })
+
+  clearTimeout(timeoutId)
+
+  data = await response.json()
+
+  console.log('AI Radar API result:', data)
+} catch (error) {
+  console.error('AI Radar API failed:', error)
+
+  data = {
+    ok: false,
+    matchedUsers: [],
+    aiReply: 'AI 雷達目前連線不穩，請再試一次。',
+  }
+}
 
 setTimeout(async () => {
   const matchedUsers = isSkySeedSearch
