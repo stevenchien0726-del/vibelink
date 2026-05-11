@@ -131,6 +131,12 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
           imageUrls: uploadedImageUrls,
         }
 
+console.log(
+  '🟣 analyze trigger:',
+  postData.id,
+  uploadedImageUrls
+)
+
         fetch('/api/ai-radar/analyze-image', {
   method: 'POST',
   headers: {

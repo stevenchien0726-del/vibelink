@@ -36,9 +36,9 @@ export async function POST(req: Request) {
 
 格式：
 {
-  "ai_tags": ["gym", "beach"],
-  "ai_style_tags": ["natural", "active"],
-  "ai_caption": "一句中文描述"
+  "ai_tags": [],
+  "ai_style_tags": [],
+  "ai_caption": ""
 }
 
 規則：
@@ -47,6 +47,8 @@ export async function POST(req: Request) {
 - 每個陣列最多 8 個
 - 不要判斷真實年齡、國籍、種族
 - 不要輸出敏感身分推測
+- 不要照抄範例；必須根據圖片內容實際判斷
+- 如果圖片是車、物品、風景、食物，也要依照實際內容輸出，不要強行輸出人物/健身/海邊標籤
 `,
             },
             {
@@ -59,6 +61,7 @@ export async function POST(req: Request) {
     })
 
     const rawText = response.output_text ?? ''
+    console.log('🟣 [Vision] rawText:', rawText)
 
     let parsed
 

@@ -35,7 +35,7 @@ export default function UploadFullPage({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[220] flex justify-center"
+      className="fixed inset-0 z-[9999] flex justify-center"
       style={{ background: 'rgba(243,243,243,0.96)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
