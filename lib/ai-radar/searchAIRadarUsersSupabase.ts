@@ -11,7 +11,6 @@ export async function searchAIRadarUsersSupabase({
     .from('posts')
     .select(`
       id,
-      content,
       ai_tags,
       ai_style_tags,
       created_at,

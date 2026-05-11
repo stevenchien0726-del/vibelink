@@ -23,7 +23,7 @@ export function transformSupabaseAIRadarUsers(rows: any[]) {
       username: profile?.username ?? 'vibelink_user',
       display_name: profile?.display_name ?? 'Vibelink User',
       avatar_url: profile?.avatar_url ?? '',
-      bio: row.ai_caption ?? row.content ?? '',
+      bio: row.ai_caption ?? '',
       city: '',
       tags,
       vibe_tags: tags,
