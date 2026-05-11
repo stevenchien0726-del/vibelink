@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
     }
 
     if (postId) {
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('posts')
     .update({
       ai_tags: parsed.ai_tags ?? [],

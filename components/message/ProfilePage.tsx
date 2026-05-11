@@ -1414,6 +1414,11 @@ openSelectedPost(post)
     loadMyShortVideos()
   }}
   onPostCreated={(post) => {
+
+  console.log('🟣 new post:', post)
+  console.log('🟣 new post id:', post.id)
+  console.log('🟣 imageUrls:', post.imageUrls)
+
   const imageUrls =
     post.imageUrls?.length
       ? post.imageUrls
