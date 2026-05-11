@@ -131,6 +131,31 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
           imageUrls: uploadedImageUrls,
         }
 
+        fetch('/api/ai-radar/analyze-image', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    postId: postData.id,
+    imageUrl: uploadedImageUrls[0],
+  }),
+})
+  .then(async (res) => {
+    const data = await res.json()
+
+    console.log(
+      '🟢 AI image analyze success:',
+      data
+    )
+  })
+  .catch((error) => {
+    console.error(
+      '🔴 AI image analyze failed:',
+      error
+    )
+  })
+
         setCaption('')
         setFiles([])
         onSuccess?.(createdPost)
