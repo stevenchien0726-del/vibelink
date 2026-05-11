@@ -62,6 +62,8 @@ export default function AIRadarPage() {
   const [loading, setLoading] = useState(false)
 const [results, setResults] = useState<FakeUser[]>([])
 const [aiText, setAiText] = useState('')
+const [errorType, setErrorType] = useState('')
+const [lastQuery, setLastQuery] = useState('')
 
 const [displayedAiText, setDisplayedAiText] = useState('')
 const [showCandidates, setShowCandidates] = useState(false)
@@ -167,6 +169,17 @@ function handleClearInput() {
   setSelectedLibraryUser(null)
 }
 
+function handleRetry() {
+  if (loading || isLoading) return
+  if (!lastQuery) return
+
+  setInputValue(lastQuery)
+
+  setTimeout(() => {
+    handleSubmit()
+  }, 100)
+}
+
 function handleVoiceInput() {
   const SpeechRecognition =
     (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -227,6 +240,7 @@ function getCandidateDescription(user: any) {
 }
 
     const handleSubmit = async () => {
+  if (loading || isLoading) return
   if (!hasInput && !selectedLibraryUser) return
 
     setIsLoading(true)
@@ -238,6 +252,8 @@ function getCandidateDescription(user: any) {
   setRefreshCount(0)
   setAiText('')
   setDisplayedAiText('')
+  setErrorType('')
+
   setShowCandidates(false)
   setShowWalls(false)
   setShowMorePrompts(false)
@@ -245,6 +261,7 @@ function getCandidateDescription(user: any) {
   const currentInput = inputValue.trim()
 const finalQuery =
   currentInput || (selectedLibraryUser ? `幫我找像 ${selectedLibraryUser.name} 的人` : '')
+  setLastQuery(finalQuery)
 
     let data: any = null
 
@@ -268,16 +285,46 @@ try {
 
   clearTimeout(timeoutId)
 
-  data = await response.json()
+  console.log('🟣 [AI Radar Frontend] response status:', response.status)
 
-  console.log('AI Radar API result:', data)
-} catch (error) {
-  console.error('AI Radar API failed:', error)
+const rawText = await response.text()
+
+console.log('🟣 [AI Radar Frontend] raw response:', rawText)
+
+try {
+  data = JSON.parse(rawText)
+
+  console.log('🟢 [AI Radar Frontend] parsed data:', data)
+} catch (jsonError) {
+  console.error(
+    '🔴 [AI Radar Frontend] JSON parse failed:',
+    jsonError
+  )
+
+  setErrorType('JSON_PARSE_FAILED')
+
+data = {
+  ok: false,
+  matchedUsers: [],
+  aiReply: 'AI 雷達目前回傳格式異常，請再試一次。',
+}
+}
+} catch (error: any) {
+  console.error('🔴 [AI Radar Frontend] API failed:', error)
+
+  if (error?.name === 'AbortError') {
+    setErrorType('TIMEOUT')
+  } else {
+    setErrorType('NETWORK_FAILED')
+  }
 
   data = {
     ok: false,
     matchedUsers: [],
-    aiReply: 'AI 雷達目前連線不穩，請再試一次。',
+    aiReply:
+      error?.name === 'AbortError'
+        ? 'AI 雷達這次回應太久，請再試一次。'
+        : 'AI 雷達目前連線不穩，請再試一次。',
   }
 }
 
@@ -380,7 +427,20 @@ setTimeout(async () => {
     {displayedAiText}
   </div>
 )}
-   
+
+{errorType && (
+  <div className="rounded-[14px] bg-red-50 px-4 py-3 text-[12px] text-red-500">
+    <div>Debug：{errorType}</div>
+
+    <button
+      type="button"
+      onClick={handleRetry}
+      className="mt-2 rounded-full bg-red-100 px-3 py-1 text-[12px] font-medium text-red-600 active:scale-95"
+    >
+      重新搜尋
+    </button>
+  </div>
+)}
 
   {showCandidates && results.length > 0 && (
   <div className="space-y-4">
