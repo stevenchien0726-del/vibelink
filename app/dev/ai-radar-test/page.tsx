@@ -79,7 +79,34 @@ export default function AIRadarTestPage() {
     setEmbeddingResult(data)
   }
 
+  const handleVisionTest = async () => {
+  const imageUrl =
+    'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop'
+
+  const res = await fetch(
+    '/api/ai-radar/analyze-image',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':
+          'application/json',
+      },
+      body: JSON.stringify({
+        imageUrl,
+      }),
+    }
+  )
+
+  const data = await res.json()
+
+  console.log(
+    'Vision analyze result:',
+    data
+  )
+}
+
   const handleVectorSearchTest = async () => {
+    
   const res = await fetch('/api/ai-radar/vector-search', {
     method: 'POST',
     headers: {
@@ -161,6 +188,14 @@ export default function AIRadarTestPage() {
   className="mb-6 ml-3 rounded-2xl bg-green-600 px-4 py-3 text-white"
 >
   測試 Vector Search
+</button>
+
+<button
+  type="button"
+  onClick={handleVisionTest}
+  className="mb-6 ml-3 rounded-2xl bg-pink-600 px-4 py-3 text-white"
+>
+  測試 Vision 圖片判讀
 </button>
 
       <pre className="overflow-auto rounded-2xl bg-black p-4 text-sm text-green-400">

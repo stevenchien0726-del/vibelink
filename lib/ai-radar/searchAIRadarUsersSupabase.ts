@@ -10,20 +10,21 @@ export async function searchAIRadarUsersSupabase({
   let query = supabase
     .from('posts')
     .select(`
-      id,
-      ai_tags,
-      ai_style_tags,
-      created_at,
-      profiles (
-        id,
-        username,
-        display_name,
-        avatar_url
-      ),
-      post_images (
-        image_url
-      )
-    `)
+  id,
+  ai_tags,
+  ai_style_tags,
+  ai_caption,
+  created_at,
+  profiles (
+    id,
+    username,
+    display_name,
+    avatar_url
+  ),
+  post_images!post_images_post_id_fkey (
+    image_url
+  )
+`)
     .eq('ai_analyzed', true)
     .limit(30)
 
