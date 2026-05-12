@@ -323,22 +323,28 @@ export default function Page() {
         }`}
         style={pageTranslateStyle}
       >
-        {page === 'home' && (
+        <div className={page === 'home' ? 'block' : 'hidden'}>
   <HomePage feedCapsulePosition={feedCapsulePosition} />
-)}
+</div>
 
-        {page === 'ai' && <AIHelperPage />}
+<div className={page === 'ai' ? 'block' : 'hidden'}>
+  <AIHelperPage />
+</div>
 
-        {page === 'message' && <MessagePage />}
+<div className={page === 'message' ? 'block' : 'hidden'}>
+  <MessagePage />
+</div>
 
-        {page === 'profile' && (
-          <ProfilePage
-            feedCapsulePosition={feedCapsulePosition}
-            onChangeFeedCapsulePosition={setFeedCapsulePosition}
-          />
-        )}
+<div className={page === 'profile' ? 'block' : 'hidden'}>
+  <ProfilePage
+    feedCapsulePosition={feedCapsulePosition}
+    onChangeFeedCapsulePosition={setFeedCapsulePosition}
+  />
+</div>
 
-        {page === 'tv' && <VibeTvPage />}
+<div className={page === 'tv' ? 'block' : 'hidden'}>
+  <VibeTvPage />
+</div>
       </div>
 
       <BottomNav current={page} setPage={setPageDirect} />
