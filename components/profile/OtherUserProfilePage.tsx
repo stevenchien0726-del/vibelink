@@ -65,10 +65,14 @@ export default function OtherUserProfilePage({ userId, onClose }: Props) {
       damping: 34,
     }}
     drag
-    dragDirectionLock
-    dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-    dragElastic={0.22}
-    onDragEnd={(_, info) => {
+dragDirectionLock
+dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
+dragElastic={0.22}
+onPointerDown={(e) => e.stopPropagation()}
+onTouchStart={(e) => e.stopPropagation()}
+onTouchMove={(e) => e.stopPropagation()}
+onClick={(e) => e.stopPropagation()}
+onDragEnd={(_, info) => {
       const shouldClose =
         info.offset.y > 120 ||
         info.offset.x > 120 ||
