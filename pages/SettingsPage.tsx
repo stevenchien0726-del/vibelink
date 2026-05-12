@@ -189,7 +189,14 @@ export default function SettingsPage({
                     <motion.button
                       key={item}
                       type="button"
-                      onClick={() => onCapsulePositionChange(item)}
+                      onClick={() => {
+  localStorage.setItem(
+  'feedCapsulePosition',
+  item
+)
+
+  onCapsulePositionChange(item)
+}}
                       whileTap={{ scale: 1.05 }}
                       transition={{
                         type: 'spring',
