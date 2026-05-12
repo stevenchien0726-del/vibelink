@@ -22,6 +22,9 @@ import AIRadarPromptList from '@/components/airadar/AIRadarPromptList'
 import AIRadarTopBar from '@/components/airadar/AIRadarTopBar'
 import AIRadarInputBar from '@/components/airadar/AIRadarInputBar'
 
+import { generateAIRadarRewriteQueries } from '@/lib/ai-radar/generateAIRadarRewriteQueries'
+import OtherUserProfilePage from '../components/profile/OtherUserProfilePage'
+
 const suggestionItems = [
   '幫我找可愛奶狗弟弟',
   '喜歡大自然的女生',
@@ -65,10 +68,13 @@ const [aiText, setAiText] = useState('')
 const [errorType, setErrorType] = useState('')
 const [lastQuery, setLastQuery] = useState('')
 
+const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null)
+
 const [displayedAiText, setDisplayedAiText] = useState('')
 const [showCandidates, setShowCandidates] = useState(false)
 const [showWalls, setShowWalls] = useState(false)
 const [showMorePrompts, setShowMorePrompts] = useState(false)
+const [rewritePrompts, setRewritePrompts] = useState<string[]>([])
 
 const [showTopBar, setShowTopBar] = useState(true)
 const lastScrollYRef = useRef(0)
@@ -257,6 +263,7 @@ function getCandidateDescription(user: any) {
   setShowCandidates(false)
   setShowWalls(false)
   setShowMorePrompts(false)
+  setRewritePrompts([])
 
   const currentInput = inputValue.trim()
 const finalQuery =
@@ -334,6 +341,17 @@ setTimeout(async () => {
     : data?.matchedUsers ?? []
 
   const aiReplyText = data?.aiReply ?? ''
+  const nextRewritePrompts = generateAIRadarRewriteQueries(
+  data?.parsedQuery ?? {
+    raw: finalQuery,
+    tags: [],
+    vibes: [],
+    keywords: [],
+  },
+  matchedUsers.length
+)
+
+setRewritePrompts(nextRewritePrompts)
 
     let nextAiText = ''
     if (matchedUsers.length > 0) {
@@ -446,15 +464,18 @@ setTimeout(async () => {
   <div className="space-y-4">
     {results.slice(0, 2).map((user) => (
       <AIRadarResultCard
-        key={user.id}
-        user={user}
-        getCandidateDescription={getCandidateDescription}
-        onTouchStart={stopSwipePropagation}
-        onTouchMove={stopSwipePropagation}
-        onPointerDown={stopPointerPropagation}
-        onPointerMove={stopPointerPropagation}
-        onWheel={stopWheelPropagation}
-      />
+  key={user.id}
+  user={user}
+  getCandidateDescription={getCandidateDescription}
+  onTouchStart={stopSwipePropagation}
+  onTouchMove={stopSwipePropagation}
+  onPointerDown={stopPointerPropagation}
+  onPointerMove={stopPointerPropagation}
+  onWheel={stopWheelPropagation}
+  onOpenProfile={(user) => {
+    setSelectedProfileUserId(user.id)
+  }}
+/>
     ))}
     </div>
 )}
@@ -488,15 +509,19 @@ setTimeout(async () => {
     
 {showMorePrompts && (
   <AIRadarPromptList
-    prompts={
-      isSkySeedSearch
-        ? SKY_MORE_PROMPTS
+  title="你也可以試試這樣問"
+  variant="rewrite"
+  prompts={
+    isSkySeedSearch
+      ? SKY_MORE_PROMPTS
+      : rewritePrompts.length > 0
+        ? rewritePrompts
         : [
             '幫我找更成熟一點的奶狗男生',
             '找夜生活但個性溫柔的人',
             '想找高互動感、會主動聊天的人',
           ]
-    }
+  }
     onSelectPrompt={(prompt) => {
       setInputValue(prompt)
 
@@ -596,6 +621,15 @@ setTimeout(async () => {
         </span>
       </div>
     </motion.div>
+  )}
+</AnimatePresence>
+
+<AnimatePresence>
+  {selectedProfileUserId && (
+    <OtherUserProfilePage
+      userId={selectedProfileUserId}
+      onClose={() => setSelectedProfileUserId(null)}
+    />
   )}
 </AnimatePresence>
     </>

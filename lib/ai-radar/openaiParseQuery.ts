@@ -1,4 +1,5 @@
 import type { AIRadarParsedQuery } from './aiRadarParser'
+import { AI_RADAR_SEMANTIC_ALIAS } from './aiRadarSemanticMap'
 
 type OpenAIChatMessage = {
   role: 'system' | 'user'
@@ -62,6 +63,24 @@ function normalizeStringArray(value: unknown): string[] {
     .filter(Boolean)
 }
 
+function expandSemanticAlias(raw: string, keywords: string[]) {
+  const expandedTags: string[] = []
+
+  const sourceText = [raw, ...keywords].join(' ').toLowerCase()
+
+  Object.entries(AI_RADAR_SEMANTIC_ALIAS).forEach(
+    ([trigger, aliases]) => {
+      if (sourceText.includes(trigger.toLowerCase())) {
+        expandedTags.push(...aliases)
+      }
+    }
+  )
+
+  return expandedTags
+    .map((tag) => tag.toLowerCase().trim())
+    .filter(Boolean)
+}
+
 function normalizeParsedQuery(
   parsed: OpenAIParsedQuery | null,
   raw: string
@@ -69,6 +88,20 @@ function normalizeParsedQuery(
   const fallback = createEmptyParsedQuery(raw)
 
   if (!parsed) return fallback
+
+  const normalizedKeywords =
+    normalizeStringArray(parsed.keywords).length > 0
+      ? normalizeStringArray(parsed.keywords)
+      : fallback.keywords
+
+  const semanticTags = expandSemanticAlias(raw, normalizedKeywords)
+
+  const mergedTags = [
+    ...normalizeStringArray(parsed.tags),
+    ...semanticTags,
+  ]
+
+  const uniqueTags = [...new Set(mergedTags)]
 
   return {
     raw,
@@ -83,13 +116,11 @@ function normalizeParsedQuery(
         ? parsed.gender
         : undefined,
 
-    tags: normalizeStringArray(parsed.tags),
+    tags: uniqueTags,
 
     vibes: normalizeStringArray(parsed.vibes),
 
-    keywords: normalizeStringArray(parsed.keywords).length
-      ? normalizeStringArray(parsed.keywords)
-      : fallback.keywords,
+    keywords: normalizedKeywords,
   }
 }
 
@@ -129,8 +160,8 @@ Rules:
 - tags should be lowercase English keywords.
 - vibes should describe the user's desired feeling or style.
 - keywords should include important words from the user request.
-- Use tags like: gym, beach, dance, kpop, streetwear, coffee, music, travel, cute, handsome, sexy, chill, hiphop, house, edm, fashion, art, foodie, nightlife.
-- Use vibes like: cute, sexy, sunny, outdoor, lifestyle, streetwear, party, chill, korean, softboy.
+- Use tags like: gym, beach, dance, kpop, streetwear, coffee, music, travel, cute, handsome, sexy, chill, hiphop, house, edm, fashion, art, foodie, nightlife, car, sports car, luxury car, supercar, futuristic, modern, sleek.
+- Use vibes like: cute, sexy, sunny, outdoor, lifestyle, streetwear, party, chill, korean, softboy, luxury, futuristic, modern.
 - If the user says 台北, use city: "taipei".
 - If the user says 台中, use city: "taichung".
 - If the user says 高雄, use city: "kaohsiung".
@@ -143,6 +174,8 @@ Rules:
 - If the user says 可愛 or 奶狗, use tag: "cute".
 - If the user says 帥, use tag: "handsome".
 - If the user says 性感 or 辣, use tag: "sexy".
+- If the user says 跑車, use tags related to sports car, luxury car, supercar, bugatti, automotive.
+- If the user says 科技感 or 未來感, use tags related to futuristic, modern, high tech, sleek.
       `.trim(),
     },
     {

@@ -27,18 +27,19 @@ type OpenAIChatResponse = {
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 
-function fallbackReply(query: string, users: AIRadarReplyUser[]) {
+function fallbackReply(
+  query: string,
+  users: AIRadarReplyUser[],
+  parsedQuery?: AIRadarParsedQuery
+) {
   if (users.length > 0) {
-    const topTags =
-      users[0]?.matchedReasons?.length
-        ? users[0].matchedReasons.join('、')
-        : (users[0]?.vibe_tags ?? users[0]?.tags ?? [])
-            .slice(0, 3)
-            .join('、')
+    return `我幫你篩選出幾位符合「${query}」的用戶，並依照你的描述整理出最接近的推薦人選。`
+  }
 
-    return topTags
-      ? `我幫你找到幾位符合「${query}」的人選，整體偏向 ${topTags} 這類 vibe，可以先從最前面的推薦開始看。`
-      : `我幫你篩選出幾位符合「${query}」的用戶，並依照你的描述整理出最接近的推薦人選。`
+  const fallbackTags = parsedQuery?.tags?.slice(0, 3) ?? []
+
+  if (fallbackTags.length > 0) {
+    return `目前沒有完全符合「${query}」的用戶，你可以試著放寬條件，例如：${fallbackTags.join(' / ')}。`
   }
 
   return `目前沒有找到完全符合「${query}」的用戶。`
@@ -69,7 +70,7 @@ export async function generateAIRadarReply({
 
   if (!apiKey) {
     console.warn('Missing OPENAI_API_KEY')
-    return fallbackReply(query, users)
+    fallbackReply(query, users, parsedQuery)
   }
 
   const topUsers = users.slice(0, 2).map(compactUserForPrompt)
@@ -125,19 +126,19 @@ Goal:
 
     if (!response.ok) {
       console.error('OpenAI generate AI Radar reply failed:', response.status)
-      return fallbackReply(query, users)
+      return fallbackReply(query, users, parsedQuery)
     }
 
     const data = (await response.json()) as OpenAIChatResponse
     const content = data.choices?.[0]?.message?.content?.trim()
 
     if (!content) {
-      return fallbackReply(query, users)
+      return fallbackReply(query, users, parsedQuery)
     }
 
     return content
   } catch (error) {
     console.error('generateAIRadarReply error:', error)
-    return fallbackReply(query, users)
+    return fallbackReply(query, users, parsedQuery)
   }
 }
