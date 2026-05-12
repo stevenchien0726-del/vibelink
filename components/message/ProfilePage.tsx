@@ -63,7 +63,6 @@ type MenuItemProps = {
 const activeColor = '#d89ad0'
 const inactiveColor = '#222'
 
-
 function MenuItem({ icon, label, onClick }: MenuItemProps) {
   return (
     <button
@@ -94,8 +93,6 @@ export default function ProfilePage({
   } = await supabase.auth.getUser()
 
   setCurrentUserId(user?.id ?? null)
-
-  setProfileUserId(user?.id ?? null)
 
   await ensureMyProfile()
   await loadMyPosts()
@@ -146,7 +143,6 @@ const [commentText, setCommentText] = useState('')
 const [commentLoading, setCommentLoading] = useState(false)
 
 const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-const [profileUserId, setProfileUserId] = useState<string | null>(null)
 const [selectedComment, setSelectedComment] = useState<any>(null)
 const [isCommentMenuOpen, setIsCommentMenuOpen] = useState(false)
 const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)

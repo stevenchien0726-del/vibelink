@@ -39,6 +39,7 @@ type FeedGridProps = {
   onOpenComments?: (post: PostItem) => void
 onOpenShare?: (post: PostItem) => void
 onDeletePost?: (post: PostItem) => void
+onOpenProfile?: (post: PostItem) => void
 }
 
 const FALLBACK_IMAGE =
@@ -53,6 +54,7 @@ export default function FeedGrid({
   onOpenComments,
   onOpenShare,
   onDeletePost,
+  onOpenProfile,
 }: FeedGridProps) {
   const [slideMap, setSlideMap] = useState<Record<string, number>>({})
   const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null)
@@ -347,12 +349,20 @@ if (isTap) {
             return (
               <motion.div layout key={post.id}>
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
-                    <div className="text-[15px] font-medium text-[#222]">
-                      {post.author}
-                    </div>
-                  </div>
+                  <button
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation()
+    onOpenProfile?.(post)
+  }}
+  className="flex items-center gap-2 active:scale-95"
+>
+  <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
+
+  <div className="text-[15px] font-medium text-[#222]">
+    {post.author}
+  </div>
+</button>
 
                   <div className="relative">
                     <button

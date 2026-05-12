@@ -12,44 +12,99 @@ type Props = {
 
 const activeColor = '#d89ad0'
 const inactiveColor = '#222'
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+
 
 export default function OtherUserProfilePage({ userId, onClose }: Props) {
   const [profile, setProfile] = useState<any>(null)
   const [posts, setPosts] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
-    async function loadProfile() {
-      setLoading(true)
+  let alive = true
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, username, display_name, avatar_url, bio')
-        .eq('id', userId)
-        .maybeSingle()
+  async function loadProfile() {
+    setLoading(true)
+    setLoadError('')
 
-      const { data: postsData } = await supabase
-        .from('posts')
-        .select(`
-          id,
-          caption,
-          created_at,
-          user_id,
-          post_images (
-            image_url
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-
-      setProfile(profileData)
-      setPosts(postsData ?? [])
+    if (!userId) {
+      setLoadError('找不到對方用戶 ID')
       setLoading(false)
+      return
     }
 
-    loadProfile()
-  }, [userId])
+    if (!isUuid(userId)) {
+      setLoadError('目前這是模擬用戶，還沒有連到真實 Supabase Profile')
+      setProfile(null)
+      setPosts([])
+      setLoading(false)
+      return
+    }
+
+    console.log('[OtherUserProfile] loading userId:', userId)
+
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url, bio')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (!alive) return
+
+    if (profileError) {
+      console.error('[OtherUserProfile] profile error:', profileError)
+      setLoadError('Profile 載入失敗')
+      setProfile(null)
+      setPosts([])
+      setLoading(false)
+      return
+    }
+
+    if (!profileData) {
+      setLoadError('找不到這位用戶')
+      setProfile(null)
+      setPosts([])
+      setLoading(false)
+      return
+    }
+
+    setProfile(profileData)
+    setLoading(false)
+
+    const { data: postsData, error: postsError } = await supabase
+      .from('posts')
+      .select(`
+        id,
+        caption,
+        created_at,
+        user_id,
+        post_images (
+          image_url
+        )
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (!alive) return
+
+    if (postsError) {
+      console.error('[OtherUserProfile] posts error:', postsError)
+      setPosts([])
+      return
+    }
+
+    setPosts(postsData ?? [])
+  }
+
+  loadProfile()
+
+  return () => {
+    alive = false
+  }
+}, [userId])
 
   const gridItems = posts.filter((post) => post.post_images?.length > 0)
 
@@ -103,10 +158,18 @@ onDragEnd={(_, info) => {
         </div>
 
         {loading ? (
-          <div className="py-20 text-center text-[14px] text-[#999]">
-            載入對方 Profile 中...
-          </div>
-        ) : (
+  <div className="py-20 text-center text-[14px] text-[#999]">
+    載入對方 Profile 中...
+  </div>
+) : loadError ? (
+  <div className="py-20 text-center text-[14px] text-[#999]">
+    {loadError}
+  </div>
+) : !profile ? (
+  <div className="py-20 text-center text-[14px] text-[#999]">
+    找不到這位用戶
+  </div>
+) : (
           <>
             <div className="mb-3 flex items-start justify-between">
               <div className="flex gap-3">

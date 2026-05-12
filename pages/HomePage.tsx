@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 
 import FeedGrid, { type FeedMode, type PostItem } from '@/components/home/sections/feed/FeedGrid'
+import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
 
 import { supabase } from '@/lib/supabase'
 
@@ -104,6 +105,7 @@ export default function HomePage({
   const [realPosts, setRealPosts] = useState<PostItem[]>([])
   const [mockSavedPostIds, setMockSavedPostIds] = useState<string[]>([])
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null)
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null)
 
   const [commentSheetPost, setCommentSheetPost] = useState<PostItem | null>(null)
 
@@ -308,12 +310,13 @@ const savedSet = new Set<string>()
     const images = (post.post_images ?? []).map((img: any) => img.image_url)
 
     return {
-      id: post.id,
-      author:
-        post.profiles?.display_name ||
-        post.profiles?.username ||
-        'Vibelink User',
-      text: post.caption || '',
+  id: post.id,
+  user_id: post.user_id,
+  author:
+    post.profiles?.display_name ||
+    post.profiles?.username ||
+    'Vibelink User',
+  text: post.caption || '',
       likes: likeCountMap.get(post.id) ?? 0,
 isLiked: likedSet.has(post.id),
 isSaved: savedSet.has(post.id),
@@ -1321,6 +1324,9 @@ await loadShortVideos(user)
   onOpenComments={openCommentSheet}
   onOpenShare={() => setIsShareSheetOpen(true)}
 onDeletePost={handleDeletePost}
+onOpenProfile={(post) => {
+  setSelectedProfileUserId(post.user_id || post.id)
+}}
 />
 </section>
 
@@ -1390,17 +1396,28 @@ onDeletePost={handleDeletePost}
 </div>
         </div>
 
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
-          <div className="text-[15px] font-medium text-[#222]">
-            {selectedPost.author}
-          </div>
-        </div>
+        <button
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation()
+    if (!selectedPost) return
+
+    setSelectedPost(null)
+    setSelectedProfileUserId(selectedPost.user_id || selectedPost.id)
+  }}
+  className="mb-5 flex items-center gap-3 px-4 py-3 active:scale-95"
+>
+  <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
+
+  <div className="text-[15px] font-medium text-[#222]">
+    {selectedPost.author}
+  </div>
+</button>
 
         <div
   data-detail-image-area="true"
   data-block-page-swipe="true"
-  className="px-3"
+  className="mt-3 px-3"
   style={{ touchAction: 'pan-y' }}
   onTouchStart={handleDetailImageTouchStart}
   onTouchMove={handleDetailImageTouchMove}
@@ -1799,6 +1816,15 @@ onTouchEnd={(e) => e.stopPropagation()}
   onShare={() => setIsShareSheetOpen(true)}
   onSave={toggleShortVideoSave}
 />
+
+<AnimatePresence>
+  {selectedProfileUserId && (
+    <OtherUserProfilePage
+      userId={selectedProfileUserId}
+      onClose={() => setSelectedProfileUserId(null)}
+    />
+  )}
+</AnimatePresence>
 
 <AnimatePresence>
   {toast && (
