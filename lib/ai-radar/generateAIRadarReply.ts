@@ -30,7 +30,7 @@ function fallbackReply(query: string, users: AIRadarReplyUser[]) {
     return `我幫你篩選出幾位符合「${query}」的用戶，並依照你的描述整理出最接近的推薦人選。`
   }
 
-  return `目前沒有找到完全符合「${query}」的用戶，你可以換更簡短或更具體的描述再試一次。`
+  return `目前沒有找到完全符合「${query}」的用戶。`
 }
 
 function compactUserForPrompt(user: AIRadarReplyUser) {
