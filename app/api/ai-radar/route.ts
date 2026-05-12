@@ -45,7 +45,34 @@ const supabaseUsers =
 const transformedSupabaseUsers =
   transformSupabaseAIRadarUsers(
     supabaseUsers
-  )
+  ).map((user: any) => {
+    const userTags = user.vibe_tags ?? user.tags ?? []
+
+    const matchScore = tags.reduce((score: number, tag: string) => {
+      return userTags.includes(tag) ? score + 20 : score
+    }, 0)
+
+    return {
+      ...user,
+      aiScore: matchScore,
+      matchedReasons: tags.filter((tag: string) =>
+        userTags.includes(tag)
+      ),
+    }
+  })
+  .sort((a: any, b: any) => {
+  const scoreA =
+    (a.aiScore ?? 0) +
+    (a.matchCount ?? 0) * 2 +
+    (a.images?.length ?? 0) * 3
+
+  const scoreB =
+    (b.aiScore ?? 0) +
+    (b.matchCount ?? 0) * 2 +
+    (b.images?.length ?? 0) * 3
+
+  return scoreB - scoreA
+})
 
   console.log(
   '🟢 [AI Radar] transformedSupabaseUsers:',

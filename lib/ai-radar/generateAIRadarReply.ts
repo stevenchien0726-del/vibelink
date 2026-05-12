@@ -7,7 +7,9 @@ type AIRadarReplyUser = {
   city?: string
   vibe_tags?: string[]
   tags?: string[]
-  score?: number
+    score?: number
+  aiScore?: number
+  matchedReasons?: string[]
 }
 
 type OpenAIChatMessage = {
@@ -27,7 +29,16 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 
 function fallbackReply(query: string, users: AIRadarReplyUser[]) {
   if (users.length > 0) {
-    return `我幫你篩選出幾位符合「${query}」的用戶，並依照你的描述整理出最接近的推薦人選。`
+    const topTags =
+      users[0]?.matchedReasons?.length
+        ? users[0].matchedReasons.join('、')
+        : (users[0]?.vibe_tags ?? users[0]?.tags ?? [])
+            .slice(0, 3)
+            .join('、')
+
+    return topTags
+      ? `我幫你找到幾位符合「${query}」的人選，整體偏向 ${topTags} 這類 vibe，可以先從最前面的推薦開始看。`
+      : `我幫你篩選出幾位符合「${query}」的用戶，並依照你的描述整理出最接近的推薦人選。`
   }
 
   return `目前沒有找到完全符合「${query}」的用戶。`
@@ -40,7 +51,8 @@ function compactUserForPrompt(user: AIRadarReplyUser) {
     city: user.city ?? '',
     bio: user.bio ?? '',
     tags: user.vibe_tags ?? user.tags ?? [],
-    score: user.score ?? 0,
+    matchedReasons: user.matchedReasons ?? [],
+    score: user.aiScore ?? user.score ?? 0,
   }
 }
 
@@ -72,7 +84,8 @@ Write one short Traditional Chinese reply for the purple AI response bubble.
 
 Goal:
 - Summarize the user's search intent.
-- Mention the matched users' overall vibe.
+- Mention the matched users' overall vibe based on matchedReasons, tags, bio, and city.
+- If matchedReasons exist, prioritize them when describing why the users match.
 - Sound natural, premium, and social-app friendly.
 - Do not overpromise.
 - Do not say anything sexual or explicit.

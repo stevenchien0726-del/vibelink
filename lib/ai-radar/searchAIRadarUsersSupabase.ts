@@ -10,23 +10,27 @@ export async function searchAIRadarUsersSupabase({
   let query = supabase
     .from('posts')
     .select(`
-  id,
-  ai_tags,
-  ai_style_tags,
-  ai_caption,
-  created_at,
-  profiles (
-    id,
-    username,
-    display_name,
-    avatar_url
-  ),
-  post_images!post_images_post_id_fkey (
-    image_url
-  )
-`)
+      id,
+      user_id,
+      caption,
+      ai_tags,
+      ai_style_tags,
+      ai_caption,
+      ai_analyzed,
+      created_at,
+      profiles (
+        id,
+        username,
+        display_name,
+        avatar_url
+      ),
+      post_images (
+        image_url
+      )
+    `)
     .eq('ai_analyzed', true)
-    .limit(30)
+    .not('ai_tags', 'is', null)
+    .limit(50)
 
   if (tags.length > 0) {
     query = query.overlaps('ai_tags', tags)
@@ -35,11 +39,7 @@ export async function searchAIRadarUsersSupabase({
   const { data, error } = await query
 
   if (error) {
-    console.error(
-      'searchAIRadarUsersSupabase failed:',
-      error
-    )
-
+    console.error('searchAIRadarUsersSupabase failed:', error)
     return []
   }
 

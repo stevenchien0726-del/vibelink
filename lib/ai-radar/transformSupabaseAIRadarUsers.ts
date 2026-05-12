@@ -1,4 +1,3 @@
-
 export function transformSupabaseAIRadarUsers(rows: any[]) {
   return rows.map((row) => {
     const profile = Array.isArray(row.profiles)
@@ -11,12 +10,14 @@ export function transformSupabaseAIRadarUsers(rows: any[]) {
           .filter(Boolean)
       : []
 
-    
-    
-      const tags = [
+    const primaryImage = images[0] ?? ''
+
+    const tags = [
       ...(row.ai_tags ?? []),
       ...(row.ai_style_tags ?? []),
     ]
+
+    const matchCount = tags.length
 
     return {
       id: profile?.id ?? row.id,
@@ -28,6 +29,8 @@ export function transformSupabaseAIRadarUsers(rows: any[]) {
       tags,
       vibe_tags: tags,
       images,
+      primaryImage,
+      matchCount,
     }
   })
 }
