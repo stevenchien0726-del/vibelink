@@ -423,7 +423,7 @@ setRewritePrompts(nextRewritePrompts)
   <div className="fixed left-1/2 top-1/2 z-[55] w-full max-w-[430px] -translate-x-1/2 -translate-y-1/2 px-8">
     <div className="mb-5 flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
       <Sparkles size={17} fill="currentColor" />
-      <span>AI雷達：今天想找什麼樣Vibe的人?</span>
+      <span>AI雷達：想找什麼Vibe的人?</span>
     </div>
 
     <div className="flex flex-col gap-3">
