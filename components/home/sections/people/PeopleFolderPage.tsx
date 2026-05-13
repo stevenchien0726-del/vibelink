@@ -26,6 +26,7 @@ type PeopleFolderPageProps = {
   folderId: string
   onClose: () => void
   onPickUser?: (payload: PickUserPayload) => void
+  onOpenProfile?: (userId: string) => void
 }
 
 const RECENT_PRIMARY_USER: PickedUser = {
@@ -45,7 +46,9 @@ export default function PeopleFolderPage({
   folderId,
   onClose,
   onPickUser,
+  onOpenProfile,
 }: PeopleFolderPageProps) {
+
   const touchStartYRef = useRef<number | null>(null)
   const touchStartXRef = useRef<number | null>(null)
 
@@ -158,18 +161,11 @@ export default function PeopleFolderPage({
             <div className="grid grid-cols-4 gap-x-5 gap-y-8">
               <button
                 type="button"
-                onClick={(e) => {
-                  if (folderId === 'recent') {
-                    const sourceRect = (
-                      e.currentTarget as HTMLButtonElement
-                    ).getBoundingClientRect()
-
-                    onPickUser?.({
-                      user: RECENT_PRIMARY_USER,
-                      sourceRect,
-                    })
-                  }
-                }}
+                onClick={() => {
+  if (folderId === 'recent') {
+    onOpenProfile?.(RECENT_PRIMARY_USER.id)
+  }
+}}
                 className="flex flex-col items-center active:scale-95"
               >
                 {folderId === 'recent' ? (
@@ -191,10 +187,11 @@ export default function PeopleFolderPage({
 
               {mockUsers.slice(1).map((user) => (
                 <button
-                  key={user.id}
-                  type="button"
-                  className="flex flex-col items-center active:scale-95"
-                >
+  key={user.id}
+  type="button"
+  onClick={() => onOpenProfile?.(user.id)}
+  className="flex flex-col items-center active:scale-95"
+>
                   <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
                   <div className="mt-3 text-[13px] text-[#555]">
                     {user.name}

@@ -355,7 +355,7 @@ if (isTap) {
     e.stopPropagation()
     onOpenProfile?.(post)
   }}
-  className="flex items-center gap-2 active:scale-95"
+  className="flex items-center gap-3 pl-2 active:scale-95"
 >
   <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
 

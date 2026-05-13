@@ -70,7 +70,7 @@ export default function TopBar() {
           {/* 左側：保留原本 People Library 功能 */}
           <button
             type="button"
-            onClick={() => setIsPeopleLibraryOpen(true)}
+            onClick={() => {}}
             className="flex h-10 items-center gap-1 rounded-[10px] bg-[#ebebeb] px-3 active:scale-[0.98]"
           >
             <img
@@ -124,14 +124,6 @@ export default function TopBar() {
         </div>
       </motion.div>
 
-      <AnimatePresence>
-        {isPeopleLibraryOpen && (
-          <PeopleLibraryPage
-            query="People Library"
-            onClose={() => setIsPeopleLibraryOpen(false)}
-          />
-        )}
-      </AnimatePresence>
     </>
   )
 }

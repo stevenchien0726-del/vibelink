@@ -34,11 +34,15 @@ export default function AIRadarInputBar({
       <div ref={targetRef} className="relative h-[50px] w-[150px] shrink-0">
         {selectedLibraryUser ? (
           <div className="flex h-[50px] w-full items-center gap-2 rounded-full bg-[#D9D9D9] px-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-            <img
-              src={selectedLibraryUser.avatar}
-              alt={selectedLibraryUser.name}
-              className="h-[30px] w-[30px] rounded-full object-cover"
-            />
+            {selectedLibraryUser.avatar ? (
+  <img
+    src={selectedLibraryUser.avatar}
+    alt={selectedLibraryUser.name}
+    className="h-[30px] w-[30px] rounded-full object-cover"
+  />
+) : (
+  <div className="h-[30px] w-[30px] shrink-0 rounded-full bg-[#c893cf]" />
+)}
 
             <span className="min-w-0 flex-1 truncate text-[13px] text-[#222]">
               {selectedLibraryUser.name}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   AnimatePresence,
   motion,
@@ -10,8 +10,6 @@ import {
 } from 'framer-motion'
 import { Search } from 'lucide-react'
 import PeopleFolderPage from './PeopleFolderPage'
-
-import { useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
 
 type PickedUser = {
@@ -35,6 +33,7 @@ type PeopleLibraryPageProps = {
   query?: string
   onClose: () => void
   onPickUser?: (payload: PickUserPayload) => void
+  onOpenProfile?: (userId: string) => void
 }
 
 const folders: FolderItem[] = [
@@ -49,7 +48,6 @@ const folders: FolderItem[] = [
   { id: 'official-business', label: '官方和商業帳戶', emoji: '🏢' },
   { id: 'high-reply', label: '高頻互動與回覆', emoji: '⚡' },
 ]
-
 
 function getFolderName(id: string) {
   const map: Record<string, string> = {
@@ -72,36 +70,10 @@ export default function PeopleLibraryPage({
   query,
   onClose,
   onPickUser,
+  onOpenProfile,
 }: PeopleLibraryPageProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
-
   const [recentUser, setRecentUser] = useState<PickedUser | null>(null)
-
-useEffect(() => {
-  
-  async function fetchUser() {
-    const { data, error } = await supabase
-  .from('profiles')
-  .select('id, username, display_name, avatar_url')
-.order('created_at', { ascending: false })
-
-    if (data && data.length > 0) {
-  const firstUser = data[0]
-
-  setRecentUser({
-  id: firstUser.id,
-  name:
-    firstUser.display_name ||
-    firstUser.username ||
-    'Vibelink User',
-  avatar:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
-  })
-}
-  }
-
-  fetchUser()
-}, [])
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const canDragCloseRef = useRef(true)
@@ -109,6 +81,65 @@ useEffect(() => {
   const sheetY = useMotionValue(0)
   const overlayOpacity = useTransform(sheetY, [0, 320], [1, 0.78])
   const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
+
+  useEffect(() => {
+    async function fetchRecentFollowedUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        setRecentUser(null)
+        return
+      }
+
+      const { data: followRows, error: followError } = await supabase
+        .from('follows')
+        .select('following_id, created_at')
+        .eq('follower_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (followError) {
+        console.error('讀取最近追蹤失敗:', followError)
+        setRecentUser(null)
+        return
+      }
+
+      const followingId = followRows?.[0]?.following_id
+      console.log('PeopleLibrary recent followRows:', followRows)
+console.log('PeopleLibrary followingId:', followingId)
+
+      if (!followingId) {
+        setRecentUser(null)
+        return
+      }
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url')
+        .eq('id', followingId)
+        .maybeSingle()
+
+      if (profileError || !profileData) {
+        console.error('讀取最近追蹤 profile 失敗:', profileError)
+        setRecentUser(null)
+        return
+      }
+
+      setRecentUser({
+  id: profileData.id,
+  name:
+    profileData.display_name ||
+    profileData.username ||
+    'Vibelink User',
+
+  avatar: profileData.avatar_url || '',
+})
+    }
+
+      fetchRecentFollowedUser()
+}, [onOpenProfile])
 
   function closeSheet() {
     animate(sheetY, 540, {
@@ -155,11 +186,7 @@ useEffect(() => {
           dragConstraints={{ top: 0, bottom: 0 }}
           onDragStart={() => {
             const el = scrollRef.current
-            if (!el) {
-              canDragCloseRef.current = true
-              return
-            }
-            canDragCloseRef.current = el.scrollTop <= 0
+            canDragCloseRef.current = !el || el.scrollTop <= 0
           }}
           onDrag={(_, info) => {
             if (selectedFolder) return
@@ -186,10 +213,7 @@ useEffect(() => {
               return
             }
 
-            const draggedDownEnough = info.offset.y > 130
-            const fastEnough = info.velocity.y > 650
-
-            if (draggedDownEnough || fastEnough) {
+            if (info.offset.y > 130 || info.velocity.y > 650) {
               closeSheet()
               return
             }
@@ -233,7 +257,7 @@ useEffect(() => {
                       recentUser={recentUser}
                       onOpenFolder={() => setSelectedFolder(folder.id)}
                       onOpenProfile={(userId) => {
-                        console.log('open profile:', folder.id, userId)
+                        onOpenProfile?.(userId)
                       }}
                       onPickUser={onPickUser}
                     />
@@ -255,6 +279,7 @@ useEffect(() => {
                 folderId={selectedFolder}
                 onClose={() => setSelectedFolder(null)}
                 onPickUser={onPickUser}
+                onOpenProfile={onOpenProfile}
               />
             )}
           </AnimatePresence>
@@ -273,16 +298,29 @@ function UserAvatarWithName({
 }) {
   return (
     <button
-      type="button"
-      onClick={onClick}
-      className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
-      aria-label={`Open ${user.name} profile`}
-    >
-      <img
-        src={user.avatar}
-        alt={user.name}
-        className="h-[42px] w-[42px] shrink-0 rounded-full object-cover"
-      />
+  type="button"
+  onPointerDownCapture={(e) => {
+    e.stopPropagation()
+  }}
+  onPointerUpCapture={(e) => {
+    e.stopPropagation()
+    onClick(e as unknown as React.MouseEvent<HTMLButtonElement>)
+  }}
+  onClick={(e) => {
+    e.stopPropagation()
+  }}
+  className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
+  aria-label={`Open ${user.name} profile`}
+>
+      {user.avatar ? (
+        <img
+          src={user.avatar}
+          alt={user.name}
+          className="h-[42px] w-[42px] shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <div className="h-[42px] w-[42px] shrink-0 rounded-full bg-[#c893cf]" />
+      )}
 
       <span className="mt-[6px] max-w-[72px] truncate text-center text-[12px] leading-[1.1] text-[#333]">
         {user.name}
@@ -296,12 +334,12 @@ function PlaceholderUserButton({
   onOpenProfile,
 }: {
   userId: string
-  onOpenProfile: (userId: string) => void
+  onOpenProfile?: (userId: string) => void
 }) {
   return (
     <button
       type="button"
-      onClick={() => onOpenProfile(userId)}
+      onClick={() => onOpenProfile?.(userId)}
       className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
       aria-label={`Open ${userId} profile`}
     >
@@ -319,65 +357,64 @@ function FolderPreview({
   onOpenFolder,
   onOpenProfile,
   onPickUser,
-  recentUser,   // ⭐ 加這行
+  recentUser,
 }: {
   folderId: string
   onOpenFolder: () => void
   onOpenProfile: (userId: string) => void
   onPickUser?: (payload: PickUserPayload) => void
-  recentUser: PickedUser | null   // ⭐ 加這行
+  recentUser: PickedUser | null
 }) {
   return (
     <div className="grid w-full grid-cols-2 place-items-start gap-x-6 gap-y-5 pt-1">
-      {folderId === 'recent' ? (
-  <UserAvatarWithName
-    user={
-  recentUser || {
-    id: 'fallback-user',
-    name: '小新',
-    avatar:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
-  }
-}
-    onClick={(e) => {
-      const sourceRect = e.currentTarget.getBoundingClientRect()
+      {folderId === 'recent' && recentUser ? (
+        <UserAvatarWithName
+  user={recentUser}
+  onClick={(e) => {
+    e.stopPropagation()
 
-      onPickUser?.({
-        user:
-  recentUser || {
-    id: 'fallback-user',
-    name: '小新',
-    avatar:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
-  },
+    const sourceRect = e.currentTarget.getBoundingClientRect()
+
+    if (onPickUser) {
+      console.log('PeopleLibrary pick user for AI Radar:', recentUser.id)
+
+      onPickUser({
+        user: recentUser,
         sourceRect,
       })
-    }}
-  />
-) : (
-  <PlaceholderUserButton
-    userId="user-1"
-    onOpenProfile={onOpenProfile}
-  />
-)}
+
+      return
+    }
+
+    console.log('PeopleLibrary open profile:', recentUser.id)
+
+    onOpenProfile?.(recentUser.id)
+  }}
+/>
+      ) : (
+        <PlaceholderUserButton
+          userId="user-1"
+          onOpenProfile={folderId === 'recent' ? undefined : onOpenProfile}
+        />
+      )}
 
       <PlaceholderUserButton userId="user-2" onOpenProfile={onOpenProfile} />
 
       <PlaceholderUserButton userId="user-3" onOpenProfile={onOpenProfile} />
 
       <button
-  type="button"
-  onClick={onOpenFolder}
-  className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
-  aria-label="Open folder"
->
-  <div className="mt-[6px] grid grid-cols-2 gap-[6px]">
-    <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-    <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-    <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-    <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
-  </div>
-</button>
+        type="button"
+        onClick={onOpenFolder}
+        className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
+        aria-label="Open folder"
+      >
+        <div className="mt-[6px] grid grid-cols-2 gap-[6px]">
+          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+          <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
+        </div>
+      </button>
     </div>
   )
 }

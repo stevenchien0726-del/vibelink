@@ -267,7 +267,10 @@ function getCandidateDescription(user: any) {
 
   const currentInput = inputValue.trim()
 const finalQuery =
-  currentInput || (selectedLibraryUser ? `幫我找像 ${selectedLibraryUser.name} 的人` : '')
+  currentInput ||
+  (selectedLibraryUser
+    ? `以 ${selectedLibraryUser.name} 為參考，幫我找生活風格、照片氣質、互動感和整體 Vibe 相似的人`
+    : '')
   setLastQuery(finalQuery)
 
     let data: any = null
@@ -359,8 +362,8 @@ setRewritePrompts(nextRewritePrompts)
     nextAiText =
       '我幫你從「Sky_07_21」延伸找出幾位更偏自然感、安靜成熟、旅行與慢節奏氛圍的用戶。這次不是找同一種可愛互動型，而是往更耐看、比較適合長聊天與真實相處感的方向去擴散。'
   } else if (selectedLibraryUser) {
-    nextAiText = `我幫你從「${selectedLibraryUser.name}」延伸找出幾位相似類型的用戶，整體更偏向情緒回饋感高、互動自然、照片氛圍接近的人選。`
-  } else {
+  nextAiText = `我用「${selectedLibraryUser.name}」當作參考基準，幫你延伸找出幾位相似 Vibe 的用戶。這次會更看重生活風格、照片氣質、互動感和整體氛圍，而不是只比對單一標籤。`
+} else {
     nextAiText = aiReplyText
   }
 } else {
@@ -368,8 +371,8 @@ setRewritePrompts(nextRewritePrompts)
     nextAiText =
       '目前沒有找到完全符合 Sky_07_21 延伸方向的用戶，你可以再補一句像是「更成熟」、「更安靜」、「更有戶外感」這類描述。'
   } else if (selectedLibraryUser) {
-    nextAiText = `目前沒有找到完全符合「${selectedLibraryUser.name} 相似類型」的用戶，你可以再補充想要的感覺。`
-  } else {
+  nextAiText = `我目前還沒找到和「${selectedLibraryUser.name}」足夠接近的用戶。你可以再補一句方向，例如「更成熟一點」、「更可愛一點」、「更會聊天」或「照片風格更像 IG 小網紅」。`
+} else {
     nextAiText = `目前沒有找到完全符合「${finalQuery}」的用戶，你可以換更簡短的描述再試一次。`
   }
 }
@@ -579,9 +582,10 @@ setRewritePrompts(nextRewritePrompts)
       {/* People Library */}
       {isPeopleLibraryOpen && (
   <PeopleLibraryPage
-    onClose={() => setIsPeopleLibraryOpen(false)}
-    onPickUser={handlePickLibraryUser}
-  />
+  query="People Library"
+  onClose={() => setIsPeopleLibraryOpen(false)}
+  onPickUser={handlePickLibraryUser}
+/>
 )}
     
     <AnimatePresence>
@@ -617,11 +621,15 @@ setRewritePrompts(nextRewritePrompts)
       className="pointer-events-none overflow-hidden bg-[#D9D9D9] shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
     >
       <div className="flex h-full w-full items-center gap-2 px-[12px]">
-        <img
-          src={flyingUser.user.avatar}
-          alt={flyingUser.user.name}
-          className="h-[30px] w-[30px] rounded-full object-cover"
-        />
+        {flyingUser.user.avatar ? (
+  <img
+    src={flyingUser.user.avatar}
+    alt={flyingUser.user.name}
+    className="h-[30px] w-[30px] rounded-full object-cover"
+  />
+) : (
+  <div className="h-[30px] w-[30px] shrink-0 rounded-full bg-[#c893cf]" />
+)}
         <span className="min-w-0 truncate text-[13px] text-[#222]">
           {flyingUser.user.name}
         </span>

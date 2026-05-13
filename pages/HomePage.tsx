@@ -1405,9 +1405,9 @@ onOpenProfile={(post) => {
     setSelectedPost(null)
     setSelectedProfileUserId(selectedPost.user_id || selectedPost.id)
   }}
-  className="mb-5 flex items-center gap-3 px-4 py-3 active:scale-95"
+  className="mb-5 ml-7 flex items-center gap-3 py-3 pr-5 active:scale-95"
 >
-  <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
+  <div className="h-[34px] b-5 ml-3 flex items-center gap-3 py-3 pr-[34px] rounded-full bg-[#d6d6d6]" />
 
   <div className="text-[15px] font-medium text-[#222]">
     {selectedPost.author}
@@ -1609,9 +1609,19 @@ onOpenProfile={(post) => {
       <AnimatePresence>
         {isPeopleLibraryOpen && (
           <PeopleLibraryPage
-            query="People Library"
-            onClose={() => setIsPeopleLibraryOpen(false)}
-          />
+  query="People Library"
+  onClose={() => setIsPeopleLibraryOpen(false)}
+  onOpenProfile={(userId) => {
+  console.log('HomePage receive open profile:', userId)
+
+  setSelectedPost(null)
+  setIsPeopleLibraryOpen(false)
+
+  requestAnimationFrame(() => {
+    setSelectedProfileUserId(userId)
+  })
+}}
+/>
         )}
       </AnimatePresence>
 
@@ -1817,7 +1827,7 @@ onTouchEnd={(e) => e.stopPropagation()}
   onSave={toggleShortVideoSave}
 />
 
-<AnimatePresence>
+<AnimatePresence mode="wait">
   {selectedProfileUserId && (
     <OtherUserProfilePage
       userId={selectedProfileUserId}

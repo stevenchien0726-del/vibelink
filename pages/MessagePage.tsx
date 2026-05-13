@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import {
   Check,
   PencilLine,
@@ -10,6 +11,8 @@ import {
   X,
 } from 'lucide-react'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
+
+import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
 
 type MessagePageProps = {
   onOpenMenu?: () => void
@@ -26,6 +29,8 @@ const searchAccounts = [
 
 export default function MessagePage({ onOpenMenu }: MessagePageProps) {
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null)
+  
   const [isTopCapsulePressed, setIsTopCapsulePressed] = useState(false)
 
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false)
@@ -310,8 +315,28 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
       </div>
 
       {isPeopleLibraryOpen && (
-        <PeopleLibraryPage onClose={() => setIsPeopleLibraryOpen(false)} />
+        <PeopleLibraryPage
+  query="People Library"
+  onClose={() => setIsPeopleLibraryOpen(false)}
+  onOpenProfile={(userId) => {
+  console.log('MessagePage receive open profile:', userId)
+
+  setIsPeopleLibraryOpen(false)
+
+  requestAnimationFrame(() => {
+    setSelectedProfileUserId(userId)
+  })
+}}
+/>
       )}
+      <AnimatePresence mode="wait">
+  {selectedProfileUserId && (
+    <OtherUserProfilePage
+      userId={selectedProfileUserId}
+      onClose={() => setSelectedProfileUserId(null)}
+    />
+  )}
+</AnimatePresence>
     </div>
   )
 }

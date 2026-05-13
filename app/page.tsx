@@ -15,7 +15,7 @@ export type CapsulePosition = '左' | '中' | '右'
 const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
 export default function Page() {
-  const [page, setPage] = useState<AppPage>('home')
+  const [page, setPage] = useState<AppPage>('ai')
 
   const [showWarning, setShowWarning] = useState(false)
 
