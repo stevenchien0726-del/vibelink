@@ -1,6 +1,10 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+import { supabase } from '@/lib/supabase'
+import { ensureUserProfile } from '@/lib/profile'
+
 import { AnimatePresence, motion } from 'framer-motion'
 
 import { BrushCleaning, Mic, Sparkles } from 'lucide-react'
@@ -59,6 +63,9 @@ export default function AIRadarPage() {
   const [refreshCount, setRefreshCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
 
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+const [authLoading, setAuthLoading] = useState(false)
+
   const [inputValue, setInputValue] = useState('')
   const [isListening, setIsListening] = useState(false)
 
@@ -106,7 +113,55 @@ const targetRef = useRef<HTMLDivElement | null>(null)
 
 const mainScrollRef = useRef<HTMLElement | null>(null)
 
-  const hasInput = inputValue.trim().length > 0 || !!selectedLibraryUser
+  useEffect(() => {
+  async function initAuth() {
+    const { data } = await supabase.auth.getSession()
+    const user = data.session?.user ?? null
+
+    if (!user) {
+      setIsAuthModalOpen(true)
+      return
+    }
+
+    setIsAuthModalOpen(false)
+    await ensureUserProfile()
+  }
+
+  initAuth()
+
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    async (_event, session) => {
+      if (session) {
+        setIsAuthModalOpen(false)
+        await ensureUserProfile()
+      } else {
+        setIsAuthModalOpen(true)
+      }
+    }
+  )
+
+  return () => {
+    listener.subscription.unsubscribe()
+  }
+}, [])
+
+async function handleGoogleLogin() {
+  setAuthLoading(true)
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin,
+    },
+  })
+
+  if (error) {
+    console.error('Google 登入失敗:', error)
+    setAuthLoading(false)
+  }
+}
+
+const hasInput = inputValue.trim().length > 0 || !!selectedLibraryUser
 
   function typeText(text: string, onDone?: () => void) {
   setDisplayedAiText('')
@@ -407,6 +462,31 @@ setRewritePrompts(nextRewritePrompts)
   return (
     <>
       <AIRadarLoadingOverlay open={isLoading} />
+
+      {isAuthModalOpen && (
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6 backdrop-blur-[10px]">
+    <div className="w-full max-w-[360px] rounded-[36px] bg-white px-7 py-9 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+      <div className="mb-5 text-[34px] text-purple-600">🪽</div>
+
+      <h2 className="text-[28px] font-semibold text-[#222]">
+        登入 Vibelink
+      </h2>
+
+      <p className="mt-4 text-[16px] text-[#888]">
+        登入後即可使用 AI 雷達與完整功能
+      </p>
+
+      <button
+        type="button"
+        disabled={authLoading}
+        onClick={handleGoogleLogin}
+        className="mt-8 flex h-[54px] w-full items-center justify-center rounded-full bg-white text-[18px] font-medium text-[#111] shadow-[0_4px_14px_rgba(0,0,0,0.14)] transition active:scale-[0.98] disabled:opacity-60"
+      >
+        {authLoading ? '登入中...' : 'GOOGLE 登入'}
+      </button>
+    </div>
+  </div>
+)}
 
 <AIRadarTopBar
   showTopBar={showTopBar}
