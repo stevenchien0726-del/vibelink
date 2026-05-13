@@ -25,6 +25,8 @@ MoreHorizontal,
 Copy,
 } from 'lucide-react'
 
+import type { Locale } from '@/i18n'
+
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import SettingsPage from '@/pages/SettingsPage'
@@ -52,6 +54,9 @@ type ProfilePageProps = {
   onCloseMenu?: () => void
   feedCapsulePosition: CapsulePosition
   onChangeFeedCapsulePosition: (value: CapsulePosition) => void
+
+  locale: Locale
+  onChangeLocale: (locale: Locale) => void
 }
 
 type MenuItemProps = {
@@ -80,10 +85,11 @@ function MenuItem({ icon, label, onClick }: MenuItemProps) {
   )
 }
 
-
 export default function ProfilePage({
   feedCapsulePosition,
   onChangeFeedCapsulePosition,
+  locale,
+  onChangeLocale,
 }: ProfilePageProps) {
   
   useEffect(() => {
@@ -1445,14 +1451,17 @@ openSelectedPost(post)
         {showSettingsPage && (
           
   <SettingsPage
-            onClose={() => {
-              setShowSettingsPage(false)
-              setIsMenuOpen(true)
-            }}
-            capsulePosition={feedCapsulePosition}
-            onCapsulePositionChange={onChangeFeedCapsulePosition}
-            initialDarkMode={false}
-            initialShowCity={false}
+  onClose={() => {
+    setShowSettingsPage(false)
+    setIsMenuOpen(true)
+  }}
+  capsulePosition={feedCapsulePosition}
+  onCapsulePositionChange={onChangeFeedCapsulePosition}
+  locale={locale}
+  onChangeLocale={onChangeLocale}
+  initialDarkMode={false}
+  initialShowCity={false}
+            
             onDarkModeChange={(value) => {
               console.log('dark mode:', value)
             }}

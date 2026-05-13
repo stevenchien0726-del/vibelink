@@ -14,6 +14,7 @@ import {
   MessageCircle,
 } from 'lucide-react'
 import type { CapsulePosition } from '@/app/page'
+import type { Locale } from '@/i18n'
 
 type SettingsPageProps = {
   onClose: () => void
@@ -21,6 +22,9 @@ type SettingsPageProps = {
   initialDarkMode?: boolean
   initialShowCity?: boolean
   onCapsulePositionChange: (value: CapsulePosition) => void
+
+    locale: Locale
+  onChangeLocale: (locale: Locale) => void
   onDarkModeChange?: (value: boolean) => void
   onShowCityChange?: (value: boolean) => void
   onBlockedClick?: () => void
@@ -35,6 +39,8 @@ export default function SettingsPage({
   initialDarkMode = false,
   initialShowCity = false,
   onCapsulePositionChange,
+    locale,
+  onChangeLocale,
   onDarkModeChange,
   onShowCityChange,
   onBlockedClick,
@@ -275,11 +281,43 @@ export default function SettingsPage({
             
             <Divider />
 
-            <SettingsRow
-              icon={<Globe size={21} strokeWidth={2.1} />}
-              label="語言"
-              onClick={onLanguageClick}
-            />
+            <div className="px-[30px] py-[26px]">
+  <div className="mb-4 flex items-center gap-3">
+    <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
+      <Globe size={21} strokeWidth={2.1} />
+    </span>
+
+    <span className="text-[16px] font-medium text-[#222]">
+      {locale === 'zh-TW' ? '語言' : 'Language'}
+    </span>
+  </div>
+
+  <div className="flex gap-3">
+    <button
+      type="button"
+      onClick={() => onChangeLocale('zh-TW')}
+      className={`flex-1 rounded-[16px] py-[12px] text-[15px] font-medium transition ${
+        locale === 'zh-TW'
+          ? 'bg-[#d9afe6] text-[#111]'
+          : 'bg-white text-[#666]'
+      }`}
+    >
+      繁中
+    </button>
+
+    <button
+      type="button"
+      onClick={() => onChangeLocale('en')}
+      className={`flex-1 rounded-[16px] py-[12px] text-[15px] font-medium transition ${
+        locale === 'en'
+          ? 'bg-[#d9afe6] text-[#111]'
+          : 'bg-white text-[#666]'
+      }`}
+    >
+      English
+    </button>
+  </div>
+</div>
           </div>
         </div>
       </div>

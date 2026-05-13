@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Locale, LOCALE_STORAGE_KEY, dictionaries } from '@/i18n'
 import HomePage from '../pages/HomePage'
 import AIHelperPage from '../pages/AIRadarPage'
 import MessagePage from '../pages/MessagePage'
@@ -16,6 +17,23 @@ const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
 export default function Page() {
   const [page, setPage] = useState<AppPage>('ai')
+
+  const [locale, setLocale] = useState<Locale>(() => {
+  if (typeof window === 'undefined') return 'zh-TW'
+
+  const saved = localStorage.getItem(LOCALE_STORAGE_KEY)
+
+  if (saved === 'zh-TW' || saved === 'en') {
+    return saved
+  }
+
+  return 'zh-TW'
+})
+
+
+useEffect(() => {
+  localStorage.setItem(LOCALE_STORAGE_KEY, locale)
+}, [locale])
 
   const [showWarning, setShowWarning] = useState(false)
 
@@ -337,9 +355,11 @@ export default function Page() {
 
 <div className={page === 'profile' ? 'block' : 'hidden'}>
   <ProfilePage
-    feedCapsulePosition={feedCapsulePosition}
-    onChangeFeedCapsulePosition={setFeedCapsulePosition}
-  />
+  feedCapsulePosition={feedCapsulePosition}
+  onChangeFeedCapsulePosition={setFeedCapsulePosition}
+  locale={locale}
+  onChangeLocale={setLocale}
+/>
 </div>
 
 <div className={page === 'tv' ? 'block' : 'hidden'}>
@@ -347,7 +367,11 @@ export default function Page() {
 </div>
       </div>
 
-      <BottomNav current={page} setPage={setPageDirect} />
+      <BottomNav
+  current={page}
+  setPage={setPageDirect}
+  locale={locale}
+/>
     </main>
   )
 }

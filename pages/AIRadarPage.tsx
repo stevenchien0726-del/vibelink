@@ -502,8 +502,8 @@ setRewritePrompts(nextRewritePrompts)
           {/* suggestions */}
 
 {!loading && !aiText && results.length === 0 && (
-  <div className="fixed left-1/2 top-1/2 z-[55] w-full max-w-[430px] -translate-x-1/2 -translate-y-1/2 px-8">
-    <div className="mb-5 flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
+  <div className="fixed left-1/2 top-[40%] z-[55] w-full max-w-[430px] -translate-x-1/2 -translate-y-1/2 px-8">
+    <div className="mb-6 flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
       <Sparkles size={17} fill="currentColor" />
       <span>AI雷達：想找什麼Vibe的人?</span>
     </div>
@@ -526,11 +526,11 @@ setRewritePrompts(nextRewritePrompts)
 )}
 
 {/* AI Result 區 */}
-<div className="mb-4 space-y-3">
+<div className="mb-3 space-y-3">
   
 
   {displayedAiText && (
-  <div className="rounded-[18px] bg-[#ead8f5] px-4 py-3 text-[14px] leading-[1.45] text-[#3f2c4f] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+  <div className="rounded-[18px] bg-[#ead8f5] px-4 py-10 text-[14px] leading-[1.45] text-[#3f2c4f] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
     {displayedAiText}
   </div>
 )}
@@ -627,7 +627,7 @@ setRewritePrompts(nextRewritePrompts)
 </main>
           
 
-  <div className="fixed bottom-[148px] left-1/2 z-[70] flex w-full max-w-[430px] -translate-x-1/2 justify-end gap-3 px-6">
+  <div className="fixed bottom-[148px] left-1/2 z-[70] flex w-full max-w-[430px] -translate-x-1/2 justify-end gap-4 pb-1.5 px-6">
     <button
       type="button"
       onClick={handleClearInput}

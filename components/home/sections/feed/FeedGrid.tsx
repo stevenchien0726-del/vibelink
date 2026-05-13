@@ -565,20 +565,7 @@ if (isTap) {
                   {post.text}
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-  <span className="text-[12px] font-semibold text-[#666]">
-    AI標籤
-  </span>
-
-                  {postTags.slice(0, 3).map((tag) => (
-                    <span
-                      key={`${post.id}-${tag}`}
-                      className="rounded-full bg-[#eeeeee] px-3 py-[7px] text-[12px] font-medium text-[#666] shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
+                
               </motion.div>
             )
           })}
