@@ -50,10 +50,10 @@ export default function AIRadarPromptList({
           >
             <div className="flex items-start gap-2">
               {isRewrite && (
-                <div className="mt-[1px] text-[15px]">
-                  ✨
-                </div>
-              )}
+  <div className="mt-[1px] text-[16px] text-[#8B5CF6]">
+    ✦
+  </div>
+)}
 
               <div className="leading-[1.5]">
                 {prompt}

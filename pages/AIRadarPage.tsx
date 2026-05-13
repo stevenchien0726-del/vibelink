@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
-import { BrushCleaning, Mic } from 'lucide-react'
+import { BrushCleaning, Mic, Sparkles } from 'lucide-react'
 
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import { FakeUser } from '../data/fakeUsers'
@@ -419,20 +419,27 @@ setRewritePrompts(nextRewritePrompts)
          
           {/* suggestions */}
 
-          {!loading && !aiText && results.length === 0 && (
-  <div className="fixed bottom-[154px] left-1/2 z-[55] grid w-full max-w-[430px] -translate-x-1/2 grid-cols-3 gap-3 px-4">
-    {suggestionItems.map((item) => (
-      <button
-        key={item}
-        type="button"
-        onClick={() => setInputValue(item)}
-        className="min-h-[74px] rounded-[18px] bg-[rgba(255,255,255,0.72)] px-3 py-3 text-left shadow-[0_4px_14px_rgba(0,0,0,0.05)] backdrop-blur-[6px] transition active:scale-[0.98]"
-      >
-        <span className="block text-[14px] leading-[1.3] text-[#111]">
-          {item}
-        </span>
-      </button>
-    ))}
+{!loading && !aiText && results.length === 0 && (
+  <div className="fixed left-1/2 top-1/2 z-[55] w-full max-w-[430px] -translate-x-1/2 -translate-y-1/2 px-8">
+    <div className="mb-5 flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
+      <Sparkles size={17} fill="currentColor" />
+      <span>AI雷達：今天想找什麼樣Vibe的人?</span>
+    </div>
+
+    <div className="flex flex-col gap-3">
+      {suggestionItems.map((item) => (
+        <button
+          key={item}
+          type="button"
+          onClick={() => setInputValue(item)}
+          className="min-h-[52px] rounded-[18px] bg-[rgba(255,255,255,0.78)] px-4 py-3 text-center shadow-[0_6px_18px_rgba(0,0,0,0.06)] backdrop-blur-[8px] transition active:scale-[0.98]"
+        >
+          <span className="block text-[14px] leading-[1.35] text-[#111]">
+            {item}
+          </span>
+        </button>
+      ))}
+    </div>
   </div>
 )}
 
@@ -537,7 +544,7 @@ setRewritePrompts(nextRewritePrompts)
 </div>
 </main>
           
-{aiText && (
+
   <div className="fixed bottom-[148px] left-1/2 z-[70] flex w-full max-w-[430px] -translate-x-1/2 justify-end gap-3 px-6">
     <button
       type="button"
@@ -557,7 +564,6 @@ setRewritePrompts(nextRewritePrompts)
       <Mic size={22} strokeWidth={2} />
     </button>
   </div>
-)}
 
 <AIRadarInputBar
   inputValue={inputValue}
