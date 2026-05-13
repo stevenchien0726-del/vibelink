@@ -341,7 +341,6 @@ if (isTap) {
         >
           {posts.map((post) => {
             const postImages = getPostImages(post)
-            const postTags = getPostTags(post)
             const currentSlide = getCurrentSlide(post.id)
             const isLiked = !!likedMap[post.id]
             const likeCount = getLikeCount(post)

@@ -367,11 +367,7 @@ useEffect(() => {
 </div>
       </div>
 
-      <BottomNav
-  current={page}
-  setPage={setPageDirect}
-  locale={locale}
-/>
+      <BottomNav current={page} setPage={setPageDirect} />
     </main>
   )
 }
