@@ -466,7 +466,6 @@ setRewritePrompts(nextRewritePrompts)
       {isAuthModalOpen && (
   <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6 backdrop-blur-[10px]">
     <div className="w-full max-w-[360px] rounded-[36px] bg-white px-7 py-9 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
-      <div className="mb-5 text-[34px] text-purple-600">🪽</div>
 
       <h2 className="text-[28px] font-semibold text-[#222]">
         登入 Vibelink
