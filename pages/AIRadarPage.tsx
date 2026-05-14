@@ -499,11 +499,11 @@ setRewritePrompts(nextRewritePrompts)
     <div className="w-full max-w-[360px] rounded-[36px] bg-white px-7 py-9 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
 
       <h2 className="text-[28px] font-semibold text-[#222]">
-        {text.heroTitle}
+        {text.loginTitle}
       </h2>
 
       <p className="mt-4 text-[16px] text-[#888]">
-        {text.heroTitle}
+        {text.loginSubtitle}
       </p>
 
       <button
@@ -513,8 +513,8 @@ setRewritePrompts(nextRewritePrompts)
         className="mt-8 flex h-[54px] w-full items-center justify-center rounded-full bg-white text-[18px] font-medium text-[#111] shadow-[0_4px_14px_rgba(0,0,0,0.14)] transition active:scale-[0.98] disabled:opacity-60"
       >
         {authLoading
-  ? aiRadarText[locale].loggingIn
-  : aiRadarText[locale].loginButton}
+  ? text.loggingIn
+  : text.loginButton}
       </button>
     </div>
   </div>
@@ -538,11 +538,11 @@ setRewritePrompts(nextRewritePrompts)
   <div className="fixed left-1/2 top-[40%] z-[55] w-full max-w-[430px] -translate-x-1/2 -translate-y-1/2 px-8">
     <div className="mb-6 flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
       <Sparkles size={17} fill="currentColor" />
-      <span>{aiRadarText[locale].heroTitle}</span>
+      <span>{text.heroTitle}</span>
     </div>
 
     <div className="flex flex-col gap-3">
-      {aiRadarText[locale].suggestions.map((item) => (
+      {text.suggestions.map((item) => (
         <button
           key={item}
           type="button"
@@ -577,7 +577,7 @@ setRewritePrompts(nextRewritePrompts)
       onClick={handleRetry}
       className="mt-2 rounded-full bg-red-100 px-3 py-1 text-[12px] font-medium text-red-600 active:scale-95"
     >
-      {aiRadarText[locale].retry}
+      {text.retry}
     </button>
   </div>
 )}
@@ -631,7 +631,7 @@ setRewritePrompts(nextRewritePrompts)
     
 {showMorePrompts && (
   <AIRadarPromptList
-  title={aiRadarText[locale].rewriteTitle}
+  title={text.rewriteTitle}
   variant="rewrite"
   prompts={
     isSkySeedSearch
@@ -682,7 +682,7 @@ setRewritePrompts(nextRewritePrompts)
 
 <AIRadarInputBar
   inputValue={inputValue}
-  locale={locale}
+  locale={safeLocale}
   setInputValue={setInputValue}
   selectedLibraryUser={selectedLibraryUser}
   setSelectedLibraryUser={setSelectedLibraryUser}
@@ -696,7 +696,7 @@ setRewritePrompts(nextRewritePrompts)
       {isPeopleLibraryOpen && (
   <PeopleLibraryPage
   query="People Library"
-    locale={locale}
+  locale={safeLocale}
   onClose={() => setIsPeopleLibraryOpen(false)}
   onPickUser={handlePickLibraryUser}
 />
@@ -757,7 +757,7 @@ setRewritePrompts(nextRewritePrompts)
     <OtherUserProfilePage
   userId={selectedProfileUserId}
   onClose={() => setSelectedProfileUserId(null)}
-  locale={locale}
+  locale={safeLocale}
 />
   )}
 </AnimatePresence>
