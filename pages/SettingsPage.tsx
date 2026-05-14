@@ -12,6 +12,7 @@ import {
   Globe,
   MessageCircle,
 } from 'lucide-react'
+
 import type { CapsulePosition } from '@/app/page'
 import type { Locale } from '@/i18n'
 
@@ -20,12 +21,15 @@ type SettingsPageProps = {
   capsulePosition: CapsulePosition
   initialDarkMode?: boolean
   initialShowCity?: boolean
+
   onCapsulePositionChange: (value: CapsulePosition) => void
 
-    locale: Locale
+  locale: Locale
   onChangeLocale: (locale: Locale) => void
+
   onDarkModeChange?: (value: boolean) => void
   onShowCityChange?: (value: boolean) => void
+
   onBlockedClick?: () => void
   onFavoritesClick?: () => void
   onLanguageClick?: () => void
@@ -77,20 +81,26 @@ export default function SettingsPage({
   capsulePosition,
   initialDarkMode = false,
   initialShowCity = false,
+
   onCapsulePositionChange,
-    locale,
+
+  locale,
   onChangeLocale,
+
   onDarkModeChange,
   onShowCityChange,
+
   onBlockedClick,
   onFavoritesClick,
   onLanguageClick,
   onMessagesClick,
 }: SettingsPageProps) {
-  const [darkMode, setDarkMode] = useState(initialDarkMode)
   const safeLocale: Locale = locale ?? 'zh-TW'
-const text = settingsText[safeLocale]
+  const text = settingsText[safeLocale]
+
+  const [darkMode, setDarkMode] = useState(initialDarkMode)
   const [showCity, setShowCity] = useState(initialShowCity)
+
   const [dragX, setDragX] = useState(0)
   const [isDraggingBack, setIsDraggingBack] = useState(false)
 
@@ -122,9 +132,12 @@ const text = settingsText[safeLocale]
     e.stopPropagation()
 
     const touch = e.touches[0]
+
     touchStartX.current = touch.clientX
     touchStartY.current = touch.clientY
+
     draggingEnabled.current = touch.clientX <= 32
+
     setIsDraggingBack(false)
   }
 
@@ -135,6 +148,7 @@ const text = settingsText[safeLocale]
     if (touchStartX.current == null || touchStartY.current == null) return
 
     const touch = e.touches[0]
+
     const deltaX = touch.clientX - touchStartX.current
     const deltaY = touch.clientY - touchStartY.current
 
@@ -200,7 +214,7 @@ const text = settingsText[safeLocale]
       onTouchEnd={handleTouchEnd}
     >
       <div className="relative min-h-screen w-full max-w-[430px] bg-[#f3f3f3] text-[#222]">
-        <div className="fixed top-0 left-1/2 z-[30] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-3 pb-3 backdrop-blur-md">
+        <div className="fixed left-1/2 top-0 z-[30] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pb-3 pt-3 backdrop-blur-md">
           <div className="relative flex items-center justify-center">
             <button
               type="button"
@@ -212,12 +226,12 @@ const text = settingsText[safeLocale]
             </button>
 
             <div className="text-[20px] font-medium tracking-[0.01em]">
-  {text.title}
-</div>
+              {text.title}
+            </div>
           </div>
         </div>
 
-        <div className="px-4 pt-[72px] pb-10">
+        <div className="px-4 pb-10 pt-[72px]">
           <div className="rounded-[22px] bg-[#d9d9d9] px-4 py-4">
             <div className="mb-4 flex items-center gap-3">
               <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
@@ -225,7 +239,7 @@ const text = settingsText[safeLocale]
               </span>
 
               <span className="text-[16px] font-medium text-[#222]">
-                {settingsText[locale].layout}
+                {text.layout}
               </span>
             </div>
 
@@ -239,13 +253,13 @@ const text = settingsText[safeLocale]
                       key={item}
                       type="button"
                       onClick={() => {
-  localStorage.setItem(
-  'feedCapsulePosition',
-  item
-)
+                        localStorage.setItem(
+                          'feedCapsulePosition',
+                          item
+                        )
 
-  onCapsulePositionChange(item)
-}}
+                        onCapsulePositionChange(item)
+                      }}
                       whileTap={{ scale: 1.05 }}
                       transition={{
                         type: 'spring',
@@ -267,18 +281,17 @@ const text = settingsText[safeLocale]
                       )}
 
                       <span className="relative z-10">
-  {item === '左'
-    ? settingsText[locale].left
-    : item === '中'
-      ? settingsText[locale].center
-      : settingsText[locale].right}
-</span>
+                        {item === '左'
+                          ? text.left
+                          : item === '中'
+                            ? text.center
+                            : text.right}
+                      </span>
                     </motion.button>
                   )
                 })}
               </div>
             </LayoutGroup>
-
 
             <div className="my-5 h-px bg-[#8f8f8f]" />
 
@@ -289,26 +302,27 @@ const text = settingsText[safeLocale]
                 </span>
 
                 <span className="text-[16px] font-medium text-[#222]">
-                  {settingsText[locale].darkMode}
+                  {text.darkMode}
                 </span>
               </div>
 
               <div className="flex items-center gap-3">
                 <span className="text-[16px] text-[#222]">
-                  {darkMode
-  ? settingsText[locale].darkOn
-  : settingsText[locale].darkOff}
+                  {darkMode ? text.darkOn : text.darkOff}
                 </span>
 
-                <Switch checked={darkMode} onClick={handleToggleDarkMode} />
+                <Switch
+                  checked={darkMode}
+                  onClick={handleToggleDarkMode}
+                />
               </div>
             </div>
           </div>
 
-          <div className="mt-[30px] rounded-[22px] bg-[#d9d9d9] py-[20px] overflow-hidden">
+          <div className="mt-[30px] overflow-hidden rounded-[22px] bg-[#d9d9d9] py-[20px]">
             <SettingsRow
               icon={<Heart size={21} strokeWidth={2.1} />}
-              label={settingsText[locale].favorites}
+              label={text.favorites}
               onClick={onFavoritesClick}
             />
 
@@ -316,59 +330,57 @@ const text = settingsText[safeLocale]
 
             <SettingsRow
               icon={<MessageCircle size={21} strokeWidth={2.1} />}
-              label={settingsText[locale].messages}
+              label={text.messages}
               onClick={onMessagesClick}
             />
 
-            
             <Divider />
 
             <SettingsRow
               icon={<Ban size={21} strokeWidth={2.1} />}
-              label={settingsText[locale].blocked}
+              label={text.blocked}
               onClick={onBlockedClick}
             />
 
-            
             <Divider />
 
             <div className="px-[30px] py-[26px]">
-  <div className="mb-4 flex items-center gap-3">
-    <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
-      <Globe size={21} strokeWidth={2.1} />
-    </span>
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
+                  <Globe size={21} strokeWidth={2.1} />
+                </span>
 
-    <span className="text-[16px] font-medium text-[#222]">
-      {settingsText[locale].language}
-    </span>
-  </div>
+                <span className="text-[16px] font-medium text-[#222]">
+                  {text.language}
+                </span>
+              </div>
 
-  <div className="flex gap-3">
-    <button
-      type="button"
-      onClick={() => onChangeLocale('zh-TW')}
-      className={`flex-1 rounded-[16px] py-[12px] text-[15px] font-medium transition ${
-        safeLocale === 'zh-TW'
-          ? 'bg-[#d9afe6] text-[#111]'
-          : 'bg-white text-[#666]'
-      }`}
-    >
-      繁中
-    </button>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => onChangeLocale('zh-TW')}
+                  className={`flex-1 rounded-[16px] py-[12px] text-[15px] font-medium transition ${
+                    safeLocale === 'zh-TW'
+                      ? 'bg-[#d9afe6] text-[#111]'
+                      : 'bg-white text-[#666]'
+                  }`}
+                >
+                  繁中
+                </button>
 
-    <button
-      type="button"
-      onClick={() => onChangeLocale('en')}
-      className={`flex-1 rounded-[16px] py-[12px] text-[15px] font-medium transition ${
-        safeLocale === 'en'
-          ? 'bg-[#d9afe6] text-[#111]'
-          : 'bg-white text-[#666]'
-      }`}
-    >
-      English
-    </button>
-  </div>
-</div>
+                <button
+                  type="button"
+                  onClick={() => onChangeLocale('en')}
+                  className={`flex-1 rounded-[16px] py-[12px] text-[15px] font-medium transition ${
+                    safeLocale === 'en'
+                      ? 'bg-[#d9afe6] text-[#111]'
+                      : 'bg-white text-[#666]'
+                  }`}
+                >
+                  English
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -389,7 +401,7 @@ function SettingsRow({
     <button
       type="button"
       onClick={onClick}
-      className="grid w-full grid-cols-[36px_minmax(0,1fr)_60px] items-center gap-x-3 pl-[30px] pr-4 py-[36px] active:bg-[#cfcfcf]"
+      className="grid w-full grid-cols-[36px_minmax(0,1fr)_60px] items-center gap-x-3 py-[36px] pl-[30px] pr-4 active:bg-[#cfcfcf]"
     >
       <span className="flex h-[22px] w-[52px] items-center justify-center text-[#111]">
         {icon}
@@ -400,7 +412,11 @@ function SettingsRow({
       </span>
 
       <span className="flex items-center justify-center">
-        <ChevronRight size={18} strokeWidth={2.4} className="text-[#444]" />
+        <ChevronRight
+          size={18}
+          strokeWidth={2.4}
+          className="text-[#444]"
+        />
       </span>
     </button>
   )

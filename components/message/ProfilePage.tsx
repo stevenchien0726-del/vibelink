@@ -175,6 +175,9 @@ export default function ProfilePage({
   locale,
   onChangeLocale,
 }: ProfilePageProps) {
+
+    const safeLocale: Locale = locale ?? 'zh-TW'
+  const text = profileText[safeLocale]
   
   useEffect(() => {
   async function init() {
@@ -1003,7 +1006,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
       className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
     >
       <PlusSquare size={15} />
-      <span>{profileText[locale].upload}</span>
+      <span>{text.upload}</span>
     </button>
   </div>
 </div>
@@ -1034,7 +1037,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   <div className="flex flex-col items-center">
     <div className="text-[18px] text-[#222]">{gridItems.length}</div>
     <div className="text-[14px] text-[#666]">
-  {profileText[locale].posts}
+  {text.posts}
 </div>
   </div>
 
@@ -1042,7 +1045,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   <div className="flex flex-col items-center">
     <div className="text-[18px] text-[#222]">5萬</div>
     <div className="text-[14px] text-[#666]">
-  {profileText[locale].followers}
+  {text.followers}
 </div>
   </div>
 </div>
@@ -1085,7 +1088,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
   style={{ WebkitAppearance: 'none', appearance: 'none' }}
 >
-  {profileText[locale].editProfile}
+  {text.editProfile}
 </button>
 
           <button
@@ -1093,7 +1096,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
             className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
             style={{ WebkitAppearance: 'none', appearance: 'none' }}
           >
-            {profileText[locale].shareProfile}
+            {text.shareProfile}
           </button>
         </div>
 
@@ -1217,7 +1220,7 @@ openSelectedPost(post)
 <div className="w-full shrink-0">
   {myShortVideos.length === 0 ? (
     <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
-      {profileText[locale].noVideos}
+      {text.noVideos}
     </div>
   ) : (
     <div className="grid grid-cols-3 gap-[2px]">
@@ -1255,7 +1258,7 @@ openSelectedPost(post)
     <div className="mb-3 mt-2 flex items-center justify-between px-[2px]">
       <span className="text-[16px] font-medium">
         <span className="ml-[1px] text-[#111]">
-  {profileText[locale].featuredStories}
+  {text.featuredStories}
 </span>
       </span>
 
@@ -1298,7 +1301,7 @@ openSelectedPost(post)
     
       <div className="mb-3 mt-2 flex items-center justify-between">
         <span className="text-[16px] font-medium text-[#111]">
-          {profileText[locale].favorites}
+          {text.favorites}
         </span>
 
         <div className="flex items-center gap-3">
@@ -1308,8 +1311,8 @@ openSelectedPost(post)
             }`}
           >
             {isFavoritesPublic
-  ? profileText[locale].public
-  : profileText[locale].private}
+  ? text.public
+  : text.private}
           </span>
 
           <button
@@ -1409,11 +1412,11 @@ openSelectedPost(post)
             onClick={() => setIsEditProfileOpen(false)}
             className="text-[16px] text-[#222]"
           >
-            {profileText[locale].cancel}
+            {text.cancel}
           </button>
 
           <div className="text-[18px] font-medium text-[#111]">
-            {profileText[locale].editProfile}
+            {text.editProfile}
           </div>
 
           <button
@@ -1421,7 +1424,7 @@ openSelectedPost(post)
             onClick={updateProfile}
             className="text-[16px] font-medium text-[#8B5CF6]"
           >
-            {profileText[locale].save}
+            {text.save}
           </button>
         </div>
 
@@ -1437,8 +1440,8 @@ openSelectedPost(post)
 
   <label className="cursor-pointer text-[15px] font-medium text-[#8B5CF6]">
     {avatarUploading
-  ? profileText[locale].uploading
-  : profileText[locale].changeAvatar}
+  ? text.uploading
+  : text.changeAvatar}
     <input
       type="file"
       accept="image/*"
@@ -1453,7 +1456,7 @@ openSelectedPost(post)
 
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-2 text-[14px] text-[#666]">
-            {profileText[locale].displayName}
+            {text.displayName}
             <input
               value={profile?.display_name || ''}
               onChange={(e) =>
@@ -1463,12 +1466,12 @@ openSelectedPost(post)
                 }))
               }
               className="h-[46px] rounded-[14px] border border-[#ddd] bg-white px-4 text-[16px] text-[#222] outline-none"
-              placeholder={profileText[locale].displayNamePlaceholder}
+              placeholder={text.displayNamePlaceholder}
             />
           </label>
 
           <label className="flex flex-col gap-2 text-[14px] text-[#666]">
-            {profileText[locale].username}
+            {text.username}
             <input
               value={profile?.username || ''}
               onChange={(e) =>
@@ -1478,12 +1481,12 @@ openSelectedPost(post)
                 }))
               }
               className="h-[46px] rounded-[14px] border border-[#ddd] bg-white px-4 text-[16px] text-[#222] outline-none"
-              placeholder={profileText[locale].usernamePlaceholder}
+              placeholder={text.usernamePlaceholder}
             />
           </label>
 
           <label className="flex flex-col gap-2 text-[14px] text-[#666]">
-            {profileText[locale].bio}
+            {text.bio}
             <textarea
               value={profile?.bio || ''}
               onChange={(e) =>
@@ -1493,7 +1496,7 @@ openSelectedPost(post)
                 }))
               }
               className="min-h-[120px] rounded-[14px] border border-[#ddd] bg-white px-4 py-3 text-[16px] text-[#222] outline-none"
-              placeholder={profileText[locale].bioPlaceholder}
+              placeholder={text.bioPlaceholder}
             />
           </label>
         </div>
@@ -1551,7 +1554,7 @@ openSelectedPost(post)
   }}
   capsulePosition={feedCapsulePosition}
   onCapsulePositionChange={onChangeFeedCapsulePosition}
-  locale={locale}
+  locale={safeLocale}
   onChangeLocale={onChangeLocale}
   initialDarkMode={false}
   initialShowCity={false}
@@ -1604,24 +1607,24 @@ openSelectedPost(post)
               style={{ originX: 0.88, originY: 0 }}
             >
               <div className="flex flex-col gap-3">
-                <MenuItem icon={<Bell size={22} />} label={profileText[locale].notifications} />
+                <MenuItem icon={<Bell size={22} />} label={text.notifications} />
                 
                 <MenuItem
   icon={<Settings size={22} />}
-  label={profileText[locale].settings}
+  label={text.settings}
   onClick={() => {
     setShowSettingsPage(true)
   }}
 />
                 
 
-                <MenuItem icon={<Activity size={22} />} label={profileText[locale].analytics} />
+                <MenuItem icon={<Activity size={22} />} label={text.analytics} />
                 
-                <MenuItem icon={<Clock3 size={22} />} label={profileText[locale].archive} />
+                <MenuItem icon={<Clock3 size={22} />} label={text.archive} />
 
                 <MenuItem
   icon={<Ticket size={22} />}
-  label={profileText[locale].membership}
+  label={text.membership}
   onClick={() => {
   setIsMenuOpen(false)
   window.open('https://vibe-membership-web.vercel.app', '_blank', 'noopener,noreferrer')
@@ -1633,14 +1636,14 @@ openSelectedPost(post)
                 
                 <MenuItem
   icon={<UserCircle2 size={22} />}
-  label={profileText[locale].account}
+  label={text.account}
   onClick={() => {
     setShowAccountManagePage(true)
     setIsMenuOpen(false)
   }}
 />
 
-                <MenuItem icon={<Megaphone size={22} />} label={profileText[locale].ads} />
+                <MenuItem icon={<Megaphone size={22} />} label={text.ads} />
               </div>
             </motion.div>
           </>
