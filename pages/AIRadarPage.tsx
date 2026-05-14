@@ -527,6 +527,9 @@ setRewritePrompts(nextRewritePrompts)
 
       {/* Main content */}
       <main
+  style={{
+    touchAction: 'pan-y',
+  }}
   ref={mainScrollRef}
   className="h-screen overflow-y-auto px-4 pt-[76px] pb-[170px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 >
