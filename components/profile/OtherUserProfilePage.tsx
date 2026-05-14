@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-
 import {
   ChevronLeft,
   Copy,
@@ -17,15 +16,92 @@ import {
   BadgeAlert,
   Ban,
   ChevronDown,
-Star,
-CircleX,
+  Star,
+  CircleX,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import type { Locale } from '@/i18n'
 
 type Props = {
   userId: string
   onClose: () => void
+  locale: Locale
 }
+
+const otherProfileText = {
+  'zh-TW': {
+    back: '返回',
+    loading: '載入對方 Profile 中...',
+    noUserId: '找不到對方用戶 ID',
+    mockUser: '目前這是模擬用戶，還沒有連到真實 Supabase Profile',
+    loadFailed: 'Profile 載入失敗',
+    userNotFound: '找不到這位用戶',
+    loginFirst: '請先登入',
+    unfollowFailed: '取消追蹤失敗:',
+    followFailed: '追蹤失敗:',
+
+    posts: '貼文',
+    followers: '粉絲',
+    follow: '追蹤',
+    following: '追蹤中',
+    message: '訊息',
+
+    noPublicPosts: '目前還沒有公開貼文',
+    shortVideoNext: '對方短影片功能下一步接',
+    storyNext: '精選限動功能下一步接',
+    privateSaved: '對方收藏不公開',
+
+    notification: '通知',
+    share: '分享',
+    report: '檢舉',
+    block: '封鎖',
+
+    addFavorite: '加到最愛',
+    unfollow: '取消追蹤',
+
+    unfollowTitle: '取消追蹤？',
+    unfollowDesc: '確定要取消追蹤這位用戶嗎？',
+    confirmUnfollow: '確認取消追蹤',
+    cancel: '取消',
+  },
+
+  en: {
+    back: 'Back',
+    loading: 'Loading profile...',
+    noUserId: 'User ID not found',
+    mockUser:
+      'This is a mock user and is not connected to a real Supabase profile yet',
+    loadFailed: 'Failed to load profile',
+    userNotFound: 'User not found',
+    loginFirst: 'Please log in first',
+    unfollowFailed: 'Failed to unfollow:',
+    followFailed: 'Failed to follow:',
+
+    posts: 'Posts',
+    followers: 'Followers',
+    follow: 'Follow',
+    following: 'Following',
+    message: 'Message',
+
+    noPublicPosts: 'No public posts yet',
+    shortVideoNext: 'Short videos coming next',
+    storyNext: 'Story highlights coming next',
+    privateSaved: 'Saved posts are private',
+
+    notification: 'Notifications',
+    share: 'Share',
+    report: 'Report',
+    block: 'Block',
+
+    addFavorite: 'Add to Favorites',
+    unfollow: 'Unfollow',
+
+    unfollowTitle: 'Unfollow?',
+    unfollowDesc: 'Are you sure you want to unfollow this user?',
+    confirmUnfollow: 'Confirm Unfollow',
+    cancel: 'Cancel',
+  },
+} as const
 
 const activeColor = '#d89ad0'
 const inactiveColor = '#222'
@@ -35,7 +111,13 @@ const isUuid = (value: string) =>
     value
   )
 
-export default function OtherUserProfilePage({ userId, onClose }: Props) {
+export default function OtherUserProfilePage({
+  userId,
+  onClose,
+  locale,
+}: Props) {
+  const text = otherProfileText[locale]
+
   const [profile, setProfile] = useState<any>(null)
   const [posts, setPosts] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState(0)
@@ -44,9 +126,8 @@ export default function OtherUserProfilePage({ userId, onClose }: Props) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isFollowMenuOpen, setIsFollowMenuOpen] = useState(false)
   const [isUnfollowConfirmOpen, setIsUnfollowConfirmOpen] = useState(false)
-
   const [isFollowing, setIsFollowing] = useState(false)
-const [followerCount, setFollowerCount] = useState(0)
+  const [followerCount, setFollowerCount] = useState(0)
 
   useEffect(() => {
     let alive = true
@@ -56,13 +137,13 @@ const [followerCount, setFollowerCount] = useState(0)
       setLoadError('')
 
       if (!userId) {
-        setLoadError('找不到對方用戶 ID')
+        setLoadError(text.noUserId)
         setLoading(false)
         return
       }
 
       if (!isUuid(userId)) {
-        setLoadError('目前這是模擬用戶，還沒有連到真實 Supabase Profile')
+        setLoadError(text.mockUser)
         setProfile(null)
         setPosts([])
         setLoading(false)
@@ -78,7 +159,7 @@ const [followerCount, setFollowerCount] = useState(0)
       if (!alive) return
 
       if (profileError) {
-        setLoadError('Profile 載入失敗')
+        setLoadError(text.loadFailed)
         setProfile(null)
         setPosts([])
         setLoading(false)
@@ -86,7 +167,7 @@ const [followerCount, setFollowerCount] = useState(0)
       }
 
       if (!profileData) {
-        setLoadError('找不到這位用戶')
+        setLoadError(text.userNotFound)
         setProfile(null)
         setPosts([])
         setLoading(false)
@@ -97,30 +178,30 @@ const [followerCount, setFollowerCount] = useState(0)
       setLoading(false)
 
       const {
-  data: { user },
-} = await supabase.auth.getUser()
+        data: { user },
+      } = await supabase.auth.getUser()
 
-const { count } = await supabase
-  .from('follows')
-  .select('*', { count: 'exact', head: true })
-  .eq('following_id', userId)
+      const { count } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', userId)
 
-if (!alive) return
+      if (!alive) return
 
-setFollowerCount(count ?? 0)
+      setFollowerCount(count ?? 0)
 
-if (user) {
-  const { data: followRow } = await supabase
-    .from('follows')
-    .select('id')
-    .eq('follower_id', user.id)
-    .eq('following_id', userId)
-    .maybeSingle()
+      if (user) {
+        const { data: followRow } = await supabase
+          .from('follows')
+          .select('id')
+          .eq('follower_id', user.id)
+          .eq('following_id', userId)
+          .maybeSingle()
 
-  if (!alive) return
+        if (!alive) return
 
-  setIsFollowing(!!followRow)
-}
+        setIsFollowing(!!followRow)
+      }
 
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
@@ -151,57 +232,57 @@ if (user) {
     return () => {
       alive = false
     }
-  }, [userId])
+  }, [userId, text])
 
   const gridItems = posts.filter((post) => post.post_images?.length > 0)
 
   async function toggleFollow() {
-  if (!userId || !isUuid(userId)) return
+    if (!userId || !isUuid(userId)) return
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) {
-    alert('請先登入')
-    return
-  }
-
-  if (user.id === userId) return
-
-  if (isFollowing) {
-    setIsFollowing(false)
-    setFollowerCount((prev) => Math.max(0, prev - 1))
-
-    const { error } = await supabase
-      .from('follows')
-      .delete()
-      .eq('follower_id', user.id)
-      .eq('following_id', userId)
-
-    if (error) {
-      console.error('取消追蹤失敗:', error)
-      setIsFollowing(true)
-      setFollowerCount((prev) => prev + 1)
+    if (!user) {
+      alert(text.loginFirst)
+      return
     }
 
-    return
+    if (user.id === userId) return
+
+    if (isFollowing) {
+      setIsFollowing(false)
+      setFollowerCount((prev) => Math.max(0, prev - 1))
+
+      const { error } = await supabase
+        .from('follows')
+        .delete()
+        .eq('follower_id', user.id)
+        .eq('following_id', userId)
+
+      if (error) {
+        console.error(text.unfollowFailed, error)
+        setIsFollowing(true)
+        setFollowerCount((prev) => prev + 1)
+      }
+
+      return
+    }
+
+    setIsFollowing(true)
+    setFollowerCount((prev) => prev + 1)
+
+    const { error } = await supabase.from('follows').insert({
+      follower_id: user.id,
+      following_id: userId,
+    })
+
+    if (error) {
+      console.error(text.followFailed, error)
+      setIsFollowing(false)
+      setFollowerCount((prev) => Math.max(0, prev - 1))
+    }
   }
-
-  setIsFollowing(true)
-  setFollowerCount((prev) => prev + 1)
-
-  const { error } = await supabase.from('follows').insert({
-    follower_id: user.id,
-    following_id: userId,
-  })
-
-  if (error) {
-    console.error('追蹤失敗:', error)
-    setIsFollowing(false)
-    setFollowerCount((prev) => Math.max(0, prev - 1))
-  }
-}
 
   return (
     <motion.div
@@ -209,11 +290,7 @@ if (user) {
       initial={{ opacity: 0, scale: 0.92, y: 24 }}
       animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
       exit={{ opacity: 0, scale: 0.92, y: 40 }}
-      transition={{
-        type: 'spring',
-        stiffness: 360,
-        damping: 34,
-      }}
+      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
       drag
       dragDirectionLock
       dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
@@ -229,9 +306,7 @@ if (user) {
           info.velocity.y > 700 ||
           info.velocity.x > 700
 
-        if (shouldClose) {
-          onClose()
-        }
+        if (shouldClose) onClose()
       }}
     >
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[76px]">
@@ -243,7 +318,7 @@ if (user) {
               className="flex h-[38px] items-center gap-1 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222] active:scale-95"
             >
               <ChevronLeft size={18} />
-              <span>返回</span>
+              <span>{text.back}</span>
             </button>
 
             <div />
@@ -261,7 +336,7 @@ if (user) {
 
         {loading ? (
           <div className="py-20 text-center text-[14px] text-[#999]">
-            載入對方 Profile 中...
+            {text.loading}
           </div>
         ) : loadError ? (
           <div className="py-20 text-center text-[14px] text-[#999]">
@@ -269,7 +344,7 @@ if (user) {
           </div>
         ) : !profile ? (
           <div className="py-20 text-center text-[14px] text-[#999]">
-            找不到這位用戶
+            {text.userNotFound}
           </div>
         ) : (
           <>
@@ -286,8 +361,11 @@ if (user) {
 
                 <div>
                   <div className="text-[18px] font-medium text-[#222]">
-                    {profile?.display_name || profile?.username || 'Vibelink User'}
+                    {profile?.display_name ||
+                      profile?.username ||
+                      'Vibelink User'}
                   </div>
+
                   <div className="text-[18px] font-medium text-[#444]">
                     {profile?.username || 'user'}
                   </div>
@@ -299,13 +377,14 @@ if (user) {
                   <div className="text-[18px] text-[#222]">
                     {gridItems.length}
                   </div>
-                  <div className="text-[14px] text-[#666]">貼文</div>
+                  <div className="text-[14px] text-[#666]">{text.posts}</div>
                 </div>
 
                 <div className="flex flex-col items-center">
                   <div className="text-[18px] text-[#222]">{followerCount}</div>
-
-                  <div className="text-[14px] text-[#666]">粉絲</div>
+                  <div className="text-[14px] text-[#666]">
+                    {text.followers}
+                  </div>
                 </div>
               </div>
             </div>
@@ -327,52 +406,54 @@ if (user) {
             </div>
 
             <div className="mb-4 flex w-full items-center gap-3">
-  <button
-    type="button"
-    onClick={() => {
-      if (isFollowing) {
-        setIsFollowMenuOpen(true)
-        return
-      }
+              <button
+                type="button"
+                onClick={() => {
+                  if (isFollowing) {
+                    setIsFollowMenuOpen(true)
+                    return
+                  }
 
-      toggleFollow()
-    }}
-    className="flex h-[44px] flex-1 items-center justify-center gap-2 rounded-full border border-transparent text-[15px] font-medium shadow-[0_4px_14px_rgba(0,0,0,0.06)] transition active:scale-95"
-style={{
-  backgroundColor: isFollowing ? '#ececec' : '#C084FC',
-  color: isFollowing ? '#111' : '#fff',
-}}
-  >
-    <span>{isFollowing ? '追蹤中' : '追蹤'}</span>
+                  toggleFollow()
+                }}
+                className="flex h-[44px] flex-1 items-center justify-center gap-2 rounded-full border border-transparent text-[15px] font-medium shadow-[0_4px_14px_rgba(0,0,0,0.06)] transition active:scale-95"
+                style={{
+                  backgroundColor: isFollowing ? '#ececec' : '#C084FC',
+                  color: isFollowing ? '#111' : '#fff',
+                }}
+              >
+                <span>{isFollowing ? text.following : text.follow}</span>
 
-    {isFollowing && (
-      <ChevronDown size={20} strokeWidth={3} />
-    )}
-  </button>
+                {isFollowing && <ChevronDown size={20} strokeWidth={3} />}
+              </button>
 
-  <button
-    type="button"
-    className="flex h-[44px] flex-1 items-center justify-center rounded-full bg-white text-[15px] font-medium text-[#111] shadow-[0_4px_14px_rgba(0,0,0,0.06)] active:scale-95"
-  >
-    訊息
-  </button>
-</div>
+              <button
+                type="button"
+                className="flex h-[44px] flex-1 items-center justify-center rounded-full bg-white text-[15px] font-medium text-[#111] shadow-[0_4px_14px_rgba(0,0,0,0.06)] active:scale-95"
+              >
+                {text.message}
+              </button>
+            </div>
 
             <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">
               <div className="grid grid-cols-4">
-                {[Grid2x2, PlaySquare, ImageIcon, Bookmark].map((Icon, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setActiveTab(index)}
-                    className="flex h-[34px] items-center justify-center"
-                  >
-                    <Icon
-                      size={20}
-                      color={activeTab === index ? activeColor : inactiveColor}
-                    />
-                  </button>
-                ))}
+                {[Grid2x2, PlaySquare, ImageIcon, Bookmark].map(
+                  (Icon, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setActiveTab(index)}
+                      className="flex h-[34px] items-center justify-center"
+                    >
+                      <Icon
+                        size={20}
+                        color={
+                          activeTab === index ? activeColor : inactiveColor
+                        }
+                      />
+                    </button>
+                  )
+                )}
               </div>
 
               <div
@@ -394,7 +475,7 @@ style={{
                 <div className="w-full shrink-0">
                   {gridItems.length === 0 ? (
                     <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
-                      目前還沒有公開貼文
+                      {text.noPublicPosts}
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 gap-[2px]">
@@ -428,19 +509,19 @@ style={{
 
                 <div className="w-full shrink-0">
                   <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
-                    對方短影片功能下一步接
+                    {text.shortVideoNext}
                   </div>
                 </div>
 
                 <div className="w-full shrink-0">
                   <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
-                    精選限動功能下一步接
+                    {text.storyNext}
                   </div>
                 </div>
 
                 <div className="w-full shrink-0">
                   <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
-                    對方收藏不公開
+                    {text.privateSaved}
                   </div>
                 </div>
               </div>
@@ -449,7 +530,7 @@ style={{
         )}
       </div>
 
-            <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait">
         {isMenuOpen && (
           <>
             <motion.div
@@ -466,11 +547,7 @@ style={{
               initial={{ y: 260, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 260, opacity: 0 }}
-              transition={{
-                type: 'spring',
-                stiffness: 360,
-                damping: 34,
-              }}
+              transition={{ type: 'spring', stiffness: 360, damping: 34 }}
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
@@ -497,7 +574,7 @@ style={{
                     <Bell size={23} />
                   </div>
 
-                  <span className="ml-1">通知</span>
+                  <span className="ml-1">{text.notification}</span>
 
                   <div className="ml-auto mr-2 flex h-[20px] w-[42px] items-center justify-end rounded-full bg-[#d89ad0] px-[2px]">
                     <div className="h-[16px] w-[16px] rounded-full bg-white" />
@@ -514,7 +591,7 @@ style={{
                     <Send size={23} />
                   </div>
 
-                  <span className="ml-1">分享</span>
+                  <span className="ml-1">{text.share}</span>
                 </button>
               </div>
 
@@ -527,7 +604,7 @@ style={{
                     <BadgeAlert size={23} />
                   </div>
 
-                  <span className="ml-1">檢舉</span>
+                  <span className="ml-1">{text.report}</span>
                 </button>
 
                 <div className="mx-5 h-px bg-[#cfcfcf]" />
@@ -540,145 +617,136 @@ style={{
                     <Ban size={23} />
                   </div>
 
-                  <span className="ml-1">封鎖</span>
+                  <span className="ml-1">{text.block}</span>
                 </button>
               </div>
             </motion.div>
-                    </>
+          </>
         )}
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
         {isFollowMenuOpen && (
-    <>
-      <motion.div
-        className="fixed inset-0 z-[220] bg-black/35"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        onClick={() => setIsFollowMenuOpen(false)}
-      />
-
-      <motion.div
-        className="fixed bottom-0 left-1/2 z-[230] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[#d9d9d9] px-4 pt-4 pb-8 shadow-[0_-12px_32px_rgba(0,0,0,0.12)]"
-        initial={{ y: 230, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 230, opacity: 0 }}
-        transition={{
-          type: 'spring',
-          stiffness: 360,
-          damping: 34,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-5 flex justify-end">
-          <div className="rounded-[18px] bg-[#ececec] p-1">
-            <button
-              type="button"
+          <>
+            <motion.div
+              className="fixed inset-0 z-[220] bg-black/35"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               onClick={() => setIsFollowMenuOpen(false)}
-              className="flex h-[42px] min-w-[112px] items-center justify-center rounded-[15px] bg-white text-[13px] text-[#111] active:scale-95"
+            />
+
+            <motion.div
+              className="fixed bottom-0 left-1/2 z-[230] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[#d9d9d9] px-4 pt-4 pb-8 shadow-[0_-12px_32px_rgba(0,0,0,0.12)]"
+              initial={{ y: 230, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 230, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              CLOSE
-            </button>
-          </div>
-        </div>
+              <div className="mb-5 flex justify-end">
+                <div className="rounded-[18px] bg-[#ececec] p-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsFollowMenuOpen(false)}
+                    className="flex h-[42px] min-w-[112px] items-center justify-center rounded-[15px] bg-white text-[13px] text-[#111] active:scale-95"
+                  >
+                    CLOSE
+                  </button>
+                </div>
+              </div>
 
-        <div className="overflow-hidden rounded-[16px] bg-white">
-  <button
-    type="button"
-    className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[#111] active:bg-black/5"
-  >
-    <div className="flex w-[54px] items-center justify-end">
-      <Star size={18} />
-    </div>
+              <div className="overflow-hidden rounded-[16px] bg-white">
+                <button
+                  type="button"
+                  className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[#111] active:bg-black/5"
+                >
+                  <div className="flex w-[54px] items-center justify-end">
+                    <Star size={18} />
+                  </div>
 
-    <span className="ml-5">加到最愛</span>
-  </button>
+                  <span className="ml-5">{text.addFavorite}</span>
+                </button>
 
-  <div className="mx-5 h-px bg-[#cfcfcf]" />
+                <div className="mx-5 h-px bg-[#cfcfcf]" />
 
-  <button
-    type="button"
-    onClick={() => {
-  setIsFollowMenuOpen(false)
-  setIsUnfollowConfirmOpen(true)
-}}
-    className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[#111] active:bg-black/5"
-  >
-    <div className="flex w-[54px] items-center justify-end">
-      <CircleX size={18} />
-    </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFollowMenuOpen(false)
+                    setIsUnfollowConfirmOpen(true)
+                  }}
+                  className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[#111] active:bg-black/5"
+                >
+                  <div className="flex w-[54px] items-center justify-end">
+                    <CircleX size={18} />
+                  </div>
 
-    <span className="ml-5">
-      {isFollowing ? '取消追蹤' : '追蹤'}
-    </span>
-  </button>
-</div>
-      </motion.div>
-    </>
-  )}
-            </AnimatePresence>
+                  <span className="ml-5">
+                    {isFollowing ? text.unfollow : text.follow}
+                  </span>
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isUnfollowConfirmOpen && (
-    <>
-      <motion.div
-        className="fixed inset-0 z-[240] bg-black/40"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={() => setIsUnfollowConfirmOpen(false)}
-      />
+          <>
+            <motion.div
+              className="fixed inset-0 z-[240] bg-black/40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsUnfollowConfirmOpen(false)}
+            />
 
-      <motion.div
-        className="fixed left-1/2 top-1/2 z-[250] w-[300px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[22px] bg-white shadow-[0_18px_45px_rgba(0,0,0,0.22)]"
-        initial={{ opacity: 0, scale: 0.92, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.92, y: 12 }}
-        transition={{
-          type: 'spring',
-          stiffness: 360,
-          damping: 30,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="px-5 pt-6 pb-4 text-center">
-          <div className="text-[17px] font-semibold text-[#111]">
-            取消追蹤？
-          </div>
+            <motion.div
+              className="fixed left-1/2 top-1/2 z-[250] w-[300px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[22px] bg-white shadow-[0_18px_45px_rgba(0,0,0,0.22)]"
+              initial={{ opacity: 0, scale: 0.92, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 12 }}
+              transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-5 pt-6 pb-4 text-center">
+                <div className="text-[17px] font-semibold text-[#111]">
+                  {text.unfollowTitle}
+                </div>
 
-          <div className="mt-2 text-[14px] leading-[1.45] text-[#777]">
-            確定要取消追蹤這位用戶嗎？
-          </div>
-        </div>
+                <div className="mt-2 text-[14px] leading-[1.45] text-[#777]">
+                  {text.unfollowDesc}
+                </div>
+              </div>
 
-        <div className="h-px bg-[#e5e5e5]" />
+              <div className="h-px bg-[#e5e5e5]" />
 
-        <button
-          type="button"
-          onClick={() => {
-            toggleFollow()
-            setIsUnfollowConfirmOpen(false)
-          }}
-          className="flex h-[50px] w-full items-center justify-center text-[15px] font-semibold text-red-500 active:bg-black/5"
-        >
-          確認取消追蹤
-        </button>
+              <button
+                type="button"
+                onClick={() => {
+                  toggleFollow()
+                  setIsUnfollowConfirmOpen(false)
+                }}
+                className="flex h-[50px] w-full items-center justify-center text-[15px] font-semibold text-red-500 active:bg-black/5"
+              >
+                {text.confirmUnfollow}
+              </button>
 
-        <div className="h-px bg-[#e5e5e5]" />
+              <div className="h-px bg-[#e5e5e5]" />
 
-        <button
-          type="button"
-          onClick={() => setIsUnfollowConfirmOpen(false)}
-          className="flex h-[50px] w-full items-center justify-center text-[15px] text-[#111] active:bg-black/5"
-        >
-          取消
-        </button>
-      </motion.div>
-    </>
-  )}
-      
+              <button
+                type="button"
+                onClick={() => setIsUnfollowConfirmOpen(false)}
+                className="flex h-[50px] w-full items-center justify-center text-[15px] text-[#111] active:bg-black/5"
+              >
+                {text.cancel}
+              </button>
+            </motion.div>
+          </>
+        )}
       </AnimatePresence>
     </motion.div>
   )

@@ -12,8 +12,6 @@ import { BrushCleaning, Mic, Sparkles } from 'lucide-react'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import { FakeUser } from '../data/fakeUsers'
 
-import { searchAIRadarUsers } from '@/lib/aiRadar'
-
 import { MEMBERSHIP_URL, openLink } from '@/lib/links'
 
 import { SKY_LIBRARY_RESULTS } from '@/lib/mockSkyLibrary'
@@ -28,12 +26,43 @@ import AIRadarInputBar from '@/components/airadar/AIRadarInputBar'
 
 import { generateAIRadarRewriteQueries } from '@/lib/ai-radar/generateAIRadarRewriteQueries'
 import OtherUserProfilePage from '../components/profile/OtherUserProfilePage'
+import type { Locale } from '@/i18n'
 
-const suggestionItems = [
-  '幫我找可愛奶狗弟弟',
-  '喜歡大自然的女生',
-  '身材性感內建男模特',
-]
+type AIRadarPageProps = {
+  locale: Locale
+}
+
+const aiRadarText = {
+  'zh-TW': {
+    loginTitle: '登入 Vibelink',
+    loginSubtitle: '登入後即可使用 AI 雷達與完整功能',
+    loginButton: 'GOOGLE 登入',
+    loggingIn: '登入中...',
+    heroTitle: 'AI雷達：想找什麼Vibe的人?',
+    retry: '重新搜尋',
+    rewriteTitle: '你也可以試試這樣問',
+    suggestions: [
+      '幫我找可愛奶狗弟弟',
+      '喜歡大自然的女生',
+      '身材性感內建男模特',
+    ],
+  },
+
+  en: {
+    loginTitle: 'Log in to Vibelink',
+    loginSubtitle: 'Log in to use AI Radar and all features',
+    loginButton: 'Continue with Google',
+    loggingIn: 'Logging in...',
+    heroTitle: 'AI Radar: What kind of vibe are you looking for?',
+    retry: 'Search again',
+    rewriteTitle: 'You can also try asking',
+    suggestions: [
+      'Find me a cute softboy',
+      'Girls who love nature',
+      'Sexy model-type guys',
+    ],
+  },
+} as const
 
 const SKY_USER_ANALYSIS: Record<string, string> = {
   'sky-match-1':
@@ -58,7 +87,7 @@ const SKY_MORE_WALL_IMAGES = [
   '/sky-more/5.jpg',
 ]
 
-export default function AIRadarPage() {
+export default function AIRadarPage({ locale }: AIRadarPageProps) {
   const [refreshKey, setRefreshKey] = useState(0)
   const [refreshCount, setRefreshCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
@@ -84,7 +113,6 @@ const [showMorePrompts, setShowMorePrompts] = useState(false)
 const [rewritePrompts, setRewritePrompts] = useState<string[]>([])
 
 const [showTopBar, setShowTopBar] = useState(true)
-const lastScrollYRef = useRef(0)
 
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const [selectedLibraryUser, setSelectedLibraryUser] = useState<{
@@ -468,11 +496,11 @@ setRewritePrompts(nextRewritePrompts)
     <div className="w-full max-w-[360px] rounded-[36px] bg-white px-7 py-9 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
 
       <h2 className="text-[28px] font-semibold text-[#222]">
-        登入 Vibelink
+        {aiRadarText[locale].loginTitle}
       </h2>
 
       <p className="mt-4 text-[16px] text-[#888]">
-        登入後即可使用 AI 雷達與完整功能
+        {aiRadarText[locale].loginSubtitle}
       </p>
 
       <button
@@ -481,7 +509,9 @@ setRewritePrompts(nextRewritePrompts)
         onClick={handleGoogleLogin}
         className="mt-8 flex h-[54px] w-full items-center justify-center rounded-full bg-white text-[18px] font-medium text-[#111] shadow-[0_4px_14px_rgba(0,0,0,0.14)] transition active:scale-[0.98] disabled:opacity-60"
       >
-        {authLoading ? '登入中...' : 'GOOGLE 登入'}
+        {authLoading
+  ? aiRadarText[locale].loggingIn
+  : aiRadarText[locale].loginButton}
       </button>
     </div>
   </div>
@@ -505,11 +535,11 @@ setRewritePrompts(nextRewritePrompts)
   <div className="fixed left-1/2 top-[40%] z-[55] w-full max-w-[430px] -translate-x-1/2 -translate-y-1/2 px-8">
     <div className="mb-6 flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
       <Sparkles size={17} fill="currentColor" />
-      <span>AI雷達：想找什麼Vibe的人?</span>
+      <span>{aiRadarText[locale].heroTitle}</span>
     </div>
 
     <div className="flex flex-col gap-3">
-      {suggestionItems.map((item) => (
+      {aiRadarText[locale].suggestions.map((item) => (
         <button
           key={item}
           type="button"
@@ -544,7 +574,7 @@ setRewritePrompts(nextRewritePrompts)
       onClick={handleRetry}
       className="mt-2 rounded-full bg-red-100 px-3 py-1 text-[12px] font-medium text-red-600 active:scale-95"
     >
-      重新搜尋
+      {aiRadarText[locale].retry}
     </button>
   </div>
 )}
@@ -598,7 +628,7 @@ setRewritePrompts(nextRewritePrompts)
     
 {showMorePrompts && (
   <AIRadarPromptList
-  title="你也可以試試這樣問"
+  title={aiRadarText[locale].rewriteTitle}
   variant="rewrite"
   prompts={
     isSkySeedSearch
@@ -649,6 +679,7 @@ setRewritePrompts(nextRewritePrompts)
 
 <AIRadarInputBar
   inputValue={inputValue}
+  locale={locale}
   setInputValue={setInputValue}
   selectedLibraryUser={selectedLibraryUser}
   setSelectedLibraryUser={setSelectedLibraryUser}
@@ -662,6 +693,7 @@ setRewritePrompts(nextRewritePrompts)
       {isPeopleLibraryOpen && (
   <PeopleLibraryPage
   query="People Library"
+    locale={locale}
   onClose={() => setIsPeopleLibraryOpen(false)}
   onPickUser={handlePickLibraryUser}
 />
@@ -720,9 +752,10 @@ setRewritePrompts(nextRewritePrompts)
 <AnimatePresence>
   {selectedProfileUserId && (
     <OtherUserProfilePage
-      userId={selectedProfileUserId}
-      onClose={() => setSelectedProfileUserId(null)}
-    />
+  userId={selectedProfileUserId}
+  onClose={() => setSelectedProfileUserId(null)}
+  locale={locale}
+/>
   )}
 </AnimatePresence>
     </>

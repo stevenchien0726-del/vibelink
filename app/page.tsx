@@ -17,6 +17,11 @@ const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
 export default function Page() {
   const [page, setPage] = useState<AppPage>('ai')
+  const [mounted, setMounted] = useState(false)
+
+useEffect(() => {
+  setMounted(true)
+}, [])
 
   const [locale, setLocale] = useState<Locale>(() => {
   if (typeof window === 'undefined') return 'zh-TW'
@@ -30,10 +35,10 @@ export default function Page() {
   return 'zh-TW'
 })
 
-
 useEffect(() => {
+  if (!mounted) return
   localStorage.setItem(LOCALE_STORAGE_KEY, locale)
-}, [locale])
+}, [locale, mounted])
 
   const [showWarning, setShowWarning] = useState(false)
 
@@ -315,6 +320,10 @@ useEffect(() => {
       ? { transform: `translateX(${swipeOffset}px)` }
       : undefined
 
+  if (!mounted) {
+  return null
+}
+
   return (
     <main
       className="mx-auto min-h-screen w-full max-w-[430px] overflow-x-hidden bg-[#f5f5f5] pb-[90px]"
@@ -342,15 +351,18 @@ useEffect(() => {
         style={pageTranslateStyle}
       >
         <div className={page === 'home' ? 'block' : 'hidden'}>
-  <HomePage feedCapsulePosition={feedCapsulePosition} />
+  <HomePage
+  feedCapsulePosition={feedCapsulePosition}
+  locale={locale}
+/>
 </div>
 
 <div className={page === 'ai' ? 'block' : 'hidden'}>
-  <AIHelperPage />
+  <AIHelperPage locale={locale} />
 </div>
 
 <div className={page === 'message' ? 'block' : 'hidden'}>
-  <MessagePage />
+  <MessagePage locale={locale} />
 </div>
 
 <div className={page === 'profile' ? 'block' : 'hidden'}>

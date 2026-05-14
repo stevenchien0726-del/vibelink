@@ -14,6 +14,7 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import type { CapsulePosition } from '@/app/page'
 import AIStoryRow from '@/components/AIStoryRow'
 
+import type { Locale } from '@/i18n'
 import WideMenuSheet from '@/components/WideMenuSheet'
 
 import ShareSheet from '@/components/ShareSheet'
@@ -47,6 +48,7 @@ type StoryItem = {
 
 type HomePageProps = {
   feedCapsulePosition: CapsulePosition
+  locale: Locale
 }
 
 type CreatedPostPayload = {
@@ -94,8 +96,8 @@ const storyPagesMap: Record<string, { title: string; bg: string }[]> = {
 
 export default function HomePage({
   feedCapsulePosition,
+  locale,
 }: HomePageProps) {
-  
 
   const [toast, setToast] = useState<string | null>(null)
 
@@ -1610,6 +1612,7 @@ onOpenProfile={(post) => {
         {isPeopleLibraryOpen && (
           <PeopleLibraryPage
   query="People Library"
+  locale={locale}
   onClose={() => setIsPeopleLibraryOpen(false)}
   onOpenProfile={(userId) => {
   console.log('HomePage receive open profile:', userId)
@@ -1830,6 +1833,7 @@ onTouchEnd={(e) => e.stopPropagation()}
 <AnimatePresence mode="wait">
   {selectedProfileUserId && (
     <OtherUserProfilePage
+      locale={locale}
       userId={selectedProfileUserId}
       onClose={() => setSelectedProfileUserId(null)}
     />

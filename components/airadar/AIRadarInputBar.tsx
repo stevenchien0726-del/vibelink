@@ -1,6 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
+import type { Locale } from '@/i18n'
 
 type SelectedUser = {
   id: string
@@ -17,7 +18,19 @@ type Props = {
   onSubmit: () => void
   hasInput: boolean
   targetRef: React.RefObject<HTMLDivElement | null>
+
+  locale: Locale
 }
+
+const inputText = {
+  'zh-TW': {
+    placeholder: 'AI雷達',
+  },
+
+  en: {
+    placeholder: 'AI Radar',
+  },
+} as const
 
 export default function AIRadarInputBar({
   inputValue,
@@ -28,6 +41,7 @@ export default function AIRadarInputBar({
   onSubmit,
   hasInput,
   targetRef,
+  locale,
 }: Props) {
   return (
     <div className="fixed bottom-[92px] left-1/2 z-[60] flex w-full max-w-[430px] -translate-x-1/2 items-center gap-2 px-4">
@@ -35,14 +49,14 @@ export default function AIRadarInputBar({
         {selectedLibraryUser ? (
           <div className="flex h-[50px] w-full items-center gap-2 rounded-full bg-[#D9D9D9] px-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
             {selectedLibraryUser.avatar ? (
-  <img
-    src={selectedLibraryUser.avatar}
-    alt={selectedLibraryUser.name}
-    className="h-[30px] w-[30px] rounded-full object-cover"
-  />
-) : (
-  <div className="h-[30px] w-[30px] shrink-0 rounded-full bg-[#c893cf]" />
-)}
+              <img
+                src={selectedLibraryUser.avatar}
+                alt={selectedLibraryUser.name}
+                className="h-[30px] w-[30px] rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-[30px] w-[30px] shrink-0 rounded-full bg-[#c893cf]" />
+            )}
 
             <span className="min-w-0 flex-1 truncate text-[13px] text-[#222]">
               {selectedLibraryUser.name}
@@ -65,6 +79,7 @@ export default function AIRadarInputBar({
             className="flex h-[50px] w-full items-center justify-center gap-[8px] rounded-full bg-[#D9D9D9] px-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition active:scale-95"
           >
             <UserCircleIcon />
+
             <span className="text-[22px] font-semibold leading-none text-[#111]">
               +
             </span>
@@ -79,7 +94,7 @@ export default function AIRadarInputBar({
           onKeyDown={(e) => {
             if (e.key === 'Enter') onSubmit()
           }}
-          placeholder="AI雷達"
+          placeholder={inputText[locale].placeholder}
           className="w-full min-w-0 text-[15px] text-[#222] placeholder:text-[#8a8a8a] outline-none"
         />
 
@@ -100,7 +115,9 @@ function UserCircleIcon() {
   return (
     <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.9" />
+
       <circle cx="12" cy="9" r="3" stroke="currentColor" strokeWidth="1.8" />
+
       <path
         d="M7 18c1-2.2 2.9-3.5 5-3.5s4 1.3 5 3.5"
         stroke="currentColor"
@@ -117,7 +134,14 @@ function EnterArrowIcon({ active }: { active: boolean }) {
   return (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2.2" />
-      <path d="M12 16V9" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+
+      <path
+        d="M12 16V9"
+        stroke={color}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+
       <path
         d="M8 13l4-4 4 4"
         stroke={color}

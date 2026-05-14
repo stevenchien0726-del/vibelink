@@ -11,6 +11,7 @@ import {
 import { Search } from 'lucide-react'
 import PeopleFolderPage from './PeopleFolderPage'
 import { supabase } from '../../../../lib/supabase'
+import type { Locale } from '@/i18n'
 
 type PickedUser = {
   id: string
@@ -31,49 +32,54 @@ type FolderItem = {
 
 type PeopleLibraryPageProps = {
   query?: string
+  locale: Locale
   onClose: () => void
   onPickUser?: (payload: PickUserPayload) => void
   onOpenProfile?: (userId: string) => void
 }
 
-const folders: FolderItem[] = [
-  { id: 'recent', label: '最近追蹤', emoji: '🆕' },
-  { id: 'favorite', label: '我的最愛', emoji: '✨' },
-  { id: 'more-interaction', label: '較常互動', emoji: '💬' },
-  { id: 'mutual-follow', label: '互相關注中', emoji: '🔁' },
-  { id: 'social-lover', label: '熱愛社交的人', emoji: '🥳' },
-  { id: 'might-care', label: '你可能在意的人', emoji: '👀' },
-  { id: 'less-interaction', label: '較少互動', emoji: '💤' },
-  { id: 'creator', label: 'Vibelink創作者', emoji: '🎨' },
-  { id: 'official-business', label: '官方和商業帳戶', emoji: '🏢' },
-  { id: 'high-reply', label: '高頻互動與回覆', emoji: '⚡' },
-]
+function getFolders(locale: Locale): FolderItem[] {
+  return [
+    { id: 'recent', label: locale === 'en' ? 'Recently Followed' : '最近追蹤', emoji: '🆕' },
+    { id: 'favorite', label: locale === 'en' ? 'My Favorites' : '我的最愛', emoji: '✨' },
+    { id: 'more-interaction', label: locale === 'en' ? 'Frequent Interactions' : '較常互動', emoji: '💬' },
+    { id: 'mutual-follow', label: locale === 'en' ? 'Mutual Following' : '互相關注中', emoji: '🔁' },
+    { id: 'social-lover', label: locale === 'en' ? 'Social Lovers' : '熱愛社交的人', emoji: '🥳' },
+    { id: 'might-care', label: locale === 'en' ? 'People You May Like' : '你可能在意的人', emoji: '👀' },
+    { id: 'less-interaction', label: locale === 'en' ? 'Less Interaction' : '較少互動', emoji: '💤' },
+    { id: 'creator', label: locale === 'en' ? 'Vibelink Creators' : 'Vibelink創作者', emoji: '🎨' },
+    { id: 'official-business', label: locale === 'en' ? 'Official & Business' : '官方和商業帳戶', emoji: '🏢' },
+    { id: 'high-reply', label: locale === 'en' ? 'High Replies' : '高頻互動與回覆', emoji: '⚡' },
+  ]
+}
 
-function getFolderName(id: string) {
+function getFolderName(id: string, locale: Locale) {
   const map: Record<string, string> = {
-    recent: '🆕 最近追蹤',
-    favorite: '✨ 我的最愛',
-    'more-interaction': '💬 較常互動',
-    'mutual-follow': '🔁 互相關注中',
-    'social-lover': '🥳 熱愛社交的人',
-    'might-care': '👀 你可能在意的人',
-    'less-interaction': '💤 較少互動',
-    creator: '🎨 Vibelink創作者',
-    'official-business': '🏢 官方和商業帳戶',
-    'high-reply': '⚡ 高頻互動與回覆',
-  }
+  recent: locale === 'en' ? '🆕 Recently Followed' : '🆕 最近追蹤',
+  favorite: locale === 'en' ? '✨ My Favorites' : '✨ 我的最愛',
+  'more-interaction': locale === 'en' ? '💬 Frequent Interactions' : '💬 較常互動',
+  'mutual-follow': locale === 'en' ? '🔁 Mutual Following' : '🔁 互相關注中',
+  'social-lover': locale === 'en' ? '🥳 Social Lovers' : '🥳 熱愛社交的人',
+  'might-care': locale === 'en' ? '👀 People You May Like' : '👀 你可能在意的人',
+  'less-interaction': locale === 'en' ? '💤 Less Interaction' : '💤 較少互動',
+  creator: locale === 'en' ? '🎨 Vibelink Creators' : '🎨 Vibelink創作者',
+  'official-business': locale === 'en' ? '🏢 Official & Business' : '🏢 官方和商業帳戶',
+  'high-reply': locale === 'en' ? '⚡ High Replies' : '⚡ 高頻互動與回覆',
+}
 
   return map[id] || 'People Library'
 }
 
 export default function PeopleLibraryPage({
   query,
+  locale,
   onClose,
   onPickUser,
   onOpenProfile,
 }: PeopleLibraryPageProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
   const [recentUser, setRecentUser] = useState<PickedUser | null>(null)
+  const folders = getFolders(locale)
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const canDragCloseRef = useRef(true)
@@ -275,7 +281,7 @@ console.log('PeopleLibrary followingId:', followingId)
           <AnimatePresence>
             {selectedFolder && (
               <PeopleFolderPage
-                title={getFolderName(selectedFolder)}
+                title={getFolderName(selectedFolder, locale)}
                 folderId={selectedFolder}
                 onClose={() => setSelectedFolder(null)}
                 onPickUser={onPickUser}

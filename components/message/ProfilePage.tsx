@@ -65,6 +65,90 @@ type MenuItemProps = {
   onClick?: () => void
 }
 
+const profileText = {
+  'zh-TW': {
+    upload: '上傳內容',
+
+    posts: '貼文',
+    followers: '粉絲',
+
+    editProfile: '編輯檔案',
+    shareProfile: '分享檔案',
+
+    notifications: '通知',
+    settings: '設定',
+    analytics: '流量報告',
+    archive: '典藏內容',
+    membership: 'Vibe會員',
+    account: '帳號管理',
+    ads: '廣告中心',
+
+    favorites: '我的收藏',
+    public: '公開',
+    private: '不公開',
+
+    featuredStories: '精選限動',
+
+    noVideos: '尚無短影片',
+
+    cancel: '取消',
+save: '儲存',
+
+uploading: '上傳中...',
+changeAvatar: '更換頭像',
+
+displayName: '顯示名稱',
+displayNamePlaceholder: '輸入顯示名稱',
+
+username: '使用者ID',
+usernamePlaceholder: '輸入 username',
+
+bio: '自我介紹',
+bioPlaceholder: '輸入自我介紹',
+  },
+
+  en: {
+    upload: 'Upload',
+
+    posts: 'Posts',
+    followers: 'Followers',
+
+    editProfile: 'Edit Profile',
+    shareProfile: 'Share Profile',
+
+    notifications: 'Notifications',
+    settings: 'Settings',
+    analytics: 'Analytics',
+    archive: 'Archive',
+    membership: 'Vibe Membership',
+    account: 'Account',
+    ads: 'Ads Center',
+
+    favorites: 'My Favorites',
+    public: 'Public',
+    private: 'Private',
+
+    featuredStories: 'Story Highlights',
+
+    noVideos: 'No short videos yet',
+
+    cancel: 'Cancel',
+save: 'Save',
+
+uploading: 'Uploading...',
+changeAvatar: 'Change Avatar',
+
+displayName: 'Display Name',
+displayNamePlaceholder: 'Enter display name',
+
+username: 'Username',
+usernamePlaceholder: 'Enter username',
+
+bio: 'Bio',
+bioPlaceholder: 'Enter your bio',
+  },
+} as const
+
 const activeColor = '#d89ad0'
 const inactiveColor = '#222'
 
@@ -919,7 +1003,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
       className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
     >
       <PlusSquare size={15} />
-      <span>上傳內容</span>
+      <span>{profileText[locale].upload}</span>
     </button>
   </div>
 </div>
@@ -949,13 +1033,17 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   {/* 貼文 */}
   <div className="flex flex-col items-center">
     <div className="text-[18px] text-[#222]">{gridItems.length}</div>
-    <div className="text-[14px] text-[#666]">貼文</div>
+    <div className="text-[14px] text-[#666]">
+  {profileText[locale].posts}
+</div>
   </div>
 
   {/* 粉絲 */}
   <div className="flex flex-col items-center">
     <div className="text-[18px] text-[#222]">5萬</div>
-    <div className="text-[14px] text-[#666]">粉絲</div>
+    <div className="text-[14px] text-[#666]">
+  {profileText[locale].followers}
+</div>
   </div>
 </div>
         </div>
@@ -997,7 +1085,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
   style={{ WebkitAppearance: 'none', appearance: 'none' }}
 >
-  編輯檔案
+  {profileText[locale].editProfile}
 </button>
 
           <button
@@ -1005,7 +1093,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
             className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
             style={{ WebkitAppearance: 'none', appearance: 'none' }}
           >
-            分享檔案
+            {profileText[locale].shareProfile}
           </button>
         </div>
 
@@ -1129,7 +1217,7 @@ openSelectedPost(post)
 <div className="w-full shrink-0">
   {myShortVideos.length === 0 ? (
     <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
-      尚無短影片
+      {profileText[locale].noVideos}
     </div>
   ) : (
     <div className="grid grid-cols-3 gap-[2px]">
@@ -1166,7 +1254,9 @@ openSelectedPost(post)
   <div className="w-full shrink-0">
     <div className="mb-3 mt-2 flex items-center justify-between px-[2px]">
       <span className="text-[16px] font-medium">
-        <span className="ml-[1px] text-[#111]">精選限動</span>
+        <span className="ml-[1px] text-[#111]">
+  {profileText[locale].featuredStories}
+</span>
       </span>
 
     </div>
@@ -1208,7 +1298,7 @@ openSelectedPost(post)
     
       <div className="mb-3 mt-2 flex items-center justify-between">
         <span className="text-[16px] font-medium text-[#111]">
-          我的收藏
+          {profileText[locale].favorites}
         </span>
 
         <div className="flex items-center gap-3">
@@ -1217,7 +1307,9 @@ openSelectedPost(post)
               isFavoritesPublic ? 'text-[#8B5CF6]' : 'text-[#666]'
             }`}
           >
-            {isFavoritesPublic ? '公開' : '不公開'}
+            {isFavoritesPublic
+  ? profileText[locale].public
+  : profileText[locale].private}
           </span>
 
           <button
@@ -1317,11 +1409,11 @@ openSelectedPost(post)
             onClick={() => setIsEditProfileOpen(false)}
             className="text-[16px] text-[#222]"
           >
-            取消
+            {profileText[locale].cancel}
           </button>
 
           <div className="text-[18px] font-medium text-[#111]">
-            編輯檔案
+            {profileText[locale].editProfile}
           </div>
 
           <button
@@ -1329,7 +1421,7 @@ openSelectedPost(post)
             onClick={updateProfile}
             className="text-[16px] font-medium text-[#8B5CF6]"
           >
-            儲存
+            {profileText[locale].save}
           </button>
         </div>
 
@@ -1344,7 +1436,9 @@ openSelectedPost(post)
   </div>
 
   <label className="cursor-pointer text-[15px] font-medium text-[#8B5CF6]">
-    {avatarUploading ? '上傳中...' : '更換頭像'}
+    {avatarUploading
+  ? profileText[locale].uploading
+  : profileText[locale].changeAvatar}
     <input
       type="file"
       accept="image/*"
@@ -1359,7 +1453,7 @@ openSelectedPost(post)
 
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-2 text-[14px] text-[#666]">
-            顯示名稱
+            {profileText[locale].displayName}
             <input
               value={profile?.display_name || ''}
               onChange={(e) =>
@@ -1369,12 +1463,12 @@ openSelectedPost(post)
                 }))
               }
               className="h-[46px] rounded-[14px] border border-[#ddd] bg-white px-4 text-[16px] text-[#222] outline-none"
-              placeholder="輸入顯示名稱"
+              placeholder={profileText[locale].displayNamePlaceholder}
             />
           </label>
 
           <label className="flex flex-col gap-2 text-[14px] text-[#666]">
-            使用者ID
+            {profileText[locale].username}
             <input
               value={profile?.username || ''}
               onChange={(e) =>
@@ -1384,12 +1478,12 @@ openSelectedPost(post)
                 }))
               }
               className="h-[46px] rounded-[14px] border border-[#ddd] bg-white px-4 text-[16px] text-[#222] outline-none"
-              placeholder="輸入 username"
+              placeholder={profileText[locale].usernamePlaceholder}
             />
           </label>
 
           <label className="flex flex-col gap-2 text-[14px] text-[#666]">
-            自我介紹
+            {profileText[locale].bio}
             <textarea
               value={profile?.bio || ''}
               onChange={(e) =>
@@ -1399,7 +1493,7 @@ openSelectedPost(post)
                 }))
               }
               className="min-h-[120px] rounded-[14px] border border-[#ddd] bg-white px-4 py-3 text-[16px] text-[#222] outline-none"
-              placeholder="輸入自我介紹"
+              placeholder={profileText[locale].bioPlaceholder}
             />
           </label>
         </div>
@@ -1510,24 +1604,24 @@ openSelectedPost(post)
               style={{ originX: 0.88, originY: 0 }}
             >
               <div className="flex flex-col gap-3">
-                <MenuItem icon={<Bell size={22} />} label="通知" />
+                <MenuItem icon={<Bell size={22} />} label={profileText[locale].notifications} />
                 
                 <MenuItem
   icon={<Settings size={22} />}
-  label="設定"
+  label={profileText[locale].settings}
   onClick={() => {
     setShowSettingsPage(true)
   }}
 />
                 
 
-                <MenuItem icon={<Activity size={22} />} label="流量報告" />
+                <MenuItem icon={<Activity size={22} />} label={profileText[locale].analytics} />
                 
-                <MenuItem icon={<Clock3 size={22} />} label="典藏內容" />
+                <MenuItem icon={<Clock3 size={22} />} label={profileText[locale].archive} />
 
                 <MenuItem
   icon={<Ticket size={22} />}
-  label="Vibe會員"
+  label={profileText[locale].membership}
   onClick={() => {
   setIsMenuOpen(false)
   window.open('https://vibe-membership-web.vercel.app', '_blank', 'noopener,noreferrer')
@@ -1539,14 +1633,14 @@ openSelectedPost(post)
                 
                 <MenuItem
   icon={<UserCircle2 size={22} />}
-  label="帳號管理"
+  label={profileText[locale].account}
   onClick={() => {
     setShowAccountManagePage(true)
     setIsMenuOpen(false)
   }}
 />
 
-                <MenuItem icon={<Megaphone size={22} />} label="廣告中心" />
+                <MenuItem icon={<Megaphone size={22} />} label={profileText[locale].ads} />
               </div>
             </motion.div>
           </>

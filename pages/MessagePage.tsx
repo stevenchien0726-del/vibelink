@@ -13,21 +13,58 @@ import {
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 
 import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
+import type { Locale } from '@/i18n'
 
 type MessagePageProps = {
   onOpenMenu?: () => void
+  locale: Locale
 }
 
-const searchAccounts = [
-  { id: 'u1', name: 'Ryan_88', sub: '最近追蹤' },
-  { id: 'u2', name: 'Leo_wave', sub: '較常互動' },
-  { id: 'u3', name: 'Mina.day', sub: 'People Library' },
-  { id: 'u4', name: 'Vibe_Alice', sub: '可能認識的人' },
-  { id: 'u5', name: 'Neo_77', sub: '官方推薦' },
-]
+const messageText = {
+  'zh-TW': {
+    peopleLibrary: 'People Library',
+
+    searchAccounts: '搜尋用戶帳戶',
+    searchAccountsSub: '搜尋你想開始聊天或查看的對象',
+
+    searchPlaceholder: '搜尋 Vibelink 帳戶',
+
+    noAccount: '找不到符合的帳戶',
+
+    editMessage: '編輯訊息介面',
+    editMessageSub: '管理釘選 / 隱藏 / 訊息排序',
+
+    pinChat: '釘選重要聊天',
+    hideLowInteraction: '隱藏低互動聊天',
+  },
+
+  en: {
+    peopleLibrary: 'People Library',
+
+    searchAccounts: 'Search Accounts',
+    searchAccountsSub:
+      'Search for people you want to chat with or view',
+
+    searchPlaceholder: 'Search Vibelink accounts',
+
+    noAccount: 'No matching accounts found',
+
+    editMessage: 'Edit Messages',
+    editMessageSub:
+      'Manage pinned / hidden / sorted chats',
+
+    pinChat: 'Pin important chats',
+    hideLowInteraction: 'Hide low interaction chats',
+  },
+} as const
 
 
-export default function MessagePage({ onOpenMenu }: MessagePageProps) {
+
+
+export default function MessagePage({
+  onOpenMenu,
+  locale,
+}: MessagePageProps) {
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null)
   
@@ -46,6 +83,49 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
 
   const [isTopBarHidden, setIsTopBarHidden] = useState(false)
   const lastScrollYRef = useRef(0)
+
+  const searchAccounts = [
+  {
+    id: 'u1',
+    name: 'Ryan_88',
+    sub:
+      locale === 'en'
+        ? 'Fitness / Beach / Coffee'
+        : '健身 / 海邊 / 咖啡',
+  },
+  {
+    id: 'u2',
+    name: 'Leo_wave',
+    sub:
+      locale === 'en'
+        ? 'Streetwear / Hip Hop'
+        : '街頭穿搭 / Hip Hop',
+  },
+  {
+    id: 'u3',
+    name: 'Mina.day',
+    sub:
+      locale === 'en'
+        ? 'Travel / Lifestyle'
+        : '旅行 / 生活感',
+  },
+  {
+    id: 'u4',
+    name: 'Vibe_Alice',
+    sub:
+      locale === 'en'
+        ? 'Cafe / Chill'
+        : '咖啡廳 / Chill',
+  },
+  {
+    id: 'u5',
+    name: 'Neo_77',
+    sub:
+      locale === 'en'
+        ? 'Nightlife / Fashion'
+        : '夜生活 / 時尚',
+  },
+]
 
   const filteredAccounts = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
@@ -183,10 +263,10 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
                     <div className="flex items-center justify-between px-4 pt-4">
                       <div>
                         <div className="text-[18px] font-medium text-[#111]">
-                          搜尋用戶帳戶
+                          {messageText[locale].searchAccounts}
                         </div>
                         <div className="mt-1 text-[12px] text-[#666]">
-                          搜尋你想開始聊天或查看的對象
+                          {messageText[locale].searchAccountsSub}
                         </div>
                       </div>
 
@@ -209,7 +289,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
                         <input
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}
-                          placeholder="搜尋 Vibelink 帳戶"
+                          placeholder={messageText[locale].searchPlaceholder}
                           className="ml-3 w-full bg-transparent text-[15px] text-[#111] outline-none placeholder:text-[#777]"
                         />
                       </div>
@@ -242,7 +322,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
                           ))
                         ) : (
                           <div className="rounded-[20px] bg-white/45 px-4 py-5 text-[14px] text-[#666]">
-                            找不到符合的帳戶
+                            {messageText[locale].noAccount}
                           </div>
                         )}
                       </div>
@@ -255,10 +335,10 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
                     <div className="flex items-center justify-between px-4 pt-4">
                       <div>
                         <div className="text-[18px] font-medium text-[#111]">
-                          編輯訊息介面
+                          {messageText[locale].editMessage}
                         </div>
                         <div className="mt-1 text-[12px] text-[#666]">
-                          管理釘選 / 隱藏 / 訊息排序
+                          {messageText[locale].editMessageSub}
                         </div>
                       </div>
 
@@ -278,7 +358,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
                           className="flex items-center justify-between rounded-[22px] bg-white/45 px-4 py-4 text-left active:scale-[0.99]"
                         >
                           <span className="text-[15px] text-[#111]">
-                            釘選重要聊天
+                            {messageText[locale].pinChat}
                           </span>
                         </button>
 
@@ -287,7 +367,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
                           className="flex items-center justify-between rounded-[22px] bg-white/45 px-4 py-4 text-left active:scale-[0.99]"
                         >
                           <span className="text-[15px] text-[#111]">
-                            隱藏低互動聊天
+                            {messageText[locale].hideLowInteraction}
                           </span>
                         </button>
                       </div>
@@ -317,6 +397,7 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
       {isPeopleLibraryOpen && (
         <PeopleLibraryPage
   query="People Library"
+    locale={locale}
   onClose={() => setIsPeopleLibraryOpen(false)}
   onOpenProfile={(userId) => {
   console.log('MessagePage receive open profile:', userId)
@@ -332,9 +413,10 @@ export default function MessagePage({ onOpenMenu }: MessagePageProps) {
       <AnimatePresence mode="wait">
   {selectedProfileUserId && (
     <OtherUserProfilePage
-      userId={selectedProfileUserId}
-      onClose={() => setSelectedProfileUserId(null)}
-    />
+  userId={selectedProfileUserId}
+  onClose={() => setSelectedProfileUserId(null)}
+  locale={locale}
+/>
   )}
 </AnimatePresence>
     </div>

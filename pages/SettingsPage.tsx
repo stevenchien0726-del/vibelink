@@ -6,7 +6,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Grid2x2,
-  MapPin,
   Moon,
   Heart,
   Ban,
@@ -32,6 +31,46 @@ type SettingsPageProps = {
   onLanguageClick?: () => void
   onMessagesClick?: () => void
 }
+
+const settingsText = {
+  'zh-TW': {
+    title: '設定',
+    layout: '版面模式膠囊',
+
+    left: '左',
+    center: '中',
+    right: '右',
+
+    darkMode: '深色模式',
+    darkOn: '開啟中',
+    darkOff: '關閉中',
+
+    favorites: '最愛和按讚',
+    messages: '訊息和留言',
+    blocked: '已封鎖',
+
+    language: '語言',
+  },
+
+  en: {
+    title: 'Settings',
+    layout: 'Layout Capsule',
+
+    left: 'Left',
+    center: 'Center',
+    right: 'Right',
+
+    darkMode: 'Dark Mode',
+    darkOn: 'On',
+    darkOff: 'Off',
+
+    favorites: 'Favorites & Likes',
+    messages: 'Messages & Comments',
+    blocked: 'Blocked',
+
+    language: 'Language',
+  },
+} as const
 
 export default function SettingsPage({
   onClose,
@@ -170,7 +209,9 @@ export default function SettingsPage({
               <ChevronLeft size={24} />
             </button>
 
-            <div className="text-[20px] font-medium tracking-[0.01em]">設定</div>
+            <div className="text-[20px] font-medium tracking-[0.01em]">
+  {settingsText[locale].title}
+</div>
           </div>
         </div>
 
@@ -182,7 +223,7 @@ export default function SettingsPage({
               </span>
 
               <span className="text-[16px] font-medium text-[#222]">
-                版面模式膠囊
+                {settingsText[locale].layout}
               </span>
             </div>
 
@@ -223,7 +264,13 @@ export default function SettingsPage({
                         />
                       )}
 
-                      <span className="relative z-10">{item}</span>
+                      <span className="relative z-10">
+  {item === '左'
+    ? settingsText[locale].left
+    : item === '中'
+      ? settingsText[locale].center
+      : settingsText[locale].right}
+</span>
                     </motion.button>
                   )
                 })}
@@ -240,13 +287,15 @@ export default function SettingsPage({
                 </span>
 
                 <span className="text-[16px] font-medium text-[#222]">
-                  深色模式
+                  {settingsText[locale].darkMode}
                 </span>
               </div>
 
               <div className="flex items-center gap-3">
                 <span className="text-[16px] text-[#222]">
-                  {darkMode ? '開啟中' : '關閉中'}
+                  {darkMode
+  ? settingsText[locale].darkOn
+  : settingsText[locale].darkOff}
                 </span>
 
                 <Switch checked={darkMode} onClick={handleToggleDarkMode} />
@@ -257,7 +306,7 @@ export default function SettingsPage({
           <div className="mt-[30px] rounded-[22px] bg-[#d9d9d9] py-[20px] overflow-hidden">
             <SettingsRow
               icon={<Heart size={21} strokeWidth={2.1} />}
-              label="最愛和按讚"
+              label={settingsText[locale].favorites}
               onClick={onFavoritesClick}
             />
 
@@ -265,7 +314,7 @@ export default function SettingsPage({
 
             <SettingsRow
               icon={<MessageCircle size={21} strokeWidth={2.1} />}
-              label="訊息和留言"
+              label={settingsText[locale].messages}
               onClick={onMessagesClick}
             />
 
@@ -274,7 +323,7 @@ export default function SettingsPage({
 
             <SettingsRow
               icon={<Ban size={21} strokeWidth={2.1} />}
-              label="已封鎖"
+              label={settingsText[locale].blocked}
               onClick={onBlockedClick}
             />
 
@@ -288,7 +337,7 @@ export default function SettingsPage({
     </span>
 
     <span className="text-[16px] font-medium text-[#222]">
-      {locale === 'zh-TW' ? '語言' : 'Language'}
+      {settingsText[locale].language}
     </span>
   </div>
 
