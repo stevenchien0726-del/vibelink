@@ -246,6 +246,9 @@ const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
   const postImageTouchDeltaX = useRef(0)
   const postImageLastTapTimeRef = useRef(0)
 
+  const postDetailTouchStartX = useRef<number | null>(null)
+const postDetailTouchStartY = useRef<number | null>(null)
+
   const gridItems = myPosts.filter(
   (post) => post.post_images?.length > 0
 )
@@ -890,6 +893,47 @@ async function deleteComment() {
 
   setIsCommentMenuOpen(false)
   setSelectedComment(null)
+}
+
+function handlePostDetailTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+  e.stopPropagation()
+
+  const target = e.target as HTMLElement
+
+  if (target.closest('[data-post-image-area="true"]')) {
+    postDetailTouchStartX.current = null
+    postDetailTouchStartY.current = null
+    return
+  }
+
+  const touch = e.touches[0]
+  postDetailTouchStartX.current = touch.clientX
+  postDetailTouchStartY.current = touch.clientY
+}
+
+function handlePostDetailTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+  e.stopPropagation()
+}
+
+function handlePostDetailTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+  e.stopPropagation()
+
+  const startX = postDetailTouchStartX.current
+  const startY = postDetailTouchStartY.current
+
+  if (startX == null || startY == null) return
+
+  const touch = e.changedTouches[0]
+  const deltaX = touch.clientX - startX
+  const deltaY = touch.clientY - startY
+
+  if (Math.abs(deltaX) > 70 && Math.abs(deltaX) > Math.abs(deltaY)) {
+    setIsPostMenuOpen(false)
+    setSelectedPost(null)
+  }
+
+  postDetailTouchStartX.current = null
+  postDetailTouchStartY.current = null
 }
 
 function handlePostImageTouchStart(e: React.TouchEvent<HTMLDivElement>) {
@@ -1682,11 +1726,17 @@ openSelectedPost(post)
     <AnimatePresence>
   {selectedPost?.post_images?.length > 0 && (
     <motion.div
-      className="fixed inset-0 z-[500] bg-[#f3f3f3]"
+  data-block-page-swipe="true"
+  className="fixed inset-0 z-[500] bg-[#f3f3f3]"
       initial={{ x: '100%' }}
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+      onTouchStart={handlePostDetailTouchStart}
+onTouchMove={handlePostDetailTouchMove}
+onTouchEnd={handlePostDetailTouchEnd}
+onPointerDown={(e) => e.stopPropagation()}
+onClick={(e) => e.stopPropagation()}
     >
       {/* Top Bar */}
       <div className="fixed left-1/2 top-0 z-[510] flex h-[58px] w-full max-w-[430px] -translate-x-1/2 items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
@@ -1726,6 +1776,7 @@ openSelectedPost(post)
         <div className="px-3">
   <div
   data-no-page-swipe="true"
+  data-post-image-area="true"
   className="relative overflow-hidden rounded-[18px] touch-pan-y"
   onTouchStart={handlePostImageTouchStart}
   onTouchMove={handlePostImageTouchMove}
