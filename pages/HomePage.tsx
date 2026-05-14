@@ -1114,7 +1114,7 @@ const mergedPosts = [
   return (
   <div
   data-auth-modal-open={isAuthModalOpen ? 'true' : 'false'}
-  className="relative min-h-screen w-full overflow-hidden bg-[#f5f5f5]"
+  className="relative min-h-screen w-full overflow-x-hidden bg-[#f5f5f5]"
 >
 
     <motion.div
@@ -1372,7 +1372,7 @@ onOpenProfile={(post) => {
       onTouchStart={handleDetailTouchStart}
       onTouchEnd={handleDetailTouchEnd}
     >
-      <div className="mx-auto h-full w-full max-w-[430px] overflow-x-hidden overflow-y-auto pb-[110px]">
+      <div className="mx-auto h-full w-full max-w-[430px] overflow-x-hidden overflow-y-auto pb-[110px] scrollbar-hide">
         <div className="sticky top-0 z-[20] flex h-[56px] items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
           <button
             type="button"
