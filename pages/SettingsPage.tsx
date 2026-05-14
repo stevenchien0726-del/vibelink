@@ -88,6 +88,8 @@ export default function SettingsPage({
   onMessagesClick,
 }: SettingsPageProps) {
   const [darkMode, setDarkMode] = useState(initialDarkMode)
+  const safeLocale: Locale = locale ?? 'zh-TW'
+const text = settingsText[safeLocale]
   const [showCity, setShowCity] = useState(initialShowCity)
   const [dragX, setDragX] = useState(0)
   const [isDraggingBack, setIsDraggingBack] = useState(false)
@@ -210,7 +212,7 @@ export default function SettingsPage({
             </button>
 
             <div className="text-[20px] font-medium tracking-[0.01em]">
-  {settingsText[locale].title}
+  {text.title}
 </div>
           </div>
         </div>
@@ -346,7 +348,7 @@ export default function SettingsPage({
       type="button"
       onClick={() => onChangeLocale('zh-TW')}
       className={`flex-1 rounded-[16px] py-[12px] text-[15px] font-medium transition ${
-        locale === 'zh-TW'
+        safeLocale === 'zh-TW'
           ? 'bg-[#d9afe6] text-[#111]'
           : 'bg-white text-[#666]'
       }`}
@@ -358,7 +360,7 @@ export default function SettingsPage({
       type="button"
       onClick={() => onChangeLocale('en')}
       className={`flex-1 rounded-[16px] py-[12px] text-[15px] font-medium transition ${
-        locale === 'en'
+        safeLocale === 'en'
           ? 'bg-[#d9afe6] text-[#111]'
           : 'bg-white text-[#666]'
       }`}

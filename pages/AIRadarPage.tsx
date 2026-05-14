@@ -754,7 +754,7 @@ setRewritePrompts(nextRewritePrompts)
 
 <AnimatePresence>
   {selectedProfileUserId && (
-    <OtherUserProfilePage
+    <OtherUserProfilePage 
   userId={selectedProfileUserId}
   onClose={() => setSelectedProfileUserId(null)}
   locale={safeLocale}
