@@ -12,7 +12,7 @@ import CreateShortVideoBox, {
   type CreateShortVideoBoxRef,
 } from '@/components/CreateShortVideoBox'
 
-type UploadTab = 'video' | 'post' | 'album'
+type UploadTab = 'video' | 'post'
 
 type UploadFullPageProps = {
   onClose: () => void
@@ -158,72 +158,22 @@ export default function UploadFullPage({
               </motion.div>
             )}
 
-            {activeTab === 'album' && (
-              <motion.div
-                key="album-actions"
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 12 }}
-                transition={{ duration: 0.2 }}
-                className="mb-4 flex flex-col items-center gap-3"
-              >
-                <button
-                  type="button"
-                  style={{
-                    height: '40px',
-                    minWidth: '180px',
-                    padding: '0 24px',
-                    borderRadius: '12px',
-                    background: '#e1e1e1',
-                    color: '#111111',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: 'none',
-                  }}
-                >
-                  選擇相片
-                </button>
-
-                <button
-                  type="button"
-                  style={{
-                    height: '40px',
-                    minWidth: '180px',
-                    padding: '0 24px',
-                    borderRadius: '12px',
-                    background: '#e1e1e1',
-                    color: '#111111',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: 'none',
-                  }}
-                >
-                  打開相機
-                </button>
-              </motion.div>
-            )}
+            
           </AnimatePresence>
 
           <div className="h-[24px] shrink-0" />
 
           <div className="pb-2">
-            <div className="relative grid grid-cols-3 rounded-[18px] bg-[#dddddd] p-[4px]">
+            <div className="relative grid grid-cols-2 rounded-[18px] bg-[#dddddd] p-[4px]">
               <motion.div
                 className="absolute top-[4px] bottom-[4px] rounded-[14px] bg-[#f0f0f0]"
                 animate={{
                   left:
-                    activeTab === 'video'
-                      ? '4px'
-                      : activeTab === 'post'
-                      ? 'calc(33.333% + 1.5px)'
-                      : 'calc(66.666% - 1px)',
-                  width: 'calc(33.333% - 2.7px)',
+  activeTab === 'video'
+    ? '4px'
+    : 'calc(50% + 1px)',
+
+width: 'calc(50% - 6px)',
                 }}
                 transition={{
                   type: 'spring',
@@ -255,16 +205,7 @@ export default function UploadFullPage({
                 貼文
               </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('album')}
-                className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
-                style={{
-                  color: activeTab === 'album' ? '#111111' : '#666666',
-                }}
-              >
-                限時動態
-              </button>
+              
             </div>
           </div>
         </div>

@@ -204,46 +204,46 @@ export default function MessagePage({
             isTopBarHidden ? '-translate-y-full' : 'translate-y-0'
           }`}
         >
-          <div
-            className="flex items-center justify-between rounded-full bg-[#d9d9d9] px-4 py-[10px] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
-            style={{
-              transform: isTopCapsulePressed ? 'scale(1.03)' : 'scale(1)',
-              transformOrigin: 'center center',
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                closeAllTopPanels()
-                setIsPeopleLibraryOpen(true)
-              }}
-              className="flex items-center gap-2 rounded-full px-3 py-[6px] transition active:scale-[0.96]"
-            >
-              <UserRound size={22} strokeWidth={2.3} />
-              <span className="text-[15px] font-medium text-[#111]">
-                People Library
-              </span>
-            </button>
+          <div className="flex items-center justify-between">
+  <div className="rounded-full bg-[#d9d9d9] p-[8px]">
+  <button
+    type="button"
+    onClick={() => {
+      closeAllTopPanels()
+      setIsPeopleLibraryOpen(true)
+    }}
+    className="flex min-w-[150px] items-center justify-center gap-2 rounded-full bg-[#d9d9d9] px-5 py-[8px] transition active:scale-[0.96]"
+    
+  >
+    <UserRound size={22} strokeWidth={2.3} />
 
-            <div className="flex items-center gap-6 pl-1">
-              <button
-                type="button"
-                onClick={openSearchPanel}
-                className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
-              >
-                <Search size={22} strokeWidth={2.5} />
-              </button>
+    <span className="text-[15px] font-medium text-[#111]">
+      People Library
+    </span>
+    </button>
+</div>
 
-              <button
-  type="button"
-  onClick={openEditPanel}
-  className="flex h-[26px] w-[26px] items-center justify-center -ml-5 active:scale-95"
+  <div
+  className="flex items-center gap-5 px-1 py-[2px] transition"
+
 >
-  <PencilLine size={22} strokeWidth={2.5} />
-</button>
+    <button
+      type="button"
+      onClick={openSearchPanel}
+      className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
+    >
+      <Search size={22} strokeWidth={2.5} />
+    </button>
 
-            </div>
-          </div>
+    <button
+      type="button"
+      onClick={openEditPanel}
+      className="flex h-[26px] w-[26px] items-center justify-center active:scale-95"
+    >
+      <PencilLine size={22} strokeWidth={2.5} />
+    </button>
+  </div>
+</div>
         </div>
 
         {hasAnyTopPanelOpen && (

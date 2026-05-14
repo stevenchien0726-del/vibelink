@@ -12,7 +12,6 @@ import SearchPage from '@/pages/SearchPage'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import type { CapsulePosition } from '@/app/page'
-import AIStoryRow from '@/components/AIStoryRow'
 
 import type { Locale } from '@/i18n'
 import WideMenuSheet from '@/components/WideMenuSheet'
@@ -1303,11 +1302,9 @@ await loadShortVideos(user)
     </AnimatePresence>
 
       <main className="min-h-screen box-border px- pb-[90px] pt-[64px]">
-        
-        <AIStoryRow />
 
         <section
-  className="px-3 pt-3"
+  className="px-3 pt-2"
   data-block-page-swipe="true"
 >
   <FeedGrid

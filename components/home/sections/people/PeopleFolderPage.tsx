@@ -24,16 +24,10 @@ type PickUserPayload = {
 type PeopleFolderPageProps = {
   title: string
   folderId: string
+  recentUser?: PickedUser | null
   onClose: () => void
   onPickUser?: (payload: PickUserPayload) => void
   onOpenProfile?: (userId: string) => void
-}
-
-const RECENT_PRIMARY_USER: PickedUser = {
-  id: 'user-1',
-  name: '小新',
-  avatar:
-    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMZ46Uh-KIfVWdwrdyBJxL_xpSjdCOz4Uow&s',
 }
 
 const mockUsers = Array.from({ length: 16 }, (_, i) => ({
@@ -44,6 +38,7 @@ const mockUsers = Array.from({ length: 16 }, (_, i) => ({
 export default function PeopleFolderPage({
   title,
   folderId,
+  recentUser,
   onClose,
   onPickUser,
   onOpenProfile,
@@ -160,30 +155,44 @@ export default function PeopleFolderPage({
           <div className="px-5 pb-[120px]">
             <div className="grid grid-cols-4 gap-x-5 gap-y-8">
               <button
-                type="button"
-                onClick={() => {
-  if (folderId === 'recent') {
-    onOpenProfile?.(RECENT_PRIMARY_USER.id)
-  }
-}}
-                className="flex flex-col items-center active:scale-95"
-              >
-                {folderId === 'recent' ? (
-                  <img
-                    src={RECENT_PRIMARY_USER.avatar}
-                    alt={RECENT_PRIMARY_USER.name}
-                    className="h-[62px] w-[62px] rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
-                )}
+  type="button"
+  onClick={(e) => {
+    if (folderId !== 'recent' || !recentUser?.id) return
 
-                <div className="mt-3 text-[13px] text-[#555]">
-                  {folderId === 'recent'
-                    ? RECENT_PRIMARY_USER.name
-                    : '(用戶名)'}
-                </div>
-              </button>
+    const sourceRect = e.currentTarget.getBoundingClientRect()
+
+    if (onPickUser) {
+      onPickUser({
+        user: recentUser,
+        sourceRect,
+      })
+      return
+    }
+
+    onOpenProfile?.(recentUser.id)
+  }}
+  className="flex flex-col items-center active:scale-95"
+>
+  {folderId === 'recent' && recentUser ? (
+    recentUser.avatar ? (
+      <img
+        src={recentUser.avatar}
+        alt={recentUser.name}
+        className="h-[62px] w-[62px] rounded-full object-cover"
+      />
+    ) : (
+      <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
+    )
+  ) : (
+    <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
+  )}
+
+  <div className="mt-3 max-w-[72px] truncate text-[13px] text-[#555]">
+    {folderId === 'recent' && recentUser
+      ? recentUser.name
+      : '(用戶名)'}
+  </div>
+</button>
 
               {mockUsers.slice(1).map((user) => (
                 <button

@@ -281,12 +281,13 @@ console.log('PeopleLibrary followingId:', followingId)
           <AnimatePresence>
             {selectedFolder && (
               <PeopleFolderPage
-                title={getFolderName(selectedFolder, locale)}
-                folderId={selectedFolder}
-                onClose={() => setSelectedFolder(null)}
-                onPickUser={onPickUser}
-                onOpenProfile={onOpenProfile}
-              />
+  title={getFolderName(selectedFolder, locale)}
+  folderId={selectedFolder}
+  recentUser={recentUser}
+  onClose={() => setSelectedFolder(null)}
+  onPickUser={onPickUser}
+  onOpenProfile={onOpenProfile}
+/>
             )}
           </AnimatePresence>
         </motion.div>
