@@ -188,7 +188,8 @@ export default function ProfilePage({
   setCurrentUserId(user?.id ?? null)
 
   await ensureMyProfile()
-  await loadMyPosts()
+await loadMyFollowerCount()
+await loadMyPosts()
 await loadMyShortVideos()
 await loadSavedPosts()
 }
@@ -207,6 +208,7 @@ await loadSavedPosts()
   const [avatarUploading, setAvatarUploading] = useState(false)
 
   const [profile, setProfile] = useState<any>(null)
+  const [followerCount, setFollowerCount] = useState(0)
 
   const albumItems = Array.from({ length: 5 })
 
@@ -301,6 +303,26 @@ const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
   }
 
   setProfile(createdProfile)
+}
+
+async function loadMyFollowerCount() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  const { count, error } = await supabase
+    .from('follows')
+    .select('*', { count: 'exact', head: true })
+    .eq('following_id', user.id)
+
+  if (error) {
+    console.error('讀取粉絲數失敗:', error)
+    return
+  }
+
+  setFollowerCount(count ?? 0)
 }
 
 async function uploadAvatar(file: File) {
@@ -1043,7 +1065,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 
   {/* 粉絲 */}
   <div className="flex flex-col items-center">
-    <div className="text-[18px] text-[#222]">5萬</div>
+    <div className="text-[18px] text-[#222]">{followerCount}</div>
     <div className="text-[14px] text-[#666]">
   {text.followers}
 </div>

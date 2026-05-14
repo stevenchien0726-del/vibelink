@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Locale } from '@/i18n'
+import LinkPortSheet from '@/components/profile/LinkPortSheet'
 
 type Props = {
   userId: string
@@ -128,6 +129,7 @@ export default function OtherUserProfilePage({
   const [isUnfollowConfirmOpen, setIsUnfollowConfirmOpen] = useState(false)
   const [isFollowing, setIsFollowing] = useState(false)
   const [followerCount, setFollowerCount] = useState(0)
+  const [isLinkPortOpen, setIsLinkPortOpen] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -396,13 +398,18 @@ export default function OtherUserProfilePage({
             </div>
 
             <div className="mb-4 flex items-center">
-              <button
-                type="button"
-                className="inline-flex h-[32px] items-center gap-2 rounded-[18px] border-[3px] border-[#8f8f8f] bg-transparent px-6 text-[14px] text-[#8B5CF6] active:scale-95"
-              >
-                <LinkIcon size={16} />
-                <span>LINKPORT</span>
-              </button>
+              <motion.button
+  type="button"
+  onClick={() => setIsLinkPortOpen(true)}
+  whileTap={{ scale: 0.9 }}
+  initial={{ scale: 1 }}
+  animate={{ scale: 1 }}
+  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+  className="inline-flex h-[32px] items-center gap-2 bg-transparent text-[14px] text-[#8B5CF6]"
+>
+  <LinkIcon size={16} />
+  <span className="text-[#8B5CF6]">LINKPORT</span>
+</motion.button>
             </div>
 
             <div className="mb-4 flex w-full items-center gap-3">
@@ -748,6 +755,12 @@ export default function OtherUserProfilePage({
           </>
         )}
       </AnimatePresence>
+      <LinkPortSheet
+  open={isLinkPortOpen}
+  onClose={() => setIsLinkPortOpen(false)}
+  userId={userId}
+  isOwner={false}
+/>
     </motion.div>
   )
 }

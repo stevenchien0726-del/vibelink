@@ -5,6 +5,7 @@ import { motion, LayoutGroup } from 'framer-motion'
 import {
   ChevronLeft,
   ChevronRight,
+Check,
   Grid2x2,
   Moon,
   Heart,
@@ -320,68 +321,66 @@ export default function SettingsPage({
           </div>
 
           <div className="mt-[30px] overflow-hidden rounded-[22px] bg-[#d9d9d9] py-[20px]">
-            <SettingsRow
-              icon={<Heart size={21} strokeWidth={2.1} />}
-              label={text.favorites}
-              onClick={onFavoritesClick}
-            />
+  <SettingsRow
+    icon={<Heart size={21} strokeWidth={2.1} />}
+    label={text.favorites}
+    onClick={onFavoritesClick}
+  />
 
-            <Divider />
+  <Divider />
 
-            <SettingsRow
-              icon={<MessageCircle size={21} strokeWidth={2.1} />}
-              label={text.messages}
-              onClick={onMessagesClick}
-            />
+  <SettingsRow
+    icon={<MessageCircle size={21} strokeWidth={2.1} />}
+    label={text.messages}
+    onClick={onMessagesClick}
+  />
 
-            <Divider />
+  <Divider />
 
-            <SettingsRow
-              icon={<Ban size={21} strokeWidth={2.1} />}
-              label={text.blocked}
-              onClick={onBlockedClick}
-            />
+  <SettingsRow
+    icon={<Ban size={21} strokeWidth={2.1} />}
+    label={text.blocked}
+    onClick={onBlockedClick}
+  />
+</div>
 
-            <Divider />
+<div className="mt-[24px] rounded-[22px] bg-[#d9d9d9] px-[30px] py-[26px]">
+  <div className="mb-5 flex items-center gap-3">
+    <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
+      <Globe size={21} strokeWidth={2.1} />
+    </span>
 
-            <div className="px-[30px] py-[26px]">
-              <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
-                  <Globe size={21} strokeWidth={2.1} />
-                </span>
+    <span className="text-[16px] font-medium text-[#222]">
+      {text.language}
+    </span>
+  </div>
 
-                <span className="text-[16px] font-medium text-[#222]">
-                  {text.language}
-                </span>
-              </div>
+  <div className="flex flex-col gap-3">
+    <button
+      type="button"
+      onClick={() => onChangeLocale('zh-TW')}
+      className="flex h-[48px] w-full items-center justify-between rounded-[16px] bg-white px-5 text-[15px] font-medium text-[#222] transition active:scale-[0.98]"
+    >
+      <span>繁中</span>
 
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => onChangeLocale('zh-TW')}
-                  className={`flex-1 rounded-[16px] py-[12px] text-[15px] font-medium transition ${
-                    safeLocale === 'zh-TW'
-                      ? 'bg-[#d9afe6] text-[#111]'
-                      : 'bg-white text-[#666]'
-                  }`}
-                >
-                  繁中
-                </button>
+      {safeLocale === 'zh-TW' && (
+        <Check size={20} strokeWidth={2.4} className="text-[#8B5CF6]" />
+      )}
+    </button>
 
-                <button
-                  type="button"
-                  onClick={() => onChangeLocale('en')}
-                  className={`flex-1 rounded-[16px] py-[12px] text-[15px] font-medium transition ${
-                    safeLocale === 'en'
-                      ? 'bg-[#d9afe6] text-[#111]'
-                      : 'bg-white text-[#666]'
-                  }`}
-                >
-                  English
-                </button>
-              </div>
-            </div>
-          </div>
+    <button
+      type="button"
+      onClick={() => onChangeLocale('en')}
+      className="flex h-[48px] w-full items-center justify-between rounded-[16px] bg-white px-5 text-[15px] font-medium text-[#222] transition active:scale-[0.98]"
+    >
+      <span>English</span>
+
+      {safeLocale === 'en' && (
+        <Check size={20} strokeWidth={3} className="text-[#8B5CF6]" />
+      )}
+    </button>
+  </div>
+</div>
         </div>
       </div>
     </motion.div>
