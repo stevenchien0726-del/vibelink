@@ -88,6 +88,9 @@ const SKY_MORE_WALL_IMAGES = [
 ]
 
 export default function AIRadarPage({ locale }: AIRadarPageProps) {
+  const safeLocale: Locale = locale ?? 'zh-TW'
+const text = aiRadarText[safeLocale]
+
   const [refreshKey, setRefreshKey] = useState(0)
   const [refreshCount, setRefreshCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
@@ -496,11 +499,11 @@ setRewritePrompts(nextRewritePrompts)
     <div className="w-full max-w-[360px] rounded-[36px] bg-white px-7 py-9 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
 
       <h2 className="text-[28px] font-semibold text-[#222]">
-        {aiRadarText[locale].loginTitle}
+        {text.heroTitle}
       </h2>
 
       <p className="mt-4 text-[16px] text-[#888]">
-        {aiRadarText[locale].loginSubtitle}
+        {text.heroTitle}
       </p>
 
       <button
