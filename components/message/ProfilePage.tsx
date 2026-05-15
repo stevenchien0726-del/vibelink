@@ -180,21 +180,64 @@ export default function ProfilePage({
   const text = profileText[safeLocale]
   
   useEffect(() => {
+  let alive = true
+
   async function init() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-  setCurrentUserId(user?.id ?? null)
+    const user = session?.user
 
-  await ensureMyProfile()
-await loadMyFollowerCount()
-await loadMyPosts()
-await loadMyShortVideos()
-await loadSavedPosts()
-}
+    if (!alive) return
+
+    if (!user) {
+      setCurrentUserId(null)
+      return
+    }
+
+    setCurrentUserId(user.id)
+
+    await ensureMyProfile()
+    await Promise.all([
+      loadMyFollowerCount(),
+      loadMyPosts(),
+      loadMyShortVideos(),
+      loadSavedPosts(),
+    ])
+  }
 
   init()
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    const user = session?.user
+
+    if (!user) {
+      setCurrentUserId(null)
+      return
+    }
+
+    setCurrentUserId(user.id)
+
+    setTimeout(() => {
+      if (!alive) return
+
+      Promise.all([
+        ensureMyProfile(),
+        loadMyFollowerCount(),
+        loadMyPosts(),
+        loadMyShortVideos(),
+        loadSavedPosts(),
+      ])
+    }, 0)
+  })
+
+  return () => {
+    alive = false
+    subscription.unsubscribe()
+  }
 }, [])
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -636,21 +679,10 @@ async function openSelectedPost(post: any) {
     return
   }
   
-  const { data: images, error } = await supabase
-  
-    .from('post_images')
-    .select('image_url')
-    .eq('post_id', post.id)
-
-  if (error) {
-    console.error('讀取貼文圖片失敗:', error)
-    return
-  }
-
   const fullPost = {
-    ...post,
-    post_images: images ?? post.post_images ?? [],
-  }
+  ...post,
+  post_images: post.post_images ?? [],
+}
 
   console.log('打開貼文完整圖片數:', fullPost.post_images.length, fullPost.post_images)
 
@@ -984,7 +1016,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 }
 
   function goToTab(index: number) {
-    if (index < 0 || index > 3) return
+    if (index < 0 || index > 2) return
     setActiveTab(index)
   }
 
@@ -1167,63 +1199,51 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
         </div>
 
         <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">
-          <div className="grid grid-cols-4">
-            <button
-              type="button"
-              onClick={() => goToTab(0)}
-              className="flex h-[34px] items-center justify-center"
-            >
-              <Grid2x2
-                size={20}
-                className="transition-colors duration-200"
-                color={activeTab === 0 ? activeColor : inactiveColor}
-              />
-            </button>
+          <div className="grid grid-cols-3">
+  <button
+    type="button"
+    onClick={() => goToTab(0)}
+    className="flex h-[34px] items-center justify-center"
+  >
+    <Grid2x2
+      size={20}
+      className="transition-colors duration-200"
+      color={activeTab === 0 ? activeColor : inactiveColor}
+    />
+  </button>
 
-            <button
-              type="button"
-              onClick={() => goToTab(1)}
-              className="flex h-[34px] items-center justify-center"
-            >
-              <PlaySquare
-  size={20}
-  className="transition-colors duration-200"
-  color={activeTab === 1 ? activeColor : inactiveColor}
-/>
-            </button>
+  <button
+    type="button"
+    onClick={() => goToTab(1)}
+    className="flex h-[34px] items-center justify-center"
+  >
+    <PlaySquare
+      size={20}
+      className="transition-colors duration-200"
+      color={activeTab === 1 ? activeColor : inactiveColor}
+    />
+  </button>
 
-            <button
-              type="button"
-              onClick={() => goToTab(2)}
-              className="flex h-[34px] items-center justify-center"
-            >
-              <ImageIcon
-                size={20}
-                className="transition-colors duration-200"
-                color={activeTab === 2 ? activeColor : inactiveColor}
-              />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goToTab(3)}
-              className="flex h-[34px] items-center justify-center"
-            >
-              <Bookmark
-                size={20}
-                className="transition-colors duration-200"
-                color={activeTab === 3 ? activeColor : inactiveColor}
-              />
-            </button>
-          </div>
+  <button
+    type="button"
+    onClick={() => goToTab(2)}
+    className="flex h-[34px] items-center justify-center"
+  >
+    <Bookmark
+      size={20}
+      className="transition-colors duration-200"
+      color={activeTab === 2 ? activeColor : inactiveColor}
+    />
+  </button>
+</div>
 
           <div
-            className="pointer-events-none absolute bottom-0 h-[4px] px-2 transition-all duration-300 ease-out"
-            style={{
-              left: `${activeTab * 25}%`,
-              width: '25%',
-            }}
-          >
+  className="pointer-events-none absolute bottom-0 h-[4px] px-2 transition-all duration-300 ease-out"
+  style={{
+    left: `${activeTab * 33.3333}%`,
+    width: '33.3333%',
+  }}
+>
             <div className="h-[4px] w-full rounded-full bg-[#d89ad0]" />
           </div>
         </div>
@@ -1319,50 +1339,7 @@ openSelectedPost(post)
   )}
 </div>
 
-    {/* 第3頁（精選限動） */}
-  <div className="w-full shrink-0">
-    <div className="mb-3 mt-2 flex items-center justify-between px-[2px]">
-      <span className="text-[16px] font-medium">
-        <span className="ml-[1px] text-[#111]">
-  {text.featuredStories}
-</span>
-      </span>
-
-    </div>
-
-    {/* 第3頁（精選限動） */}
-<div className="w-full shrink-0">
-  
-
-  {/* 👇 加這段 */}
-  <div className="grid grid-cols-2 gap-3">
-    {[
-      { label: '日常' },
-      { label: '跳舞' },
-      { label: '旅遊' },
-      { label: '健身' },
-    ].map((item, index) => (
-      <div
-        key={index}
-        className="relative h-[250px] w-full overflow-hidden rounded-[20px] bg-[#d9d9d9]"
-      >
-        {/* 未來可以放封面圖 */}
-        <div className="absolute inset-0 bg-[#cfcfcf]" />
-
-        {/* 底部文字 */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[15px] font-medium text-[#222]">
-          {item.label}
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
-
-  </div>
-
-  
-
-  {/* 第4頁（收藏） */}
+  {/* 第3頁（收藏） */}
   <div className="w-full shrink-0">
     
       <div className="mb-3 mt-2 flex items-center justify-between">

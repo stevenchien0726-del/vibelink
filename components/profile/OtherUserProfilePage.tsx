@@ -122,6 +122,11 @@ export default function OtherUserProfilePage({
   const [profile, setProfile] = useState<any>(null)
   const [posts, setPosts] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState(0)
+  function goToTab(index: number) {
+  if (index < 0 || index > 2) return
+  setActiveTab(index)
+}
+
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -449,13 +454,13 @@ export default function OtherUserProfilePage({
             </div>
 
             <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">
-              <div className="grid grid-cols-4">
-                {[Grid2x2, PlaySquare, ImageIcon, Bookmark].map(
+              <div className="grid grid-cols-3">
+  {[Grid2x2, PlaySquare, Bookmark].map(
                   (Icon, index) => (
                     <button
                       key={index}
                       type="button"
-                      onClick={() => setActiveTab(index)}
+                      onClick={() => goToTab(index)}
                       className="flex h-[34px] items-center justify-center"
                     >
                       <Icon
@@ -472,9 +477,9 @@ export default function OtherUserProfilePage({
               <div
                 className="pointer-events-none absolute bottom-0 h-[4px] px-2 transition-all duration-300 ease-out"
                 style={{
-                  left: `${activeTab * 25}%`,
-                  width: '25%',
-                }}
+  left: `${activeTab * 33.3333}%`,
+  width: '33.3333%',
+}}
               >
                 <div className="h-[4px] w-full rounded-full bg-[#d89ad0]" />
               </div>
@@ -523,12 +528,6 @@ export default function OtherUserProfilePage({
                 <div className="w-full shrink-0">
                   <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
                     {text.shortVideoNext}
-                  </div>
-                </div>
-
-                <div className="w-full shrink-0">
-                  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
-                    {text.storyNext}
                   </div>
                 </div>
 
