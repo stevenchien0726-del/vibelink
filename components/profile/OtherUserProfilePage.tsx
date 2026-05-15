@@ -145,12 +145,18 @@ export default function OtherUserProfilePage({
       }
 
       if (!isUuid(userId)) {
-        setLoadError(text.mockUser)
-        setProfile(null)
-        setPosts([])
-        setLoading(false)
-        return
-      }
+  setProfile({
+    id: userId,
+    username: userId,
+    display_name: userId,
+    avatar_url: '',
+    bio: '',
+  })
+
+  setPosts([])
+  setLoading(false)
+  return
+}
 
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')

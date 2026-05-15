@@ -346,8 +346,14 @@ function PlaceholderUserButton({
   return (
     <button
       type="button"
-      onClick={() => onOpenProfile?.(userId)}
-      className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
+      onClick={() => {
+  if (!onOpenProfile) return
+
+  onOpenProfile(userId)
+}}
+      className={`flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95 ${
+  !onOpenProfile ? 'opacity-45' : ''
+}`}
       aria-label={`Open ${userId} profile`}
     >
       <div className="h-[42px] w-[42px] shrink-0 rounded-full bg-[#c893cf]" />
@@ -399,15 +405,12 @@ function FolderPreview({
   }}
 />
       ) : (
-        <PlaceholderUserButton
-          userId="user-1"
-          onOpenProfile={folderId === 'recent' ? undefined : onOpenProfile}
-        />
+        <PlaceholderUserButton userId="user-1" />
       )}
 
-      <PlaceholderUserButton userId="user-2" onOpenProfile={onOpenProfile} />
+      <PlaceholderUserButton userId="user-2" />
 
-      <PlaceholderUserButton userId="user-3" onOpenProfile={onOpenProfile} />
+<PlaceholderUserButton userId="user-3" />
 
       <button
         type="button"
