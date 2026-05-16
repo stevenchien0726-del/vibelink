@@ -412,6 +412,7 @@ onTouchEnd={(e) => e.stopPropagation()}
     userId={otherUserId}
     onClose={() => setIsProfileOpen(false)}
     locale={locale}
+    onOpenChat={() => setIsProfileOpen(false)}
   />
 )}
       

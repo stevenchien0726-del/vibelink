@@ -28,6 +28,7 @@ type Props = {
   userId: string
   onClose: () => void
   locale: Locale
+  onOpenChat?: () => void
 }
 
 const otherProfileText = {
@@ -117,6 +118,7 @@ export default function OtherUserProfilePage({
   userId,
   onClose,
   locale,
+  onOpenChat,
 }: Props) {
   const text = otherProfileText[locale]
 
@@ -448,9 +450,13 @@ export default function OtherUserProfilePage({
               <button
   type="button"
   onClick={() => {
-    console.log('✅ message button clicked')
-    setIsChatOpen(true)
-  }}
+  if (onOpenChat) {
+    onOpenChat()
+    return
+  }
+
+  setIsChatOpen(true)
+}}
   className="flex h-[44px] flex-1 items-center justify-center rounded-full bg-white text-[15px] font-medium text-[#111] shadow-[0_4px_14px_rgba(0,0,0,0.06)] active:scale-95"
 >
   {text.message}
