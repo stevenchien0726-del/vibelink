@@ -30,7 +30,6 @@ import type { Locale } from '@/i18n'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import SettingsPage from '@/pages/SettingsPage'
-import type { CapsulePosition } from '@/app/page'
 
 import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
 
@@ -52,8 +51,6 @@ import { mockPosts } from '@/lib/mockPosts'
 
 type ProfilePageProps = {
   onCloseMenu?: () => void
-  feedCapsulePosition: CapsulePosition
-  onChangeFeedCapsulePosition: (value: CapsulePosition) => void
 
   locale: Locale
   onChangeLocale: (locale: Locale) => void
@@ -170,8 +167,6 @@ function MenuItem({ icon, label, onClick }: MenuItemProps) {
 }
 
 export default function ProfilePage({
-  feedCapsulePosition,
-  onChangeFeedCapsulePosition,
   locale,
   onChangeLocale,
 }: ProfilePageProps) {
@@ -1595,8 +1590,7 @@ openSelectedPost(post)
     setShowSettingsPage(false)
     setIsMenuOpen(true)
   }}
-  capsulePosition={feedCapsulePosition}
-  onCapsulePositionChange={onChangeFeedCapsulePosition}
+  
   locale={safeLocale}
   onChangeLocale={onChangeLocale}
   initialDarkMode={false}
