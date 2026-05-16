@@ -31,6 +31,7 @@ import {
 
 import FeedGrid, { type PostItem } from '@/components/home/sections/feed/FeedGrid'
 import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
+import FavoriteFeedPage from '@/components/home/sections/feed/FavoriteFeedPage'
 
 import { supabase } from '@/lib/supabase'
 
@@ -38,6 +39,8 @@ import { MEMBERSHIP_URL, openLink } from '@/lib/links'
 
 import { ensureUserProfile } from '@/lib/profile'
 import { mockPosts, mockShortVideos } from '@/lib/mockPosts'
+
+import FollowingFeedPage from '@/components/home/sections/feed/FollowingFeedPage'
 
 type StoryItem = {
   id: string
@@ -213,6 +216,9 @@ function handlePostCreated(post: CreatedPostPayload) {
 }
 
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false)
+  const [isFavoriteFeedOpen, setIsFavoriteFeedOpen] = useState(false)
+  const [isFollowingFeedOpen, setIsFollowingFeedOpen] = useState(false)
+
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
@@ -1215,20 +1221,28 @@ const mergedPosts = [
   </button>
 
   <button
-    type="button"
-    className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
-  >
-    <FollowingIcon />
-    <span>追蹤中</span>
-  </button>
+  type="button"
+  onClick={() => {
+    setIsTopMenuOpen(false)
+    setIsFollowingFeedOpen(true)
+  }}
+  className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
+>
+  <FollowingIcon />
+  <span>追蹤中</span>
+</button>
 
   <button
-    type="button"
-    className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
-  >
-    <FavoriteIcon />
-    <span>最愛</span>
-  </button>
+  type="button"
+  onClick={() => {
+    setIsTopMenuOpen(false)
+    setIsFavoriteFeedOpen(true)
+  }}
+  className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
+>
+  <FavoriteIcon />
+  <span>最愛</span>
+</button>
 </div>
 </motion.div>
   )}
@@ -1783,6 +1797,45 @@ onTouchEnd={(e) => e.stopPropagation()}
   onShare={() => setIsShareSheetOpen(true)}
   onSave={toggleShortVideoSave}
 />
+
+<AnimatePresence>
+  {isFollowingFeedOpen && (
+    <FollowingFeedPage
+      onClose={() => setIsFollowingFeedOpen(false)}
+      onOpenPost={(post) => {
+        setIsFollowingFeedOpen(false)
+
+        if (post.type === 'video' || post.videoUrl) {
+          setShortVideoStartId(post.id)
+          setIsShortVideoPageOpen(true)
+          return
+        }
+
+        openDetailPost(post)
+      }}
+    />
+  )}
+</AnimatePresence>
+
+<AnimatePresence>
+  {isFavoriteFeedOpen && (
+    <FavoriteFeedPage
+  posts={mergedPosts}
+  onClose={() => setIsFavoriteFeedOpen(false)}
+  onOpenPost={(post) => {
+    setIsFavoriteFeedOpen(false)
+
+    if (post.type === 'video' || post.videoUrl) {
+      setShortVideoStartId(post.id)
+      setIsShortVideoPageOpen(true)
+      return
+    }
+
+    openDetailPost(post)
+  }}
+/>
+  )}
+</AnimatePresence>
 
 <AnimatePresence mode="wait">
   {selectedProfileUserId && (

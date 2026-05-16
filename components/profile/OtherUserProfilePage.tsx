@@ -139,6 +139,7 @@ export default function OtherUserProfilePage({
   const [followerCount, setFollowerCount] = useState(0)
   const [isLinkPortOpen, setIsLinkPortOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -252,6 +253,56 @@ export default function OtherUserProfilePage({
   }, [userId, text])
 
   const gridItems = posts.filter((post) => post.post_images?.length > 0)
+
+  useEffect(() => {
+  const saved = localStorage.getItem('vibelink_favorite_user')
+
+  if (!saved) {
+    setIsFavorite(false)
+    return
+  }
+
+  const parsed = JSON.parse(saved)
+
+  setIsFavorite(parsed?.id === userId)
+}, [userId])
+
+function toggleFavorite() {
+  if (!profile) return
+
+  if (isFavorite) {
+    localStorage.removeItem('vibelink_favorite_user')
+
+    setIsFavorite(false)
+
+    window.dispatchEvent(
+      new Event('vibelink_favorite_user_changed')
+    )
+
+    return
+  }
+
+  const favoriteUser = {
+    id: userId,
+    name:
+      profile?.display_name ||
+      profile?.username ||
+      'Vibelink User',
+
+    avatar: profile?.avatar_url || '',
+  }
+
+  localStorage.setItem(
+    'vibelink_favorite_user',
+    JSON.stringify(favoriteUser)
+  )
+
+  setIsFavorite(true)
+
+  window.dispatchEvent(
+    new Event('vibelink_favorite_user_changed')
+  )
+}
 
   async function toggleFollow() {
     if (!userId || !isUuid(userId)) return
@@ -681,15 +732,22 @@ export default function OtherUserProfilePage({
 
               <div className="overflow-hidden rounded-[16px] bg-white">
                 <button
-                  type="button"
-                  className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[#111] active:bg-black/5"
-                >
-                  <div className="flex w-[54px] items-center justify-end">
-                    <Star size={18} />
-                  </div>
+  type="button"
+  onClick={toggleFavorite}
+  className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[#111] active:bg-black/5"
+>
+  <div className="flex w-[54px] items-center justify-end">
+  <Star
+    size={18}
+    fill={isFavorite ? '#A855F7' : 'transparent'}
+    color={isFavorite ? '#A855F7' : '#111'}
+  />
+</div>
 
-                  <span className="ml-5">{text.addFavorite}</span>
-                </button>
+  <span className="ml-5">
+    {isFavorite ? '取消最愛' : text.addFavorite}
+  </span>
+</button>
 
                 <div className="mx-5 h-px bg-[#cfcfcf]" />
 

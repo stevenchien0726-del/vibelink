@@ -26,6 +26,13 @@ type ConversationItem = {
   lastMessage?: string
 }
 
+type SearchAccountItem = {
+  id: string
+  name: string
+  sub: string
+  avatarUrl?: string
+}
+
 type MessagePageProps = {
   onOpenMenu?: () => void
   locale: Locale
@@ -69,9 +76,6 @@ const messageText = {
   },
 } as const
 
-
-
-
 export default function MessagePage({
   onOpenMenu,
   locale,
@@ -82,10 +86,13 @@ export default function MessagePage({
   const [isTopCapsulePressed, setIsTopCapsulePressed] = useState(false)
 
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false)
-  const [isEditPanelOpen, setIsEditPanelOpen] = useState(false)
-  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
+const [isEditPanelOpen, setIsEditPanelOpen] = useState(false)
+const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
 
   const [searchText, setSearchText] = useState('')
+    const [searchAccounts, setSearchAccounts] = useState<SearchAccountItem[]>([])
+  const [isSearchingAccounts, setIsSearchingAccounts] = useState(false)
+
   const [groupName, setGroupName] = useState('')
   const [selectedGroupMembers, setSelectedGroupMembers] = useState<string[]>([
     'g1',
@@ -98,56 +105,15 @@ export default function MessagePage({
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [openedChat, setOpenedChat] = useState<ConversationItem | null>(null)
 
-  const searchAccounts = [
-  {
-    id: 'u1',
-    name: 'Ryan_88',
-    sub:
-      locale === 'en'
-        ? 'Fitness / Beach / Coffee'
-        : '健身 / 海邊 / 咖啡',
-  },
-  {
-    id: 'u2',
-    name: 'Leo_wave',
-    sub:
-      locale === 'en'
-        ? 'Streetwear / Hip Hop'
-        : '街頭穿搭 / Hip Hop',
-  },
-  {
-    id: 'u3',
-    name: 'Mina.day',
-    sub:
-      locale === 'en'
-        ? 'Travel / Lifestyle'
-        : '旅行 / 生活感',
-  },
-  {
-    id: 'u4',
-    name: 'Vibe_Alice',
-    sub:
-      locale === 'en'
-        ? 'Cafe / Chill'
-        : '咖啡廳 / Chill',
-  },
-  {
-    id: 'u5',
-    name: 'Neo_77',
-    sub:
-      locale === 'en'
-        ? 'Nightlife / Fashion'
-        : '夜生活 / 時尚',
-  },
-]
-
-  const filteredAccounts = useMemo(() => {
+    const filteredAccounts = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
+
     if (!keyword) return searchAccounts
+
     return searchAccounts.filter((account) =>
       account.name.toLowerCase().includes(keyword)
     )
-  }, [searchText])
+  }, [searchAccounts, searchText])
 
   const hasAnyTopPanelOpen =
     isSearchPanelOpen || isEditPanelOpen || isCreateGroupOpen
@@ -248,6 +214,77 @@ export default function MessagePage({
 
   loadConversations()
 }, [])
+
+useEffect(() => {
+  if (!isSearchPanelOpen) return
+
+  async function loadFollowingUsers() {
+    setIsSearchingAccounts(true)
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      setSearchAccounts([])
+      setIsSearchingAccounts(false)
+      return
+    }
+
+    const { data: followsData, error: followsError } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', user.id)
+
+    if (followsError) {
+      console.error('讀取追蹤用戶失敗:', followsError)
+      setSearchAccounts([])
+      setIsSearchingAccounts(false)
+      return
+    }
+
+    const followingIds =
+      followsData?.map((item: any) => item.following_id) ?? []
+
+    if (followingIds.length === 0) {
+      setSearchAccounts([])
+      setIsSearchingAccounts(false)
+      return
+    }
+
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url, bio')
+      .in('id', followingIds)
+
+    if (profilesError) {
+      console.error('讀取 profiles 失敗:', profilesError)
+      setSearchAccounts([])
+      setIsSearchingAccounts(false)
+      return
+    }
+
+    const mapped =
+      profilesData?.map((profile: any) => ({
+        id: profile.id,
+        name:
+          profile.display_name ||
+          profile.username ||
+          'Vibelink User',
+        sub:
+          profile.bio ||
+          (locale === 'en'
+            ? 'Following user'
+            : '已追蹤用戶'),
+        avatarUrl: profile.avatar_url || '',
+      })) ?? []
+
+    setSearchAccounts(mapped)
+    setIsSearchingAccounts(false)
+  }
+
+  loadFollowingUsers()
+}, [isSearchPanelOpen, locale])
 
   function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
     const currentY = e.currentTarget.scrollTop
@@ -366,20 +403,35 @@ export default function MessagePage({
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        {filteredAccounts.length > 0 ? (
+                        {isSearchingAccounts ? (
+  <div className="rounded-[20px] bg-white/45 px-4 py-5 text-[14px] text-[#666]">
+    搜尋追蹤用戶中...
+  </div>
+) : filteredAccounts.length > 0 ? (
                           filteredAccounts.map((account) => (
                             <button
-                              key={account.id}
-                              type="button"
-                              className="flex items-center gap-3 rounded-[20px] bg-white/45 px-3 py-3 text-left active:scale-[0.99]"
-                            >
-                              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[#d9d9d9]">
-                                <UserRound
-                                  size={24}
-                                  strokeWidth={2.1}
-                                  className="text-black"
-                                />
-                              </div>
+  key={account.id}
+  type="button"
+  onClick={() => {
+    setIsSearchPanelOpen(false)
+    setSelectedProfileUserId(account.id)
+  }}
+  className="flex items-center gap-3 rounded-[20px] bg-white/45 px-3 py-3 text-left active:scale-[0.99]"
+>
+                              <div className="flex h-[46px] w-[46px] items-center justify-center overflow-hidden rounded-full bg-[#d9d9d9]">
+  {account.avatarUrl ? (
+    <img
+      src={account.avatarUrl}
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    <UserRound
+      size={24}
+      strokeWidth={2.1}
+      className="text-black"
+    />
+  )}
+</div>
 
                               <div className="flex flex-col">
                                 <span className="text-[15px] font-medium text-[#111]">

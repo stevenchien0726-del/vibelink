@@ -79,6 +79,8 @@ export default function PeopleLibraryPage({
 }: PeopleLibraryPageProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
   const [recentUser, setRecentUser] = useState<PickedUser | null>(null)
+  const [favoriteUser, setFavoriteUser] = useState<PickedUser | null>(null)
+
   const folders = getFolders(locale)
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
@@ -146,6 +148,32 @@ console.log('PeopleLibrary followingId:', followingId)
 
       fetchRecentFollowedUser()
 }, [onOpenProfile])
+
+useEffect(() => {
+  function loadFavoriteUser() {
+    const saved = localStorage.getItem(
+      'vibelink_favorite_user'
+    )
+
+    setFavoriteUser(
+      saved ? JSON.parse(saved) : null
+    )
+  }
+
+  loadFavoriteUser()
+
+  window.addEventListener(
+    'vibelink_favorite_user_changed',
+    loadFavoriteUser
+  )
+
+  return () => {
+    window.removeEventListener(
+      'vibelink_favorite_user_changed',
+      loadFavoriteUser
+    )
+  }
+}, [])
 
   function closeSheet() {
     animate(sheetY, 540, {
@@ -259,8 +287,9 @@ console.log('PeopleLibrary followingId:', followingId)
                 <div key={folder.id} className="flex flex-col items-center">
                   <div className="flex h-[170px] w-full items-center justify-center rounded-[20px] bg-[#d9d9d9] px-4">
                     <FolderPreview
-                      folderId={folder.id}
-                      recentUser={recentUser}
+  folderId={folder.id}
+  recentUser={recentUser}
+  favoriteUser={favoriteUser}
                       onOpenFolder={() => setSelectedFolder(folder.id)}
                       onOpenProfile={(userId) => {
                         onOpenProfile?.(userId)
@@ -371,42 +400,63 @@ function FolderPreview({
   onOpenProfile,
   onPickUser,
   recentUser,
+  favoriteUser,
 }: {
   folderId: string
   onOpenFolder: () => void
   onOpenProfile: (userId: string) => void
   onPickUser?: (payload: PickUserPayload) => void
   recentUser: PickedUser | null
+  favoriteUser: PickedUser | null
 }) {
   return (
     <div className="grid w-full grid-cols-2 place-items-start gap-x-6 gap-y-5 pt-1">
-      {folderId === 'recent' && recentUser ? (
-        <UserAvatarWithName
-  user={recentUser}
-  onClick={(e) => {
-    e.stopPropagation()
+      {folderId === 'favorite' && favoriteUser ? (
+  <UserAvatarWithName
+    user={favoriteUser}
+    onClick={(e) => {
+      e.stopPropagation()
 
-    const sourceRect = e.currentTarget.getBoundingClientRect()
+      const sourceRect =
+        e.currentTarget.getBoundingClientRect()
 
-    if (onPickUser) {
-      console.log('PeopleLibrary pick user for AI Radar:', recentUser.id)
+      if (onPickUser) {
+        onPickUser({
+          user: favoriteUser,
+          sourceRect,
+        })
 
-      onPickUser({
-        user: recentUser,
-        sourceRect,
-      })
+        return
+      }
 
-      return
-    }
+      onOpenProfile?.(favoriteUser.id)
+    }}
+  />
+)
+       : folderId === 'recent' && recentUser ? (
+  <UserAvatarWithName
+    user={recentUser}
+    onClick={(e) => {
+      e.stopPropagation()
 
-    console.log('PeopleLibrary open profile:', recentUser.id)
+      const sourceRect =
+        e.currentTarget.getBoundingClientRect()
 
-    onOpenProfile?.(recentUser.id)
-  }}
-/>
-      ) : (
-        <PlaceholderUserButton userId="user-1" />
-      )}
+      if (onPickUser) {
+        onPickUser({
+          user: recentUser,
+          sourceRect,
+        })
+
+        return
+      }
+
+      onOpenProfile?.(recentUser.id)
+    }}
+  />
+) : (
+  <PlaceholderUserButton userId="user-1" />
+)}
 
       <PlaceholderUserButton userId="user-2" />
 
