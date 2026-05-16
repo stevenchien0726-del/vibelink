@@ -13,7 +13,18 @@ import {
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 
 import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
+import ChatRoomPage from '@/components/chat/ChatRoomPage'
+
 import type { Locale } from '@/i18n'
+import { supabase } from '@/lib/supabase'
+
+type ConversationItem = {
+  id: string
+  otherUserId: string
+  name: string
+  avatarUrl?: string
+  lastMessage?: string
+}
 
 type MessagePageProps = {
   onOpenMenu?: () => void
@@ -83,6 +94,9 @@ export default function MessagePage({
 
   const [isTopBarHidden, setIsTopBarHidden] = useState(false)
   const lastScrollYRef = useRef(0)
+
+  const [conversations, setConversations] = useState<ConversationItem[]>([])
+  const [openedChat, setOpenedChat] = useState<ConversationItem | null>(null)
 
   const searchAccounts = [
   {
@@ -177,6 +191,63 @@ export default function MessagePage({
         : [...prev, memberId]
     )
   }
+
+  useEffect(() => {
+  async function loadConversations() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from('conversations')
+      .select(`
+        id,
+        user_a,
+        user_b,
+        chat_messages (
+          id,
+          text,
+          created_at,
+          recalled
+        )
+      `)
+      .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+
+    if (error) {
+      console.error('讀取 conversations 失敗:', error)
+      return
+    }
+
+    const mapped = (data ?? []).map((conversation: any) => {
+      const otherUserId =
+        conversation.user_a === user.id
+          ? conversation.user_b
+          : conversation.user_a
+
+      const latestMessage = [...(conversation.chat_messages ?? [])]
+        .filter((msg: any) => !msg.recalled)
+        .sort(
+          (a: any, b: any) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+        )[0]
+
+      return {
+        id: conversation.id,
+        otherUserId,
+        name: '小葵',
+        avatarUrl: '',
+        lastMessage: latestMessage?.text ?? '',
+      }
+    })
+
+    setConversations(mapped)
+  }
+
+  loadConversations()
+}, [])
 
   function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
     const currentY = e.currentTarget.scrollTop
@@ -381,17 +452,35 @@ export default function MessagePage({
           </>
         )}
 
-        <div className="flex flex-col gap-7 pt-2">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <button
-              key={`message-${index}`}
-              type="button"
-              className="flex items-center gap-4 text-left"
-            >
-              <div className="h-[58px] w-[58px] rounded-full bg-[#d9d9d9]" />
-            </button>
-          ))}
+        <div className="flex flex-col gap-4 pt-2">
+  {conversations.map((conversation) => (
+    <button
+  key={conversation.id}
+  type="button"
+  onClick={() => setOpenedChat(conversation)}
+  className="flex items-center gap-4 rounded-[24px] px-1 py-2 text-left active:scale-[0.99]"
+>
+      <div className="h-[58px] w-[58px] overflow-hidden rounded-full bg-[#d9d9d9]">
+        {conversation.avatarUrl && (
+          <img
+            src={conversation.avatarUrl}
+            className="h-full w-full object-cover"
+          />
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="text-[15px] font-medium text-[#111]">
+          {conversation.name}
         </div>
+
+        <div className="mt-1 truncate text-[13px] text-[#777]">
+          {conversation.lastMessage || '開始聊天'}
+        </div>
+      </div>
+    </button>
+  ))}
+</div>
       </div>
 
       {isPeopleLibraryOpen && (
@@ -419,6 +508,14 @@ export default function MessagePage({
 />
   )}
 </AnimatePresence>
+  {openedChat && (
+  <ChatRoomPage
+    otherUserId={openedChat.otherUserId}
+    userName={openedChat.name}
+    userAvatar={openedChat.avatarUrl}
+    onClose={() => setOpenedChat(null)}
+  />
+)}
     </div>
   )
 }

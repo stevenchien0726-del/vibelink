@@ -11,11 +11,14 @@ import {
 } from 'framer-motion'
 import { ChevronLeft, Image as ImageIcon, ArrowUp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
+import type { Locale } from '@/i18n'
 
 type Props = {
   otherUserId: string
   userName?: string
   userAvatar?: string
+  locale?: Locale
   onClose: () => void
 }
 
@@ -30,6 +33,7 @@ export default function ChatRoomPage({
   otherUserId,
   userName = '(用戶名)',
   userAvatar,
+  locale = 'zh-TW',
   onClose,
 }: Props) {
   const [mounted, setMounted] = useState(false)
@@ -37,6 +41,7 @@ export default function ChatRoomPage({
   const [input, setInput] = useState('')
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   const touchStartXRef = useRef<number | null>(null)
   const touchStartYRef = useRef<number | null>(null)
@@ -197,16 +202,8 @@ export default function ChatRoomPage({
       .eq('id', messageId)
 
     setMessages((prev) =>
-      prev.map((message) =>
-        message.id === messageId
-          ? {
-              ...message,
-              text: '已收回訊息',
-              recalled: true,
-            }
-          : message
-      )
-    )
+  prev.filter((message) => message.id !== messageId)
+)
 
     setSelectedMessageId(null)
   }
@@ -278,29 +275,39 @@ export default function ChatRoomPage({
               <ChevronLeft size={24} />
             </button>
 
-            <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#d49be0]">
-              {userAvatar && (
-                <img
-                  src={userAvatar}
-                  className="h-full w-full object-cover"
-                />
-              )}
-            </div>
+            <button
+  type="button"
+  onClick={() => setIsProfileOpen(true)}
+  className="flex items-center gap-3 rounded-full px-1 py-1 active:scale-[0.97]"
+>
+  <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#d49be0]">
+    {userAvatar && (
+      <img
+        src={userAvatar}
+        className="h-full w-full object-cover"
+      />
+    )}
+  </div>
 
-            <div className="text-[15px] font-medium text-[#222]">
-              {userName}
-            </div>
+  <div className="text-[15px] font-medium text-[#222]">
+    {userName}
+  </div>
+</button>
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-5">
             <div className="flex min-h-full flex-col justify-end gap-3">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`relative flex ${
-                    message.mine ? 'justify-end' : 'justify-start'
-                  }`}
-                >
+              
+               {messages
+  .filter((message) => !message.recalled)
+  .map((message) => (
+    <div
+      key={message.id}
+      className={`relative flex ${
+        message.mine ? 'justify-end' : 'justify-start'
+      }`}
+    >
+            
                   <div
                     onContextMenu={(e) => {
                       e.preventDefault()
@@ -400,6 +407,14 @@ onTouchEnd={(e) => e.stopPropagation()}
             </div>
           </div>
         </div>
+        {isProfileOpen && (
+  <OtherUserProfilePage
+    userId={otherUserId}
+    onClose={() => setIsProfileOpen(false)}
+    locale={locale}
+  />
+)}
+      
       </motion.div>
     </AnimatePresence>,
     document.body
