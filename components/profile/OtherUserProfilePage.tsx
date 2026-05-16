@@ -22,6 +22,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import type { Locale } from '@/i18n'
 import LinkPortSheet from '@/components/profile/LinkPortSheet'
+import ChatRoomPage from '@/components/chat/ChatRoomPage'
 
 type Props = {
   userId: string
@@ -135,6 +136,7 @@ export default function OtherUserProfilePage({
   const [isFollowing, setIsFollowing] = useState(false)
   const [followerCount, setFollowerCount] = useState(0)
   const [isLinkPortOpen, setIsLinkPortOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -298,16 +300,14 @@ export default function OtherUserProfilePage({
   }
 
   return (
+  <>
     <motion.div
       className="fixed inset-0 z-[9999] overflow-y-auto bg-[#f3f3f3] pb-[110px]"
       initial={{ opacity: 0, scale: 0.92, y: 24 }}
       animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
       exit={{ opacity: 0, scale: 0.92, y: 40 }}
       transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-      drag
-      dragDirectionLock
-      dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-      dragElastic={0.22}
+      
       onPointerDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
@@ -446,11 +446,15 @@ export default function OtherUserProfilePage({
               </button>
 
               <button
-                type="button"
-                className="flex h-[44px] flex-1 items-center justify-center rounded-full bg-white text-[15px] font-medium text-[#111] shadow-[0_4px_14px_rgba(0,0,0,0.06)] active:scale-95"
-              >
-                {text.message}
-              </button>
+  type="button"
+  onClick={() => {
+    console.log('✅ message button clicked')
+    setIsChatOpen(true)
+  }}
+  className="flex h-[44px] flex-1 items-center justify-center rounded-full bg-white text-[15px] font-medium text-[#111] shadow-[0_4px_14px_rgba(0,0,0,0.06)] active:scale-95"
+>
+  {text.message}
+</button>
             </div>
 
             <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">
@@ -760,12 +764,31 @@ export default function OtherUserProfilePage({
           </>
         )}
       </AnimatePresence>
-      <LinkPortSheet
-  open={isLinkPortOpen}
-  onClose={() => setIsLinkPortOpen(false)}
-  userId={userId}
-  isOwner={false}
-/>
+      
+
+            <LinkPortSheet
+        open={isLinkPortOpen}
+        onClose={() => setIsLinkPortOpen(false)}
+        userId={userId}
+        isOwner={false}
+      />
     </motion.div>
-  )
+
+    <AnimatePresence>
+  {isChatOpen && (
+    <ChatRoomPage
+  otherUserId={userId}
+  userName={
+    profile?.display_name ||
+    profile?.username ||
+    'Vibelink User'
+  }
+  userAvatar={profile?.avatar_url}
+  onClose={() => setIsChatOpen(false)}
+/>
+  )}
+</AnimatePresence>
+
+  </>
+)
 }

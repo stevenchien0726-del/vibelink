@@ -11,7 +11,6 @@ import {
 import SearchPage from '@/pages/SearchPage'
 import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
-import type { CapsulePosition } from '@/app/page'
 
 import type { Locale } from '@/i18n'
 import WideMenuSheet from '@/components/WideMenuSheet'
@@ -30,7 +29,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react'
 
-import FeedGrid, { type FeedMode, type PostItem } from '@/components/home/sections/feed/FeedGrid'
+import FeedGrid, { type PostItem } from '@/components/home/sections/feed/FeedGrid'
 import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
 
 import { supabase } from '@/lib/supabase'
@@ -46,7 +45,6 @@ type StoryItem = {
 }
 
 type HomePageProps = {
-  feedCapsulePosition: CapsulePosition
   locale: Locale
 }
 
@@ -94,7 +92,6 @@ const storyPagesMap: Record<string, { title: string; bg: string }[]> = {
 }
 
 export default function HomePage({
-  feedCapsulePosition,
   locale,
 }: HomePageProps) {
 
@@ -102,7 +99,6 @@ export default function HomePage({
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   
-  const [feedMode, setFeedMode] = useState<FeedMode>('1x1')
   const [realPosts, setRealPosts] = useState<PostItem[]>([])
   const [mockSavedPostIds, setMockSavedPostIds] = useState<string[]>([])
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null)
@@ -229,7 +225,6 @@ function handlePostCreated(post: CreatedPostPayload) {
     'next' | 'prev' | 'story-next' | 'story-prev'
   >('next')
   const [isStoryPaused, setIsStoryPaused] = useState(false)
-  const [isFeedCapsulePressed, setIsFeedCapsulePressed] = useState(false)
   const [isTopBarVisible, setIsTopBarVisible] = useState(true)
 
   const topMenuRef = useRef<HTMLDivElement>(null)
@@ -584,17 +579,6 @@ async function handleGoogleLogin() {
     setIsSearchPageOpen(true)
   }
 
-function handleCycleFeedMode() {
-  setIsFeedCapsulePressed(true)
-
-  setFeedMode((prev) => {
-    return prev === '1x1' ? '2x2' : '1x1'
-  })
-
-  window.setTimeout(() => {
-    setIsFeedCapsulePressed(false)
-  }, 320)
-}
 
 function handleDetailTouchStart(e: React.TouchEvent<HTMLDivElement>) {
   const target = e.target as HTMLElement
@@ -1309,8 +1293,6 @@ await loadShortVideos(user)
 >
   <FeedGrid
   posts={mergedPosts}
-  feedMode={feedMode}
-  setFeedMode={setFeedMode}
   onOpenPost={(post) => {
   if (post.type === 'video' || post.videoUrl) {
     setShortVideoStartId(post.id)
@@ -1329,32 +1311,7 @@ onOpenProfile={(post) => {
 />
 </section>
 
-        <div className="pointer-events-none fixed bottom-[96px] left-0 right-0 z-[24] mx-auto w-full max-w-[430px] px-4">
-          <div
-            className={`flex ${
-              feedCapsulePosition === '左'
-                ? 'justify-start'
-                : feedCapsulePosition === '中'
-                  ? 'justify-center'
-                  : 'justify-end'
-            }`}
-          >
-            <button
-              type="button"
-              onClick={handleCycleFeedMode}
-              className="pointer-events-auto flex h-[35px] min-w-[85px] items-center justify-center gap-[5px] rounded-full border border-white/40 bg-gray-200/60 text-[#444] shadow-[0_6px_16px_rgba(0,0,0,0.08)] backdrop-blur-md transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
-              style={{
-                transform: isFeedCapsulePressed ? 'scale(1.06)' : 'scale(1)',
-                transformOrigin: 'center center',
-              }}
-            >
-              <GridIcon />
-              <span className="whitespace-nowrap text-[12px] font-semibold text-[#555]">
-                {feedMode}
-              </span>
-            </button>
-          </div>
-        </div>
+        
       </main>
 
 <AnimatePresence>
@@ -1946,17 +1903,6 @@ function MembershipIcon() {
         strokeLinecap="round"
         strokeDasharray="1.8 1.8"
       />
-    </svg>
-  )
-}
-
-function GridIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="5" y="5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.7" />
-      <rect x="14" y="5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.7" />
-      <rect x="5" y="14" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.7" />
-      <rect x="14" y="14" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.7" />
     </svg>
   )
 }

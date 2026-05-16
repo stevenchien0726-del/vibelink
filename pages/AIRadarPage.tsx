@@ -146,8 +146,9 @@ const mainScrollRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
   async function initAuth() {
-    const { data } = await supabase.auth.getSession()
-    const user = data.session?.user ?? null
+    const {
+  data: { user },
+} = await supabase.auth.getUser()
 
     if (!user) {
       setIsAuthModalOpen(true)

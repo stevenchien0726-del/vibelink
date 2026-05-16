@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { motion, LayoutGroup } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   ChevronLeft,
   ChevronRight,
 Check,
-  Grid2x2,
   Moon,
   Heart,
   Ban,
@@ -14,16 +13,12 @@ Check,
   MessageCircle,
 } from 'lucide-react'
 
-import type { CapsulePosition } from '@/app/page'
 import type { Locale } from '@/i18n'
 
 type SettingsPageProps = {
   onClose: () => void
-  capsulePosition: CapsulePosition
   initialDarkMode?: boolean
   initialShowCity?: boolean
-
-  onCapsulePositionChange: (value: CapsulePosition) => void
 
   locale: Locale
   onChangeLocale: (locale: Locale) => void
@@ -40,11 +35,6 @@ type SettingsPageProps = {
 const settingsText = {
   'zh-TW': {
     title: '設定',
-    layout: '版面模式膠囊',
-
-    left: '左',
-    center: '中',
-    right: '右',
 
     darkMode: '深色模式',
     darkOn: '開啟中',
@@ -59,11 +49,6 @@ const settingsText = {
 
   en: {
     title: 'Settings',
-    layout: 'Layout Capsule',
-
-    left: 'Left',
-    center: 'Center',
-    right: 'Right',
 
     darkMode: 'Dark Mode',
     darkOn: 'On',
@@ -79,11 +64,8 @@ const settingsText = {
 
 export default function SettingsPage({
   onClose,
-  capsulePosition,
   initialDarkMode = false,
   initialShowCity = false,
-
-  onCapsulePositionChange,
 
   locale,
   onChangeLocale,
@@ -234,67 +216,6 @@ export default function SettingsPage({
 
         <div className="px-4 pb-10 pt-[72px]">
           <div className="rounded-[22px] bg-[#d9d9d9] px-4 py-4">
-            <div className="mb-4 flex items-center gap-3">
-              <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
-                <Grid2x2 size={19} strokeWidth={2.1} />
-              </span>
-
-              <span className="text-[16px] font-medium text-[#222]">
-                {text.layout}
-              </span>
-            </div>
-
-            <LayoutGroup id="capsule-position-segment">
-              <div className="grid grid-cols-3 gap-3">
-                {(['左', '中', '右'] as CapsulePosition[]).map((item) => {
-                  const selected = capsulePosition === item
-
-                  return (
-                    <motion.button
-                      key={item}
-                      type="button"
-                      onClick={() => {
-                        localStorage.setItem(
-                          'feedCapsulePosition',
-                          item
-                        )
-
-                        onCapsulePositionChange(item)
-                      }}
-                      whileTap={{ scale: 1.05 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 520,
-                        damping: 26,
-                      }}
-                      className="relative flex h-[46px] items-center justify-center overflow-hidden rounded-[16px] border border-[#ececec] bg-white text-[17px] font-medium text-[#222] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-                    >
-                      {selected && (
-                        <motion.div
-                          layoutId="capsule-position-pill"
-                          className="absolute inset-0 rounded-[16px] bg-[#d9afe6]"
-                          transition={{
-                            type: 'spring',
-                            stiffness: 420,
-                            damping: 32,
-                          }}
-                        />
-                      )}
-
-                      <span className="relative z-10">
-                        {item === '左'
-                          ? text.left
-                          : item === '中'
-                            ? text.center
-                            : text.right}
-                      </span>
-                    </motion.button>
-                  )
-                })}
-              </div>
-            </LayoutGroup>
-
-            <div className="my-5 h-px bg-[#8f8f8f]" />
 
             <div className="flex items-center justify-between py-1">
               <div className="flex items-center gap-3">
