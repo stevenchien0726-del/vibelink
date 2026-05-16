@@ -11,7 +11,6 @@ import BottomNav from '@/components/home/ui/nav/BottomNav'
 import { isInAppBrowser } from '@/lib/detectInAppBrowser'
 
 export type AppPage = 'home' | 'ai' | 'message' | 'profile' | 'tv'
-export type CapsulePosition = '左' | '中' | '右'
 
 const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
@@ -51,23 +50,6 @@ useEffect(() => {
   const [swipeOffset, setSwipeOffset] = useState(0)
   const [isDraggingPage, setIsDraggingPage] = useState(false)
   const [isSnapAnimating, setIsSnapAnimating] = useState(false)
-
-  const [feedCapsulePosition, setFeedCapsulePosition] =
-  useState<CapsulePosition>(() => {
-    if (typeof window === 'undefined') return '中'
-
-    const saved = localStorage.getItem('feedCapsulePosition')
-
-    if (saved === '左' || saved === '中' || saved === '右') {
-      return saved
-    }
-
-    return '中'
-  })
-
-  useEffect(() => {
-  localStorage.setItem('feedCapsulePosition', feedCapsulePosition)
-}, [feedCapsulePosition])
 
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
@@ -351,10 +333,7 @@ useEffect(() => {
         style={pageTranslateStyle}
       >
         <div className={page === 'home' ? 'block' : 'hidden'}>
-  <HomePage
-  feedCapsulePosition={feedCapsulePosition}
-  locale={locale}
-/>
+  <HomePage locale={locale} />
 </div>
 
 <div className={page === 'ai' ? 'block' : 'hidden'}>
@@ -367,8 +346,6 @@ useEffect(() => {
 
 <div className={page === 'profile' ? 'block' : 'hidden'}>
   <ProfilePage
-  feedCapsulePosition={feedCapsulePosition}
-  onChangeFeedCapsulePosition={setFeedCapsulePosition}
   locale={locale}
   onChangeLocale={setLocale}
 />
