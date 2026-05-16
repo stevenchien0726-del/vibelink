@@ -255,53 +255,69 @@ export default function OtherUserProfilePage({
   const gridItems = posts.filter((post) => post.post_images?.length > 0)
 
   useEffect(() => {
-  const saved = localStorage.getItem('vibelink_favorite_user')
+  async function loadFavoriteState() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!saved) {
-    setIsFavorite(false)
-    return
+    if (!user || !userId) {
+      setIsFavorite(false)
+      return
+    }
+
+    const { data } = await supabase
+      .from('favorite_users')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('favorite_user_id', userId)
+      .maybeSingle()
+
+    setIsFavorite(!!data)
   }
 
-  const parsed = JSON.parse(saved)
-
-  setIsFavorite(parsed?.id === userId)
+  loadFavoriteState()
 }, [userId])
 
-function toggleFavorite() {
-  if (!profile) return
+async function toggleFavorite() {
+  if (!profile || !userId) return
 
-  if (isFavorite) {
-    localStorage.removeItem('vibelink_favorite_user')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-    setIsFavorite(false)
-
-    window.dispatchEvent(
-      new Event('vibelink_favorite_user_changed')
-    )
-
+  if (!user) {
+    alert(text.loginFirst)
     return
   }
 
-  const favoriteUser = {
-    id: userId,
-    name:
-      profile?.display_name ||
-      profile?.username ||
-      'Vibelink User',
+  if (isFavorite) {
+    setIsFavorite(false)
 
-    avatar: profile?.avatar_url || '',
+    const { error } = await supabase
+      .from('favorite_users')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('favorite_user_id', userId)
+
+    if (error) {
+      console.error('取消最愛失敗:', error)
+      setIsFavorite(true)
+    }
+
+    return
   }
-
-  localStorage.setItem(
-    'vibelink_favorite_user',
-    JSON.stringify(favoriteUser)
-  )
 
   setIsFavorite(true)
 
-  window.dispatchEvent(
-    new Event('vibelink_favorite_user_changed')
-  )
+  const { error } = await supabase.from('favorite_users').insert({
+    user_id: user.id,
+    favorite_user_id: userId,
+  })
+
+  if (error) {
+    console.error('加入最愛失敗:', error)
+    setIsFavorite(false)
+  }
 }
 
   async function toggleFollow() {

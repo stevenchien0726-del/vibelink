@@ -17,14 +17,50 @@ export default function FavoriteFeedPage({ onClose, onOpenPost }: Props) {
 
   useEffect(() => {
     async function loadFavoriteFeed() {
-      const saved = localStorage.getItem('vibelink_favorite_user')
-      const favoriteUser = saved ? JSON.parse(saved) : null
+      const {
+  data: { user },
+} = await supabase.auth.getUser()
 
-      if (!favoriteUser?.id) {
-        setItems([])
-        setLoading(false)
-        return
-      }
+if (!user) {
+  setItems([])
+  setLoading(false)
+  return
+}
+
+const { data: favoriteRows } = await supabase
+  .from('favorite_users')
+  .select(`
+    favorite_user_id,
+    profiles:favorite_user_id (
+      id,
+      username,
+      display_name,
+      avatar_url
+    )
+  `)
+  .eq('user_id', user.id)
+
+const favoriteUsers = favoriteRows ?? []
+const favoriteUserIds = favoriteUsers.map(
+  (row: any) => row.favorite_user_id
+)
+
+if (favoriteUserIds.length === 0) {
+  setItems([])
+  setLoading(false)
+  return
+}
+
+const favoriteNameMap = new Map<string, string>()
+
+favoriteUsers.forEach((row: any) => {
+  favoriteNameMap.set(
+    row.favorite_user_id,
+    row.profiles?.display_name ||
+      row.profiles?.username ||
+      'Vibelink User'
+  )
+})
 
       const { data: postsData } = await supabase
         .from('posts')
@@ -37,7 +73,7 @@ export default function FavoriteFeedPage({ onClose, onOpenPost }: Props) {
             image_url
           )
         `)
-        .eq('user_id', favoriteUser.id)
+        .in('user_id', favoriteUserIds)
         .order('created_at', { ascending: false })
 
       const { data: videoData } = await supabase
@@ -49,7 +85,7 @@ export default function FavoriteFeedPage({ onClose, onOpenPost }: Props) {
           created_at,
           user_id
         `)
-        .eq('user_id', favoriteUser.id)
+        .in('user_id', favoriteUserIds)
         .order('created_at', { ascending: false })
 
         const postIds = (postsData ?? []).map((post: any) => post.id)
@@ -92,7 +128,7 @@ const videoLikeCountMap = new Map<string, number>()
         .map((post: any) => ({
           id: post.id,
           user_id: post.user_id,
-          author: favoriteUser.name,
+          author: favoriteNameMap.get(post.user_id) || 'Vibelink User',
           text: post.caption || '',
           likes: likeCountMap.get(post.id) ?? 0,
           images: (post.post_images ?? []).map((img: any) => img.image_url),
@@ -105,7 +141,7 @@ const videoLikeCountMap = new Map<string, number>()
       const videoItems: PostItem[] = (videoData ?? []).map((video: any) => ({
         id: video.id,
         user_id: video.user_id,
-        author: favoriteUser.name,
+        author: favoriteNameMap.get(video.user_id) || 'Vibelink User',
         text: video.caption || '',
         likes: videoLikeCountMap.get(video.id) ?? 0,
         images: [],
