@@ -41,6 +41,7 @@ import { ensureUserProfile } from '@/lib/profile'
 import { mockPosts, mockShortVideos } from '@/lib/mockPosts'
 
 import FollowingFeedPage from '@/components/home/sections/feed/FollowingFeedPage'
+import NotificationsPage from '@/components/profile/NotificationsPage'
 
 type StoryItem = {
   id: string
@@ -218,6 +219,7 @@ function handlePostCreated(post: CreatedPostPayload) {
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false)
   const [isFavoriteFeedOpen, setIsFavoriteFeedOpen] = useState(false)
   const [isFollowingFeedOpen, setIsFollowingFeedOpen] = useState(false)
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
 
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -1271,11 +1273,12 @@ const mergedPosts = [
     </button>
 
     <button
-      type="button"
-      className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-black transition-all active:scale-[0.95] active:bg-black/5"
-    >
-      <Bell size={20} strokeWidth={2.1} />
-    </button>
+  type="button"
+  onClick={() => setIsNotificationsOpen(true)}
+  className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-black transition-all active:scale-[0.95] active:bg-black/5"
+>
+  <Bell size={20} strokeWidth={2.1} />
+</button>
   </div>
 </motion.div>
 
@@ -1797,6 +1800,14 @@ onTouchEnd={(e) => e.stopPropagation()}
   onShare={() => setIsShareSheetOpen(true)}
   onSave={toggleShortVideoSave}
 />
+
+<AnimatePresence>
+  {isNotificationsOpen && (
+    <NotificationsPage
+      onClose={() => setIsNotificationsOpen(false)}
+    />
+  )}
+</AnimatePresence>
 
 <AnimatePresence>
   {isFollowingFeedOpen && (

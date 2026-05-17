@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   ChevronLeft,
   ChevronRight,
@@ -84,6 +84,8 @@ export default function SettingsPage({
   const [darkMode, setDarkMode] = useState(initialDarkMode)
   const [showCity, setShowCity] = useState(initialShowCity)
 
+  const [languageOpen, setLanguageOpen] = useState(false)
+
   const [dragX, setDragX] = useState(0)
   const [isDraggingBack, setIsDraggingBack] = useState(false)
 
@@ -165,10 +167,17 @@ export default function SettingsPage({
     }
 
     if (dragX > 90) {
-      setDragX(0)
-      setIsDraggingBack(false)
-      onClose()
-    } else {
+  setDragX(0)
+  setIsDraggingBack(false)
+
+  if (languageOpen) {
+    setLanguageOpen(false)
+    return
+  }
+
+  onClose()
+}
+    else {
       setDragX(0)
       setIsDraggingBack(false)
     }
@@ -202,102 +211,105 @@ export default function SettingsPage({
             <button
               type="button"
               aria-label="返回"
-              onClick={onClose}
+              onClick={() => {
+  if (languageOpen) {
+    setLanguageOpen(false)
+    return
+  }
+
+  onClose()
+}}
               className="absolute left-0 flex h-[40px] w-[40px] items-center justify-center rounded-full active:scale-95"
             >
               <ChevronLeft size={24} />
             </button>
 
             <div className="text-[20px] font-medium tracking-[0.01em]">
-              {text.title}
+              {languageOpen ? text.language : text.title}
             </div>
           </div>
         </div>
 
         <div className="px-4 pb-10 pt-[72px]">
-          <div className="rounded-[22px] bg-[#d9d9d9] px-4 py-4">
+          <AnimatePresence mode="wait">
+  {!languageOpen ? (
+    <motion.div
+      key="settings-main"
+      initial={{ x: -24, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: -24, opacity: 0 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="rounded-[22px] bg-[#d9d9d9] px-4 py-4">
+        <div className="flex items-center justify-between py-1">
+          <div className="flex items-center gap-3">
+            <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
+              <Moon size={19} strokeWidth={2.1} />
+            </span>
 
-            <div className="flex items-center justify-between py-1">
-              <div className="flex items-center gap-3">
-                <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
-                  <Moon size={19} strokeWidth={2.1} />
-                </span>
-
-                <span className="text-[16px] font-medium text-[#222]">
-                  {text.darkMode}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-[16px] text-[#222]">
-                  {darkMode ? text.darkOn : text.darkOff}
-                </span>
-
-                <Switch
-                  checked={darkMode}
-                  onClick={handleToggleDarkMode}
-                />
-              </div>
-            </div>
+            <span className="text-[16px] font-medium text-[#222]">
+              {text.darkMode}
+            </span>
           </div>
 
-          <div className="mt-[30px] overflow-hidden rounded-[22px] bg-[#d9d9d9] py-[20px]">
-  
+          <div className="flex items-center gap-3">
+            <span className="text-[16px] text-[#222]">
+              {darkMode ? text.darkOn : text.darkOff}
+            </span>
 
-  
+            <Switch checked={darkMode} onClick={handleToggleDarkMode} />
+          </div>
+        </div>
+      </div>
 
-  <SettingsRow
-    icon={<MessageCircle size={21} strokeWidth={2.1} />}
-    label={text.messages}
-    onClick={onMessagesClick}
-  />
+      <div className="mt-[30px] overflow-hidden rounded-[22px] bg-[#d9d9d9] py-[20px]">
+        <SettingsRow
+          icon={<MessageCircle size={21} strokeWidth={2.1} />}
+          label={text.messages}
+          onClick={onMessagesClick}
+        />
 
-  <Divider />
+        <Divider />
 
-  <SettingsRow
-    icon={<Ban size={21} strokeWidth={2.1} />}
-    label={text.blocked}
-    onClick={onBlockedClick}
-  />
-</div>
+        <SettingsRow
+          icon={<Ban size={21} strokeWidth={2.1} />}
+          label={text.blocked}
+          onClick={onBlockedClick}
+        />
+      </div>
 
-<div className="mt-[24px] rounded-[22px] bg-[#d9d9d9] px-[30px] py-[26px]">
-  <div className="mb-5 flex items-center gap-3">
-    <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
-      <Globe size={21} strokeWidth={2.1} />
-    </span>
-
-    <span className="text-[16px] font-medium text-[#222]">
-      {text.language}
-    </span>
-  </div>
-
-  <div className="flex flex-col gap-3">
-    <button
-      type="button"
-      onClick={() => onChangeLocale('zh-TW')}
-      className="flex h-[48px] w-full items-center justify-between rounded-[16px] bg-white px-5 text-[15px] font-medium text-[#222] transition active:scale-[0.98]"
+      <div className="mt-[24px] overflow-hidden rounded-[22px] bg-[#d9d9d9] py-[20px]">
+        <SettingsRow
+          icon={<Globe size={21} strokeWidth={2.1} />}
+          label={text.language}
+          onClick={() => setLanguageOpen(true)}
+        />
+      </div>
+    </motion.div>
+  ) : (
+    <motion.div
+      key="language-page"
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      className="mt-[4px] overflow-hidden rounded-[22px] bg-[#d9d9d9] py-[14px]"
     >
-      <span>繁中</span>
+      <LanguageRow
+        label="繁中"
+        active={safeLocale === 'zh-TW'}
+        onClick={() => onChangeLocale('zh-TW')}
+      />
 
-      {safeLocale === 'zh-TW' && (
-        <Check size={20} strokeWidth={2.4} className="text-[#8B5CF6]" />
-      )}
-    </button>
+      <LanguageRow
+        label="English"
+        active={safeLocale === 'en'}
+        onClick={() => onChangeLocale('en')}
+      />
+    </motion.div>
+  )}
+</AnimatePresence>
 
-    <button
-      type="button"
-      onClick={() => onChangeLocale('en')}
-      className="flex h-[48px] w-full items-center justify-between rounded-[16px] bg-white px-5 text-[15px] font-medium text-[#222] transition active:scale-[0.98]"
-    >
-      <span>English</span>
-
-      {safeLocale === 'en' && (
-        <Check size={20} strokeWidth={3} className="text-[#8B5CF6]" />
-      )}
-    </button>
-  </div>
-</div>
         </div>
       </div>
     </motion.div>
@@ -335,6 +347,36 @@ function SettingsRow({
         />
       </span>
     </button>
+  )
+}
+
+function LanguageRow({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+  type="button"
+  onClick={onClick}
+  className="flex h-[72px] w-full items-center text-[16px] font-medium text-[#111] active:bg-[#cfcfcf]"
+>
+  <span className="ml-[34px]">{label}</span>
+
+  <div className="ml-auto mr-[34px]">
+    {active && (
+      <Check
+        size={21}
+        strokeWidth={2.5}
+        className="text-[#8B5CF6]"
+      />
+    )}
+  </div>
+</button>
   )
 }
 

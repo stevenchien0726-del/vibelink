@@ -49,8 +49,8 @@ const messageText = {
 
     noAccount: '找不到符合的帳戶',
 
-    editMessage: '編輯訊息介面',
-    editMessageSub: '管理釘選 / 隱藏 / 訊息排序',
+    editMessage: '編輯訊息',
+    editMessageSub: '釘選 / 隱藏 / 訊息排序',
 
     pinChat: '釘選重要聊天',
     hideLowInteraction: '隱藏低互動聊天',
@@ -474,26 +474,8 @@ useEffect(() => {
                       </button>
                     </div>
 
-                    <div className="p-4 pt-3">
-                      <div className="grid gap-3">
-                        <button
-                          type="button"
-                          className="flex items-center justify-between rounded-[22px] bg-white/45 px-4 py-4 text-left active:scale-[0.99]"
-                        >
-                          <span className="text-[15px] text-[#111]">
-                            {messageText[locale].pinChat}
-                          </span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="flex items-center justify-between rounded-[22px] bg-white/45 px-4 py-4 text-left active:scale-[0.99]"
-                        >
-                          <span className="text-[15px] text-[#111]">
-                            {messageText[locale].hideLowInteraction}
-                          </span>
-                        </button>
-                      </div>
+                    <div className="p-2 pt-3">
+                      
                     </div>
                   </div>
                 )}

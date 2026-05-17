@@ -31,6 +31,8 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import SettingsPage from '@/pages/SettingsPage'
 import AnalyticsPage from '@/components/profile/AnalyticsPage'
+import ArchivedContentPage from '@/components/profile/ArchivedContentPage'
+import NotificationsPage from '@/components/profile/NotificationsPage'
 
 import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
 
@@ -242,6 +244,9 @@ export default function ProfilePage({
   const [activeTab, setActiveTab] = useState(0)
   const [showSettingsPage, setShowSettingsPage] = useState(false)
   const [showAnalyticsPage, setShowAnalyticsPage] = useState(false)
+
+  const [showArchivedPage, setShowArchivedPage] = useState(false)
+  const [showNotificationsPage, setShowNotificationsPage] = useState(false)
 
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
   const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
@@ -1647,7 +1652,14 @@ openSelectedPost(post)
               style={{ originX: 0.88, originY: 0 }}
             >
               <div className="flex flex-col gap-3">
-                <MenuItem icon={<Bell size={22} />} label={text.notifications} />
+                <MenuItem
+  icon={<Bell size={22} />}
+  label={text.notifications}
+  onClick={() => {
+    setShowNotificationsPage(true)
+    setIsMenuOpen(false)
+  }}
+/>
                 
                 <MenuItem
   icon={<Settings size={22} />}
@@ -1667,7 +1679,14 @@ openSelectedPost(post)
   }}
 />
                 
-                <MenuItem icon={<Clock3 size={22} />} label={text.archive} />
+                <MenuItem
+  icon={<Clock3 size={22} />}
+  label={text.archive}
+  onClick={() => {
+    setShowArchivedPage(true)
+    setIsMenuOpen(false)
+  }}
+/>
 
                 <MenuItem
   icon={<Ticket size={22} />}
@@ -1701,6 +1720,28 @@ openSelectedPost(post)
   open={showAnalyticsPage}
   onClose={() => setShowAnalyticsPage(false)}
 />
+
+<AnimatePresence>
+  {showNotificationsPage && (
+    <NotificationsPage
+      onClose={() => {
+        setShowNotificationsPage(false)
+        setIsMenuOpen(true)
+      }}
+    />
+  )}
+</AnimatePresence>
+
+<AnimatePresence>
+  {showArchivedPage && (
+    <ArchivedContentPage
+  onClose={() => {
+    setShowArchivedPage(false)
+    setIsMenuOpen(true)
+  }}
+/>
+  )}
+</AnimatePresence>
 
       <AnimatePresence>
   {showAccountManagePage && (
