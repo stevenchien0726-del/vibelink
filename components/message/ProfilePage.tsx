@@ -268,6 +268,19 @@ export default function ProfilePage({
 const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 
   const [savedPosts, setSavedPosts] = useState<any[]>([])
+  const [archivedPosts, setArchivedPosts] = useState<any[]>([])
+
+  useEffect(() => {
+  const saved = localStorage.getItem('vibelink_archived_posts')
+
+  if (saved) {
+    try {
+      setArchivedPosts(JSON.parse(saved))
+    } catch (error) {
+      console.error('讀取典藏貼文失敗:', error)
+    }
+  }
+}, [])
 
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
@@ -296,7 +309,9 @@ const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
 const postDetailTouchStartY = useRef<number | null>(null)
 
   const gridItems = myPosts.filter(
-  (post) => post.post_images?.length > 0
+  (post) =>
+    post.post_images?.length > 0 &&
+    !archivedPosts.some((archived) => archived.id === post.id)
 )
 
   async function ensureMyProfile() {
@@ -699,6 +714,39 @@ async function openSelectedPost(post: any) {
 setCommentText('')
 setComments([])
 loadComments(post.id)
+}
+
+function archiveSelectedPost() {
+  if (!selectedPost?.id) return
+
+  const nextArchivedPosts = [
+    selectedPost,
+    ...archivedPosts.filter((post) => post.id !== selectedPost.id),
+  ]
+
+  setArchivedPosts(nextArchivedPosts)
+
+  localStorage.setItem(
+    'vibelink_archived_posts',
+    JSON.stringify(nextArchivedPosts)
+  )
+
+  setIsPostMenuOpen(false)
+
+setTimeout(() => {
+  setSelectedPost(null)
+}, 180)
+}
+
+function unarchivePost(postId: string) {
+  const nextArchivedPosts = archivedPosts.filter((post) => post.id !== postId)
+
+  setArchivedPosts(nextArchivedPosts)
+
+  localStorage.setItem(
+    'vibelink_archived_posts',
+    JSON.stringify(nextArchivedPosts)
+  )
 }
 
 async function deleteSelectedPost() {
@@ -1662,15 +1710,6 @@ openSelectedPost(post)
 />
                 
                 <MenuItem
-  icon={<Settings size={22} />}
-  label={text.settings}
-  onClick={() => {
-    setShowSettingsPage(true)
-  }}
-/>
-                
-
-                <MenuItem
   icon={<BarChart3 size={22} strokeWidth={2.4} />}
   label={text.analytics}
   onClick={() => {
@@ -1688,6 +1727,23 @@ openSelectedPost(post)
   }}
 />
 
+<MenuItem
+  icon={<Settings size={22} />}
+  label={text.settings}
+  onClick={() => {
+    setShowSettingsPage(true)
+  }}
+/>
+
+<MenuItem
+  icon={<UserCircle2 size={22} />}
+  label={text.account}
+  onClick={() => {
+    setShowAccountManagePage(true)
+    setIsMenuOpen(false)
+  }}
+/>
+
                 <MenuItem
   icon={<Ticket size={22} />}
   label={text.membership}
@@ -1699,16 +1755,6 @@ openSelectedPost(post)
 
                 <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
 
-                
-                <MenuItem
-  icon={<UserCircle2 size={22} />}
-  label={text.account}
-  onClick={() => {
-    setShowAccountManagePage(true)
-    setIsMenuOpen(false)
-  }}
-/>
-
                 <MenuItem icon={<Megaphone size={22} />} label={text.ads} />
               </div>
             </motion.div>
@@ -1718,7 +1764,10 @@ openSelectedPost(post)
 
       <AnalyticsPage
   open={showAnalyticsPage}
-  onClose={() => setShowAnalyticsPage(false)}
+  onClose={() => {
+    setShowAnalyticsPage(false)
+    setIsMenuOpen(true)
+  }}
 />
 
 <AnimatePresence>
@@ -1735,6 +1784,8 @@ openSelectedPost(post)
 <AnimatePresence>
   {showArchivedPage && (
     <ArchivedContentPage
+  posts={archivedPosts}
+  onUnarchive={unarchivePost}
   onClose={() => {
     setShowArchivedPage(false)
     setIsMenuOpen(true)
@@ -1746,8 +1797,11 @@ openSelectedPost(post)
       <AnimatePresence>
   {showAccountManagePage && (
     <AccountManagePage
-      onClose={() => setShowAccountManagePage(false)}
-    />
+  onClose={() => {
+    setShowAccountManagePage(false)
+    setIsMenuOpen(true)
+  }}
+/>
   )}
 </AnimatePresence>
     
@@ -2036,10 +2090,11 @@ onClick={(e) => e.stopPropagation()}
       <AnimatePresence>
   {isPostMenuOpen && (
     <WideMenuSheet
-      variant="mine"
-      onClose={() => setIsPostMenuOpen(false)}
-      onDelete={deleteSelectedPost}
-    />
+  variant="mine"
+  onClose={() => setIsPostMenuOpen(false)}
+  onArchive={archiveSelectedPost}
+  onDelete={deleteSelectedPost}
+/>
   )}
 </AnimatePresence>
 

@@ -192,7 +192,7 @@ useEffect(() => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[220] flex justify-center bg-[rgba(243,243,243,0.96)]"
+        className="fixed inset-0 z-[1400] flex justify-center bg-[rgba(243,243,243,0.96)]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -200,7 +200,7 @@ useEffect(() => {
         transition={{ duration: 0.18 }}
       >
         <motion.div
-          className="relative min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f3f3f3]"
+          className="relative z-[1401] min-h-screen w-full max-w-[430px] overflow-hidden bg-[#f3f3f3]"
           initial={{ scale: 0.94, opacity: 0, y: 18 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.98, opacity: 0, y: 10 }}
