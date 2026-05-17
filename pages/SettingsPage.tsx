@@ -242,13 +242,9 @@ export default function SettingsPage({
           </div>
 
           <div className="mt-[30px] overflow-hidden rounded-[22px] bg-[#d9d9d9] py-[20px]">
-  <SettingsRow
-    icon={<Heart size={21} strokeWidth={2.1} />}
-    label={text.favorites}
-    onClick={onFavoritesClick}
-  />
+  
 
-  <Divider />
+  
 
   <SettingsRow
     icon={<MessageCircle size={21} strokeWidth={2.1} />}

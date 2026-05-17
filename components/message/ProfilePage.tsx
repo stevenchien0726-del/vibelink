@@ -10,7 +10,7 @@ import {
   Menu,
   PlusSquare,
   UserCircle2,
-  Activity,
+  BarChart3,
   Bell,
   Clock3,
   Ticket,
@@ -30,6 +30,7 @@ import type { Locale } from '@/i18n'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import SettingsPage from '@/pages/SettingsPage'
+import AnalyticsPage from '@/components/profile/AnalyticsPage'
 
 import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
 
@@ -240,6 +241,8 @@ export default function ProfilePage({
   const [isLinkPortOpen, setIsLinkPortOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const [showSettingsPage, setShowSettingsPage] = useState(false)
+  const [showAnalyticsPage, setShowAnalyticsPage] = useState(false)
+
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
   const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
@@ -1655,7 +1658,14 @@ openSelectedPost(post)
 />
                 
 
-                <MenuItem icon={<Activity size={22} />} label={text.analytics} />
+                <MenuItem
+  icon={<BarChart3 size={22} strokeWidth={2.4} />}
+  label={text.analytics}
+  onClick={() => {
+    setShowAnalyticsPage(true)
+    setIsMenuOpen(false)
+  }}
+/>
                 
                 <MenuItem icon={<Clock3 size={22} />} label={text.archive} />
 
@@ -1686,6 +1696,12 @@ openSelectedPost(post)
           </>
         )}
       </AnimatePresence>
+
+      <AnalyticsPage
+  open={showAnalyticsPage}
+  onClose={() => setShowAnalyticsPage(false)}
+/>
+
       <AnimatePresence>
   {showAccountManagePage && (
     <AccountManagePage
