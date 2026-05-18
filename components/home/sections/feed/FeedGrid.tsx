@@ -321,7 +321,7 @@ if (isTap) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -14, scale: 0.98 }}
           transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-          className="grid grid-cols-2 gap-2"
+          className="grid grid-cols-2 gap-[3px]"
         >
           {posts.map((post) => {
   const image = getPostImages(post)[0]
@@ -332,7 +332,7 @@ if (isTap) {
       layout
       key={post.id}
       onClick={() => onOpenPost?.(post)}
-      className="relative h-[280px] w-full overflow-hidden rounded-[20px] bg-[#dddddd]"
+      className="relative h-[280px] w-full overflow-hidden rounded-[6px] bg-[#dddddd]"
     >
       {post.videoUrl ? (
         <video

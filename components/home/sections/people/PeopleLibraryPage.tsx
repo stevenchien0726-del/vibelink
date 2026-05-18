@@ -192,8 +192,14 @@ useEffect(() => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[1400] flex justify-center bg-[rgba(243,243,243,0.96)]"
-        initial={{ opacity: 0 }}
+  data-block-page-swipe="true"
+  className="fixed inset-0 z-[1400] flex justify-center bg-[rgba(243,243,243,0.96)]"
+  initial={{ opacity: 0 }}
+  onTouchStart={(e) => e.stopPropagation()}
+  onTouchMove={(e) => e.stopPropagation()}
+  onTouchEnd={(e) => e.stopPropagation()}
+  onPointerDown={(e) => e.stopPropagation()}
+  onClick={(e) => e.stopPropagation()}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         style={{ opacity: overlayOpacity }}
@@ -213,8 +219,9 @@ useEffect(() => {
             scale: sheetScale,
           }}
           drag={selectedFolder ? false : 'y'}
-          dragListener={!selectedFolder}
-          dragDirectionLock
+dragListener={!selectedFolder}
+dragDirectionLock
+dragPropagation={false}
           dragMomentum={false}
           dragElastic={{ top: 0, bottom: 0.14 }}
           dragConstraints={{ top: 0, bottom: 0 }}
@@ -261,10 +268,13 @@ useEffect(() => {
           }}
         >
           <div
-            ref={scrollRef}
-            onScroll={handleScroll}
-            className="h-screen overflow-y-auto px-4 pb-[120px] pt-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
+  ref={scrollRef}
+  onScroll={handleScroll}
+  onTouchStart={(e) => e.stopPropagation()}
+  onTouchMove={(e) => e.stopPropagation()}
+  onTouchEnd={(e) => e.stopPropagation()}
+  className="h-screen overflow-y-auto px-4 pb-[120px] pt-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+>
             <div className="mb-4 flex items-center gap-3 pt-2">
               <div className="flex h-[36px] flex-1 items-center rounded-full bg-[#d9d9d9] px-4 text-[#222]">
                 <Search size={18} strokeWidth={2.2} />

@@ -33,6 +33,7 @@ import SettingsPage from '@/pages/SettingsPage'
 import AnalyticsPage from '@/components/profile/AnalyticsPage'
 import ArchivedContentPage from '@/components/profile/ArchivedContentPage'
 import NotificationsPage from '@/components/profile/NotificationsPage'
+import ShareProfilePage from '@/components/profile/ShareProfilePage'
 
 import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
 
@@ -247,6 +248,7 @@ export default function ProfilePage({
 
   const [showArchivedPage, setShowArchivedPage] = useState(false)
   const [showNotificationsPage, setShowNotificationsPage] = useState(false)
+  const [showShareProfilePage, setShowShareProfilePage] = useState(false)
 
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
   const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
@@ -1239,14 +1241,15 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 >
   {text.editProfile}
 </button>
-
-          <button
-            type="button"
-            className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
-            style={{ WebkitAppearance: 'none', appearance: 'none' }}
-          >
-            {text.shareProfile}
-          </button>
+   
+            <button
+  type="button"
+  onClick={() => setShowShareProfilePage(true)}
+  className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
+  style={{ WebkitAppearance: 'none', appearance: 'none' }}
+>
+  {text.shareProfile}
+</button>
         </div>
 
         <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">
@@ -2105,6 +2108,12 @@ onClick={(e) => e.stopPropagation()}
     <ShareSheet
   open={isShareSheetOpen}
   onClose={() => setIsShareSheetOpen(false)}
+/>
+
+<ShareProfilePage
+  open={showShareProfilePage}
+  onClose={() => setShowShareProfilePage(false)}
+  profile={profile}
 />
 
     <ShortVideoFullPage
