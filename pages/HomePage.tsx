@@ -1635,7 +1635,7 @@ onTouchEnd={(e) => e.stopPropagation()}
         <button
   type="button"
   onClick={handleGoogleLogin}
-  className="mt-5 flex h-[48px] w-full items-center justify-center gap-3 rounded-full border border-[#ddd] bg-white text-[15px] font-medium text-[#222] shadow-sm active:scale-[0.97]"
+  className="mt-5 mb-5 flex h-[48px] w-full items-center justify-center gap-3 rounded-full border border-[#ddd] bg-white text-[15px] font-medium text-[#222] shadow-sm active:scale-[0.97]"
 >
   GOOGLE 登入
 </button>
