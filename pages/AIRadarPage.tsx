@@ -115,6 +115,8 @@ const [showWalls, setShowWalls] = useState(false)
 const [showMorePrompts, setShowMorePrompts] = useState(false)
 const [rewritePrompts, setRewritePrompts] = useState<string[]>([])
 
+const [starterPrompts, setStarterPrompts] = useState<string[]>([])
+
 const [showTopBar, setShowTopBar] = useState(true)
 
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
@@ -144,11 +146,36 @@ const targetRef = useRef<HTMLDivElement | null>(null)
 
 const mainScrollRef = useRef<HTMLElement | null>(null)
 
-  useEffect(() => {
+useEffect(() => {
+  async function loadStarterPrompts() {
+    try {
+      const response = await fetch(
+        '/api/ai-radar/starter-prompts'
+      )
+
+      const data = await response.json()
+
+      if (Array.isArray(data?.prompts)) {
+        setStarterPrompts(data.prompts)
+      }
+    } catch (error) {
+      console.error(
+        'loadStarterPrompts failed:',
+        error
+      )
+    }
+  }
+
+  loadStarterPrompts()
+}, [])
+
+useEffect(() => {
   async function initAuth() {
     const {
-  data: { user },
-} = await supabase.auth.getUser()
+  data: { session },
+} = await supabase.auth.getSession()
+
+const user = session?.user
 
     if (!user) {
       setIsAuthModalOpen(true)
@@ -431,15 +458,18 @@ setTimeout(async () => {
     : data?.matchedUsers ?? []
 
   const aiReplyText = data?.aiReply ?? ''
-  const nextRewritePrompts = generateAIRadarRewriteQueries(
-  data?.parsedQuery ?? {
-    raw: finalQuery,
-    tags: [],
-    vibes: [],
-    keywords: [],
-  },
-  matchedUsers.length
-)
+  const nextRewritePrompts =
+  data?.rewritePrompts?.length > 0
+    ? data.rewritePrompts
+    : generateAIRadarRewriteQueries(
+        data?.parsedQuery ?? {
+          raw: finalQuery,
+          tags: [],
+          vibes: [],
+          keywords: [],
+        },
+        matchedUsers.length
+      )
 
 setRewritePrompts(nextRewritePrompts)
 
@@ -546,7 +576,11 @@ setRewritePrompts(nextRewritePrompts)
     </div>
 
     <div className="flex flex-col gap-3">
-      {text.suggestions.map((item) => (
+      {(
+  starterPrompts.length > 0
+    ? starterPrompts
+    : text.suggestions
+).map((item) => (
         <button
           key={item}
           type="button"

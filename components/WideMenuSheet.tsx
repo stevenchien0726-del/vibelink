@@ -18,6 +18,7 @@ type Props = {
   variant?: 'mine' | 'other'
   onArchive?: () => void
   onDelete?: () => void
+  onOpenInsights?: () => void
 }
 
 export default function WideMenuSheet({
@@ -25,6 +26,7 @@ export default function WideMenuSheet({
   variant = 'other',
   onArchive,
   onDelete,
+  onOpenInsights,
 }: Props) {
   const [mounted, setMounted] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -61,10 +63,20 @@ export default function WideMenuSheet({
         {variant === 'mine' ? (
           <div className="rounded-[18px] bg-white px-5 py-6 shadow-sm">
             <div className="flex flex-col gap-6">
-              <button type="button" className="flex items-center gap-7">
-                <BarChart3 size={20} />
-                <span className="text-[16px] text-[#111]">流量與互動</span>
-              </button>
+              <button
+  type="button"
+  onClick={() => {
+    handleClose()
+
+    setTimeout(() => {
+      onOpenInsights?.()
+    }, 220)
+  }}
+  className="flex items-center gap-7"
+>
+  <BarChart3 size={20} />
+  <span className="text-[16px] text-[#111]">流量與互動</span>
+</button>
 
               <button type="button" className="flex items-center gap-7">
                 <Pin size={20} />

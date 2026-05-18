@@ -45,7 +45,7 @@ export default function AIRadarInputBar({
 }: Props) {
   return (
     <div className="fixed bottom-[92px] left-1/2 z-[60] flex w-full max-w-[430px] -translate-x-1/2 items-center gap-2 px-4">
-      <div ref={targetRef} className="relative h-[50px] w-[150px] shrink-0">
+      <div ref={targetRef} className="relative h-[50px] w-[130px] shrink-0">
         {selectedLibraryUser ? (
           <div className="flex h-[50px] w-full items-center gap-2 rounded-full bg-[#D9D9D9] px-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
             {selectedLibraryUser.avatar ? (

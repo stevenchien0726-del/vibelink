@@ -6,6 +6,8 @@ import { searchAIRadarUsers } from '@/lib/aiRadar'
 import { searchAIRadarUsersSupabase } from '@/lib/ai-radar/searchAIRadarUsersSupabase'
 import { transformSupabaseAIRadarUsers } from '@/lib/ai-radar/transformSupabaseAIRadarUsers'
 
+import { generateAIRadarRewritePrompts } from '@/lib/ai-radar/generateAIRadarRewritePrompts'
+
 export async function POST(req: Request) {
   const startedAt = Date.now()
 
@@ -104,15 +106,24 @@ console.log(
       users: matchedUsers,
     })
 
+    const rewritePrompts = await generateAIRadarRewritePrompts({
+  query,
+  parsedQuery,
+  matchedUsers,
+})
+
     console.log('🟢 [AI Radar] aiReply:', aiReply)
     console.log('✅ [AI Radar] success in', Date.now() - startedAt, 'ms')
 
-    return NextResponse.json({
-      ok: true,
-      parsedQuery,
-      matchedUsers,
-      aiReply,
-    })
+
+return NextResponse.json({
+  ok: true,
+  parsedQuery,
+  matchedUsers,
+  aiReply,
+  rewritePrompts,
+})
+
   } catch (error) {
     console.error('🔴 [AI Radar] API route failed:', error)
     console.error('🔴 [AI Radar] failed after', Date.now() - startedAt, 'ms')

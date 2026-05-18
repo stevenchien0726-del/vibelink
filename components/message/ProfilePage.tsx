@@ -34,6 +34,7 @@ import AnalyticsPage from '@/components/profile/AnalyticsPage'
 import ArchivedContentPage from '@/components/profile/ArchivedContentPage'
 import NotificationsPage from '@/components/profile/NotificationsPage'
 import ShareProfilePage from '@/components/profile/ShareProfilePage'
+import PostInsightsPage from '@/components/profile/PostInsightsPage'
 
 import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
 
@@ -249,6 +250,7 @@ export default function ProfilePage({
   const [showArchivedPage, setShowArchivedPage] = useState(false)
   const [showNotificationsPage, setShowNotificationsPage] = useState(false)
   const [showShareProfilePage, setShowShareProfilePage] = useState(false)
+  const [showPostInsightsPage, setShowPostInsightsPage] = useState(false)
 
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
   const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
@@ -1797,6 +1799,19 @@ openSelectedPost(post)
   )}
 </AnimatePresence>
 
+<AnimatePresence>
+  {showPostInsightsPage && (
+    <PostInsightsPage
+      onClose={() => {
+        setShowPostInsightsPage(false)
+      }}
+      views={0}
+      likes={selectedPostLikeCount}
+      comments={comments.length}
+    />
+  )}
+</AnimatePresence>
+
       <AnimatePresence>
   {showAccountManagePage && (
     <AccountManagePage
@@ -2093,6 +2108,13 @@ onClick={(e) => e.stopPropagation()}
       <AnimatePresence>
   {isPostMenuOpen && (
     <WideMenuSheet
+  onOpenInsights={() => {
+    setIsPostMenuOpen(false)
+
+    setTimeout(() => {
+      setShowPostInsightsPage(true)
+    }, 180)
+  }}
   variant="mine"
   onClose={() => setIsPostMenuOpen(false)}
   onArchive={archiveSelectedPost}
