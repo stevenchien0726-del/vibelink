@@ -251,88 +251,52 @@ function handlePostCreated(post: CreatedPostPayload) {
   const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
 
   async function loadPosts(user?: any) {
+  try {
+    const response = await fetch('/api/feed', {
+      method: 'GET',
+      cache: 'no-store',
+    })
 
-  const { data, error } = await supabase
-  .from('posts')
-  .select(`
-  id,
-  caption,
-  created_at,
-  user_id,
-  profiles (
-    username,
-    display_name,
-    avatar_url
-  ),
-  post_images (
-    image_url
-  )
-`)
-  .order('created_at', { ascending: false })
+    const data = await response.json()
 
-  if (error) {
-    console.error('讀取 posts 失敗:', error)
-    return
-  }
-
-
-  const postIds = (data ?? []).map((post: any) => post.id)
-
-const { data: likeRows } = await supabase
-  .from('likes')
-  .select('post_id, user_id')
-  .in('post_id', postIds)
-
-const { data: savedRows } = await supabase
-  .from('saved_posts')
-  .select('post_id, user_id')
-  .in('post_id', postIds)
-
-const likeCountMap = new Map<string, number>()
-const likedSet = new Set<string>()
-const savedSet = new Set<string>()
-
-;(likeRows ?? []).forEach((like: any) => {
-  likeCountMap.set(
-    like.post_id,
-    (likeCountMap.get(like.post_id) ?? 0) + 1
-  )
-
-  if (like.user_id === user?.id) {
-    likedSet.add(like.post_id)
-  }
-})
-
-;(savedRows ?? []).forEach((saved: any) => {
-  if (saved.user_id === user?.id) {
-    savedSet.add(saved.post_id)
-  }
-})
-
-  const mappedPosts: PostItem[] = (data ?? [])
-  .map((post: any) => {
-    const images = (post.post_images ?? []).map((img: any) => img.image_url)
-
-    return {
-  id: post.id,
-  user_id: post.user_id,
-  author:
-    post.profiles?.display_name ||
-    post.profiles?.username ||
-    'Vibelink User',
-  text: post.caption || '',
-      likes: likeCountMap.get(post.id) ?? 0,
-isLiked: likedSet.has(post.id),
-isSaved: savedSet.has(post.id),
-      images,
-      aiTags: ['真實發文'],
-type: 'post' as const,
-isMine: post.user_id === user?.id,
+    if (!data?.ok) {
+      console.error('讀取演算法 feed 失敗:', data)
+      return
     }
-  })
-  .filter((post) => post.images.length > 0)
 
-  setRealPosts(mappedPosts)
+    const mappedPosts: PostItem[] = (data.feed ?? [])
+      .map((post: any) => {
+        const images = (post.post_images ?? []).map(
+          (img: any) => img.image_url
+        )
+
+        return {
+          id: post.id,
+          user_id: post.user_id,
+          author:
+            post.profiles?.display_name ||
+            post.profiles?.username ||
+            'Vibelink User',
+          text: post.caption || '',
+          likes: post.likes ?? 0,
+          isLiked: !!post.isLiked,
+          isSaved: !!post.isSaved,
+          images,
+          aiTags: post.ai_tags ?? [],
+          type: 'post' as const,
+          isMine: post.user_id === user?.id,
+          feedScore: post.feedScore,
+          feedReasons: post.feedReasons,
+        }
+      })
+      .filter((post: PostItem) => post.images.length > 0)
+
+    console.log('🟣 personalized feed:', mappedPosts)
+
+    setRealPosts(mappedPosts)
+  } catch (error) {
+    console.error('loadPosts /api/feed failed:', error)
+  }
 }
 
 async function loadShortVideos(user?: any) {
@@ -1084,12 +1048,12 @@ if (isTap) {
   }, [selectedStory, storyPage, isStoryPaused])
 
 const mergedPosts = [
+  ...realPosts,
   ...mockShortVideos,
   ...mockPosts.map((post) => ({
     ...post,
     isSaved: mockSavedPostIds.includes(post.id),
   })),
-  ...realPosts,
 ]
 
   if (isSearchPageOpen) {

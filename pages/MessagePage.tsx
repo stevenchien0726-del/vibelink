@@ -161,10 +161,12 @@ const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
   useEffect(() => {
   async function loadConversations() {
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
+  data: { session },
+} = await supabase.auth.getSession()
 
-    if (!user) return
+const user = session?.user
+
+if (!user) return
 
     const { data, error } = await supabase
       .from('conversations')

@@ -21,6 +21,10 @@ export type PostItem = {
   images: string[]
   videoUrl?: string
   aiTags: string[]
+
+  feedScore?: number
+  feedReasons?: string[]
+
   isMine?: boolean
   isLiked?: boolean
 isSaved?: boolean
@@ -328,13 +332,14 @@ if (isTap) {
 
   return (
     <motion.button
-      type="button"
-      layout
-      key={post.id}
-      onClick={() => onOpenPost?.(post)}
-      className="relative h-[280px] w-full overflow-hidden rounded-[6px] bg-[#dddddd]"
-    >
-      {post.videoUrl ? (
+  type="button"
+  layout
+  key={post.id}
+  onClick={() => onOpenPost?.(post)}
+  className="relative h-[280px] w-full overflow-hidden rounded-[6px] bg-[#dddddd]"
+>
+
+  {post.videoUrl ? (
         <video
   src={post.videoUrl}
   muted
