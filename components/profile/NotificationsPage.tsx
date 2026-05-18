@@ -12,16 +12,22 @@ export default function NotificationsPage({
 }: Props) {
   return (
     <motion.div
-      className="fixed inset-0 z-[1200] flex justify-center bg-[#f3f3f3]"
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{
-        type: 'spring',
-        stiffness: 360,
-        damping: 34,
-      }}
-    >
+  data-block-page-swipe="true"
+  className="fixed inset-0 z-[1200] flex justify-center bg-[#f3f3f3]"
+  initial={{ x: '100%' }}
+  animate={{ x: 0 }}
+  exit={{ x: '100%' }}
+  transition={{
+    type: 'spring',
+    stiffness: 360,
+    damping: 34,
+  }}
+  onTouchStart={(e) => e.stopPropagation()}
+  onTouchMove={(e) => e.stopPropagation()}
+  onTouchEnd={(e) => e.stopPropagation()}
+  onPointerDown={(e) => e.stopPropagation()}
+  onClick={(e) => e.stopPropagation()}
+>
       <div className="relative min-h-screen w-full max-w-[430px] bg-[#f3f3f3] text-[#111]">
         {/* Top Bar */}
         <div className="fixed left-1/2 top-0 z-[20] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pb-3 pt-3 backdrop-blur-md">

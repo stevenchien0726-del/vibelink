@@ -35,16 +35,22 @@ export default function AnalyticsPage({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[700] bg-[#f3f3f3]"
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          exit={{ x: '100%' }}
-          transition={{
-            type: 'spring',
-            stiffness: 360,
-            damping: 34,
-          }}
-        >
+  data-block-page-swipe="true"
+  className="fixed inset-0 z-[1200] bg-[#f3f3f3]"
+  initial={{ x: '100%' }}
+  animate={{ x: 0 }}
+  exit={{ x: '100%' }}
+  transition={{
+    type: 'spring',
+    stiffness: 360,
+    damping: 34,
+  }}
+  onTouchStart={(e) => e.stopPropagation()}
+  onTouchMove={(e) => e.stopPropagation()}
+  onTouchEnd={(e) => e.stopPropagation()}
+  onPointerDown={(e) => e.stopPropagation()}
+  onClick={(e) => e.stopPropagation()}
+>
           <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#f3f3f3]">
             
             {/* Top Bar */}
