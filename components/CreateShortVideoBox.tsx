@@ -30,6 +30,7 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
     const [caption, setCaption] = useState('')
     const [uploading, setUploading] = useState(false)
     const [aiAnalyzing, setAiAnalyzing] = useState(false)
+    const [videoReloadKey, setVideoReloadKey] = useState(0)
 
     useEffect(() => {
       onReadyChange?.(!!file && !uploading)
@@ -216,10 +217,24 @@ if (newVideo?.id) {
 
         {previewUrl ? (
           <video
-            ref={videoRef}
-            src={previewUrl}
-            controls
-            playsInline
+  key={videoReloadKey}
+  ref={videoRef}
+  src={previewUrl}
+  controls
+  playsInline
+  preload="metadata"
+  onLoadStart={() => {
+    window.setTimeout(() => {
+      const video = videoRef.current
+
+      if (!video) return
+
+      if (video.readyState < 2) {
+        console.warn('手機短影片載入超時，自動重讀')
+        setVideoReloadKey((prev) => prev + 1)
+      }
+    }, 4000)
+  }}
             className="h-[360px] w-full max-w-[280px] rounded-[20px] bg-black object-cover"
           />
         ) : (
