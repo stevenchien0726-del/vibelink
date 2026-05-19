@@ -86,7 +86,7 @@ export default function ShortVideoFullPage({
   video.pause()
 }
     })
-  }, [open, activeVideoId])
+  }, [open, activeVideoId, soundOn])
 
   useEffect(() => {
   if (!open || !activeVideoId) return
@@ -201,7 +201,7 @@ export default function ShortVideoFullPage({
             }}
           >
             {orderedVideos.map((video, index) => {
-  const activeIndex = orderedVideos.findIndex((item) => item.id === activeVideoId)
+  
   const shouldRenderVideo = video.id === activeVideoId
               const videoSrc = video.videoUrl || (video as any).video_url
 
@@ -253,17 +253,34 @@ onError={() => {
                     />
                   ) : (
   <img
-    src={
-      (video as any).thumbnailUrl ||
-      video.images?.[0] ||
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
-    }
+    src={(video as any).thumbnailUrl || video.images?.[0] || undefined}
     className="absolute inset-0 z-[10] h-full w-full object-cover"
     draggable={false}
+    onError={(e) => {
+  e.currentTarget.style.display = 'none'
+}}
   />
 )}
 
                   <div className="pointer-events-none absolute inset-0 z-[20] bg-gradient-to-b from-black/20 via-transparent to-black/55" />
+                  <button
+  type="button"
+  onClick={() => {
+    const nextSoundOn = !soundOn
+    setSoundOn(nextSoundOn)
+
+    const activeVideo = activeVideoId
+      ? videoRefs.current[activeVideoId]
+      : null
+
+    if (activeVideo) {
+      activeVideo.muted = !nextSoundOn
+      activeVideo.play().catch(() => {})
+    }
+  }}
+  className="absolute left-1/2 top-1/2 z-[45] h-[180px] w-[180px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-transparent"
+  aria-label={soundOn ? '關閉聲音' : '開啟聲音'}
+/>
 
                   <button
                     type="button"
