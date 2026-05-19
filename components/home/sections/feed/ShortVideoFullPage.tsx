@@ -43,6 +43,7 @@ export default function ShortVideoFullPage({
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null)
 
   const [reloadMap, setReloadMap] = useState<Record<string, number>>({})
+  const [soundOn, setSoundOn] = useState(false)
 
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
@@ -77,11 +78,11 @@ export default function ShortVideoFullPage({
 
     Object.entries(videoRefs.current).forEach(([id, video]) => {
       if (!video) return
-
       if (id === activeVideoId) {
-        video.muted = false
-        video.play().catch(() => {})
-      } else {
+  video.muted = !soundOn
+  video.play().catch(() => {})
+}
+      else {
   video.pause()
 }
     })
@@ -201,8 +202,7 @@ export default function ShortVideoFullPage({
           >
             {orderedVideos.map((video, index) => {
   const activeIndex = orderedVideos.findIndex((item) => item.id === activeVideoId)
-  const shouldRenderVideo =
-    activeIndex === -1 || Math.abs(index - activeIndex) <= 1
+  const shouldRenderVideo = video.id === activeVideoId
               const videoSrc = video.videoUrl || (video as any).video_url
 
               return (
@@ -222,16 +222,16 @@ export default function ShortVideoFullPage({
                         videoRefs.current[video.id] = node
                       }}
                       src={videoSrc}
-                      muted={video.id !== activeVideoId}
+                      muted={video.id !== activeVideoId || !soundOn}
                       loop
                       playsInline
                       controls={false}
-                      preload={video.id === activeVideoId ? 'auto' : 'metadata'}
+                      preload={video.id === activeVideoId ? 'metadata' : 'none'}
                       onLoadedData={(e) => {
   const el = e.currentTarget
 
   if (video.id === activeVideoId) {
-    el.muted = false
+    el.muted = !soundOn
 
     window.setTimeout(() => {
       el.play().catch(() => {})
@@ -252,10 +252,16 @@ onError={() => {
                       className="absolute inset-0 z-[10] h-full w-full bg-black object-cover"
                     />
                   ) : (
-                    <div className="absolute inset-0 z-[10] flex items-center justify-center bg-black text-white">
-                      找不到影片 URL
-                    </div>
-                  )}
+  <img
+    src={
+      (video as any).thumbnailUrl ||
+      video.images?.[0] ||
+      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
+    }
+    className="absolute inset-0 z-[10] h-full w-full object-cover"
+    draggable={false}
+  />
+)}
 
                   <div className="pointer-events-none absolute inset-0 z-[20] bg-gradient-to-b from-black/20 via-transparent to-black/55" />
 
