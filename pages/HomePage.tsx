@@ -1807,6 +1807,7 @@ onTouchEnd={(e) => e.stopPropagation()}
   onComment={openCommentSheet}
   onShare={() => setIsShareSheetOpen(true)}
   onSave={toggleShortVideoSave}
+  onDelete={handleDeletePost}
 />
 
 <AnimatePresence>
