@@ -60,7 +60,6 @@ export default function ShortVideoFullPage({
       Object.values(videoRefs.current).forEach((video) => {
         if (!video) return
         video.pause()
-        video.currentTime = 0
       })
 
       setActiveVideoId(null)
@@ -173,7 +172,10 @@ export default function ShortVideoFullPage({
               touchAction: 'pan-y',
             }}
           >
-            {orderedVideos.map((video) => {
+            {orderedVideos.map((video, index) => {
+  const activeIndex = orderedVideos.findIndex((item) => item.id === activeVideoId)
+  const shouldRenderVideo =
+    activeIndex === -1 || Math.abs(index - activeIndex) <= 1
               const videoSrc = video.videoUrl || (video as any).video_url
 
               return (
@@ -186,8 +188,8 @@ export default function ShortVideoFullPage({
                   data-block-page-swipe="true"
                   className="relative h-[100dvh] w-full snap-start snap-always overflow-hidden bg-black"
                 >
-                  {videoSrc ? (
-                    <video
+                  {videoSrc && shouldRenderVideo ? (
+  <video
                       key={videoSrc}
                       ref={(node) => {
                         videoRefs.current[video.id] = node
@@ -197,7 +199,7 @@ export default function ShortVideoFullPage({
                       loop
                       playsInline
                       controls={false}
-                      preload="auto"
+                      preload={video.id === activeVideoId ? 'auto' : 'metadata'}
                       onLoadedData={(e) => {
                         if (video.id === activeVideoId) {
                           e.currentTarget.muted = false
