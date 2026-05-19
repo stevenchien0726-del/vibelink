@@ -9,6 +9,8 @@ import {
   Bookmark,
   X,
   MoreHorizontal,
+  Volume2,
+  VolumeX,
 } from 'lucide-react'
 
 import type { PostItem } from './FeedGrid'
@@ -44,6 +46,7 @@ export default function ShortVideoFullPage({
 
   const [reloadMap, setReloadMap] = useState<Record<string, number>>({})
   const [soundOn, setSoundOn] = useState(false)
+  const [showSoundIcon, setShowSoundIcon] = useState(false)
 
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
@@ -207,7 +210,38 @@ export default function ShortVideoFullPage({
 
               return (
                 <section
-                  key={video.id}
+  key={video.id}
+  onClick={async (e) => {
+  e.stopPropagation()
+    if (video.id !== activeVideoId) return
+
+    const nextSoundOn = !soundOn
+
+const activeVideo = videoRefs.current[video.id]
+
+if (activeVideo) {
+  try {
+    activeVideo.muted = !nextSoundOn
+    activeVideo.defaultMuted = false
+    activeVideo.volume = 1
+
+    if (nextSoundOn) {
+      await activeVideo.play()
+    }
+
+    setSoundOn(nextSoundOn)
+    setShowSoundIcon(true)
+
+window.clearTimeout((window as any).__vibeSoundTimer)
+
+;(window as any).__vibeSoundTimer = window.setTimeout(() => {
+  setShowSoundIcon(false)
+}, 2300)
+  } catch (err) {
+    console.error('開啟聲音失敗:', err)
+  }
+}
+  }}
                   ref={(node) => {
                     sectionRefs.current[video.id] = node
                   }}
@@ -225,6 +259,8 @@ export default function ShortVideoFullPage({
                       muted={video.id !== activeVideoId || !soundOn}
                       loop
                       playsInline
+                      webkit-playsinline="true"
+disablePictureInPicture
                       controls={false}
                       preload={video.id === activeVideoId ? 'metadata' : 'none'}
                       onLoadedData={(e) => {
@@ -263,25 +299,36 @@ onError={() => {
 )}
 
                   <div className="pointer-events-none absolute inset-0 z-[20] bg-gradient-to-b from-black/20 via-transparent to-black/55" />
-                  <button
-  type="button"
-  onClick={() => {
-    const nextSoundOn = !soundOn
-    setSoundOn(nextSoundOn)
-
-    const activeVideo = activeVideoId
-      ? videoRefs.current[activeVideoId]
-      : null
-
-    if (activeVideo) {
-      activeVideo.muted = !nextSoundOn
-      activeVideo.play().catch(() => {})
-    }
-  }}
-  className="absolute left-1/2 top-1/2 z-[45] h-[180px] w-[180px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-transparent"
-  aria-label={soundOn ? '關閉聲音' : '開啟聲音'}
-/>
-
+                  <AnimatePresence>
+  {showSoundIcon && video.id === activeVideoId && (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.72 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.72 }}
+      transition={{
+        type: 'spring',
+        stiffness: 320,
+        damping: 24,
+      }}
+      className="pointer-events-none absolute left-1/2 top-1/2 z-[60] flex h-[82px] w-[82px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/42 backdrop-blur-xl"
+    >
+      {soundOn ? (
+        <Volume2
+          size={38}
+          color="white"
+          strokeWidth={2.6}
+        />
+      ) : (
+        <VolumeX
+          size={38}
+          color="white"
+          strokeWidth={2.6}
+        />
+      )}
+    </motion.div>
+  )}
+</AnimatePresence>
+                  
                   <button
                     type="button"
                     onClick={closeWithAnimation}
@@ -306,7 +353,7 @@ onError={() => {
                   <div className="absolute bottom-[118px] right-5 z-[50] flex flex-col items-center gap-6 text-white">
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         console.log('前往用戶 Profile:', video.user_id)
                       }}
                       className="flex h-[48px] w-[48px] items-center justify-center rounded-full border-2 border-white bg-white shadow-[0_4px_14px_rgba(0,0,0,0.25)] active:scale-90"
@@ -316,7 +363,13 @@ onError={() => {
                       </span>
                     </button>
 
-                    <button type="button" onClick={() => onLike?.(video)}>
+                    <button
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation()
+    onLike?.(video)
+  }}
+>
                       <Heart
                         size={34}
                         color="white"
@@ -325,15 +378,33 @@ onError={() => {
                       />
                     </button>
 
-                    <button type="button" onClick={() => onComment?.(video)}>
+                    <button
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation()
+    onComment?.(video)
+  }}
+>
                       <MessageCircle size={34} strokeWidth={2.4} />
                     </button>
 
-                    <button type="button" onClick={() => onShare?.(video)}>
+                    <button
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation()
+    onShare?.(video)
+  }}
+>
                       <Send size={33} strokeWidth={2.2} />
                     </button>
 
-                    <button type="button" onClick={() => onSave?.(video)}>
+                    <button
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation()
+    onSave?.(video)
+  }}
+>
                       <Bookmark
                         size={34}
                         color="white"
