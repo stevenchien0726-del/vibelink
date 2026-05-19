@@ -29,6 +29,7 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
     const [previewUrl, setPreviewUrl] = useState('')
     const [caption, setCaption] = useState('')
     const [uploading, setUploading] = useState(false)
+    const [aiAnalyzing, setAiAnalyzing] = useState(false)
 
     useEffect(() => {
       onReadyChange?.(!!file && !uploading)
@@ -65,6 +66,45 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
         onReadyChange?.(true)
       }
     }
+
+async function extractFramesFromVideo(file: File) {
+  const video = document.createElement('video')
+  video.src = URL.createObjectURL(file)
+  video.crossOrigin = 'anonymous'
+  video.muted = true
+  video.playsInline = true
+
+  await new Promise<void>((resolve) => {
+    video.onloadedmetadata = () => resolve()
+  })
+
+  const duration = video.duration || 1
+  const times = [duration * 0.2, duration * 0.5, duration * 0.8]
+
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return []
+
+  const results: string[] = []
+
+  for (const time of times) {
+    video.currentTime = time
+
+    await new Promise<void>((resolve) => {
+      video.onseeked = () => resolve()
+    })
+
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+    results.push(canvas.toDataURL('image/jpeg', 0.82))
+  }
+
+  URL.revokeObjectURL(video.src)
+
+  return results
+}
 
     async function submitVideo() {
       if (!file || uploading) return
@@ -110,11 +150,15 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
 
       const videoUrl = publicUrlData.publicUrl
 
-      const { error: insertError } = await supabase.from('short_videos').insert({
-        user_id: user.id,
-        caption: caption.trim(),
-        video_url: videoUrl,
-      })
+      const { data: newVideo, error: insertError } = await supabase
+  .from('short_videos')
+  .insert({
+    user_id: user.id,
+    caption: caption.trim(),
+    video_url: videoUrl,
+  })
+  .select('id')
+  .single()
 
       if (insertError) {
         console.error('寫入 short_videos 失敗:', insertError)
@@ -123,6 +167,29 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
         onReadyChange?.(true)
         return
       }
+
+      try {
+  if (newVideo?.id) {
+    setAiAnalyzing(true)
+
+    const frames = await extractFramesFromVideo(file)
+
+    await fetch('/api/short-video-ai-tags', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        frames,
+        videoId: newVideo.id,
+      }),
+    })
+  }
+} catch (error) {
+  console.error('短影片 AI tags 分析失敗:', error)
+} finally {
+  setAiAnalyzing(false)
+}
 
       setUploading(false)
       onReadyChange?.(false)
@@ -172,11 +239,11 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
           className="min-h-[110px] w-full resize-none rounded-[18px] border border-[#e2e2e2] bg-white px-4 py-3 text-[15px] outline-none"
         />
 
-        {uploading && (
-          <div className="text-[14px] text-[#777]">
-            影片上傳中...
-          </div>
-        )}
+        {(uploading || aiAnalyzing) && (
+  <div className="text-[14px] text-[#777]">
+    {aiAnalyzing ? 'AI 分析中...' : '影片上傳中...'}
+  </div>
+)}
       </div>
     )
   }

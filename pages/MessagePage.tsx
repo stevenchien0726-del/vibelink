@@ -230,7 +230,18 @@ if (!user) {
       }
     })
 
-    setConversations(mapped)
+    const conversationMap = new Map<string, ConversationItem>()
+
+mapped.forEach((conversation) => {
+  const key = conversation.name
+
+  if (!conversationMap.has(key)) {
+    conversationMap.set(key, conversation)
+  }
+})
+
+setConversations(Array.from(conversationMap.values()))
+
     setMessageLoading(false)
   }
 
