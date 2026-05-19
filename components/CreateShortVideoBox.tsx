@@ -167,55 +167,37 @@ async function extractFramesFromVideo(file: File) {
         return
       }
 
-      try {
-  if (newVideo?.id) {
-    setAiAnalyzing(true)
-
-    const frames = await extractFramesFromVideo(file)
-
-    await fetch('/api/short-video-ai-tags', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        frames,
-        videoId: newVideo.id,
-      }),
-    })
-  }
-} catch (error) {
-  console.error('短影片 AI tags 分析失敗:', error)
-} finally {
-  setAiAnalyzing(false)
-}
+      
 
       setUploading(false)
 onReadyChange?.(false)
 onSuccess?.()
 
-try {
-  if (newVideo?.id) {
-    setAiAnalyzing(true)
+if (newVideo?.id) {
+  window.setTimeout(async () => {
+    try {
+      setAiAnalyzing(true)
 
-    const frames = await extractFramesFromVideo(file)
+      const frames = await extractFramesFromVideo(file)
 
-    await fetch('/api/short-video-ai-tags', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        frames,
-        videoId: newVideo.id,
-      }),
-    })
-  }
-} catch (error) {
-  console.error('短影片 AI tags 分析失敗:', error)
-} finally {
-  setAiAnalyzing(false)
+      await fetch('/api/short-video-ai-tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          frames,
+          videoId: newVideo.id,
+        }),
+      })
+    } catch (error) {
+      console.error('短影片 AI tags 分析失敗:', error)
+    } finally {
+      setAiAnalyzing(false)
+    }
+  }, 300)
 }
+
     }
 
     useImperativeHandle(ref, () => ({
