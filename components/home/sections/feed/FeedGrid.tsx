@@ -344,13 +344,8 @@ if (isTap) {
   src={post.videoUrl}
   muted
   playsInline
-  preload="auto"
-  autoPlay
-  loop
+  preload="metadata"
   className="h-full w-full object-cover bg-black"
-  onLoadedData={(e) => {
-    e.currentTarget.currentTime = 0.1
-  }}
 />
       ) : (
         <img
