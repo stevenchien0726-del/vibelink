@@ -42,6 +42,8 @@ export default function ShortVideoFullPage({
   const [menuVideo, setMenuVideo] = useState<PostItem | null>(null)
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null)
 
+  const [reloadMap, setReloadMap] = useState<Record<string, number>>({})
+
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
 
@@ -80,11 +82,36 @@ export default function ShortVideoFullPage({
         video.muted = false
         video.play().catch(() => {})
       } else {
-        video.pause()
-        video.currentTime = 0
-      }
+  video.pause()
+}
     })
   }, [open, activeVideoId])
+
+  useEffect(() => {
+  if (!open || !activeVideoId) return
+
+  const timer = window.setTimeout(() => {
+    const video = videoRefs.current[activeVideoId]
+
+    if (!video) return
+
+    const isStuck =
+      video.readyState < 2 ||
+      video.paused ||
+      video.currentTime === 0
+
+    if (isStuck) {
+      console.warn('短影片卡住，自動重新讀取:', activeVideoId)
+
+      setReloadMap((prev) => ({
+        ...prev,
+        [activeVideoId]: (prev[activeVideoId] ?? 0) + 1,
+      }))
+    }
+  }, 3500)
+
+  return () => window.clearTimeout(timer)
+}, [open, activeVideoId, reloadMap])
 
   useEffect(() => {
     if (!open) return
@@ -190,7 +217,7 @@ export default function ShortVideoFullPage({
                 >
                   {videoSrc && shouldRenderVideo ? (
   <video
-                      key={videoSrc}
+                      key={`${videoSrc}-${reloadMap[video.id] ?? 0}`}
                       ref={(node) => {
                         videoRefs.current[video.id] = node
                       }}
@@ -201,14 +228,27 @@ export default function ShortVideoFullPage({
                       controls={false}
                       preload={video.id === activeVideoId ? 'auto' : 'metadata'}
                       onLoadedData={(e) => {
-                        if (video.id === activeVideoId) {
-                          e.currentTarget.muted = false
-                          e.currentTarget.play().catch(() => {})
-                        } else {
-                          e.currentTarget.pause()
-                          e.currentTarget.currentTime = 0
-                        }
-                      }}
+  const el = e.currentTarget
+
+  if (video.id === activeVideoId) {
+    el.muted = false
+
+    window.setTimeout(() => {
+      el.play().catch(() => {})
+    }, 80)
+  } else {
+    el.pause()
+  }
+}}
+
+onError={() => {
+  console.warn('影片載入失敗，重新讀取:', video.id)
+
+  setReloadMap((prev) => ({
+    ...prev,
+    [video.id]: (prev[video.id] ?? 0) + 1,
+  }))
+}}
                       className="absolute inset-0 z-[10] h-full w-full bg-black object-cover"
                     />
                   ) : (
