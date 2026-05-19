@@ -51,7 +51,6 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
       video.src = url
 
       video.onloadedmetadata = () => {
-        window.URL.revokeObjectURL(video.src)
 
         if (video.duration > MAX_DURATION) {
           alert('短影片不能超過 3 分鐘')
@@ -192,8 +191,31 @@ async function extractFramesFromVideo(file: File) {
 }
 
       setUploading(false)
-      onReadyChange?.(false)
-      onSuccess?.()
+onReadyChange?.(false)
+onSuccess?.()
+
+try {
+  if (newVideo?.id) {
+    setAiAnalyzing(true)
+
+    const frames = await extractFramesFromVideo(file)
+
+    await fetch('/api/short-video-ai-tags', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        frames,
+        videoId: newVideo.id,
+      }),
+    })
+  }
+} catch (error) {
+  console.error('短影片 AI tags 分析失敗:', error)
+} finally {
+  setAiAnalyzing(false)
+}
     }
 
     useImperativeHandle(ref, () => ({
