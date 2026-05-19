@@ -182,7 +182,11 @@ export default function ProfilePage({
   useEffect(() => {
   let alive = true
 
-  async function init() {
+ async function init(retry = 0) {
+  try {
+    setProfileLoading(true)
+    setProfileError('')
+
     const {
       data: { session },
     } = await supabase.auth.getSession()
@@ -193,19 +197,41 @@ export default function ProfilePage({
 
     if (!user) {
       setCurrentUserId(null)
+      setProfileLoading(false)
       return
     }
 
     setCurrentUserId(user.id)
 
     await ensureMyProfile()
+
     await Promise.all([
       loadMyFollowerCount(),
       loadMyPosts(),
       loadMyShortVideos(),
       loadSavedPosts(),
     ])
+
+    if (!alive) return
+
+    setProfileLoading(false)
+  } catch (error) {
+    console.error('自己 Profile 初始化失敗:', error)
+
+    if (retry < 1) {
+      window.setTimeout(() => {
+        init(retry + 1)
+      }, 600)
+
+      return
+    }
+
+    if (!alive) return
+
+    setProfileError('Profile 讀取失敗')
+    setProfileLoading(false)
   }
+}
 
   init()
 
@@ -258,7 +284,10 @@ export default function ProfilePage({
   const [avatarUploading, setAvatarUploading] = useState(false)
 
   const [profile, setProfile] = useState<any>(null)
-  const [followerCount, setFollowerCount] = useState(0)
+const [followerCount, setFollowerCount] = useState(0)
+
+const [profileLoading, setProfileLoading] = useState(true)
+const [profileError, setProfileError] = useState('')
 
   const albumItems = Array.from({ length: 5 })
 
@@ -336,9 +365,9 @@ const postDetailTouchStartY = useRef<number | null>(null)
     .maybeSingle()
 
   if (selectError) {
-    console.error('讀取 profile 失敗:', selectError)
-    return
-  }
+  console.error('讀取 profile 失敗:', selectError)
+  throw selectError
+}
 
   if (existingProfile) {
     setProfile(existingProfile)
@@ -366,9 +395,9 @@ const postDetailTouchStartY = useRef<number | null>(null)
     .single()
 
   if (insertError) {
-    console.error('建立 profile 失敗:', insertError)
-    return
-  }
+  console.error('建立 profile 失敗:', insertError)
+  throw insertError
+}
 
   setProfile(createdProfile)
 }
@@ -386,9 +415,9 @@ async function loadMyFollowerCount() {
     .eq('following_id', user.id)
 
   if (error) {
-    console.error('讀取粉絲數失敗:', error)
-    return
-  }
+  console.error('讀取粉絲數失敗:', error)
+  throw error
+}
 
   setFollowerCount(count ?? 0)
 }
@@ -491,9 +520,9 @@ async function loadMyPosts() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('讀取我的貼文失敗:', error)
-    return
-  }
+  console.error('讀取我的貼文失敗:', error)
+  throw error
+}
 
   const postIds = (data ?? []).map((post: any) => post.id)
 
@@ -548,9 +577,9 @@ async function loadMyShortVideos() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('讀取我的短影片失敗:', error)
-    return
-  }
+  console.error('讀取我的短影片失敗:', error)
+  throw error
+}
 
   const videoIds = (data ?? []).map((video: any) => video.id)
 
@@ -623,9 +652,9 @@ async function loadSavedPosts() {
     .eq('user_id', user.id)
 
   if (photoError) {
-    console.error('讀取照片收藏失敗:', photoError)
-    return
-  }
+  console.error('讀取照片收藏失敗:', photoError)
+  throw photoError
+}
 
   const { data: videoSavedRows, error: videoError } = await supabase
     .from('saved_short_videos')
@@ -642,9 +671,9 @@ async function loadSavedPosts() {
     .eq('user_id', user.id)
 
   if (videoError) {
-    console.error('讀取短影片收藏失敗:', videoError)
-    return
-  }
+  console.error('讀取短影片收藏失敗:', videoError)
+  throw videoError
+}
 
   const photoPosts = (photoSavedRows ?? [])
     .map((item: any) => item.posts)
@@ -1134,6 +1163,27 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   return (
     <div className="relative min-h-screen bg-[#f3f3f3] pb-[110px]">
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[90px]">
+        {profileLoading && (
+  <div className="py-20 text-center text-[14px] text-[#999]">
+    Profile 讀取中...
+  </div>
+)}
+
+{profileError && !profileLoading && (
+  <div className="py-20 text-center">
+    <div className="mb-3 text-[14px] text-[#999]">
+      {profileError}
+    </div>
+
+    <button
+      type="button"
+      onClick={() => window.location.reload()}
+      className="rounded-full bg-[#c86cff] px-4 py-2 text-[13px] text-white"
+    >
+      重新讀取
+    </button>
+  </div>
+)}
         <div className="fixed top-0 left-1/2 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
   <div className="flex items-center justify-between">
     <motion.button

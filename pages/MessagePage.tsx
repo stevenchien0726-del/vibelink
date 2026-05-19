@@ -103,7 +103,10 @@ const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
   const lastScrollYRef = useRef(0)
 
   const [conversations, setConversations] = useState<ConversationItem[]>([])
-  const [openedChat, setOpenedChat] = useState<ConversationItem | null>(null)
+const [openedChat, setOpenedChat] = useState<ConversationItem | null>(null)
+
+const [messageLoading, setMessageLoading] = useState(true)
+const [messageError, setMessageError] = useState('')
 
     const filteredAccounts = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
@@ -159,14 +162,19 @@ const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
   }
 
   useEffect(() => {
-  async function loadConversations() {
+  async function loadConversations(retry = 0) {
+    setMessageLoading(true)
+setMessageError('')
     const {
   data: { session },
 } = await supabase.auth.getSession()
 
 const user = session?.user
 
-if (!user) return
+if (!user) {
+  setMessageLoading(false)
+  return
+}
 
     const { data, error } = await supabase
       .from('conversations')
@@ -184,9 +192,20 @@ if (!user) return
       .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
 
     if (error) {
-      console.error('讀取 conversations 失敗:', error)
-      return
-    }
+  console.error('讀取 conversations 失敗:', error)
+
+  if (retry < 1) {
+    window.setTimeout(() => {
+      loadConversations(retry + 1)
+    }, 600)
+
+    return
+  }
+
+  setMessageError('訊息讀取失敗')
+  setMessageLoading(false)
+  return
+}
 
     const mapped = (data ?? []).map((conversation: any) => {
       const otherUserId =
@@ -212,6 +231,7 @@ if (!user) return
     })
 
     setConversations(mapped)
+    setMessageLoading(false)
   }
 
   loadConversations()
@@ -487,6 +507,33 @@ useEffect(() => {
             </div>
           </>
         )}
+
+{messageLoading && (
+  <div className="mb-4 rounded-[22px] bg-[#e9e9e9] px-4 py-4 text-[14px] text-[#666]">
+    訊息讀取中...
+  </div>
+)}
+
+{messageError && !messageLoading && (
+  <div className="mb-4 rounded-[22px] bg-[#e9e9e9] px-4 py-4">
+    <div className="mb-3 text-[14px] text-[#666]">
+      {messageError}
+    </div>
+
+    <button
+      type="button"
+      onClick={() => {
+        setMessageError('')
+        setMessageLoading(true)
+
+        window.location.reload()
+      }}
+      className="rounded-full bg-[#c86cff] px-4 py-2 text-[13px] text-white"
+    >
+      重新讀取
+    </button>
+  </div>
+)}
 
         <div className="flex flex-col gap-4 pt-2">
   {conversations.map((conversation) => (

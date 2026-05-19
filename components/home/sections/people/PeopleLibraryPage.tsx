@@ -79,7 +79,9 @@ export default function PeopleLibraryPage({
 }: PeopleLibraryPageProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
   const [recentUser, setRecentUser] = useState<PickedUser | null>(null)
-  const [favoriteUser, setFavoriteUser] = useState<PickedUser | null>(null)
+const [favoriteUser, setFavoriteUser] = useState<PickedUser | null>(null)
+const [peopleLoading, setPeopleLoading] = useState(true)
+const [peopleError, setPeopleError] = useState('')
 
   const folders = getFolders(locale)
 
@@ -91,13 +93,22 @@ export default function PeopleLibraryPage({
   const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
 
   useEffect(() => {
-    async function fetchRecentFollowedUser() {
+  let cancelled = false
+
+  async function fetchRecentFollowedUser(retry = 0) {
+    try {
+      setPeopleLoading(true)
+      setPeopleError('')
+
       const {
         data: { user },
+        error: authError,
       } = await supabase.auth.getUser()
 
+      if (authError) throw authError
+
       if (!user) {
-        setRecentUser(null)
+        if (!cancelled) setRecentUser(null)
         return
       }
 
@@ -108,18 +119,12 @@ export default function PeopleLibraryPage({
         .order('created_at', { ascending: false })
         .limit(1)
 
-      if (followError) {
-        console.error('讀取最近追蹤失敗:', followError)
-        setRecentUser(null)
-        return
-      }
+      if (followError) throw followError
 
       const followingId = followRows?.[0]?.following_id
-      console.log('PeopleLibrary recent followRows:', followRows)
-console.log('PeopleLibrary followingId:', followingId)
 
       if (!followingId) {
-        setRecentUser(null)
+        if (!cancelled) setRecentUser(null)
         return
       }
 
@@ -129,25 +134,50 @@ console.log('PeopleLibrary followingId:', followingId)
         .eq('id', followingId)
         .maybeSingle()
 
-      if (profileError || !profileData) {
-        console.error('讀取最近追蹤 profile 失敗:', profileError)
-        setRecentUser(null)
+      if (profileError) throw profileError
+
+      if (!profileData) {
+        if (!cancelled) setRecentUser(null)
         return
       }
 
-      setRecentUser({
-  id: profileData.id,
-  name:
-    profileData.display_name ||
-    profileData.username ||
-    'Vibelink User',
+      if (!cancelled) {
+        setRecentUser({
+          id: profileData.id,
+          name:
+            profileData.display_name ||
+            profileData.username ||
+            'Vibelink User',
+          avatar: profileData.avatar_url || '',
+        })
+      }
+    } catch (error) {
+      console.error('People Library 最近追蹤讀取失敗:', error)
 
-  avatar: profileData.avatar_url || '',
-})
+      if (retry < 1) {
+        window.setTimeout(() => {
+          fetchRecentFollowedUser(retry + 1)
+        }, 600)
+        return
+      }
+
+      if (!cancelled) {
+        setPeopleError('People Library 讀取失敗，請再試一次')
+        setRecentUser(null)
+      }
+    } finally {
+      if (!cancelled) {
+        setPeopleLoading(false)
+      }
     }
+  }
 
-      fetchRecentFollowedUser()
-}, [onOpenProfile])
+  fetchRecentFollowedUser()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
 
 useEffect(() => {
   function loadFavoriteUser() {
@@ -291,6 +321,25 @@ dragPropagation={false}
                 CLOSE
               </button>
             </div>
+
+{peopleLoading && (
+  <div className="mb-4 rounded-[18px] bg-white/60 px-4 py-3 text-center text-[13px] text-[#777]">
+    People Library 讀取中...
+  </div>
+)}
+
+{peopleError && !peopleLoading && (
+  <div className="mb-4 rounded-[18px] bg-white/70 px-4 py-3 text-center">
+    <p className="mb-2 text-[13px] text-[#777]">{peopleError}</p>
+    <button
+      type="button"
+      onClick={() => window.location.reload()}
+      className="rounded-full bg-[#c893cf] px-4 py-2 text-[13px] font-medium text-white"
+    >
+      重新讀取
+    </button>
+  </div>
+)}
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-5">
               {folders.map((folder) => (

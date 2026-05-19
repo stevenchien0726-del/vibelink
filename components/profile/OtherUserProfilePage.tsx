@@ -144,9 +144,10 @@ export default function OtherUserProfilePage({
   useEffect(() => {
     let alive = true
 
-    async function loadProfile() {
-      setLoading(true)
-      setLoadError('')
+    async function loadProfile(retry = 0) {
+  try {
+    setLoading(true)
+    setLoadError('')
 
       if (!userId) {
         setLoadError(text.noUserId)
@@ -177,12 +178,8 @@ export default function OtherUserProfilePage({
       if (!alive) return
 
       if (profileError) {
-        setLoadError(text.loadFailed)
-        setProfile(null)
-        setPosts([])
-        setLoading(false)
-        return
-      }
+  throw profileError
+}
 
       if (!profileData) {
         setLoadError(text.userNotFound)
@@ -238,12 +235,29 @@ export default function OtherUserProfilePage({
       if (!alive) return
 
       if (postsError) {
-        setPosts([])
+  throw postsError
+}
+
+            setPosts(postsData ?? [])
+    } catch (error) {
+      console.error('對方 Profile 讀取失敗:', error)
+
+      if (retry < 1) {
+        window.setTimeout(() => {
+          loadProfile(retry + 1)
+        }, 600)
+
         return
       }
 
-      setPosts(postsData ?? [])
+      if (!alive) return
+
+      setLoadError(text.loadFailed)
+      setProfile(null)
+      setPosts([])
+      setLoading(false)
     }
+  }
 
     loadProfile()
 

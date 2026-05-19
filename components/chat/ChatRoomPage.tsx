@@ -38,6 +38,9 @@ export default function ChatRoomPage({
 }: Props) {
   const [mounted, setMounted] = useState(false)
   const [messages, setMessages] = useState<MessageItem[]>([])
+  const [chatLoading, setChatLoading] = useState(true)
+const [chatError, setChatError] = useState('')
+
   const [input, setInput] = useState('')
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
@@ -69,7 +72,10 @@ export default function ChatRoomPage({
         data: { user },
       } = await supabase.auth.getUser()
 
-      if (!user || !otherUserId) return
+      if (!user || !otherUserId) {
+  setChatLoading(false)
+  return
+}
 
       const sortedUsers = [user.id, otherUserId].sort()
 
@@ -114,9 +120,22 @@ export default function ChatRoomPage({
         .order('created_at', { ascending: true })
 
       if (messageError) {
-        console.error('讀取聊天訊息失敗:', messageError)
-        return
-      }
+  console.error('讀取聊天訊息失敗:', messageError)
+
+  async function initConversation(retry = 0) {
+    setChatLoading(true)
+setChatError('')
+    window.setTimeout(() => {
+      initConversation(retry + 1)
+    }, 600)
+
+    return
+  }
+
+  setChatError('聊天室讀取失敗')
+  setChatLoading(false)
+  return
+}
 
       setMessages(
         (messageRows ?? []).map((msg) => ({
@@ -126,6 +145,7 @@ export default function ChatRoomPage({
           recalled: msg.recalled,
         }))
       )
+      setChatLoading(false)
     }
 
     initConversation()
@@ -296,6 +316,27 @@ export default function ChatRoomPage({
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-5">
+            {chatLoading && (
+  <div className="pb-4 text-center text-[14px] text-[#777]">
+    聊天室讀取中...
+  </div>
+)}
+
+{chatError && !chatLoading && (
+  <div className="pb-4 text-center">
+    <div className="mb-3 text-[14px] text-[#777]">
+      {chatError}
+    </div>
+
+    <button
+      type="button"
+      onClick={() => window.location.reload()}
+      className="rounded-full bg-[#c86cff] px-4 py-2 text-[13px] text-white"
+    >
+      重新讀取
+    </button>
+  </div>
+)}
             <div className="flex min-h-full flex-col justify-end gap-3">
               
                {messages

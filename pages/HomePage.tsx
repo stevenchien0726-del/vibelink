@@ -250,7 +250,7 @@ function handlePostCreated(post: CreatedPostPayload) {
 
   const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
 
-  async function loadPosts(user?: any) {
+  async function loadPosts(user?: any, retry = 0) {
   try {
     const response = await fetch('/api/feed', {
       method: 'GET',
@@ -260,9 +260,8 @@ function handlePostCreated(post: CreatedPostPayload) {
     const data = await response.json()
 
     if (!data?.ok) {
-      console.error('讀取演算法 feed 失敗:', data)
-      return
-    }
+  throw new Error('讀取演算法 feed 失敗')
+}
 
     const mappedPosts: PostItem[] = (data.feed ?? [])
       .map((post: any) => {
@@ -295,11 +294,20 @@ function handlePostCreated(post: CreatedPostPayload) {
 
     setRealPosts(mappedPosts)
   } catch (error) {
-    console.error('loadPosts /api/feed failed:', error)
+  console.error('loadPosts /api/feed failed:', error)
+
+  if (retry < 1) {
+    window.setTimeout(() => {
+      loadPosts(user, retry + 1)
+    }, 600)
+    return
   }
+
+  setToast('Feed 讀取失敗，請重新整理')
+}
 }
 
-async function loadShortVideos(user?: any) {
+async function loadShortVideos(user?: any, retry = 0) {
   const { data, error } = await supabase
     .from('short_videos')
     .select(`
@@ -312,9 +320,18 @@ async function loadShortVideos(user?: any) {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('讀取短影片失敗:', error)
+  console.error('讀取短影片失敗:', error)
+
+  if (retry < 1) {
+    window.setTimeout(() => {
+      loadShortVideos(user, retry + 1)
+    }, 600)
     return
   }
+
+  setToast('短影片讀取失敗，請重新整理')
+  return
+}
 
   const videoIds = (data ?? []).map((video: any) => video.id)
 
