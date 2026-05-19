@@ -45,11 +45,11 @@ function getFolders(locale: Locale): FolderItem[] {
     { id: 'more-interaction', label: locale === 'en' ? 'Frequent Interactions' : '較常互動', emoji: '💬' },
     { id: 'mutual-follow', label: locale === 'en' ? 'Mutual Following' : '互相關注中', emoji: '🔁' },
     { id: 'social-lover', label: locale === 'en' ? 'Social Lovers' : '熱愛社交的人', emoji: '🥳' },
-    { id: 'might-care', label: locale === 'en' ? 'People You May Like' : '你可能在意的人', emoji: '👀' },
+    
     { id: 'less-interaction', label: locale === 'en' ? 'Less Interaction' : '較少互動', emoji: '💤' },
     { id: 'creator', label: locale === 'en' ? 'Vibelink Creators' : 'Vibelink創作者', emoji: '🎨' },
     { id: 'official-business', label: locale === 'en' ? 'Official & Business' : '官方和商業帳戶', emoji: '🏢' },
-    { id: 'high-reply', label: locale === 'en' ? 'High Replies' : '高頻互動與回覆', emoji: '⚡' },
+    
   ]
 }
 
@@ -161,49 +161,107 @@ const [peopleError, setPeopleError] = useState('')
         return
       }
 
-      if (!cancelled) {
+            if (!cancelled) {
         setPeopleError('People Library 讀取失敗，請再試一次')
         setRecentUser(null)
-      }
-    } finally {
-      if (!cancelled) {
-        setPeopleLoading(false)
       }
     }
   }
 
-  fetchRecentFollowedUser()
+async function fetchFavoriteUser(retry = 0) {
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError) throw authError
+
+    if (!user) {
+      if (!cancelled) setFavoriteUser(null)
+      return
+    }
+
+    const { data: favoriteRows, error: favoriteError } = await supabase
+      .from('favorite_users')
+      .select('favorite_user_id, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (favoriteError) throw favoriteError
+
+    const favoriteUserId = favoriteRows?.[0]?.favorite_user_id
+
+    if (!favoriteUserId) {
+      if (!cancelled) setFavoriteUser(null)
+      return
+    }
+
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url')
+      .eq('id', favoriteUserId)
+      .maybeSingle()
+
+    if (profileError) throw profileError
+
+    if (!profileData) {
+      if (!cancelled) setFavoriteUser(null)
+      return
+    }
+
+    if (!cancelled) {
+      setFavoriteUser({
+        id: profileData.id,
+        name:
+          profileData.display_name ||
+          profileData.username ||
+          'Vibelink User',
+        avatar: profileData.avatar_url || '',
+      })
+    }
+  } catch (error) {
+    console.error('People Library 我的最愛讀取失敗:', error)
+
+    if (retry < 1) {
+      window.setTimeout(() => {
+        fetchFavoriteUser(retry + 1)
+      }, 600)
+    }
+  }
+}
+
+    function reloadPeopleLibrary() {
+    setPeopleLoading(true)
+    setPeopleError('')
+
+    Promise.all([
+      fetchRecentFollowedUser(),
+      fetchFavoriteUser(),
+    ]).finally(() => {
+      if (!cancelled) {
+        setPeopleLoading(false)
+      }
+    })
+  }
+
+  reloadPeopleLibrary()
+
+  const timeoutId = window.setTimeout(() => {
+    if (!cancelled) {
+      console.warn('People Library 讀取超時，自動重新讀取')
+      reloadPeopleLibrary()
+    }
+  }, 4000)
 
   return () => {
     cancelled = true
+    window.clearTimeout(timeoutId)
   }
 }, [])
 
-useEffect(() => {
-  function loadFavoriteUser() {
-    const saved = localStorage.getItem(
-      'vibelink_favorite_user'
-    )
 
-    setFavoriteUser(
-      saved ? JSON.parse(saved) : null
-    )
-  }
-
-  loadFavoriteUser()
-
-  window.addEventListener(
-    'vibelink_favorite_user_changed',
-    loadFavoriteUser
-  )
-
-  return () => {
-    window.removeEventListener(
-      'vibelink_favorite_user_changed',
-      loadFavoriteUser
-    )
-  }
-}, [])
 
   function closeSheet() {
     animate(sheetY, 540, {
