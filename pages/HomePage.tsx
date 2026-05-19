@@ -250,12 +250,31 @@ function handlePostCreated(post: CreatedPostPayload) {
 
   const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
 
+  function withTimeout<T>(
+  promise: Promise<T>,
+  ms = 4000,
+  label = 'request'
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => {
+        reject(new Error(`${label} timeout`))
+      }, ms)
+    }),
+  ])
+}
+
   async function loadPosts(user?: any, retry = 0) {
   try {
-    const response = await fetch('/api/feed', {
-      method: 'GET',
-      cache: 'no-store',
-    })
+    const response = await withTimeout(
+  fetch('/api/feed', {
+    method: 'GET',
+    cache: 'no-store',
+  }),
+  4000,
+  'feed'
+)
 
     const data = await response.json()
 
@@ -308,16 +327,22 @@ function handlePostCreated(post: CreatedPostPayload) {
 }
 
 async function loadShortVideos(user?: any, retry = 0) {
-  const { data, error } = await supabase
-    .from('short_videos')
-    .select(`
-      id,
-      caption,
-      video_url,
-      created_at,
-      user_id
-    `)
-    .order('created_at', { ascending: false })
+  const { data, error } = await withTimeout(
+  Promise.resolve(
+    supabase
+      .from('short_videos')
+      .select(`
+        id,
+        caption,
+        video_url,
+        created_at,
+        user_id
+      `)
+      .order('created_at', { ascending: false })
+  ),
+  4000,
+  'short_videos'
+)
 
   if (error) {
   console.error('讀取短影片失敗:', error)

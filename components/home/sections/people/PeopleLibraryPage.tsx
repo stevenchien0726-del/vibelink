@@ -286,8 +286,19 @@ async function fetchFavoriteUser(retry = 0) {
   onTouchStart={(e) => e.stopPropagation()}
   onTouchMove={(e) => e.stopPropagation()}
   onTouchEnd={(e) => e.stopPropagation()}
-  onPointerDown={(e) => e.stopPropagation()}
-  onClick={(e) => e.stopPropagation()}
+  onPointerDown={(e) => {
+  e.preventDefault()
+  e.stopPropagation()
+}}
+onPointerUp={(e) => {
+  e.preventDefault()
+  e.stopPropagation()
+}}
+onClick={(e) => {
+  e.preventDefault()
+  e.stopPropagation()
+}}
+
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         style={{ opacity: overlayOpacity }}
@@ -453,15 +464,19 @@ function UserAvatarWithName({
     <button
   type="button"
   onPointerDownCapture={(e) => {
-    e.stopPropagation()
-  }}
-  onPointerUpCapture={(e) => {
-    e.stopPropagation()
-    onClick(e as unknown as React.MouseEvent<HTMLButtonElement>)
-  }}
-  onClick={(e) => {
-    e.stopPropagation()
-  }}
+  e.preventDefault()
+  e.stopPropagation()
+}}
+onPointerUpCapture={(e) => {
+  e.preventDefault()
+  e.stopPropagation()
+  onClick(e as unknown as React.MouseEvent<HTMLButtonElement>)
+}}
+onClick={(e) => {
+  e.preventDefault()
+  e.stopPropagation()
+}}
+
   className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
   aria-label={`Open ${user.name} profile`}
 >

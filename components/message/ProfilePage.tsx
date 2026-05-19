@@ -178,6 +178,21 @@ export default function ProfilePage({
 
     const safeLocale: Locale = locale ?? 'zh-TW'
   const text = profileText[safeLocale]
+
+  function withTimeout<T>(
+  promise: PromiseLike<T>,
+  ms = 4000,
+  label = 'request'
+): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => {
+        reject(new Error(`${label} timeout`))
+      }, ms)
+    }),
+  ])
+}
   
   useEffect(() => {
   let alive = true
@@ -188,8 +203,8 @@ export default function ProfilePage({
     setProfileError('')
 
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+  data: { session },
+} = await supabase.auth.getSession()
 
     const user = session?.user
 
@@ -203,14 +218,22 @@ export default function ProfilePage({
 
     setCurrentUserId(user.id)
 
-    await ensureMyProfile()
+    await withTimeout(
+  ensureMyProfile(),
+  4000,
+  'ensure_my_profile'
+)
 
-    await Promise.all([
-      loadMyFollowerCount(),
-      loadMyPosts(),
-      loadMyShortVideos(),
-      loadSavedPosts(),
-    ])
+await withTimeout(
+  Promise.all([
+    loadMyFollowerCount(),
+    loadMyPosts(),
+    loadMyShortVideos(),
+    loadSavedPosts(),
+  ]),
+  4000,
+  'my_profile_data'
+)
 
     if (!alive) return
 

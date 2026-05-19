@@ -6,8 +6,9 @@ import {
   ChevronLeft,
   Copy,
   Grid2x2,
-  Image as ImageIcon,
   Bookmark,
+  Heart,
+MessageCircle,
   PlaySquare,
   Link as LinkIcon,
   MoreHorizontal,
@@ -23,6 +24,8 @@ import { supabase } from '@/lib/supabase'
 import type { Locale } from '@/i18n'
 import LinkPortSheet from '@/components/profile/LinkPortSheet'
 import ChatRoomPage from '@/components/chat/ChatRoomPage'
+
+import WideMenuSheet from '@/components/WideMenuSheet'
 
 type Props = {
   userId: string
@@ -122,9 +125,25 @@ export default function OtherUserProfilePage({
 }: Props) {
   const text = otherProfileText[locale]
 
+  function withTimeout<T>(
+  promise: PromiseLike<T>,
+  ms = 4000,
+  label = 'request'
+): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => {
+        reject(new Error(`${label} timeout`))
+      }, ms)
+    }),
+  ])
+}
+
   const [profile, setProfile] = useState<any>(null)
   const [posts, setPosts] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState(0)
+const [selectedPost, setSelectedPost] = useState<any>(null)
+const [activeTab, setActiveTab] = useState(0)
   function goToTab(index: number) {
   if (index < 0 || index > 2) return
   setActiveTab(index)
@@ -133,6 +152,8 @@ export default function OtherUserProfilePage({
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
+
   const [isFollowMenuOpen, setIsFollowMenuOpen] = useState(false)
   const [isUnfollowConfirmOpen, setIsUnfollowConfirmOpen] = useState(false)
   const [isFollowing, setIsFollowing] = useState(false)
@@ -169,11 +190,15 @@ export default function OtherUserProfilePage({
   return
 }
 
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, username, display_name, avatar_url, bio')
-        .eq('id', userId)
-        .maybeSingle()
+      const { data: profileData, error: profileError } = await withTimeout(
+  supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_url, bio')
+    .eq('id', userId)
+    .maybeSingle(),
+  4000,
+  'other_profile'
+)
 
       if (!alive) return
 
@@ -193,13 +218,21 @@ export default function OtherUserProfilePage({
       setLoading(false)
 
       const {
-        data: { user },
-      } = await supabase.auth.getUser()
+  data: { user },
+} = await withTimeout(
+  supabase.auth.getUser(),
+  4000,
+  'other_profile_auth'
+)
 
-      const { count } = await supabase
-        .from('follows')
-        .select('*', { count: 'exact', head: true })
-        .eq('following_id', userId)
+      const { count } = await withTimeout(
+  supabase
+    .from('follows')
+    .select('*', { count: 'exact', head: true })
+    .eq('following_id', userId),
+  4000,
+  'other_profile_followers'
+)
 
       if (!alive) return
 
@@ -218,19 +251,23 @@ export default function OtherUserProfilePage({
         setIsFollowing(!!followRow)
       }
 
-      const { data: postsData, error: postsError } = await supabase
-        .from('posts')
-        .select(`
-          id,
-          caption,
-          created_at,
-          user_id,
-          post_images (
-            image_url
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+      const { data: postsData, error: postsError } = await withTimeout(
+  supabase
+    .from('posts')
+    .select(`
+      id,
+      caption,
+      created_at,
+      user_id,
+      post_images (
+        image_url
+      )
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false }),
+  4000,
+  'other_profile_posts'
+)
 
       if (!alive) return
 
@@ -421,7 +458,7 @@ async function toggleFavorite() {
 
             <button
               type="button"
-              onClick={() => setIsMenuOpen(true)}
+              onClick={() => setIsPostMenuOpen(true)}
               className="flex h-[38px] items-center gap-1 rounded-[14px] px-2 text-[13px] text-[#111] active:scale-95"
             >
               <MoreHorizontal size={22} strokeWidth={2.4} />
@@ -593,10 +630,11 @@ async function toggleFavorite() {
 
                         return (
                           <button
-                            key={post.id}
-                            type="button"
-                            className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
-                          >
+  key={post.id}
+  type="button"
+  onClick={() => setSelectedPost(post)}
+  className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
+>
                             {image && (
                               <img
                                 src={image}
@@ -723,6 +761,7 @@ async function toggleFavorite() {
                   <span className="ml-1">{text.block}</span>
                 </button>
               </div>
+              
             </motion.div>
           </>
         )}
@@ -798,6 +837,7 @@ async function toggleFavorite() {
                   </span>
                 </button>
               </div>
+              
             </motion.div>
           </>
         )}
@@ -866,7 +906,131 @@ async function toggleFavorite() {
         userId={userId}
         isOwner={false}
       />
+      <AnimatePresence>
+  {selectedPost && (
+     <motion.div
+  className="fixed inset-0 z-[260] flex justify-center overflow-y-auto bg-[#f3f3f3] pb-[110px]"
+  initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+    >
+      <div className="w-full max-w-[430px]">
+      <div className="sticky top-0 z-[270] flex h-[56px] items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
+        <button
+          type="button"
+          onClick={() => setSelectedPost(null)}
+          className="flex h-10 w-10 items-center justify-center rounded-full active:scale-90"
+        >
+          <ChevronLeft size={26} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsPostMenuOpen(true)}
+          className="flex h-8 items-center gap-2 rounded-full px-2 active:scale-95"
+        >
+          <MoreHorizontal size={22} strokeWidth={2.4} />
+          <span className="text-[15px] font-medium">MENU</span>
+        </button>
+      </div>
+
+      <div className="px-4 pt-3">
+        <button
+  type="button"
+  onClick={() => setSelectedPost(null)}
+  className="mb-10 flex h-[52px] items-center gap-3 active:scale-[0.98]"
+>
+          <div className="h-[40px] w-[40px] overflow-hidden rounded-full bg-[#d9d9d9]">
+            {profile?.avatar_url && (
+              <img
+                src={profile.avatar_url}
+                className="h-full w-full object-cover"
+              />
+            )}
+          </div>
+
+            <div className="text-[15px] font-medium text-[#222]">
+    {profile?.display_name || profile?.username || 'Vibelink User'}
+  </div>
+</button>
+
+        <div className="overflow-hidden rounded-[18px] bg-[#ddd]">
+          {selectedPost.post_images?.[0]?.image_url && (
+            <img
+              src={selectedPost.post_images[0].image_url}
+              className="w-full object-cover"
+            />
+          )}
+        </div>
+
+        <div className="flex items-center justify-between px-1 pt-4">
+          <div className="flex items-center gap-5">
+            <button type="button" className="flex items-center gap-1.5 active:scale-90">
+              <Heart size={25} color="#c86cff" />
+              <span className="text-[15px] text-[#555]">0</span>
+            </button>
+
+            <button type="button" className="active:scale-90">
+              <MessageCircle size={25} strokeWidth={2.1} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-5">
+            <button type="button" className="active:scale-90">
+              <Send size={25} strokeWidth={2.1} />
+            </button>
+
+            <button type="button" className="active:scale-90">
+              <Bookmark size={25} color="#c86cff" strokeWidth={2.1} />
+            </button>
+          </div>
+        </div>
+
+        {selectedPost.caption && (
+          <div className="px-1 pt-3 text-[15px] text-[#222]">
+            {selectedPost.caption}
+          </div>
+        )}
+
+        <div className="mt-5 border-t border-[#ddd] px-1 pt-4">
+          <div className="mb-4 text-[15px] font-medium text-[#222]">
+            留言
+          </div>
+
+          <div className="mb-4 flex gap-2">
+            <input
+              placeholder="新增留言..."
+              className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[#222] outline-none"
+            />
+
+            <button
+              type="button"
+              className="h-[42px] rounded-full px-4 text-[14px] font-medium text-[#222]"
+            >
+              送出
+            </button>
+          </div>
+
+                  <div className="text-[14px] text-[#999]">
+          尚無留言，成為第一個留言的人
+        </div>
+      </div>
+      </div>
+      </div>
     </motion.div>
+  )}
+</AnimatePresence>
+    </motion.div>
+
+<AnimatePresence>
+  {isPostMenuOpen && (
+    <WideMenuSheet
+      variant="other"
+      onClose={() => setIsPostMenuOpen(false)}
+    />
+  )}
+</AnimatePresence>
 
     <AnimatePresence>
   {isChatOpen && (

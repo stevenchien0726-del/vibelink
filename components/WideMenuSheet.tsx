@@ -45,7 +45,7 @@ export default function WideMenuSheet({
 
   return (
     <div
-      className={`fixed inset-0 z-[999] flex justify-center transition-all duration-300 ${
+      className={`fixed inset-0 z-[99999] flex justify-center transition-all duration-300 ${
         mounted && !closing ? 'bg-black/40' : 'bg-black/0'
       }`}
       onClick={handleClose}
@@ -190,7 +190,7 @@ function ConfirmDialog({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/35 px-8"
+          className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/35 px-8"
           onClick={(e) => e.stopPropagation()}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
