@@ -332,12 +332,13 @@ async function loadShortVideos(user?: any, retry = 0) {
     supabase
       .from('short_videos')
       .select(`
-        id,
-        caption,
-        video_url,
-        created_at,
-        user_id
-      `)
+  id,
+  caption,
+  video_url,
+  thumbnail_url,
+  created_at,
+  user_id
+`)
       .order('created_at', { ascending: false })
   ),
   4000,
@@ -412,8 +413,9 @@ async function loadShortVideos(user?: any, retry = 0) {
         : 'Vibelink User',
     text: video.caption || '',
     likes: likeCountMap.get(video.id) ?? 0,
-    images: [],
-    videoUrl: video.video_url,
+    images: video.thumbnail_url ? [video.thumbnail_url] : [],
+thumbnailUrl: video.thumbnail_url || '',
+videoUrl: video.video_url,
     type: 'video',
     aiTags: ['短影片'],
     isMine: video.user_id === user?.id,

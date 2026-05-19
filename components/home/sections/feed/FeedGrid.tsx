@@ -20,6 +20,7 @@ export type PostItem = {
   likes: number
   images: string[]
   videoUrl?: string
+  thumbnailUrl?: string
   aiTags: string[]
 
   feedScore?: number
@@ -45,113 +46,6 @@ type FeedGridProps = {
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
 
-function LazyFeedVideo({
-  src,
-  poster,
-}: {
-  src: string
-  poster: string
-}) {
-  const wrapRef = useRef<HTMLDivElement | null>(null)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-
-  const [shouldMountVideo, setShouldMountVideo] = useState(false)
-  const [isReady, setIsReady] = useState(false)
-  const [reloadKey, setReloadKey] = useState(0)
-
-  useEffect(() => {
-    const node = wrapRef.current
-    if (!node) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setShouldMountVideo(entry.isIntersecting)
-      },
-      {
-        root: null,
-        rootMargin: '260px 0px',
-        threshold: 0.01,
-      }
-    )
-
-    observer.observe(node)
-
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if (!shouldMountVideo) return
-
-    const video = videoRef.current
-    if (!video) return
-
-    video.muted = true
-    video.playsInline = true
-
-    const playVideo = async () => {
-      try {
-        await video.play()
-      } catch {
-        // 手機瀏覽器可能會擋第一次 autoplay，先不讓它炸掉
-      }
-    }
-
-    playVideo()
-  }, [shouldMountVideo, reloadKey])
-
-  useEffect(() => {
-    if (!shouldMountVideo) return
-
-    const timer = window.setTimeout(() => {
-      const video = videoRef.current
-
-      if (!video) return
-
-      const stillBlack =
-        video.readyState < 2 || video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE
-
-      if (stillBlack) {
-        setReloadKey((prev) => prev + 1)
-      }
-    }, 3500)
-
-    return () => window.clearTimeout(timer)
-  }, [shouldMountVideo, reloadKey])
-
-  return (
-    <div ref={wrapRef} className="relative h-full w-full overflow-hidden bg-black">
-      <img
-        src={poster || FALLBACK_IMAGE}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover"
-        draggable={false}
-      />
-
-      {shouldMountVideo && (
-        <video
-          key={`${src}-${reloadKey}`}
-          ref={videoRef}
-          src={src}
-          muted
-          loop
-          playsInline
-          autoPlay
-          preload="none"
-          poster={poster || FALLBACK_IMAGE}
-          className={`absolute inset-0 h-full w-full bg-black object-cover transition-opacity duration-300 ${
-            isReady ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoadedData={() => setIsReady(true)}
-          onCanPlay={() => setIsReady(true)}
-          onError={() => {
-            setIsReady(false)
-            setReloadKey((prev) => prev + 1)
-          }}
-        />
-      )}
-    </div>
-  )
-}
 
 export default function FeedGrid({
   posts = [],
@@ -209,7 +103,10 @@ export default function FeedGrid({
         className="grid grid-cols-2 gap-[3px]"
       >
         {posts.map((post) => {
-          const image = getPostImages(post)[0]
+          const image =
+  post.thumbnailUrl ||
+  post.images?.[0] ||
+  ''
 
           return (
             <motion.button
@@ -220,15 +117,48 @@ export default function FeedGrid({
               className="relative h-[280px] w-full overflow-hidden rounded-[6px] bg-[#dddddd]"
             >
               {post.videoUrl ? (
-                <LazyFeedVideo src={post.videoUrl} poster={image} />
-              ) : (
-                <img
-                  src={image}
-                  alt={post.author}
-                  className="h-full w-full object-cover"
-                  draggable={false}
-                />
-              )}
+  <>
+    {image ? (
+  <img
+    src={image}
+    alt={post.author}
+    className="h-full w-full object-cover"
+    draggable={false}
+    onError={(e) => {
+      e.currentTarget.style.display = 'none'
+    }}
+  />
+) : (
+  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1f1f1f] via-[#3a3a3a] to-[#111111]">
+    <div className="text-[13px] font-semibold text-white/70">
+      Vibe Video
+    </div>
+  </div>
+)}
+
+    <div className="pointer-events-none absolute inset-0 bg-black/5" />
+
+    <div className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/45 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-md">
+      ▶
+    </div>
+  </>
+) : image ? (
+  <img
+    src={image}
+    alt={post.author}
+    className="h-full w-full object-cover"
+    draggable={false}
+    onError={(e) => {
+      e.currentTarget.style.display = 'none'
+    }}
+  />
+) : (
+  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1f1f1f] via-[#3a3a3a] to-[#111111]">
+    <div className="text-[13px] font-semibold text-white/70">
+      Vibe Video
+    </div>
+    </div>
+)}
             </motion.button>
           )
         })}

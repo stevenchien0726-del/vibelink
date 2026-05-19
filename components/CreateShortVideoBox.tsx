@@ -150,13 +150,80 @@ async function extractFramesFromVideo(file: File) {
 
       const videoUrl = publicUrlData.publicUrl
 
+      // ✅ 自動產生影片縮圖
+const thumbnailCanvas = document.createElement('canvas')
+const thumbnailVideo = document.createElement('video')
+
+thumbnailVideo.src = videoUrl
+thumbnailVideo.crossOrigin = 'anonymous'
+thumbnailVideo.muted = true
+thumbnailVideo.playsInline = true
+
+await new Promise<void>((resolve) => {
+  thumbnailVideo.onloadeddata = () => resolve()
+})
+
+thumbnailVideo.currentTime = 0.1
+
+await new Promise<void>((resolve) => {
+  thumbnailVideo.onseeked = () => resolve()
+})
+
+thumbnailCanvas.width = thumbnailVideo.videoWidth
+thumbnailCanvas.height = thumbnailVideo.videoHeight
+
+const ctx = thumbnailCanvas.getContext('2d')
+
+if (!ctx) {
+  alert('縮圖產生失敗')
+  setUploading(false)
+  return
+}
+
+ctx.drawImage(
+  thumbnailVideo,
+  0,
+  0,
+  thumbnailCanvas.width,
+  thumbnailCanvas.height
+)
+
+const thumbnailBlob: Blob = await new Promise((resolve) => {
+  thumbnailCanvas.toBlob(
+    (blob) => resolve(blob as Blob),
+    'image/jpeg',
+    0.82
+  )
+})
+
+const thumbnailFileName = `${user.id}/${Date.now()}-thumbnail.jpg`
+
+const { error: thumbnailUploadError } = await supabase.storage
+  .from('short-video-thumbnails')
+  .upload(thumbnailFileName, thumbnailBlob, {
+    contentType: 'image/jpeg',
+    upsert: false,
+  })
+
+if (thumbnailUploadError) {
+  console.error('縮圖上傳失敗:', thumbnailUploadError)
+}
+
+const { data: thumbnailPublicUrlData } = supabase.storage
+  .from('short-video-thumbnails')
+  .getPublicUrl(thumbnailFileName)
+
+const thumbnailUrl =
+  thumbnailPublicUrlData.publicUrl
+
       const { data: newVideo, error: insertError } = await supabase
   .from('short_videos')
   .insert({
-    user_id: user.id,
-    caption: caption.trim(),
-    video_url: videoUrl,
-  })
+  user_id: user.id,
+  caption: caption.trim(),
+  video_url: videoUrl,
+  thumbnail_url: thumbnailUrl,
+})
   .select('id')
   .single()
 
