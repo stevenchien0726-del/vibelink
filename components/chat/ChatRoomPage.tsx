@@ -45,6 +45,7 @@ const [chatError, setChatError] = useState('')
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [resolvedAvatar, setResolvedAvatar] = useState(userAvatar || '')
 
   const touchStartXRef = useRef<number | null>(null)
   const touchStartYRef = useRef<number | null>(null)
@@ -67,6 +68,21 @@ const [chatError, setChatError] = useState('')
   }, [dragX])
 
   useEffect(() => {
+    async function loadOtherUserProfile() {
+  if (!otherUserId) return
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('avatar_url')
+    .eq('id', otherUserId)
+    .maybeSingle()
+
+  if (data?.avatar_url) {
+    setResolvedAvatar(data.avatar_url)
+  }
+}
+
+loadOtherUserProfile()
     async function initConversation() {
       const {
         data: { user },
@@ -87,9 +103,11 @@ const [chatError, setChatError] = useState('')
         .maybeSingle()
 
       if (findError) {
-        console.error('讀取 conversation 失敗:', findError)
-        return
-      }
+  console.error('讀取 conversation 失敗:', findError)
+  setChatError('聊天室讀取失敗')
+  setChatLoading(false)
+  return
+}
 
       if (!conversation) {
         const { data: newConversation, error: createError } = await supabase
@@ -102,14 +120,20 @@ const [chatError, setChatError] = useState('')
           .single()
 
         if (createError) {
-          console.error('建立 conversation 失敗:', createError)
-          return
-        }
+  console.error('建立 conversation 失敗:', createError)
+  setChatError('聊天室建立失敗')
+  setChatLoading(false)
+  return
+}
 
         conversation = newConversation
       }
 
-      if (!conversation) return
+      if (!conversation) {
+  setChatError('找不到聊天室')
+  setChatLoading(false)
+  return
+}
 
       setConversationId(conversation.id)
 
@@ -121,17 +145,6 @@ const [chatError, setChatError] = useState('')
 
       if (messageError) {
   console.error('讀取聊天訊息失敗:', messageError)
-
-  async function initConversation(retry = 0) {
-    setChatLoading(true)
-setChatError('')
-    window.setTimeout(() => {
-      initConversation(retry + 1)
-    }, 600)
-
-    return
-  }
-
   setChatError('聊天室讀取失敗')
   setChatLoading(false)
   return
@@ -301,12 +314,17 @@ setChatError('')
   className="flex items-center gap-3 rounded-full px-1 py-1 active:scale-[0.97]"
 >
   <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#d49be0]">
-    {userAvatar && (
-      <img
-        src={userAvatar}
-        className="h-full w-full object-cover"
-      />
-    )}
+    {resolvedAvatar ? (
+  <img
+    src={resolvedAvatar}
+    className="h-full w-full object-cover"
+  />
+) : (
+  <div className="flex h-full w-full items-center justify-center text-[14px] font-semibold text-white">
+    {userName.slice(0, 1)}
+  </div>
+)}
+
   </div>
 
   <div className="text-[15px] font-medium text-[#222]">

@@ -207,28 +207,52 @@ if (!user) {
   return
 }
 
-    const mapped = (data ?? []).map((conversation: any) => {
-      const otherUserId =
-        conversation.user_a === user.id
-          ? conversation.user_b
-          : conversation.user_a
+const validConversations = (data ?? []).filter((conversation: any) => {
+  return conversation.user_a !== user.id || conversation.user_b !== user.id
+})
 
-      const latestMessage = [...(conversation.chat_messages ?? [])]
-        .filter((msg: any) => !msg.recalled)
-        .sort(
-          (a: any, b: any) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
-        )[0]
+    const otherUserIds = validConversations.map((conversation: any) =>
+  conversation.user_a === user.id
+    ? conversation.user_b
+    : conversation.user_a
+)
 
-      return {
-        id: conversation.id,
-        otherUserId,
-        name: '小葵',
-        avatarUrl: '',
-        lastMessage: latestMessage?.text ?? '',
-      }
-    })
+const { data: profilesData } = await supabase
+  .from('profiles')
+  .select('id, username, display_name, avatar_url')
+  .in('id', otherUserIds)
+
+const profileMap = new Map(
+  (profilesData ?? []).map((profile: any) => [profile.id, profile])
+)
+
+const mapped = validConversations.map((conversation: any) => {
+  const otherUserId =
+    conversation.user_a === user.id
+      ? conversation.user_b
+      : conversation.user_a
+
+  const latestMessage = [...(conversation.chat_messages ?? [])]
+    .filter((msg: any) => !msg.recalled)
+    .sort(
+      (a: any, b: any) =>
+        new Date(b.created_at).getTime() -
+        new Date(a.created_at).getTime()
+    )[0]
+
+  const profile = profileMap.get(otherUserId) as any
+
+  return {
+    id: conversation.id,
+    otherUserId,
+    name:
+      profile?.display_name ||
+      profile?.username ||
+      'Vibelink User',
+    avatarUrl: profile?.avatar_url || '',
+    lastMessage: latestMessage?.text ?? '',
+  }
+})
 
     const conversationMap = new Map<string, ConversationItem>()
 

@@ -14,7 +14,6 @@ import { FakeUser } from '../data/fakeUsers'
 
 import { MEMBERSHIP_URL, openLink } from '@/lib/links'
 
-import { SKY_LIBRARY_RESULTS } from '@/lib/mockSkyLibrary'
 import AIRadarLoadingOverlay from '@/components/airadar/AIRadarLoadingOverlay'
 import AIRadarMoreWall from '@/components/airadar/AIRadarMoreWall'
 
@@ -64,28 +63,7 @@ const aiRadarText = {
   },
 } as const
 
-const SKY_USER_ANALYSIS: Record<string, string> = {
-  'sky-match-1':
-    '整體偏自然戶外與公路旅行感，聊天節奏慢，給人的感覺比較穩、比較耐看，也更像會陪你往外走走的人。',
-  'sky-match-2':
-    '山景與慢生活感很重，照片裡有一種成熟但不高冷的距離感，比較像是能安靜聊天、慢慢熟起來的類型。',
-  'sky-match-3':
-    '海風感和舒服感比較強，整體氣質偏溫和療癒，不是高刺激型，而是容易讓人放鬆、願意多聊幾句的類型。',
-}
 
-const SKY_MORE_PROMPTS = [
-  '幫我找比 Sky_07_21 更成熟一點的人',
-  '找和 Sky_07_21 一樣自然感強但更主動聊天的人',
-  '找偏安靜、戶外感、適合慢慢熟起來的人',
-]
-
-const SKY_MORE_WALL_IMAGES = [
-  '/sky-more/1.jpg',
-  '/sky-more/2.jpg',
-  '/sky-more/3.jpg',
-  '/sky-more/4.jpg',
-  '/sky-more/5.jpg',
-]
 
 export default function AIRadarPage({ locale }: AIRadarPageProps) {
   const safeLocale: Locale = locale ?? 'zh-TW'
@@ -282,8 +260,6 @@ function handlePickLibraryUser(payload: {
   setIsPeopleLibraryOpen(false)
 }
 
-const isSkySeedSearch = selectedLibraryUser?.id === 'user-1'
-
 function handleClearInput() {
   setInputValue('')
   setSelectedLibraryUser(null)
@@ -341,22 +317,22 @@ function getCandidateDescription(user: any) {
   const tagText = tags.slice(0, 3).join('、')
 
   if (tags.includes('nightlife') || tags.includes('techno') || tags.includes('rave') || tags.includes('dj')) {
-    return `${user.display_name} 偏夜生活與音樂派對感，標籤包含 ${tagText}，適合喜歡高能量社交的人。`
+    return `${user.displayName} 偏夜生活與音樂派對感，標籤包含 ${tagText}，適合喜歡高能量社交的人。`
   }
 
   if (tags.includes('gym') || tags.includes('fitness') || tags.includes('workout')) {
-    return `${user.display_name} 偏健身與運動生活感，標籤包含 ${tagText}，整體比較自律、有活力。`
+    return `${user.displayName} 偏健身與運動生活感，標籤包含 ${tagText}，整體比較自律、有活力。`
   }
 
   if (tags.includes('coffee') || tags.includes('cafe')) {
-    return `${user.display_name} 偏咖啡與生活感，標籤包含 ${tagText}，整體氛圍比較日常、放鬆。`
+    return `${user.displayName} 偏咖啡與生活感，標籤包含 ${tagText}，整體氛圍比較日常、放鬆。`
   }
 
   if (tags.includes('dance') || tags.includes('kpop')) {
-    return `${user.display_name} 偏舞蹈與韓系感，標籤包含 ${tagText}，互動氛圍比較活潑。`
+    return `${user.displayName} 偏舞蹈與韓系感，標籤包含 ${tagText}，互動氛圍比較活潑。`
   }
 
-  return `${user.display_name} 和你的搜尋條件有部分重疊，標籤包含 ${tagText}。`
+  return `${user.displayName} 和你的搜尋條件有部分重疊，標籤包含 ${tagText}。`
 }
 
     const handleSubmit = async () => {
@@ -402,8 +378,10 @@ try {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      query: finalQuery,
-    }),
+  query: finalQuery,
+  referenceUserId: selectedLibraryUser?.id ?? null,
+  referenceUserName: selectedLibraryUser?.name ?? null,
+}),
     signal: controller.signal,
   })
 
@@ -453,9 +431,7 @@ data = {
 }
 
 setTimeout(async () => {
-  const matchedUsers = isSkySeedSearch
-    ? SKY_LIBRARY_RESULTS
-    : data?.matchedUsers ?? []
+  const matchedUsers = data?.matchedUsers ?? []
 
   const aiReplyText = data?.aiReply ?? ''
   const nextRewritePrompts =
@@ -474,24 +450,13 @@ setTimeout(async () => {
 setRewritePrompts(nextRewritePrompts)
 
     let nextAiText = ''
-    if (matchedUsers.length > 0) {
-  if (isSkySeedSearch) {
-    nextAiText =
-      '我幫你從「Sky_07_21」延伸找出幾位更偏自然感、安靜成熟、旅行與慢節奏氛圍的用戶。這次不是找同一種可愛互動型，而是往更耐看、比較適合長聊天與真實相處感的方向去擴散。'
-  } else if (selectedLibraryUser) {
-  nextAiText = `我用「${selectedLibraryUser.name}」當作參考基準，幫你延伸找出幾位相似 Vibe 的用戶。這次會更看重生活風格、照片氣質、互動感和整體氛圍，而不是只比對單一標籤。`
+
+if (matchedUsers.length > 0) {
+  nextAiText = aiReplyText
 } else {
-    nextAiText = aiReplyText
-  }
-} else {
-  if (isSkySeedSearch) {
-    nextAiText =
-      '目前沒有找到完全符合 Sky_07_21 延伸方向的用戶，你可以再補一句像是「更成熟」、「更安靜」、「更有戶外感」這類描述。'
-  } else if (selectedLibraryUser) {
-  nextAiText = `我目前還沒找到和「${selectedLibraryUser.name}」足夠接近的用戶。你可以再補一句方向，例如「更成熟一點」、「更可愛一點」、「更會聊天」或「照片風格更像 IG 小網紅」。`
-} else {
-    nextAiText = `目前沒有找到完全符合「${finalQuery}」的用戶，你可以換更簡短的描述再試一次。`
-  }
+  nextAiText =
+    aiReplyText ||
+    `目前沒有找到完全符合「${finalQuery}」的用戶，你可以換更簡短的描述再試一次。`
 }
 
     setAiText(nextAiText)
@@ -646,8 +611,9 @@ setRewritePrompts(nextRewritePrompts)
 <AIRadarMoreWall
   refreshKey={refreshKey}
   refreshCount={refreshCount}
-  isSkySeedSearch={isSkySeedSearch}
-  skyImages={SKY_MORE_WALL_IMAGES}
+  isSkySeedSearch={false}
+
+  skyImages={[]}
   onRefresh={() => {
     if (refreshCount >= 2) return
 
@@ -671,17 +637,7 @@ setRewritePrompts(nextRewritePrompts)
   <AIRadarPromptList
   title={text.rewriteTitle}
   variant="rewrite"
-  prompts={
-    isSkySeedSearch
-      ? SKY_MORE_PROMPTS
-      : rewritePrompts.length > 0
-        ? rewritePrompts
-        : [
-            '幫我找更成熟一點的奶狗男生',
-            '找夜生活但個性溫柔的人',
-            '想找高互動感、會主動聊天的人',
-          ]
-  }
+  prompts={rewritePrompts}
     onSelectPrompt={(prompt) => {
       setInputValue(prompt)
 

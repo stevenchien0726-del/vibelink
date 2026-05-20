@@ -6,6 +6,9 @@ import { searchAIRadarUsers } from '@/lib/aiRadar'
 import { searchAIRadarUsersSupabase } from '@/lib/ai-radar/searchAIRadarUsersSupabase'
 import { transformSupabaseAIRadarUsers } from '@/lib/ai-radar/transformSupabaseAIRadarUsers'
 
+import { searchVectorUsers } from '@/lib/ai-radar/searchVectorUsers'
+import { transformVectorResults } from '@/lib/ai-radar/transformVectorResults'
+
 import { generateAIRadarRewritePrompts } from '@/lib/ai-radar/generateAIRadarRewritePrompts'
 
 export async function POST(req: Request) {
@@ -48,7 +51,7 @@ const transformedSupabaseUsers =
   transformSupabaseAIRadarUsers(
     supabaseUsers
   ).map((user: any) => {
-    const userTags = user.vibe_tags ?? user.tags ?? []
+    const userTags = user.tags ?? []
 
     const matchScore = tags.reduce((score: number, tag: string) => {
       return userTags.includes(tag) ? score + 20 : score
@@ -81,10 +84,33 @@ const transformedSupabaseUsers =
   transformedSupabaseUsers
 )
 
-const matchedUsers =
-  transformedSupabaseUsers.length > 0
-    ? transformedSupabaseUsers
-    : searchAIRadarUsers(parsedQuery)
+let matchedUsers: any[] = []
+
+try {
+  const vectorRows =
+    await searchVectorUsers(query)
+
+  const vectorUsers =
+    transformVectorResults(vectorRows)
+
+  matchedUsers =
+    vectorUsers.length > 0
+      ? vectorUsers
+      : transformedSupabaseUsers.length > 0
+        ? transformedSupabaseUsers
+        : searchAIRadarUsers(parsedQuery)
+
+} catch (vectorError) {
+  console.error(
+    'AI Radar vector search failed, fallback:',
+    vectorError
+  )
+
+  matchedUsers =
+    transformedSupabaseUsers.length > 0
+      ? transformedSupabaseUsers
+      : searchAIRadarUsers(parsedQuery)
+}
 
 console.log('🟢 [AI Radar] search tags:', tags)
 

@@ -1,13 +1,12 @@
 import type { AIRadarParsedQuery } from './aiRadarParser'
 
 type AIRadarReplyUser = {
-  display_name?: string
+  displayName?: string
   username?: string
   bio?: string
   city?: string
-  vibe_tags?: string[]
   tags?: string[]
-    score?: number
+  score?: number
   aiScore?: number
   matchedReasons?: string[]
 }
@@ -47,11 +46,11 @@ function fallbackReply(
 
 function compactUserForPrompt(user: AIRadarReplyUser) {
   return {
-    name: user.display_name ?? user.username ?? 'Unknown user',
-    username: user.username ?? '',
+    name: user.displayName ?? user.username ?? 'Unknown user',
+tags: user.tags ?? [],
     city: user.city ?? '',
     bio: user.bio ?? '',
-    tags: user.vibe_tags ?? user.tags ?? [],
+    
     matchedReasons: user.matchedReasons ?? [],
     score: user.aiScore ?? user.score ?? 0,
   }
@@ -69,9 +68,9 @@ export async function generateAIRadarReply({
   const apiKey = process.env.OPENAI_API_KEY
 
   if (!apiKey) {
-    console.warn('Missing OPENAI_API_KEY')
-    fallbackReply(query, users, parsedQuery)
-  }
+  console.warn('Missing OPENAI_API_KEY')
+  return fallbackReply(query, users, parsedQuery)
+}
 
   const topUsers = users.slice(0, 2).map(compactUserForPrompt)
 

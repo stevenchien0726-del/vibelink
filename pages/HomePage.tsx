@@ -295,6 +295,7 @@ function handlePostCreated(post: CreatedPostPayload) {
             post.profiles?.display_name ||
             post.profiles?.username ||
             'Vibelink User',
+            avatarUrl: post.profiles?.avatar_url || '',
           text: post.caption || '',
           likes: post.likes ?? 0,
           isLiked: !!post.isLiked,
@@ -1388,7 +1389,14 @@ onOpenProfile={(post) => {
   }}
   className="mb-5 ml-7 flex items-center gap-3 py-3 pr-5 active:scale-95"
 >
-  <div className="h-[34px] b-5 ml-3 flex items-center gap-3 py-3 pr-[34px] rounded-full bg-[#d6d6d6]" />
+  <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#d6d6d6]">
+  {(selectedPost as any).avatarUrl ? (
+    <img
+      src={(selectedPost as any).avatarUrl}
+      className="h-full w-full object-cover"
+    />
+  ) : null}
+</div>
 
   <div className="text-[15px] font-medium text-[#222]">
     {selectedPost.author}

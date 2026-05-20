@@ -20,17 +20,19 @@ export function transformSupabaseAIRadarUsers(rows: any[]) {
     const matchCount = tags.length
 
     return {
-      id: profile?.id ?? row.id,
-      username: profile?.username ?? 'vibelink_user',
-      display_name: profile?.display_name ?? 'Vibelink User',
-      avatar_url: profile?.avatar_url ?? '',
-      bio: row.ai_caption ?? '',
-      city: '',
-      tags,
-      vibe_tags: tags,
-      images,
-      primaryImage,
-      matchCount,
-    }
+  id: profile?.id ?? row.id,
+  username: profile?.username ?? 'vibelink_user',
+  displayName:
+    profile?.display_name ??
+    profile?.username ??
+    'Vibelink User',
+  avatar: profile?.avatar_url ?? '',
+  bio: row.ai_caption ?? '',
+  city: '',
+  tags,
+  images,
+  primaryImage,
+  matchCount,
+}
   })
 }

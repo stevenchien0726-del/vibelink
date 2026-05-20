@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getPersonalizedFeed } from '@/lib/feed/getPersonalizedFeed'
 
+
+
 export async function GET() {
   try {
     const {

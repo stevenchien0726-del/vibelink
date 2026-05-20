@@ -25,6 +25,8 @@ import type { Locale } from '@/i18n'
 import LinkPortSheet from '@/components/profile/LinkPortSheet'
 import ChatRoomPage from '@/components/chat/ChatRoomPage'
 
+import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
+
 import WideMenuSheet from '@/components/WideMenuSheet'
 
 type Props = {
@@ -127,14 +129,15 @@ export default function OtherUserProfilePage({
 
   function withTimeout<T>(
   promise: PromiseLike<T>,
-  ms = 4000,
+  ms = 9000,
   label = 'request'
-): Promise<T> {
+): Promise<T | null> {
   return Promise.race([
     Promise.resolve(promise),
-    new Promise<T>((_, reject) => {
+    new Promise<null>((resolve) => {
       window.setTimeout(() => {
-        reject(new Error(`${label} timeout`))
+        console.warn(`${label} timeout`)
+        resolve(null)
       }, ms)
     }),
   ])
@@ -142,6 +145,11 @@ export default function OtherUserProfilePage({
 
   const [profile, setProfile] = useState<any>(null)
   const [posts, setPosts] = useState<any[]>([])
+
+const [shortVideos, setShortVideos] = useState<any[]>([])
+const [selectedShortVideoId, setSelectedShortVideoId] = useState<string | undefined>()
+const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
+
 const [selectedPost, setSelectedPost] = useState<any>(null)
 const [activeTab, setActiveTab] = useState(0)
   function goToTab(index: number) {
@@ -190,15 +198,23 @@ const [activeTab, setActiveTab] = useState(0)
   return
 }
 
-      const { data: profileData, error: profileError } = await withTimeout(
+  const profileResult = await withTimeout(
   supabase
     .from('profiles')
     .select('id, username, display_name, avatar_url, bio')
     .eq('id', userId)
     .maybeSingle(),
-  4000,
+  9000,
   'other_profile'
 )
+
+if (!profileResult) {
+  setLoadError(text.loadFailed)
+  setLoading(false)
+  return
+}
+
+const { data: profileData, error: profileError } = profileResult
 
       if (!alive) return
 
@@ -217,15 +233,15 @@ const [activeTab, setActiveTab] = useState(0)
       setProfile(profileData)
       setLoading(false)
 
-      const {
-  data: { user },
-} = await withTimeout(
+      const authResult = await withTimeout(
   supabase.auth.getUser(),
   4000,
   'other_profile_auth'
 )
 
-      const { count } = await withTimeout(
+const user = authResult?.data?.user
+
+const followerResult = await withTimeout(
   supabase
     .from('follows')
     .select('*', { count: 'exact', head: true })
@@ -233,6 +249,8 @@ const [activeTab, setActiveTab] = useState(0)
   4000,
   'other_profile_followers'
 )
+
+const count = followerResult?.count ?? 0
 
       if (!alive) return
 
@@ -251,7 +269,7 @@ const [activeTab, setActiveTab] = useState(0)
         setIsFollowing(!!followRow)
       }
 
-      const { data: postsData, error: postsError } = await withTimeout(
+      const postsResult = await withTimeout(
   supabase
     .from('posts')
     .select(`
@@ -269,6 +287,9 @@ const [activeTab, setActiveTab] = useState(0)
   'other_profile_posts'
 )
 
+const postsData = postsResult?.data ?? []
+const postsError = postsResult?.error
+
       if (!alive) return
 
       if (postsError) {
@@ -276,6 +297,20 @@ const [activeTab, setActiveTab] = useState(0)
 }
 
             setPosts(postsData ?? [])
+            const { data: videosData } = await supabase
+  .from('short_videos')
+  .select(`
+    id,
+    caption,
+    video_url,
+    thumbnail_url,
+    created_at,
+    user_id
+  `)
+  .eq('user_id', userId)
+  .order('created_at', { ascending: false })
+
+setShortVideos(videosData ?? [])
     } catch (error) {
       console.error('對方 Profile 讀取失敗:', error)
 
@@ -655,10 +690,41 @@ async function toggleFavorite() {
                 </div>
 
                 <div className="w-full shrink-0">
-                  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
-                    {text.shortVideoNext}
-                  </div>
-                </div>
+  {shortVideos.length === 0 ? (
+    <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
+      {text.shortVideoNext}
+    </div>
+  ) : (
+    <div className="grid grid-cols-3 gap-[2px]">
+      {shortVideos.map((video) => (
+        <button
+          key={video.id}
+          type="button"
+          onClick={() => {
+            setSelectedShortVideoId(video.id)
+            setIsShortVideoPageOpen(true)
+          }}
+          className="relative h-[190px] overflow-hidden bg-black"
+        >
+          {video.thumbnail_url ? (
+            <img
+              src={video.thumbnail_url}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <video
+              src={video.video_url}
+              muted
+              playsInline
+              preload="metadata"
+              className="h-full w-full object-cover"
+            />
+          )}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
 
                 <div className="w-full shrink-0">
                   <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
@@ -955,14 +1021,14 @@ async function toggleFavorite() {
   </div>
 </button>
 
-        <div className="overflow-hidden rounded-[18px] bg-[#ddd]">
-          {selectedPost.post_images?.[0]?.image_url && (
-            <img
-              src={selectedPost.post_images[0].image_url}
-              className="w-full object-cover"
-            />
-          )}
-        </div>
+        <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[#ddd]">
+  {selectedPost.post_images?.[0]?.image_url && (
+    <img
+      src={selectedPost.post_images[0].image_url}
+      className="h-full w-full object-cover"
+    />
+  )}
+</div>
 
         <div className="flex items-center justify-between px-1 pt-4">
           <div className="flex items-center gap-5">
@@ -1031,6 +1097,27 @@ async function toggleFavorite() {
     />
   )}
 </AnimatePresence>
+
+<ShortVideoFullPage
+  open={isShortVideoPageOpen}
+  videos={shortVideos.map((video) => ({
+    id: video.id,
+    user_id: video.user_id,
+    author: profile?.display_name || profile?.username || 'Vibelink User',
+    text: video.caption || '',
+    likes: 0,
+    images: video.thumbnail_url ? [video.thumbnail_url] : [],
+    thumbnailUrl: video.thumbnail_url || '',
+    videoUrl: video.video_url,
+    type: 'video',
+    aiTags: ['短影片'],
+    isMine: false,
+    isLiked: false,
+    isSaved: false,
+  }))}
+  initialVideoId={selectedShortVideoId}
+  onClose={() => setIsShortVideoPageOpen(false)}
+/>
 
     <AnimatePresence>
   {isChatOpen && (

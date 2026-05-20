@@ -1,18 +1,24 @@
 export type FakeUser = {
   id: string
-  name: string
-  age: number
-  followers: number
-  bio: string
-  tags: string[]
+  username: string
+  displayName: string
   avatar: string
+  bio: string
+  city?: string
+  tags: string[]
   images: string[]
+  shortVideos?: string[]
+  age?: number
+  followers?: number
+  aiScore?: number
+  matchedReasons?: string[]
 }
 
 export const fakeUsers: FakeUser[] = [
   {
     id: 'jay',
-    name: 'Jay',
+    username: 'jay',
+displayName: 'Jay',
     age: 24,
     followers: 3200,
     bio: 'Cute nightlife vibe, playful energy, and high interaction style.',
@@ -30,7 +36,8 @@ export const fakeUsers: FakeUser[] = [
   },
   {
     id: 'kenny',
-    name: 'Kenny',
+    username: 'Kenny',
+    displayName: 'Kenny',
     age: 26,
     followers: 4100,
     bio: 'Gentle younger-boy charm with warm replies and cute energy.',
@@ -48,7 +55,8 @@ export const fakeUsers: FakeUser[] = [
   },
   {
     id: 'leo',
-    name: 'Leo',
+    username: 'Leo',
+    displayName: 'Leo',
     age: 25,
     followers: 1800,
     bio: 'Poolside body, beach energy, relaxed confidence.',
@@ -62,7 +70,8 @@ export const fakeUsers: FakeUser[] = [
   },
   {
     id: 'ryan',
-    name: 'Ryan',
+    username: 'Ryan',
+    displayName: 'Ryan',
     age: 25,
     followers: 2900,
     bio: 'Playful street vibe with cute energy and easy conversation.',

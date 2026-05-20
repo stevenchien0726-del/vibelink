@@ -24,7 +24,7 @@ onOpenProfile,
   const userImages =
     user.images && user.images.length > 0
       ? user.images
-      : [(user as any).image ?? (user as any).avatar_url].filter(Boolean)
+      : [(user as any).image ?? user.avatar].filter(Boolean)
 
   const uniqueImages = Array.from(
   new Set(userImages)
@@ -35,7 +35,7 @@ onOpenProfile,
     <div className="space-y-3">
       <div className="px-1">
         <div className="mb-2 text-[15px] font-semibold text-[#1f1f1f]">
-          {user.name ?? user.display_name ?? user.username}
+          {user.displayName ?? user.username}
         </div>
 
         <div className="text-[14px] leading-[1.45] text-[#2d2d2d]">
@@ -65,7 +65,7 @@ onOpenProfile,
                   <div className="h-[160px] w-[110px] overflow-hidden rounded-[16px] bg-[#ead8f5] shadow-[0_3px_10px_rgba(0,0,0,0.05)]">
                     <img
                       src={imgSrc}
-                      alt={`${user.name ?? user.display_name ?? 'user'} photo ${
+                      alt={`${user.displayName ?? user.username ?? 'user'} photo ${
                         photoIndex + 1
                       }`}
                       className="h-full w-full object-cover"
