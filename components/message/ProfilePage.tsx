@@ -325,18 +325,34 @@ const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 
   const [savedPosts, setSavedPosts] = useState<any[]>([])
   const [archivedPosts, setArchivedPosts] = useState<any[]>([])
+  const [archivedShortVideos, setArchivedShortVideos] = useState<any[]>([])
 
   useEffect(() => {
-  const saved = localStorage.getItem('vibelink_archived_posts')
+  const savedPosts = localStorage.getItem(
+    'vibelink_archived_posts'
+  )
 
-  if (saved) {
+  if (savedPosts) {
     try {
-      setArchivedPosts(JSON.parse(saved))
+      setArchivedPosts(JSON.parse(savedPosts))
     } catch (error) {
       console.error('讀取典藏貼文失敗:', error)
     }
   }
+
+  const savedVideos = localStorage.getItem(
+    'vibelink_archived_short_videos'
+  )
+
+  if (savedVideos) {
+    try {
+      setArchivedShortVideos(JSON.parse(savedVideos))
+    } catch (error) {
+      console.error('讀取典藏短影片失敗:', error)
+    }
+  }
 }, [])
+
 
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
@@ -1439,7 +1455,9 @@ openSelectedPost(post)
     </div>
   ) : (
     <div className="grid grid-cols-3 gap-[2px]">
-      {myShortVideos.map((video) => (
+      {myShortVideos
+  .filter((video) => !archivedShortVideos.some((item) => item.id === video.id))
+  .map((video) => (
   <button
     type="button"
     key={video.id}
@@ -1862,8 +1880,27 @@ openSelectedPost(post)
 <AnimatePresence>
   {showArchivedPage && (
     <ArchivedContentPage
-  posts={archivedPosts}
-  onUnarchive={unarchivePost}
+  posts={[
+    ...archivedPosts,
+    ...archivedShortVideos.map((video) => ({
+      ...video,
+      type: 'video',
+    })),
+  ]}
+  onUnarchive={(itemId) => {
+    unarchivePost(itemId)
+
+    const nextVideos = archivedShortVideos.filter(
+      (video) => video.id !== itemId
+    )
+
+    setArchivedShortVideos(nextVideos)
+
+    localStorage.setItem(
+      'vibelink_archived_short_videos',
+      JSON.stringify(nextVideos)
+    )
+  }}
   onClose={() => {
     setShowArchivedPage(false)
     setIsMenuOpen(true)
@@ -2213,10 +2250,20 @@ onClick={(e) => e.stopPropagation()}
 
     <ShortVideoFullPage
   open={isShortVideoPageOpen}
-  videos={myShortVideos.map((video) => ({
+  videos={myShortVideos
+  .filter(
+    (video) =>
+      !archivedShortVideos.some(
+        (item) => item.id === video.id
+      )
+  )
+  .map((video) => ({
     id: video.id,
     user_id: video.user_id,
-    author: profile?.display_name || profile?.username || 'Vibelink User',
+    author:
+      profile?.display_name ||
+      profile?.username ||
+      'Vibelink User',
     text: video.caption || '',
     likes: video.likes ?? 0,
     images: [],
@@ -2225,7 +2272,7 @@ onClick={(e) => e.stopPropagation()}
     aiTags: ['短影片'],
     isMine: true,
     isLiked: !!video.isLiked,
-isSaved: !!video.isSaved,
+    isSaved: !!video.isSaved,
   }))}
   initialVideoId={selectedShortVideoId}
   onClose={() => setIsShortVideoPageOpen(false)}
@@ -2238,6 +2285,22 @@ isSaved: !!video.isSaved,
   onShare={() => setIsShareSheetOpen(true)}
   onSave={async (video) => {
   await loadMyShortVideos()
+}}
+
+onArchive={(video) => {
+  const next = [
+    video,
+    ...archivedShortVideos.filter(
+      (item) => item.id !== video.id
+    ),
+  ]
+
+  setArchivedShortVideos(next)
+
+  localStorage.setItem(
+    'vibelink_archived_short_videos',
+    JSON.stringify(next)
+  )
 }}
 />
     

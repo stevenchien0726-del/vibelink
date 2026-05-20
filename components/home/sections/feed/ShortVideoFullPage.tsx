@@ -15,6 +15,7 @@ import {
 
 import type { PostItem } from './FeedGrid'
 import WideMenuSheet from '@/components/WideMenuSheet'
+import { supabase } from '@/lib/supabase'
 
 type Props = {
   open: boolean
@@ -26,6 +27,7 @@ type Props = {
   onShare?: (post: PostItem) => void
   onSave?: (post: PostItem) => void
   onDelete?: (post: PostItem) => void
+  onArchive?: (post: PostItem) => void
 }
 
 export default function ShortVideoFullPage({
@@ -38,6 +40,7 @@ export default function ShortVideoFullPage({
   onShare,
   onSave,
   onDelete,
+  onArchive,
 }: Props) {
   const dragX = useMotionValue(0)
 
@@ -47,6 +50,7 @@ export default function ShortVideoFullPage({
   const [reloadMap, setReloadMap] = useState<Record<string, number>>({})
   const [soundOn, setSoundOn] = useState(false)
   const [showSoundIcon, setShowSoundIcon] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
@@ -161,6 +165,45 @@ export default function ShortVideoFullPage({
       },
     })
   }
+
+  async function handleDeleteVideo(video: PostItem) {
+  if (!video?.id || deletingId) return
+
+  setDeletingId(video.id)
+
+  try {
+    await supabase
+      .from('short_video_likes')
+      .delete()
+      .eq('short_video_id', video.id)
+
+    await supabase
+      .from('saved_short_videos')
+      .delete()
+      .eq('short_video_id', video.id)
+
+    await supabase
+      .from('short_video_comments')
+      .delete()
+      .eq('short_video_id', video.id)
+
+    const { error } = await supabase
+      .from('short_videos')
+      .delete()
+      .eq('id', video.id)
+
+    if (error) throw error
+
+    onDelete?.(video)
+    setMenuVideo(null)
+    closeWithAnimation()
+  } catch (error) {
+    console.error('刪除短影片失敗:', error)
+    alert('刪除失敗，請再試一次。')
+  } finally {
+    setDeletingId(null)
+  }
+}
 
   function resetDrag() {
     animate(dragX, 0, {
@@ -440,15 +483,19 @@ onError={() => {
               className="fixed inset-0 z-[10020]"
             >
               <WideMenuSheet
-                variant="mine"
-                onClose={() => setMenuVideo(null)}
-                onDelete={() => {
-                  if (!menuVideo) return
+  variant="mine"
+  onClose={() => setMenuVideo(null)}
+  onArchive={() => {
+    if (!menuVideo) return
 
-                  onDelete?.(menuVideo)
-                  setMenuVideo(null)
-                  onClose()
-                }}
+    onArchive?.(menuVideo)
+    setMenuVideo(null)
+    closeWithAnimation()
+  }}
+  onDelete={() => {
+  if (!menuVideo) return
+  handleDeleteVideo(menuVideo)
+}}
               />
             </motion.div>
           )}

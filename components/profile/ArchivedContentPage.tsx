@@ -66,8 +66,12 @@ export default function ArchivedContentPage({
           ) : (
             <div className="grid grid-cols-3 gap-[2px]">
               {posts.map((post) => {
-                const image = post?.post_images?.[0]?.image_url
-                if (!image) return null
+
+                const isVideo = post.type === 'video' || !!post.videoUrl || !!post.video_url
+const image = post?.post_images?.[0]?.image_url
+const videoUrl = post.videoUrl || post.video_url
+
+if (!image && !videoUrl) return null
 
                 return (
                   <button
@@ -76,7 +80,17 @@ export default function ArchivedContentPage({
                     onClick={() => setConfirmPostId(post.id)}
                     className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
                   >
-                    <img src={image} className="h-full w-full object-cover" />
+                    {isVideo ? (
+  <video
+    src={videoUrl}
+    muted
+    playsInline
+    preload="metadata"
+    className="h-full w-full object-cover bg-black"
+  />
+) : (
+  <img src={image} className="h-full w-full object-cover" />
+)}
                   </button>
                 )
               })}
@@ -102,11 +116,11 @@ export default function ArchivedContentPage({
       >
         <div className="px-6 pb-5 pt-6">
           <div className="text-[18px] font-semibold text-[#111]">
-            取消典藏這篇貼文？
+            取消典藏這個內容？
           </div>
 
           <div className="mt-2 text-[14px] leading-relaxed text-[#777]">
-            取消後，這篇貼文會恢復顯示在你的個人頁貼文牆。
+            取消後，這個內容會恢復顯示在你的個人頁內容牆。
           </div>
         </div>
 
