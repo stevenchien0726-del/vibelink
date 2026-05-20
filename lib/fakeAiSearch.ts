@@ -5,13 +5,9 @@ export function fakeAiSearch(query: string) {
 
   if (!cleanQuery) return fakeUsers.slice(0, 3)
 
-  // 先讓「小新」也能模擬找到結果
-  if (cleanQuery.includes('小新')) {
-    return fakeUsers.slice(0, 3)
-  }
-
   const results = fakeUsers.filter((user) => {
-    const text = `${user.name} ${user.bio} ${user.tags.join(' ')}`.toLowerCase()
+    const text =
+  `${user.displayName} ${user.bio} ${user.tags.join(' ')}`.toLowerCase()
     return text.includes(cleanQuery)
   })
 
