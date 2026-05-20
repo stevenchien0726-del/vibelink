@@ -1807,8 +1807,8 @@ onTouchEnd={(e) => e.stopPropagation()}
 <ShortVideoFullPage
   open={isShortVideoPageOpen}
   videos={mergedPosts.filter(
-  (post) => post.type === 'video' || post.videoUrl
-)}
+    (post) => post.type === 'video' || post.videoUrl
+  )}
   initialVideoId={shortVideoStartId}
   onClose={() => setIsShortVideoPageOpen(false)}
   onLike={toggleShortVideoLike}
@@ -1816,6 +1816,17 @@ onTouchEnd={(e) => e.stopPropagation()}
   onShare={() => setIsShareSheetOpen(true)}
   onSave={toggleShortVideoSave}
   onDelete={handleDeletePost}
+  onOpenProfile={(userId) => {
+  if (!userId) return
+
+  // 自己的短影片頭像不開 Profile
+  if (userId === currentUserId) {
+    return
+  }
+
+  // 只有對方短影片才開對方 Profile
+  setSelectedProfileUserId(userId)
+}}
 />
 
 <AnimatePresence>

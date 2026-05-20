@@ -1117,6 +1117,13 @@ async function toggleFavorite() {
   }))}
   initialVideoId={selectedShortVideoId}
   onClose={() => setIsShortVideoPageOpen(false)}
+  onOpenProfile={(clickedUserId) => {
+  if (!clickedUserId) return
+
+  setIsShortVideoPageOpen(false)
+
+  console.log('開啟對方 Profile:', clickedUserId)
+}}
 />
 
     <AnimatePresence>

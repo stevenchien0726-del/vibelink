@@ -28,6 +28,7 @@ type Props = {
   onSave?: (post: PostItem) => void
   onDelete?: (post: PostItem) => void
   onArchive?: (post: PostItem) => void
+  onOpenProfile?: (userId: string) => void
 }
 
 export default function ShortVideoFullPage({
@@ -41,6 +42,7 @@ export default function ShortVideoFullPage({
   onSave,
   onDelete,
   onArchive,
+  onOpenProfile,
 }: Props) {
   const dragX = useMotionValue(0)
 
@@ -396,9 +398,11 @@ onError={() => {
                   <div className="absolute bottom-[118px] right-5 z-[50] flex flex-col items-center gap-6 text-white">
                     <button
                       type="button"
-                      onClick={async () => {
-                        console.log('前往用戶 Profile:', video.user_id)
-                      }}
+                      onClick={(e) => {
+  e.stopPropagation()
+  if (!video.user_id) return
+  onOpenProfile?.(video.user_id)
+}}
                       className="flex h-[48px] w-[48px] items-center justify-center rounded-full border-2 border-white bg-white shadow-[0_4px_14px_rgba(0,0,0,0.25)] active:scale-90"
                     >
                       <span className="text-[17px] font-semibold text-[#555]">
@@ -487,6 +491,7 @@ onError={() => {
   onClose={() => setMenuVideo(null)}
   onArchive={() => {
     if (!menuVideo) return
+
 
     onArchive?.(menuVideo)
     setMenuVideo(null)

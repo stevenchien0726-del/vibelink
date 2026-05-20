@@ -50,6 +50,7 @@ import { Link as LinkIcon } from 'lucide-react'
 import WideMenuSheet from '@/components/WideMenuSheet'
 import ShareSheet from '@/components/ShareSheet'
 import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
+import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
 
 import LinkPortSheet from '@/components/profile/LinkPortSheet'
 import { mockPosts } from '@/lib/mockPosts'
@@ -322,6 +323,8 @@ const [profileError, setProfileError] = useState('')
   const [myShortVideos, setMyShortVideos] = useState<any[]>([])
   const [selectedShortVideoId, setSelectedShortVideoId] = useState<string | undefined>()
 const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
+const [shortVideoProfileUserId, setShortVideoProfileUserId] =
+  useState<string | null>(null)
 
   const [savedPosts, setSavedPosts] = useState<any[]>([])
   const [archivedPosts, setArchivedPosts] = useState<any[]>([])
@@ -758,7 +761,7 @@ async function loadSavedPosts() {
 }
 
 async function openSelectedPost(post: any) {
-    if (post.isMock) {
+  if (post.isMock) {
     setSelectedPost(post)
     setSelectedPostImageIndex(0)
     setSelectedPostLiked(!!post.isLiked)
@@ -768,24 +771,40 @@ async function openSelectedPost(post: any) {
     setComments([])
     return
   }
-  
-  const fullPost = {
-  ...post,
-  post_images: post.post_images ?? [],
-}
 
-  console.log('打開貼文完整圖片數:', fullPost.post_images.length, fullPost.post_images)
+  const { data: imageRows, error } = await supabase
+    .from('post_images')
+    .select('image_url')
+    .eq('post_id', post.id)
+
+  if (error) {
+    console.error('重新讀取貼文圖片失敗:', error)
+  }
+
+  const fullPost = {
+    ...post,
+    post_images:
+      imageRows && imageRows.length > 0
+        ? imageRows
+        : post.post_images ?? [],
+  }
+
+  console.log(
+    '打開貼文完整圖片數:',
+    fullPost.post_images.length,
+    fullPost.post_images
+  )
 
   setSelectedPost(fullPost)
   setSelectedPostImageIndex(0)
   setSelectedPostLiked(!!post.isLiked)
   setSelectedPostLikeCount(post.likes ?? 0)
   setSelectedPostSaved(
-  savedPosts.some((savedPost) => savedPost.id === post.id)
-)
-setCommentText('')
-setComments([])
-loadComments(post.id)
+    savedPosts.some((savedPost) => savedPost.id === post.id)
+  )
+  setCommentText('')
+  setComments([])
+  loadComments(post.id)
 }
 
 function archiveSelectedPost() {
@@ -2010,72 +2029,74 @@ onClick={(e) => e.stopPropagation()}
       ))}
     </motion.div>
 
-{selectedPost.post_images?.length > 1 && (
-  <div className="absolute bottom-4 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-[7px]">
-    {selectedPost.post_images.map((_: any, index: number) => (
-      <button
-        key={index}
-        type="button"
-        onClick={() => setSelectedPostImageIndex(index)}
-        className={`h-[8px] rounded-full transition-all ${
-          selectedPostImageIndex === index
-            ? 'w-[18px] bg-[#c86cff]'
-            : 'w-[8px] bg-white/90'
-        }`}
-      />
-    ))}
-  </div>
-)}
 </div>
+
 </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between px-4 pt-4">
-          <div className="flex items-center gap-5">
-            <button
-  type="button"
-  onClick={toggleSelectedPostLike}
-  className="flex items-center gap-1.5 active:scale-90"
->
-  <Heart
-    size={25}
-    color="#c86cff"
-    fill={selectedPostLiked ? '#c86cff' : 'none'}
-    strokeWidth={2.1}
-  />
-  <span className="text-[15px] text-[#555]">
-    {selectedPostLikeCount}
-  </span>
-</button>
+<div className="relative flex items-center justify-between px-4 pt-4">
+  {selectedPost.post_images?.length > 1 && (
+    <div className="pointer-events-auto absolute left-1/2 top-[23px] z-[20] flex -translate-x-1/2 items-center gap-[7px]">
+      {selectedPost.post_images.map((_: any, index: number) => (
+        <button
+          key={index}
+          type="button"
+          onClick={() => setSelectedPostImageIndex(index)}
+          className={`h-[7px] rounded-full transition-all ${
+            selectedPostImageIndex === index
+              ? 'w-[18px] bg-[#c86cff]'
+              : 'w-[7px] bg-[#d7d7d7]'
+          }`}
+        />
+      ))}
+    </div>
+  )}
 
-            <button type="button" className="active:scale-90">
-  <MessageCircle size={25} strokeWidth={2.1} />
-</button>
-          </div>
+  <div className="flex items-center gap-5">
+    <button
+      type="button"
+      onClick={toggleSelectedPostLike}
+      className="flex items-center gap-1.5 active:scale-90"
+    >
+      <Heart
+        size={25}
+        color="#c86cff"
+        fill={selectedPostLiked ? '#c86cff' : 'none'}
+        strokeWidth={2.1}
+      />
+      <span className="text-[15px] text-[#555]">
+        {selectedPostLikeCount}
+      </span>
+    </button>
 
-          <div className="flex items-center gap-5">
-            <button
-  type="button"
-  onClick={() => setIsShareSheetOpen(true)}
-  className="active:scale-90"
->
-  <Send size={24} strokeWidth={2.1} />
-</button>
+    <button type="button" className="active:scale-90">
+      <MessageCircle size={25} strokeWidth={2.1} />
+    </button>
+  </div>
 
-            <button
-  type="button"
-  onClick={toggleSelectedPostSave}
-  className="active:scale-90"
->
-  <Bookmark
-    size={25}
-    color="#c86cff"
-    fill={selectedPostSaved ? '#c86cff' : 'none'}
-    strokeWidth={2.1}
-  />
-</button>
-          </div>
-        </div>
+  <div className="flex items-center gap-5">
+    <button
+      type="button"
+      onClick={() => setIsShareSheetOpen(true)}
+      className="active:scale-90"
+    >
+      <Send size={24} strokeWidth={2.1} />
+    </button>
+
+    <button
+      type="button"
+      onClick={toggleSelectedPostSave}
+      className="active:scale-90"
+    >
+      <Bookmark
+        size={25}
+        color="#c86cff"
+        fill={selectedPostSaved ? '#c86cff' : 'none'}
+        strokeWidth={2.1}
+      />
+    </button>
+  </div>
+</div>
 
         {/* Caption */}
         {selectedPost.caption && (
@@ -2276,6 +2297,15 @@ onClick={(e) => e.stopPropagation()}
   }))}
   initialVideoId={selectedShortVideoId}
   onClose={() => setIsShortVideoPageOpen(false)}
+  onOpenProfile={(userId) => {
+  if (!userId) return
+
+  setIsShortVideoPageOpen(false)
+
+  window.setTimeout(() => {
+    setShortVideoProfileUserId(userId)
+  }, 180)
+}}
   onLike={async (video) => {
   await loadMyShortVideos()
 }}
