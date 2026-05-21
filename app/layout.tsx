@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import ThemeInit from '../components/ThemeInit'
+
 
 export const metadata: Metadata = {
   title: 'Vibelink',
@@ -16,7 +18,10 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
-      <body>{children}</body>
+      <body>
+        <ThemeInit />
+        {children}
+      </body>
     </html>
   )
 }

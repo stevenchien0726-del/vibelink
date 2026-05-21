@@ -1,29 +1,18 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import {
-  Grid2x2,
-  Clapperboard,
-  Bookmark,
-  Image as ImageIcon,
-  Menu,
-  PlusSquare,
-  UserCircle2,
-  BarChart3,
-  Bell,
-  Clock3,
-  Ticket,
-  Grid3x3,
-  Settings,
-  Megaphone,
-Heart,
-MessageCircle,
-Send,
-ChevronLeft,
-MoreHorizontal,
-Copy,
-} from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
+
+import ProfileHeader from '@/components/profile/ProfileHeader'
+import ProfileActionButtons from '@/components/profile/ProfileActionButtons'
+import ProfileTopBar from '@/components/profile/ProfileTopBar'
+import ProfileTabs from '@/components/profile/ProfileTabs'
+import ProfileMenuSheet from '@/components/profile/ProfileMenuSheet'
+import EditProfilePage from '@/components/profile/EditProfilePage'
+import ProfilePostDetailModal from '@/components/profile/ProfilePostDetailModal'
+import ProfilePostGridTabs from '@/components/profile/ProfilePostGridTabs'
+
+import { profileText } from '@/lib/profile/profileText'
 
 import type { Locale } from '@/i18n'
 
@@ -36,16 +25,18 @@ import NotificationsPage from '@/components/profile/NotificationsPage'
 import ShareProfilePage from '@/components/profile/ShareProfilePage'
 import PostInsightsPage from '@/components/profile/PostInsightsPage'
 
-import { MEMBERSHIP_URL, VIBETV_APP_URL, openLink } from '@/lib/links'
+import {
+  loadMyFollowerCount as fetchMyFollowerCount,
+} from '@/lib/profile/profileApi'
 
-import { PlaySquare } from 'lucide-react'
-
-import { Plus } from 'lucide-react'
-import { X } from 'lucide-react'
+import {
+  openSelectedPostHandler,
+  submitCommentHandler,
+  deleteCommentHandler,
+} from '../../lib/profile/postDetailHandlers'
 
 import { supabase } from '@/lib/supabase'
 
-import { Link as LinkIcon } from 'lucide-react'
 
 import WideMenuSheet from '@/components/WideMenuSheet'
 import ShareSheet from '@/components/ShareSheet'
@@ -62,115 +53,6 @@ type ProfilePageProps = {
   onChangeLocale: (locale: Locale) => void
 }
 
-type MenuItemProps = {
-  icon: React.ReactNode
-  label: string
-  onClick?: () => void
-}
-
-const profileText = {
-  'zh-TW': {
-    upload: '上傳內容',
-
-    posts: '貼文',
-    followers: '粉絲',
-
-    editProfile: '編輯檔案',
-    shareProfile: '分享檔案',
-
-    notifications: '通知',
-    settings: '設定',
-    analytics: '流量報告',
-    archive: '典藏內容',
-    membership: 'Vibe會員',
-    account: '帳號管理',
-    ads: '廣告中心',
-
-    favorites: '我的收藏',
-    public: '公開',
-    private: '不公開',
-
-    featuredStories: '精選限動',
-
-    noVideos: '尚無短影片',
-
-    cancel: '取消',
-save: '儲存',
-
-uploading: '上傳中...',
-changeAvatar: '更換頭像',
-
-displayName: '顯示名稱',
-displayNamePlaceholder: '輸入顯示名稱',
-
-username: '使用者ID',
-usernamePlaceholder: '輸入 username',
-
-bio: '自我介紹',
-bioPlaceholder: '輸入自我介紹',
-  },
-
-  en: {
-    upload: 'Upload',
-
-    posts: 'Posts',
-    followers: 'Followers',
-
-    editProfile: 'Edit Profile',
-    shareProfile: 'Share Profile',
-
-    notifications: 'Notifications',
-    settings: 'Settings',
-    analytics: 'Analytics',
-    archive: 'Archive',
-    membership: 'Vibe Membership',
-    account: 'Account',
-    ads: 'Ads Center',
-
-    favorites: 'My Favorites',
-    public: 'Public',
-    private: 'Private',
-
-    featuredStories: 'Story Highlights',
-
-    noVideos: 'No short videos yet',
-
-    cancel: 'Cancel',
-save: 'Save',
-
-uploading: 'Uploading...',
-changeAvatar: 'Change Avatar',
-
-displayName: 'Display Name',
-displayNamePlaceholder: 'Enter display name',
-
-username: 'Username',
-usernamePlaceholder: 'Enter username',
-
-bio: 'Bio',
-bioPlaceholder: 'Enter your bio',
-  },
-} as const
-
-const activeColor = '#d89ad0'
-const inactiveColor = '#222'
-
-function MenuItem({ icon, label, onClick }: MenuItemProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex min-h-[52px] w-full justify-center rounded-[14px] bg-transparent px-2 py-[12px] text-[17px] text-[#222] transition hover:bg-[#ececec]"
-    >
-      <div className="flex min-w-[170px] items-center justify-center gap-4">
-        <span className="flex h-[24px] w-[24px] shrink-0 items-center justify-center text-[#111]">
-          {icon}
-        </span>
-        <span className="w-[96px] text-left leading-none">{label}</span>
-      </div>
-    </button>
-  )
-}
 
 export default function ProfilePage({
   locale,
@@ -313,11 +195,8 @@ const [followerCount, setFollowerCount] = useState(0)
 const [profileLoading, setProfileLoading] = useState(true)
 const [profileError, setProfileError] = useState('')
 
-  const albumItems = Array.from({ length: 5 })
-
   const tabTouchStartX = useRef<number | null>(null)
   const tabTouchDeltaX = useRef(0)
-  const albumScrollRef = useRef<HTMLDivElement | null>(null)
 
   const [myPosts, setMyPosts] = useState<any[]>([])
   const [myShortVideos, setMyShortVideos] = useState<any[]>([])
@@ -362,7 +241,6 @@ const [shortVideoProfileUserId, setShortVideoProfileUserId] =
   const [selectedPostImageIndex, setSelectedPostImageIndex] = useState(0)
 
   const [selectedPostLiked, setSelectedPostLiked] = useState(false)
-  const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
 const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
 
   const [selectedPostSaved, setSelectedPostSaved] = useState(false)
@@ -451,17 +329,9 @@ async function loadMyFollowerCount() {
 
   if (!user) return
 
-  const { count, error } = await supabase
-    .from('follows')
-    .select('*', { count: 'exact', head: true })
-    .eq('following_id', user.id)
+  const count = await fetchMyFollowerCount(user.id)
 
-  if (error) {
-  console.error('讀取粉絲數失敗:', error)
-  throw error
-}
-
-  setFollowerCount(count ?? 0)
+  setFollowerCount(count)
 }
 
 async function uploadAvatar(file: File) {
@@ -760,6 +630,7 @@ async function loadSavedPosts() {
   setSavedPosts([...mockSavedPosts, ...videoPosts, ...photoPosts])
 }
 
+<<<<<<< HEAD
 async function openSelectedPost(post: any) {
   if (post.isMock) {
     setSelectedPost(post)
@@ -807,6 +678,8 @@ async function openSelectedPost(post: any) {
   loadComments(post.id)
 }
 
+=======
+>>>>>>> 9343150 (fix)
 function archiveSelectedPost() {
   if (!selectedPost?.id) return
 
@@ -886,20 +759,6 @@ async function deleteSelectedPost() {
   setMyPosts((prev) => prev.filter((post) => post.id !== selectedPost.id))
   setIsPostMenuOpen(false)
   setSelectedPost(null)
-}
-
-function handleSelectedPostDoubleLike() {
-  if (!selectedPost) return
-
-  if (!selectedPostLiked) {
-    toggleSelectedPostLike()
-  }
-
-  setDetailBigHeartVisible(true)
-
-  setTimeout(() => {
-    setDetailBigHeartVisible(false)
-  }, 700)
 }
 
 async function toggleSelectedPostLike() {
@@ -993,82 +852,6 @@ async function toggleSelectedPostSave() {
   })
 }
 
-async function loadComments(postId: string) {
-  const { data, error } = await supabase
-    .from('comments')
-    .select(`
-      id,
-      content,
-      created_at,
-      user_id
-    `)
-    .eq('post_id', postId)
-    .order('created_at', { ascending: true })
-
-  if (error) {
-    console.error('讀取留言失敗:', error)
-    return
-  }
-
-  setComments(data ?? [])
-}
-
-async function submitComment() {
-  if (!selectedPost?.id) return
-
-  const text = commentText.trim()
-  if (!text) return
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    alert('請先登入')
-    return
-  }
-
-  setCommentLoading(true)
-
-  const { error } = await supabase.from('comments').insert({
-    post_id: selectedPost.id,
-    user_id: user.id,
-    content: text,
-  })
-
-  if (error) {
-    console.error('送出留言失敗:', error)
-    setCommentLoading(false)
-    return
-  }
-
-  setCommentText('')
-  await loadComments(selectedPost.id)
-  setCommentLoading(false)
-}
-
-async function deleteComment() {
-  if (!selectedComment?.id) return
-
-  const { error } = await supabase
-    .from('comments')
-    .delete()
-    .eq('id', selectedComment.id)
-
-  if (error) {
-    console.error('刪除留言失敗:', error)
-    alert('刪除留言失敗，請檢查 comments DELETE RLS')
-    return
-  }
-
-  setComments((prev) =>
-    prev.filter((comment) => comment.id !== selectedComment.id)
-  )
-
-  setIsCommentMenuOpen(false)
-  setSelectedComment(null)
-}
-
 function handlePostDetailTouchStart(e: React.TouchEvent<HTMLDivElement>) {
   e.stopPropagation()
 
@@ -1138,11 +921,11 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 
   if (absX < 12) {
     if (now - postImageLastTapTimeRef.current < 280) {
-      handleSelectedPostDoubleLike()
-      postImageLastTapTimeRef.current = 0
-    } else {
-      postImageLastTapTimeRef.current = now
-    }
+  toggleSelectedPostLike()
+  postImageLastTapTimeRef.current = 0
+} else {
+  postImageLastTapTimeRef.current = now
+}
   }
 
   if (absX > 50 && total > 1) {
@@ -1162,18 +945,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
     setActiveTab(index)
   }
 
-  function canSwipeFromAlbum(deltaX: number) {
-    const el = albumScrollRef.current
-    if (!el) return true
-
-    const atFirst = el.scrollLeft <= 4
-    const atLast = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4
-
-    if (deltaX > 0) return atFirst
-    if (deltaX < 0) return atLast
-
-    return true
-  }
+  
 
   function handleTabTouchStart(e: React.TouchEvent<HTMLDivElement>) {
     const touch = e.touches[0]
@@ -1188,9 +960,6 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
     const deltaX = touch.clientX - tabTouchStartX.current
     tabTouchDeltaX.current = deltaX
 
-    if (activeTab === 3 && !canSwipeFromAlbum(deltaX)) {
-      return
-    }
 
     if (Math.abs(deltaX) > 8) {
       e.stopPropagation()
@@ -1198,38 +967,32 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   }
 
   function handleTabTouchEnd() {
-    const deltaX = tabTouchDeltaX.current
+  const deltaX = tabTouchDeltaX.current
 
-    if (Math.abs(deltaX) > 50) {
-      if (activeTab === 3 && !canSwipeFromAlbum(deltaX)) {
-        tabTouchStartX.current = null
-        tabTouchDeltaX.current = 0
-        return
-      }
-
-      if (deltaX < 0) {
-        goToTab(activeTab + 1)
-      } else {
-        goToTab(activeTab - 1)
-      }
+  if (Math.abs(deltaX) > 50) {
+    if (deltaX < 0) {
+      goToTab(activeTab + 1)
+    } else {
+      goToTab(activeTab - 1)
     }
-
-    tabTouchStartX.current = null
-    tabTouchDeltaX.current = 0
   }
 
+  tabTouchStartX.current = null
+  tabTouchDeltaX.current = 0
+}
+
   return (
-    <div className="relative min-h-screen bg-[#f3f3f3] pb-[110px]">
+    <div className="relative min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] pb-[110px]">
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[90px]">
         {profileLoading && (
-  <div className="py-20 text-center text-[14px] text-[#999]">
+  <div className="py-20 text-center text-[14px] text-[var(--app-muted)]">
     Profile 讀取中...
   </div>
 )}
 
 {profileError && !profileLoading && (
   <div className="py-20 text-center">
-    <div className="mb-3 text-[14px] text-[#999]">
+    <div className="mb-3 text-[14px] text-[var(--app-muted)]">ofilePostDetailModal.tsx
       {profileError}
     </div>
 
@@ -1242,476 +1005,85 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
     </button>
   </div>
 )}
-        <div className="fixed top-0 left-1/2 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
-  <div className="flex items-center justify-between">
-    <motion.button
-  type="button"
-  onClick={() => {
+        <ProfileTopBar
+  isMenuOpen={isMenuOpen}
+  uploadLabel={text.upload}
+  onMenuClick={() => {
     setIsUploadOpen(false)
     setIsMenuOpen((prev) => !prev)
   }}
-  whileTap={{ scale: 0.9 }}
-  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-  className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
->
-  <Menu size={18} />
-  <span>{isMenuOpen ? 'CLOSE' : 'MENU'}</span>
-</motion.button>
-
-    <button
-      type="button"
-      onClick={() => {
-        setIsMenuOpen(false)
-        setIsUploadOpen((prev) => !prev)
-      }}
-      className="relative z-[30] flex h-[38px] items-center gap-2 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222]"
-    >
-      <PlusSquare size={15} />
-      <span>{text.upload}</span>
-    </button>
-  </div>
-</div>
-          
-        <div className="mb-3 flex items-start justify-between">
-          <div className="flex gap-3">
-            <div className="h-[58px] w-[58px] overflow-hidden rounded-full bg-[#d9d9d9]">
-  {profile?.avatar_url && (
-    <img
-      src={profile.avatar_url}
-      className="h-full w-full object-cover"
-    />
-  )}
-</div>
-
-            <div>
-              <div className="text-[18px] font-medium text-[#222]">
-  {profile?.display_name || profile?.username || 'Loading...'}
-</div>
-              <div className="text-[18px] font-medium text-[#444]">
-  {profile?.username || 'Loading...'}
-</div>
-            </div>
-          </div>
-
-          <div className="flex gap-10 pr-4">
-  {/* 貼文 */}
-  <div className="flex flex-col items-center">
-    <div className="text-[18px] text-[#222]">{gridItems.length}</div>
-    <div className="text-[14px] text-[#666]">
-  {text.posts}
-</div>
-  </div>
-
-  {/* 粉絲 */}
-  <div className="flex flex-col items-center">
-    <div className="text-[18px] text-[#222]">{followerCount}</div>
-    <div className="text-[14px] text-[#666]">
-  {text.followers}
-</div>
-  </div>
-</div>
-        </div>
-
-        <div className="mb-3">
-  <div className="text-[16px] leading-[1.45] text-[#333]">
-    {profile?.bio || 'Loading...'}
-  </div>
-</div>
-
-        <div className="mb-4 flex items-center">
-
-  {/* LINKPORT */}
-  <motion.button
-  type="button"
-  onClick={() => setIsLinkPortOpen(true)}
-  whileTap={{ scale: 0.9 }} // 👈 按下去縮
-  initial={{ scale: 1 }}
-  animate={{ scale: 1 }}
-  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-  className="
-    inline-flex h-[32px] items-center gap-2
-    rounded-[18px] border-[3px] border-[#8f8f8f]
-    bg-transparent px-6 text-[14px] text-[#8B5CF6]
-  "
->
-  <LinkIcon size={16}/>
-  <span className="text-[#8B5CF6]">LINKPORT</span>
-</motion.button>
-
-</div>
-
-
-        <div className="mb-4 flex w-full items-center gap-3">
-          
-          <button
-  type="button"
-  onClick={() => setIsEditProfileOpen(true)}
-  className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
-  style={{ WebkitAppearance: 'none', appearance: 'none' }}
->
-  {text.editProfile}
-</button>
-   
-            <button
-  type="button"
-  onClick={() => setShowShareProfilePage(true)}
-  className="flex h-[44px] flex-1 items-center justify-center rounded-[18px] !border-[1.5px] !border-solid !border-[#8f8f8f] !bg-transparent px-3 text-[15px] leading-none whitespace-nowrap text-[#222]"
-  style={{ WebkitAppearance: 'none', appearance: 'none' }}
->
-  {text.shareProfile}
-</button>
-        </div>
-
-        <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">
-          <div className="grid grid-cols-3">
-  <button
-    type="button"
-    onClick={() => goToTab(0)}
-    className="flex h-[34px] items-center justify-center"
-  >
-    <Grid2x2
-      size={20}
-      className="transition-colors duration-200"
-      color={activeTab === 0 ? activeColor : inactiveColor}
-    />
-  </button>
-
-  <button
-    type="button"
-    onClick={() => goToTab(1)}
-    className="flex h-[34px] items-center justify-center"
-  >
-    <PlaySquare
-      size={20}
-      className="transition-colors duration-200"
-      color={activeTab === 1 ? activeColor : inactiveColor}
-    />
-  </button>
-
-  <button
-    type="button"
-    onClick={() => goToTab(2)}
-    className="flex h-[34px] items-center justify-center"
-  >
-    <Bookmark
-      size={20}
-      className="transition-colors duration-200"
-      color={activeTab === 2 ? activeColor : inactiveColor}
-    />
-  </button>
-</div>
-
-          <div
-  className="pointer-events-none absolute bottom-0 h-[4px] px-2 transition-all duration-300 ease-out"
-  style={{
-    left: `${activeTab * 33.3333}%`,
-    width: '33.3333%',
-  }}
->
-            <div className="h-[4px] w-full rounded-full bg-[#d89ad0]" />
-          </div>
-        </div>
-
-        <div
-          data-no-page-swipe="true"
-          className="overflow-hidden touch-pan-y"
-          onTouchStart={handleTabTouchStart}
-          onTouchMove={handleTabTouchMove}
-          onTouchEnd={handleTabTouchEnd}
-        >
-          <div
-  className="flex w-full transition-transform duration-300 ease-out"
-  style={{
-    transform: `translateX(-${activeTab * 100}%)`,
-  }}
->
-  {/* 第1頁 */}
-  <div className="w-full shrink-0">
-    <div className="grid grid-cols-3 gap-[2px]">
-      {gridItems.map((post) => {
-  const image = post?.post_images?.[0]?.image_url
-
-  return (
-    <button
-  type="button"
-  key={post.id}
-  onClick={(e) => {
-    e.stopPropagation()
-
-    const isVideo = post.type === 'video' || !!post.video_url
-const image = post?.post_images?.[0]?.image_url
-
-if (isVideo) return
-if (!image) return
-
-openSelectedPost(post)
-  }}
-  className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
->
-      {image && (
-        <img
-          src={image}
-          className="h-full w-full object-cover"
-        />
-      )}
-      {post.post_images?.length > 1 && (
-  <div className="absolute right-2 top-2 flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/45 text-white">
-    <Copy size={15} strokeWidth={2.3} />
-  </div>
-)}
-    </button>
-
-  )
-})}
-    </div>
-  </div>
-
-  {/* 第2頁：短影片 */}
-<div className="w-full shrink-0">
-  {myShortVideos.length === 0 ? (
-    <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
-      {text.noVideos}
-    </div>
-  ) : (
-    <div className="grid grid-cols-3 gap-[2px]">
-      {myShortVideos
-  .filter((video) => !archivedShortVideos.some((item) => item.id === video.id))
-  .map((video) => (
-  <button
-    type="button"
-    key={video.id}
-    onClick={(e) => {
-  e.stopPropagation()
-  setSelectedShortVideoId(video.id)
-  setIsShortVideoPageOpen(true)
-}}
-    className="relative h-[190px] overflow-hidden bg-black"
-  >
-    <video
-  src={video.video_url}
-  muted
-  playsInline
-  preload="auto"
-  autoPlay
-  loop
-  className="h-full w-full object-cover bg-black"
-  onLoadedData={(e) => {
-    e.currentTarget.currentTime = 0.1
+  onUploadClick={() => {
+    setIsMenuOpen(false)
+    setIsUploadOpen((prev) => !prev)
   }}
 />
-  </button>
-))}
-    </div>
-  )}
-</div>
+          
+        <ProfileHeader
+  profile={profile}
+  postCount={gridItems.length}
+  followerCount={followerCount}
+  postsLabel={text.posts}
+  followersLabel={text.followers}
+  onOpenLinkPort={() => setIsLinkPortOpen(true)}
+/>
 
-  {/* 第3頁（收藏） */}
-  <div className="w-full shrink-0">
-    
-      <div className="mb-3 mt-2 flex items-center justify-between">
-        <span className="text-[16px] font-medium text-[#111]">
-          {text.favorites}
-        </span>
+        <ProfileActionButtons
+  editLabel={text.editProfile}
+  shareLabel={text.shareProfile}
+  onEdit={() => setIsEditProfileOpen(true)}
+  onShare={() => setShowShareProfilePage(true)}
+/>
 
-        <div className="flex items-center gap-3">
-          <span
-            className={`text-[14px] font-medium transition-colors ${
-              isFavoritesPublic ? 'text-[#8B5CF6]' : 'text-[#666]'
-            }`}
-          >
-            {isFavoritesPublic
-  ? text.public
-  : text.private}
-          </span>
+        <ProfileTabs
+  activeTab={activeTab}
+  onChangeTab={goToTab}
+/>
 
-          <button
-            type="button"
-            onClick={() => setIsFavoritesPublic((prev) => !prev)}
-            className="relative flex h-[28px] w-[54px] items-center rounded-full border border-transparent transition-all duration-300 active:scale-[0.96]"
-            style={{
-              backgroundColor: isFavoritesPublic ? '#dc5cf6b1' : '#d0d0d0',
-              boxShadow: isFavoritesPublic
-                ? '0 4px 12px rgba(233, 92, 246, 0.35)'
-                : '0 2px 8px rgba(0,0,0,0.08)',
-            }}
-          >
-            <span
-              className={`absolute top-1/2 h-[20px] w-[20px] -translate-y-1/2 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] transition-all duration-300 ${
-                isFavoritesPublic ? 'left-[30px]' : 'left-[4px]'
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-    
-
-    <div className="grid grid-cols-3 gap-[2px]">
-      {savedPosts.map((post) => {
-  const isVideo = post.type === 'video' || !!post.video_url
-  const image = post?.post_images?.[0]?.image_url
-
-  return (
-    <button
-      type="button"
-      key={post.id}
-      onClick={(e) => {
-  e.stopPropagation()
-
-  if (isVideo) {
-    setSelectedShortVideoId(post.id)
-    setIsShortVideoPageOpen(true)
-    return
+<ProfilePostGridTabs
+  activeTab={activeTab}
+  text={text}
+  gridItems={gridItems}
+  myShortVideos={myShortVideos}
+  savedPosts={savedPosts}
+  archivedShortVideos={archivedShortVideos}
+  isFavoritesPublic={isFavoritesPublic}
+  onToggleFavoritesPublic={() =>
+    setIsFavoritesPublic((prev) => !prev)
   }
-
-  if (!image) return
-
-  openSelectedPost(post)
-}}
-      className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
-    >
-      {isVideo ? (
-  <video
-  src={post.video_url}
-  muted
-  playsInline
-  preload="auto"
-  autoPlay
-  loop
-  className="h-full w-full object-cover bg-black"
-  onLoadedData={(e) => {
-    e.currentTarget.currentTime = 0.1
+  onOpenPost={(post) =>
+  openSelectedPostHandler({
+    post,
+    savedPosts,
+    setSelectedPost,
+    setSelectedPostImageIndex,
+    setSelectedPostLiked,
+    setSelectedPostLikeCount,
+    setSelectedPostSaved,
+    setCommentText,
+    setComments,
+  })
+}
+  onOpenShortVideo={(videoId) => {
+    setSelectedShortVideoId(videoId)
+    setIsShortVideoPageOpen(true)
   }}
+  onTouchStart={handleTabTouchStart}
+  onTouchMove={handleTabTouchMove}
+  onTouchEnd={handleTabTouchEnd}
 />
-) : (
-  image && (
-    <img
-      src={image}
-      className="h-full w-full object-cover"
-    />
-  )
-)}
-
-      {post.post_images?.length > 1 && (
-        <div className="absolute right-2 top-2 flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/45 text-white">
-          <Copy size={15} strokeWidth={2.3} />
         </div>
-      )}
-    </button>
-  )
-})}
-    </div>
-  </div>
-</div>
-        </div>
-      </div>
 
 <AnimatePresence>
-  {isEditProfileOpen && (
-    <motion.div
-      className="fixed inset-0 z-[650] bg-[#f3f3f3]"
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-    >
-      <div className="mx-auto w-full max-w-[430px] px-4 pt-5">
-        <div className="mb-6 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setIsEditProfileOpen(false)}
-            className="text-[16px] text-[#222]"
-          >
-            {text.cancel}
-          </button>
-
-          <div className="text-[18px] font-medium text-[#111]">
-            {text.editProfile}
-          </div>
-
-          <button
-            type="button"
-            onClick={updateProfile}
-            className="text-[16px] font-medium text-[#8B5CF6]"
-          >
-            {text.save}
-          </button>
-        </div>
-
-        <div className="mb-6 flex flex-col items-center gap-3">
-  <div className="h-[86px] w-[86px] overflow-hidden rounded-full bg-[#d9d9d9]">
-    {profile?.avatar_url && (
-      <img
-        src={profile.avatar_url}
-        className="h-full w-full object-cover"
-      />
-    )}
-  </div>
-
-  <label className="cursor-pointer text-[15px] font-medium text-[#8B5CF6]">
-    {avatarUploading
-  ? text.uploading
-  : text.changeAvatar}
-    <input
-      type="file"
-      accept="image/*"
-      className="hidden"
-      onChange={(e) => {
-        const file = e.target.files?.[0]
-        if (file) uploadAvatar(file)
-      }}
-    />
-  </label>
-</div>
-
-        <div className="flex flex-col gap-4">
-          <label className="flex flex-col gap-2 text-[14px] text-[#666]">
-            {text.displayName}
-            <input
-              value={profile?.display_name || ''}
-              onChange={(e) =>
-                setProfile((prev: any) => ({
-                  ...prev,
-                  display_name: e.target.value,
-                }))
-              }
-              className="h-[46px] rounded-[14px] border border-[#ddd] bg-white px-4 text-[16px] text-[#222] outline-none"
-              placeholder={text.displayNamePlaceholder}
-            />
-          </label>
-
-          <label className="flex flex-col gap-2 text-[14px] text-[#666]">
-            {text.username}
-            <input
-              value={profile?.username || ''}
-              onChange={(e) =>
-                setProfile((prev: any) => ({
-                  ...prev,
-                  username: e.target.value,
-                }))
-              }
-              className="h-[46px] rounded-[14px] border border-[#ddd] bg-white px-4 text-[16px] text-[#222] outline-none"
-              placeholder={text.usernamePlaceholder}
-            />
-          </label>
-
-          <label className="flex flex-col gap-2 text-[14px] text-[#666]">
-            {text.bio}
-            <textarea
-              value={profile?.bio || ''}
-              onChange={(e) =>
-                setProfile((prev: any) => ({
-                  ...prev,
-                  bio: e.target.value,
-                }))
-              }
-              className="min-h-[120px] rounded-[14px] border border-[#ddd] bg-white px-4 py-3 text-[16px] text-[#222] outline-none"
-              placeholder={text.bioPlaceholder}
-            />
-          </label>
-        </div>
-      </div>
-    </motion.div>
-  )}
+  <EditProfilePage
+    open={isEditProfileOpen}
+    text={text}
+    profile={profile}
+    avatarUploading={avatarUploading}
+    onClose={() => setIsEditProfileOpen(false)}
+    onSave={updateProfile}
+    onChangeProfile={setProfile}
+    onUploadAvatar={uploadAvatar}
+  />
 </AnimatePresence>
 
       <AnimatePresence>
@@ -1764,7 +1136,7 @@ openSelectedPost(post)
   
   locale={safeLocale}
   onChangeLocale={onChangeLocale}
-  initialDarkMode={false}
+  initialDarkMode={true}
   initialShowCity={false}
             
             onDarkModeChange={(value) => {
@@ -1788,94 +1160,39 @@ openSelectedPost(post)
 />
 
       <AnimatePresence>
-        {isMenuOpen && (
-          <>
-            <motion.button
-              type="button"
-              aria-label="Close profile menu overlay"
-              onClick={() => setIsMenuOpen(false)}
-              className="fixed inset-0 z-[20] bg-black/10"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-            />
-
-            <motion.div
-              className="fixed left-1/2 top-[96px] z-[25] w-[300px] -translate-x-1/2 rounded-[26px] bg-[#f3f3f3] px-6 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.10)]"
-              initial={{ opacity: 0, scale: 0.82, y: -18 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.86, y: -10 }}
-              transition={{
-                type: 'spring',
-                stiffness: 360,
-                damping: 28,
-                mass: 0.9,
-              }}
-              style={{ originX: 0.88, originY: 0 }}
-            >
-              <div className="flex flex-col gap-3">
-                <MenuItem
-  icon={<Bell size={22} />}
-  label={text.notifications}
-  onClick={() => {
-    setShowNotificationsPage(true)
-    setIsMenuOpen(false)
-  }}
-/>
-                
-                <MenuItem
-  icon={<BarChart3 size={22} strokeWidth={2.4} />}
-  label={text.analytics}
-  onClick={() => {
-    setShowAnalyticsPage(true)
-    setIsMenuOpen(false)
-  }}
-/>
-                
-                <MenuItem
-  icon={<Clock3 size={22} />}
-  label={text.archive}
-  onClick={() => {
-    setShowArchivedPage(true)
-    setIsMenuOpen(false)
-  }}
-/>
-
-<MenuItem
-  icon={<Settings size={22} />}
-  label={text.settings}
-  onClick={() => {
-    setShowSettingsPage(true)
-  }}
-/>
-
-<MenuItem
-  icon={<UserCircle2 size={22} />}
-  label={text.account}
-  onClick={() => {
-    setShowAccountManagePage(true)
-    setIsMenuOpen(false)
-  }}
-/>
-
-                <MenuItem
-  icon={<Ticket size={22} />}
-  label={text.membership}
-  onClick={() => {
-  setIsMenuOpen(false)
-  window.open('https://vibe-membership-web.vercel.app', '_blank', 'noopener,noreferrer')
-}}
-/>
-
-                <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
-
-                <MenuItem icon={<Megaphone size={22} />} label={text.ads} />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+  <ProfileMenuSheet
+    open={isMenuOpen}
+    text={text}
+    onClose={() => setIsMenuOpen(false)}
+    onNotifications={() => {
+      setShowNotificationsPage(true)
+      setIsMenuOpen(false)
+    }}
+    onAnalytics={() => {
+      setShowAnalyticsPage(true)
+      setIsMenuOpen(false)
+    }}
+    onArchive={() => {
+      setShowArchivedPage(true)
+      setIsMenuOpen(false)
+    }}
+    onSettings={() => {
+      setShowSettingsPage(true)
+    }}
+    onAccount={() => {
+      setShowAccountManagePage(true)
+      setIsMenuOpen(false)
+    }}
+    onMembership={() => {
+      setIsMenuOpen(false)
+      window.open(
+        'https://vibe-membership-web.vercel.app',
+        '_blank',
+        'noopener,noreferrer'
+      )
+    }}
+  />
+</AnimatePresence>
 
       <AnalyticsPage
   open={showAnalyticsPage}
@@ -1953,6 +1270,7 @@ openSelectedPost(post)
 </AnimatePresence>
     
     <AnimatePresence>
+<<<<<<< HEAD
   {selectedPost?.post_images?.length > 0 && (
     <motion.div
   data-block-page-swipe="true"
@@ -2171,69 +1489,58 @@ onClick={(e) => e.stopPropagation()}
   setSelectedComment(comment)
   requestAnimationFrame(() => {
     setIsCommentMenuOpen(true)
+=======
+    <ProfilePostDetailModal
+  open={!!selectedPost}
+  selectedPost={selectedPost}
+  selectedPostImageIndex={selectedPostImageIndex}
+  selectedPostLiked={selectedPostLiked}
+  selectedPostLikeCount={selectedPostLikeCount}
+  selectedPostSaved={selectedPostSaved}
+  comments={comments}
+  commentText={commentText}
+  commentLoading={commentLoading}
+  profile={profile}
+  isPostMenuOpen={isPostMenuOpen}
+  isCommentMenuOpen={isCommentMenuOpen}
+  selectedComment={selectedComment}
+  onClose={() => {
+    setIsPostMenuOpen(false)
+    setSelectedPost(null)
+  }}
+  onToggleLike={toggleSelectedPostLike}
+  onToggleSave={toggleSelectedPostSave}
+  onSubmitComment={() =>
+  submitCommentHandler({
+    selectedPost,
+    commentText,
+    setCommentLoading,
+    setCommentText,
+    setComments,
+>>>>>>> 9343150 (fix)
   })
-}}
-    className="flex h-[20px] w-[20px] items-center justify-center rounded-full active:scale-90 mt-[0px] mr-[2px]"
-  >
-    <MoreHorizontal size={20} strokeWidth={2} />
-  </button>
-</div>
-      ))}
-    </div>
-  )}
-</div>
-      </div>
+}
+  onDeleteComment={() =>
+  deleteCommentHandler({
+    selectedComment,
+    setComments,
+    setIsCommentMenuOpen,
+    setSelectedComment,
+  })
+}
 
-      {/* Comment Input */}
-      <AnimatePresence>
-  {isCommentMenuOpen && selectedComment && (
-    <>
-      <motion.div
-        className="fixed inset-0 z-[620] bg-black/20"
-        onClick={() => {
-          setIsCommentMenuOpen(false)
-          setSelectedComment(null)
-        }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      />
-
-      <motion.div
-        className="fixed bottom-0 left-1/2 z-[630] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[#f3f3f3] px-5 pt-4 pb-8 shadow-[0_-10px_30px_rgba(0,0,0,0.12)]"
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-      >
-        <div className="mb-4 flex justify-center">
-          <div className="h-[4px] w-[40px] rounded-full bg-[#bbb]" />
-        </div>
-
-        {selectedComment.user_id === selectedPost?.user_id ? (
-          <button
-            type="button"
-            onClick={deleteComment}
-            className="flex h-[52px] w-full items-center justify-center rounded-[16px] text-[16px] font-medium text-red-500 active:bg-black/5"
-          >
-            刪除留言
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              alert('已收到檢舉')
-              setIsCommentMenuOpen(false)
-              setSelectedComment(null)
-            }}
-            className="flex h-[52px] w-full items-center justify-center rounded-[16px] text-[16px] font-medium text-[#222] active:bg-black/5"
-          >
-            檢舉留言
-          </button>
-        )}
-      </motion.div>
-    </>
-  )}
+  setCommentText={setCommentText}
+  setSelectedPostImageIndex={setSelectedPostImageIndex}
+  setIsPostMenuOpen={setIsPostMenuOpen}
+  setIsCommentMenuOpen={setIsCommentMenuOpen}
+  setSelectedComment={setSelectedComment}
+  handlePostImageTouchStart={handlePostImageTouchStart}
+  handlePostImageTouchMove={handlePostImageTouchMove}
+  handlePostImageTouchEnd={handlePostImageTouchEnd}
+  handlePostDetailTouchStart={handlePostDetailTouchStart}
+  handlePostDetailTouchMove={handlePostDetailTouchMove}
+  handlePostDetailTouchEnd={handlePostDetailTouchEnd}
+/>
 </AnimatePresence>
 
       <AnimatePresence>
@@ -2251,10 +1558,6 @@ onClick={(e) => e.stopPropagation()}
   onArchive={archiveSelectedPost}
   onDelete={deleteSelectedPost}
 />
-  )}
-</AnimatePresence>
-
-    </motion.div>
   )}
 </AnimatePresence>
     

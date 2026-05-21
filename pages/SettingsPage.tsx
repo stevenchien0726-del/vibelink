@@ -102,10 +102,14 @@ export default function SettingsPage({
   }, [initialShowCity])
 
   const handleToggleDarkMode = () => {
-    const next = !darkMode
-    setDarkMode(next)
-    onDarkModeChange?.(next)
-  }
+  const next = !darkMode
+
+  setDarkMode(next)
+  document.documentElement.classList.toggle('dark', next)
+  localStorage.setItem('vibelink-dark-mode', next ? 'dark' : 'light')
+
+  onDarkModeChange?.(next)
+}
 
   const handleToggleShowCity = () => {
     const next = !showCity
@@ -189,7 +193,7 @@ export default function SettingsPage({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[220] flex justify-center bg-[#f3f3f3] touch-pan-y"
+      className="fixed inset-0 z-[220] flex justify-center bg-[#dcdcdc] touch-pan-y"
       initial={{ x: '100%' }}
       animate={{ x: dragX }}
       exit={{ x: '100%' }}
@@ -205,8 +209,8 @@ export default function SettingsPage({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative min-h-screen w-full max-w-[430px] bg-[#f3f3f3] text-[#222]">
-        <div className="fixed left-1/2 top-0 z-[30] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pb-3 pt-3 backdrop-blur-md">
+      <div className="relative min-h-screen w-full max-w-[430px] bg-[var(--app-bg)] text-[var(--app-text)]">
+        <div className="fixed left-1/2 top-0 z-[30] w-full max-w-[430px] -translate-x-1/2 bg-[var(--app-bg)]/95 px-4 pb-3 pt-3 backdrop-blur-md">
           <div className="relative flex items-center justify-center">
             <button
               type="button"
@@ -219,12 +223,13 @@ export default function SettingsPage({
 
   onClose()
 }}
-              className="absolute left-0 flex h-[40px] w-[40px] items-center justify-center rounded-full active:scale-95"
+              className="absolute left-0 flex h-[40px] w-[40px] items-center justify-center rounded-full text-[var(--app-text)] active:scale-95"
+
             >
               <ChevronLeft size={24} />
             </button>
 
-            <div className="text-[20px] font-medium tracking-[0.01em]">
+            <div className="text-[20px] font-medium tracking-[0.01em] text-[var(--app-text)]">
               {languageOpen ? text.language : text.title}
             </div>
           </div>
@@ -240,20 +245,20 @@ export default function SettingsPage({
       exit={{ x: -24, opacity: 0 }}
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="rounded-[22px] bg-[#d9d9d9] px-4 py-4">
+      <div className="rounded-[22px] bg-[var(--app-card)] px-4 py-4">
         <div className="flex items-center justify-between py-1">
           <div className="flex items-center gap-3">
-            <span className="flex h-[22px] w-[22px] items-center justify-center text-[#111]">
+            <span className="flex h-[22px] w-[22px] items-center justify-center text-[var(--app-text)]">
               <Moon size={19} strokeWidth={2.1} />
             </span>
 
-            <span className="text-[16px] font-medium text-[#222]">
+            <span className="text-[16px] font-medium text-[var(--app-text)]">
               {text.darkMode}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-[16px] text-[#222]">
+            <span className="text-[16px] text-[var(--app-text)]">
               {darkMode ? text.darkOn : text.darkOff}
             </span>
 
@@ -262,14 +267,8 @@ export default function SettingsPage({
         </div>
       </div>
 
-      <div className="mt-[30px] overflow-hidden rounded-[22px] bg-[#d9d9d9] py-[20px]">
-        <SettingsRow
-          icon={<MessageCircle size={21} strokeWidth={2.1} />}
-          label={text.messages}
-          onClick={onMessagesClick}
-        />
-
-        <Divider />
+      <div className="mt-[30px] overflow-hidden rounded-[22px] bg-[var(--app-card)] py-[20px]">
+        
 
         <SettingsRow
           icon={<Ban size={21} strokeWidth={2.1} />}
@@ -278,7 +277,7 @@ export default function SettingsPage({
         />
       </div>
 
-      <div className="mt-[24px] overflow-hidden rounded-[22px] bg-[#d9d9d9] py-[20px]">
+      <div className="mt-[24px] overflow-hidden rounded-[22px] bg-[var(--app-card)] py-[20px]">
         <SettingsRow
           icon={<Globe size={21} strokeWidth={2.1} />}
           label={text.language}
@@ -293,7 +292,7 @@ export default function SettingsPage({
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="mt-[4px] overflow-hidden rounded-[22px] bg-[#d9d9d9] py-[14px]"
+      className="mt-[4px] overflow-hidden rounded-[22px] bg-[var(--app-card)] py-[14px]"
     >
       <LanguageRow
         label="繁中"
@@ -331,11 +330,11 @@ function SettingsRow({
       onClick={onClick}
       className="grid w-full grid-cols-[36px_minmax(0,1fr)_60px] items-center gap-x-3 py-[36px] pl-[30px] pr-4 active:bg-[#cfcfcf]"
     >
-      <span className="flex h-[22px] w-[52px] items-center justify-center text-[#111]">
+      <span className="flex h-[22px] w-[52px] items-center justify-center text-[var(--app-text)]">
         {icon}
       </span>
 
-      <span className="text-left text-[16px] font-medium leading-none text-[#222]">
+      <span className="text-left text-[16px] font-medium leading-none text-[var(--app-text)]">
         {label}
       </span>
 
@@ -343,7 +342,7 @@ function SettingsRow({
         <ChevronRight
           size={18}
           strokeWidth={2.4}
-          className="text-[#444]"
+          className="text-[var(--app-muted)]"
         />
       </span>
     </button>
@@ -363,7 +362,7 @@ function LanguageRow({
     <button
   type="button"
   onClick={onClick}
-  className="flex h-[72px] w-full items-center text-[16px] font-medium text-[#111] active:bg-[#cfcfcf]"
+  className="flex h-[72px] w-full items-center text-[16px] font-medium text-[var(--app-text)] active:bg-[#cfcfcf]"
 >
   <span className="ml-[34px]">{label}</span>
 
@@ -393,11 +392,11 @@ function Switch({
       role="switch"
       aria-checked={checked}
       onClick={onClick}
-      className="relative h-[28px] w-[48px] rounded-full bg-[#f3f3f3] transition-colors duration-250"
+      className="relative h-[28px] w-[52px] rounded-full bg-[var(--switch-track)] transition-colors duration-250"
     >
       <span
         className={`absolute top-[3px] h-[22px] w-[22px] rounded-full bg-[#d39ad8] shadow-sm transition-all duration-250 ${
-          checked ? 'left-[23px]' : 'left-[3px]'
+          checked ? 'left-[27px]' : 'left-[3px]'
         }`}
       />
     </button>
@@ -405,5 +404,5 @@ function Switch({
 }
 
 function Divider() {
-  return <div className="mx-4 my-[25px] h-px bg-[#2b2b2b]" />
+  return <div className="mx-4 my-[25px] h-px bg-[var(--app-muted)]" />
 }

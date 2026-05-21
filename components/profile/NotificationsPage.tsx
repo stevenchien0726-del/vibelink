@@ -13,7 +13,7 @@ export default function NotificationsPage({
   return (
     <motion.div
   data-block-page-swipe="true"
-  className="fixed inset-0 z-[1200] flex justify-center bg-[#f3f3f3]"
+  className="fixed inset-0 z-[1200] flex justify-center bg-[var(--app-bg)] text-[var(--app-text)]"
   initial={{ x: '100%' }}
   animate={{ x: 0 }}
   exit={{ x: '100%' }}
