@@ -41,7 +41,6 @@ import { supabase } from '@/lib/supabase'
 import WideMenuSheet from '@/components/WideMenuSheet'
 import ShareSheet from '@/components/ShareSheet'
 import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
-import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
 
 import LinkPortSheet from '@/components/profile/LinkPortSheet'
 import { mockPosts } from '@/lib/mockPosts'
@@ -202,8 +201,6 @@ const [profileError, setProfileError] = useState('')
   const [myShortVideos, setMyShortVideos] = useState<any[]>([])
   const [selectedShortVideoId, setSelectedShortVideoId] = useState<string | undefined>()
 const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
-const [shortVideoProfileUserId, setShortVideoProfileUserId] =
-  useState<string | null>(null)
 
   const [savedPosts, setSavedPosts] = useState<any[]>([])
   const [archivedPosts, setArchivedPosts] = useState<any[]>([])
@@ -630,56 +627,6 @@ async function loadSavedPosts() {
   setSavedPosts([...mockSavedPosts, ...videoPosts, ...photoPosts])
 }
 
-<<<<<<< HEAD
-async function openSelectedPost(post: any) {
-  if (post.isMock) {
-    setSelectedPost(post)
-    setSelectedPostImageIndex(0)
-    setSelectedPostLiked(!!post.isLiked)
-    setSelectedPostLikeCount(post.likes ?? 0)
-    setSelectedPostSaved(true)
-    setCommentText('')
-    setComments([])
-    return
-  }
-
-  const { data: imageRows, error } = await supabase
-    .from('post_images')
-    .select('image_url')
-    .eq('post_id', post.id)
-
-  if (error) {
-    console.error('重新讀取貼文圖片失敗:', error)
-  }
-
-  const fullPost = {
-    ...post,
-    post_images:
-      imageRows && imageRows.length > 0
-        ? imageRows
-        : post.post_images ?? [],
-  }
-
-  console.log(
-    '打開貼文完整圖片數:',
-    fullPost.post_images.length,
-    fullPost.post_images
-  )
-
-  setSelectedPost(fullPost)
-  setSelectedPostImageIndex(0)
-  setSelectedPostLiked(!!post.isLiked)
-  setSelectedPostLikeCount(post.likes ?? 0)
-  setSelectedPostSaved(
-    savedPosts.some((savedPost) => savedPost.id === post.id)
-  )
-  setCommentText('')
-  setComments([])
-  loadComments(post.id)
-}
-
-=======
->>>>>>> 9343150 (fix)
 function archiveSelectedPost() {
   if (!selectedPost?.id) return
 
@@ -992,9 +939,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 
 {profileError && !profileLoading && (
   <div className="py-20 text-center">
-    <div className="mb-3 text-[14px] text-[var(--app-muted)]">ofilePostDetailModal.tsx
-      {profileError}
-    </div>
+    
 
     <button
       type="button"
@@ -1136,7 +1081,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   
   locale={safeLocale}
   onChangeLocale={onChangeLocale}
-  initialDarkMode={true}
+  initialDarkMode={false}
   initialShowCity={false}
             
             onDarkModeChange={(value) => {
@@ -1270,226 +1215,6 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 </AnimatePresence>
     
     <AnimatePresence>
-<<<<<<< HEAD
-  {selectedPost?.post_images?.length > 0 && (
-    <motion.div
-  data-block-page-swipe="true"
-  className="fixed inset-0 z-[500] bg-[#f3f3f3]"
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-      onTouchStart={handlePostDetailTouchStart}
-onTouchMove={handlePostDetailTouchMove}
-onTouchEnd={handlePostDetailTouchEnd}
-onPointerDown={(e) => e.stopPropagation()}
-onClick={(e) => e.stopPropagation()}
-    >
-      {/* Top Bar */}
-      <div className="fixed left-1/2 top-0 z-[510] flex h-[58px] w-full max-w-[430px] -translate-x-1/2 items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
-        <button
-          type="button"
-          onClick={() => {
-  setIsPostMenuOpen(false)
-  setSelectedPost(null)
-}}
-          className="flex h-10 w-10 items-center justify-center rounded-full active:scale-90"
-        >
-          <ChevronLeft />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setIsPostMenuOpen(true)}
-          className="flex h-10 items-center gap-2 rounded-full px-2 active:scale-95"
-        >
-          <MoreHorizontal size={22} strokeWidth={2.4} />
-          <span className="text-[15px] font-medium">MENU</span>
-        </button>
-      </div>
-
-      <div className="mx-auto h-full w-full max-w-[430px] overflow-y-auto pt-[58px] pb-[120px]">
-        {/* Author */}
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <div className="h-[34px] w-[34px] rounded-full bg-[#d6d6d6]" />
-            <div className="text-[15px] font-medium text-[#222]">
-              {profile?.display_name || profile?.username || 'Vibelink User'}
-            </div>
-          </div>
-        </div>
-
-        {/* Image */}
-        <div className="px-3">
-  <div
-  data-no-page-swipe="true"
-  data-post-image-area="true"
-  className="relative overflow-hidden rounded-[18px] touch-pan-y"
-  onTouchStart={handlePostImageTouchStart}
-  onTouchMove={handlePostImageTouchMove}
-  onTouchEnd={handlePostImageTouchEnd}
->
-    <motion.div
-      className="flex"
-      animate={{ x: `-${selectedPostImageIndex * 100}%` }}
-      transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-    >
-      {selectedPost.post_images?.map((img: any, index: number) => (
-        <div
-  key={index}
-  className="h-[530px] w-full shrink-0 grow-0 basis-full overflow-hidden bg-black"
->
-  <img
-    src={img.image_url}
-    className="h-full w-full object-cover"
-  />
-</div>
-      ))}
-    </motion.div>
-
-</div>
-
-</div>
-
-        {/* Actions */}
-<div className="relative flex items-center justify-between px-4 pt-4">
-  {selectedPost.post_images?.length > 1 && (
-    <div className="pointer-events-auto absolute left-1/2 top-[23px] z-[20] flex -translate-x-1/2 items-center gap-[7px]">
-      {selectedPost.post_images.map((_: any, index: number) => (
-        <button
-          key={index}
-          type="button"
-          onClick={() => setSelectedPostImageIndex(index)}
-          className={`h-[7px] rounded-full transition-all ${
-            selectedPostImageIndex === index
-              ? 'w-[18px] bg-[#c86cff]'
-              : 'w-[7px] bg-[#d7d7d7]'
-          }`}
-        />
-      ))}
-    </div>
-  )}
-
-  <div className="flex items-center gap-5">
-    <button
-      type="button"
-      onClick={toggleSelectedPostLike}
-      className="flex items-center gap-1.5 active:scale-90"
-    >
-      <Heart
-        size={25}
-        color="#c86cff"
-        fill={selectedPostLiked ? '#c86cff' : 'none'}
-        strokeWidth={2.1}
-      />
-      <span className="text-[15px] text-[#555]">
-        {selectedPostLikeCount}
-      </span>
-    </button>
-
-    <button type="button" className="active:scale-90">
-      <MessageCircle size={25} strokeWidth={2.1} />
-    </button>
-  </div>
-
-  <div className="flex items-center gap-5">
-    <button
-      type="button"
-      onClick={() => setIsShareSheetOpen(true)}
-      className="active:scale-90"
-    >
-      <Send size={24} strokeWidth={2.1} />
-    </button>
-
-    <button
-      type="button"
-      onClick={toggleSelectedPostSave}
-      className="active:scale-90"
-    >
-      <Bookmark
-        size={25}
-        color="#c86cff"
-        fill={selectedPostSaved ? '#c86cff' : 'none'}
-        strokeWidth={2.1}
-      />
-    </button>
-  </div>
-</div>
-
-        {/* Caption */}
-        {selectedPost.caption && (
-          <div className="px-4 pt-3 text-[15px] text-[#222]">
-            {selectedPost.caption}
-          </div>
-        )}
-
-        {/* Comments */}
-<div className="mt-5 border-t border-[#ddd] px-4 pt-4">
-  <div className="mb-4 text-[15px] font-medium text-[#222]">
-    留言
-  </div>
-
-  <div className="mb-4 flex gap-2">
-    <input
-      value={commentText}
-      onChange={(e) => setCommentText(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') submitComment()
-      }}
-      placeholder="新增留言..."
-      className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[#222] outline-none"
-    />
-
-    <button
-      type="button"
-      onClick={submitComment}
-      disabled={commentLoading || !commentText.trim()}
-      className={`h-[42px] rounded-full px-4 text-[14px] font-medium ${
-        commentText.trim()
-          ? 'bg-[#c86cff] text-white'
-          : 'bg-[#e5e5e5] text-[#999]'
-      }`}
-    >
-      送出
-    </button>
-  </div>
-
-  {comments.length === 0 ? (
-    <div className="text-[14px] text-[#999]">
-      尚無留言，成為第一個留言的人
-    </div>
-  ) : (
-    <div className="flex flex-col gap-4 pb-8">
-      {comments.map((comment) => (
-        <div key={comment.id} className="flex gap-3">
-  <div className="h-[32px] w-[32px] overflow-hidden rounded-full bg-[#d6d6d6]">
-    {comment.profiles?.avatar_url && (
-      <img
-        src={comment.profiles.avatar_url}
-        className="h-full w-full object-cover"
-      />
-    )}
-  </div>
-
-  <div className="flex-1">
-    <div className="text-[13px] font-medium text-[#222]">
-      {comment.profiles?.display_name ||
-        comment.profiles?.username ||
-        'Vibelink User'}
-    </div>
-
-    <div className="mt-1 text-[14px] text-[#444]">
-      {comment.content}
-    </div>
-  </div>
-
-  <button
-    type="button"
-    onClick={() => {
-  setSelectedComment(comment)
-  requestAnimationFrame(() => {
-    setIsCommentMenuOpen(true)
-=======
     <ProfilePostDetailModal
   open={!!selectedPost}
   selectedPost={selectedPost}
@@ -1517,7 +1242,6 @@ onClick={(e) => e.stopPropagation()}
     setCommentLoading,
     setCommentText,
     setComments,
->>>>>>> 9343150 (fix)
   })
 }
   onDeleteComment={() =>
@@ -1600,15 +1324,6 @@ onClick={(e) => e.stopPropagation()}
   }))}
   initialVideoId={selectedShortVideoId}
   onClose={() => setIsShortVideoPageOpen(false)}
-  onOpenProfile={(userId) => {
-  if (!userId) return
-
-  setIsShortVideoPageOpen(false)
-
-  window.setTimeout(() => {
-    setShortVideoProfileUserId(userId)
-  }, 180)
-}}
   onLike={async (video) => {
   await loadMyShortVideos()
 }}
