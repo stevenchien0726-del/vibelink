@@ -236,10 +236,10 @@ async function fetchFavoriteUser(retry = 0) {
     setPeopleLoading(true)
     setPeopleError('')
 
-    Promise.all([
-      fetchRecentFollowedUser(),
-      fetchFavoriteUser(),
-    ]).finally(() => {
+    Promise.allSettled([
+  fetchRecentFollowedUser(),
+  fetchFavoriteUser(),
+]).finally(() => {
       if (!cancelled) {
         setPeopleLoading(false)
       }

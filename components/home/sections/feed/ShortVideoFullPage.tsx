@@ -110,7 +110,13 @@ export default function ShortVideoFullPage({
       video.paused ||
       video.currentTime === 0
 
-    if (isStuck) {
+    const reloadCount = reloadMap[activeVideoId] ?? 0
+
+if (isStuck && reloadCount < 2) {
+  if (isStuck && reloadCount >= 2) {
+  console.warn('短影片多次重載仍失敗，停止自動重試:', activeVideoId)
+}
+
       console.warn('短影片卡住，自動重新讀取:', activeVideoId)
 
       setReloadMap((prev) => ({
@@ -206,6 +212,8 @@ export default function ShortVideoFullPage({
     setDeletingId(null)
   }
 }
+
+
 
   function resetDrag() {
     animate(dragX, 0, {

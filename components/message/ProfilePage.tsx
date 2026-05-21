@@ -75,6 +75,17 @@ export default function ProfilePage({
     }),
   ])
 }
+async function safeTask<T>(
+  task: () => PromiseLike<T>,
+  label: string
+): Promise<T | null> {
+  try {
+    return await withTimeout(task(), 4000, label)
+  } catch (error) {
+    console.warn(`${label} failed:`, error)
+    return null
+  }
+}
   
   useEffect(() => {
   let alive = true
@@ -100,26 +111,18 @@ export default function ProfilePage({
 
     setCurrentUserId(user.id)
 
-    await withTimeout(
-  ensureMyProfile(),
-  4000,
-  'ensure_my_profile'
-)
+await withTimeout(ensureMyProfile(), 4000, 'ensure_my_profile')
 
-await withTimeout(
-  Promise.all([
-    loadMyFollowerCount(),
-    loadMyPosts(),
-    loadMyShortVideos(),
-    loadSavedPosts(),
-  ]),
-  4000,
-  'my_profile_data'
-)
+if (!alive) return
 
-    if (!alive) return
+setProfileLoading(false)
 
-    setProfileLoading(false)
+Promise.allSettled([
+  safeTask(() => loadMyFollowerCount(), 'followers'),
+  safeTask(() => loadMyPosts(), 'my_posts'),
+  safeTask(() => loadMyShortVideos(), 'my_short_videos'),
+  safeTask(() => loadSavedPosts(), 'saved_posts'),
+])
   } catch (error) {
     console.error('自己 Profile 初始化失敗:', error)
 
@@ -155,13 +158,13 @@ await withTimeout(
     setTimeout(() => {
       if (!alive) return
 
-      Promise.all([
-        ensureMyProfile(),
-        loadMyFollowerCount(),
-        loadMyPosts(),
-        loadMyShortVideos(),
-        loadSavedPosts(),
-      ])
+      Promise.allSettled([
+  safeTask(() => ensureMyProfile(), 'auth_ensure_profile'),
+  safeTask(() => loadMyFollowerCount(), 'auth_followers'),
+  safeTask(() => loadMyPosts(), 'auth_my_posts'),
+  safeTask(() => loadMyShortVideos(), 'auth_my_short_videos'),
+  safeTask(() => loadSavedPosts(), 'auth_saved_posts'),
+])
     }, 0)
   })
 
@@ -964,13 +967,21 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 />
           
         <ProfileHeader
-  profile={profile}
+  profile={
+    profile || {
+      display_name: 'Vibelink User',
+      username: 'vibelink',
+      avatar_url: '',
+      bio: '',
+    }
+  }
   postCount={gridItems.length}
   followerCount={followerCount}
   postsLabel={text.posts}
   followersLabel={text.followers}
   onOpenLinkPort={() => setIsLinkPortOpen(true)}
 />
+
 
         <ProfileActionButtons
   editLabel={text.editProfile}

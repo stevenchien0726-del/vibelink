@@ -104,6 +104,8 @@ export default function HomePage({
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   
   const [realPosts, setRealPosts] = useState<PostItem[]>([])
+  const [realVideos, setRealVideos] = useState<PostItem[]>([])
+
   const [mockSavedPostIds, setMockSavedPostIds] = useState<string[]>([])
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null)
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null)
@@ -162,11 +164,15 @@ useEffect(() => {
 
     setIsAuthModalOpen(false)
 
-    const profile = await ensureUserProfile()
-    console.log('目前登入者 Profile:', profile)
+    void safeTask(
+  () => ensureUserProfile(),
+  'home_ensure_profile'
+).then((profile) => {
+  console.log('目前登入者 Profile:', profile)
+})
 
-        await loadPosts(user)
-    await loadShortVideos(user)
+void safeTask(() => loadPosts(user), 'home_load_posts')
+void safeTask(() => loadShortVideos(user), 'home_load_short_videos')
   }
 
   initHome()
@@ -263,6 +269,18 @@ function handlePostCreated(post: CreatedPostPayload) {
       }, ms)
     }),
   ])
+}
+
+async function safeTask<T>(
+  task: () => PromiseLike<T>,
+  label: string
+): Promise<T | null> {
+  try {
+    return await withTimeout(Promise.resolve(task()), 4000, label)
+  } catch (error) {
+    console.warn(`${label} failed:`, error)
+    return null
+  }
 }
 
   async function loadPosts(user?: any, retry = 0) {
@@ -424,11 +442,8 @@ videoUrl: video.video_url,
     isSaved: savedSet.has(video.id),
   }))
 
-  setRealPosts((prev) => {
-    const photoPosts = prev.filter((post: any) => !post.videoUrl)
-    return [...mappedVideos, ...photoPosts]
-  })
-}
+  setRealVideos(mappedVideos)
+  }
 
 async function handleDeletePost(post: PostItem) {
   if (!post.id) return
@@ -1093,6 +1108,7 @@ if (isTap) {
   }, [selectedStory, storyPage, isStoryPaused])
 
 const mergedPosts = [
+  ...realVideos,
   ...realPosts,
   ...mockShortVideos,
   ...mockPosts.map((post) => ({
@@ -1303,8 +1319,8 @@ const mergedPosts = [
   const { data } = await supabase.auth.getSession()
 const user = data.session?.user ?? null
 
-await loadPosts(user)
-await loadShortVideos(user)
+void safeTask(() => loadPosts(user), 'upload_reload_posts')
+void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
 }}
   onPostCreated={handlePostCreated}
 />

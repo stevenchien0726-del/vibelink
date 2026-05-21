@@ -161,6 +161,22 @@ const [messageError, setMessageError] = useState('')
     )
   }
 
+function withTimeout<T>(
+  promise: PromiseLike<T>,
+  ms = 4000,
+  label = 'request'
+): Promise<T | null> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<null>((resolve) => {
+      window.setTimeout(() => {
+        console.warn(`${label} timeout`)
+        resolve(null)
+      }, ms)
+    }),
+  ])
+}
+
   useEffect(() => {
   async function loadConversations(retry = 0) {
     setMessageLoading(true)
@@ -217,10 +233,19 @@ const validConversations = (data ?? []).filter((conversation: any) => {
     : conversation.user_a
 )
 
-const { data: profilesData } = await supabase
-  .from('profiles')
-  .select('id, username, display_name, avatar_url')
-  .in('id', otherUserIds)
+const profilesResult =
+  otherUserIds.length > 0
+    ? await withTimeout(
+        supabase
+          .from('profiles')
+          .select('id, username, display_name, avatar_url')
+          .in('id', otherUserIds),
+        4000,
+        'message_profiles'
+      )
+    : null
+
+const profilesData = profilesResult?.data ?? []
 
 const profileMap = new Map(
   (profilesData ?? []).map((profile: any) => [profile.id, profile])

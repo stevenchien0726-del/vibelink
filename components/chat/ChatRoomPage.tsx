@@ -67,15 +67,38 @@ const [chatError, setChatError] = useState('')
     })
   }, [dragX])
 
+function withTimeout<T>(
+  promise: PromiseLike<T>,
+  ms = 4000,
+  label = 'request'
+): Promise<T | null> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<null>((resolve) => {
+      window.setTimeout(() => {
+        console.warn(`${label} timeout`)
+        resolve(null)
+      }, ms)
+    }),
+  ])
+}
+
   useEffect(() => {
     async function loadOtherUserProfile() {
   if (!otherUserId) return
 
-  const { data } = await supabase
+  const result = await withTimeout(
+  supabase
     .from('profiles')
     .select('avatar_url')
     .eq('id', otherUserId)
     .maybeSingle()
+    ,
+4000,
+'chat_other_avatar'
+)
+
+const data = result?.data
 
   if (data?.avatar_url) {
     setResolvedAvatar(data.avatar_url)

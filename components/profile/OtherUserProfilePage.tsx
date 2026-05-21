@@ -129,7 +129,7 @@ export default function OtherUserProfilePage({
 
   function withTimeout<T>(
   promise: PromiseLike<T>,
-  ms = 9000,
+  ms = 4000,
   label = 'request'
 ): Promise<T | null> {
   return Promise.race([
@@ -142,6 +142,19 @@ export default function OtherUserProfilePage({
     }),
   ])
 }
+
+async function safeTask<T>(
+  task: () => PromiseLike<T>,
+  label: string
+): Promise<T | null> {
+  try {
+    return await withTimeout(task(), 4000, label)
+  } catch (error) {
+    console.warn(`${label} failed:`, error)
+    return null
+  }
+}
+
 
   const [profile, setProfile] = useState<any>(null)
   const [posts, setPosts] = useState<any[]>([])
@@ -159,6 +172,11 @@ const [activeTab, setActiveTab] = useState(0)
 
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
+
+  const [postsLoading, setPostsLoading] = useState(false)
+const [videosLoading, setVideosLoading] = useState(false)
+const [followersLoading, setFollowersLoading] = useState(false)
+
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
 
@@ -204,7 +222,7 @@ const [activeTab, setActiveTab] = useState(0)
     .select('id, username, display_name, avatar_url, bio')
     .eq('id', userId)
     .maybeSingle(),
-  9000,
+  4000,
   'other_profile'
 )
 
@@ -233,84 +251,103 @@ const { data: profileData, error: profileError } = profileResult
       setProfile(profileData)
       setLoading(false)
 
-      const authResult = await withTimeout(
-  supabase.auth.getUser(),
-  4000,
+      setFollowersLoading(true)
+setPostsLoading(true)
+setVideosLoading(true)
+
+void safeTask(
+  () => supabase.auth.getUser(),
   'other_profile_auth'
-)
+).then(async (authResult) => {
+  const user = authResult?.data?.user
 
-const user = authResult?.data?.user
+  const followerResult = await safeTask(
+    () =>
+      supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', userId),
+    'other_profile_followers'
+  )
 
-const followerResult = await withTimeout(
-  supabase
-    .from('follows')
-    .select('*', { count: 'exact', head: true })
-    .eq('following_id', userId),
-  4000,
-  'other_profile_followers'
-)
+  if (!alive) return
 
-const count = followerResult?.count ?? 0
+  setFollowerCount(followerResult?.count ?? 0)
+  setFollowersLoading(false)
 
-      if (!alive) return
+  if (!user) return
 
-      setFollowerCount(count ?? 0)
+  const followResult = await safeTask(
+    () =>
+      supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', user.id)
+        .eq('following_id', userId)
+        .maybeSingle(),
+    'other_profile_follow_state'
+  )
 
-      if (user) {
-        const { data: followRow } = await supabase
-          .from('follows')
-          .select('id')
-          .eq('follower_id', user.id)
-          .eq('following_id', userId)
-          .maybeSingle()
+  if (!alive) return
 
-        if (!alive) return
+  setIsFollowing(!!followResult?.data)
+})
 
-        setIsFollowing(!!followRow)
-      }
-
-      const postsResult = await withTimeout(
-  supabase
-    .from('posts')
-    .select(`
-      id,
-      caption,
-      created_at,
-      user_id,
-      post_images (
-        image_url
-      )
-    `)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false }),
-  4000,
+void safeTask(
+  () =>
+    supabase
+      .from('posts')
+      .select(`
+        id,
+        caption,
+        created_at,
+        user_id,
+        post_images (
+          image_url
+        )
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false }),
   'other_profile_posts'
-)
+).then((postsResult) => {
+  if (!alive) return
 
-const postsData = postsResult?.data ?? []
-const postsError = postsResult?.error
+  if (postsResult && 'data' in postsResult) {
+    setPosts(postsResult.data ?? [])
+  } else {
+    setPosts([])
+  }
 
-      if (!alive) return
+  setPostsLoading(false)
+})
 
-      if (postsError) {
-  throw postsError
-}
+void safeTask(
+  () =>
+    supabase
+      .from('short_videos')
+      .select(`
+        id,
+        caption,
+        video_url,
+        thumbnail_url,
+        created_at,
+        user_id
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false }),
+  'other_profile_short_videos'
+).then((videosResult) => {
+  if (!alive) return
 
-            setPosts(postsData ?? [])
-            const { data: videosData } = await supabase
-  .from('short_videos')
-  .select(`
-    id,
-    caption,
-    video_url,
-    thumbnail_url,
-    created_at,
-    user_id
-  `)
-  .eq('user_id', userId)
-  .order('created_at', { ascending: false })
+  if (videosResult && 'data' in videosResult) {
+    setShortVideos(videosResult.data ?? [])
+  } else {
+    setShortVideos([])
+  }
 
-setShortVideos(videosData ?? [])
+  setVideosLoading(false)
+})
+
     } catch (error) {
       console.error('對方 Profile 讀取失敗:', error)
 
@@ -654,7 +691,11 @@ async function toggleFavorite() {
                 style={{ transform: `translateX(-${activeTab * 100}%)` }}
               >
                 <div className="w-full shrink-0">
-                  {gridItems.length === 0 ? (
+                  {postsLoading ? (
+  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
+    貼文讀取中...
+  </div>
+) : gridItems.length === 0 ? (
                     <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
                       {text.noPublicPosts}
                     </div>
@@ -690,7 +731,11 @@ async function toggleFavorite() {
                 </div>
 
                 <div className="w-full shrink-0">
-  {shortVideos.length === 0 ? (
+  {videosLoading ? (
+  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
+    短影片讀取中...
+  </div>
+) : shortVideos.length === 0 ? (
     <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
       {text.shortVideoNext}
     </div>

@@ -124,14 +124,46 @@ const targetRef = useRef<HTMLDivElement | null>(null)
 
 const mainScrollRef = useRef<HTMLElement | null>(null)
 
+function withTimeout<T>(
+  promise: PromiseLike<T>,
+  ms = 4000,
+  label = 'request'
+): Promise<T | null> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<null>((resolve) => {
+      window.setTimeout(() => {
+        console.warn(`${label} timeout`)
+        resolve(null)
+      }, ms)
+    }),
+  ])
+}
+
+async function safeTask<T>(
+  task: () => PromiseLike<T>,
+  label: string
+): Promise<T | null> {
+  try {
+    return await withTimeout(task(), 4000, label)
+  } catch (error) {
+    console.warn(`${label} failed:`, error)
+    return null
+  }
+}
+
 useEffect(() => {
   async function loadStarterPrompts() {
     try {
-      const response = await fetch(
-        '/api/ai-radar/starter-prompts'
-      )
+      const response = await withTimeout(
+  fetch('/api/ai-radar/starter-prompts'),
+  4000,
+  'ai_radar_starter_prompts'
+)
 
-      const data = await response.json()
+if (!response) return
+
+const data = await response.json()
 
       if (Array.isArray(data?.prompts)) {
         setStarterPrompts(data.prompts)
@@ -161,7 +193,11 @@ const user = session?.user
     }
 
     setIsAuthModalOpen(false)
-    await ensureUserProfile()
+
+void safeTask(
+  () => ensureUserProfile(),
+  'ai_radar_ensure_profile'
+)
   }
 
   initAuth()
@@ -170,7 +206,11 @@ const user = session?.user
     async (_event, session) => {
       if (session) {
         setIsAuthModalOpen(false)
-        await ensureUserProfile()
+
+void safeTask(
+  () => ensureUserProfile(),
+  'ai_radar_auth_ensure_profile'
+)
       } else {
         setIsAuthModalOpen(true)
       }
@@ -431,6 +471,7 @@ data = {
 }
 
 setTimeout(async () => {
+  try {
   const matchedUsers = data?.matchedUsers ?? []
 
   const aiReplyText = data?.aiReply ?? ''
@@ -483,7 +524,15 @@ if (matchedUsers.length > 0) {
   }
 
 })
-  }, 900)
+    } catch (renderError) {
+    console.error('AI Radar render failed:', renderError)
+    setLoading(false)
+    setIsLoading(false)
+    setErrorType('RENDER_FAILED')
+    setAiText('AI 雷達顯示結果時發生問題，請再試一次。')
+    setDisplayedAiText('AI 雷達顯示結果時發生問題，請再試一次。')
+  }
+}, 900)
 }
 
   return (

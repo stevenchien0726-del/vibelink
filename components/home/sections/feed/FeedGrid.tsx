@@ -106,7 +106,7 @@ export default function FeedGrid({
           const image =
   post.thumbnailUrl ||
   post.images?.[0] ||
-  ''
+  FALLBACK_IMAGE
 
           return (
             <motion.button
@@ -125,8 +125,8 @@ export default function FeedGrid({
     className="h-full w-full object-cover"
     draggable={false}
     onError={(e) => {
-      e.currentTarget.style.display = 'none'
-    }}
+  e.currentTarget.src = FALLBACK_IMAGE
+}}
   />
 ) : (
   <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1f1f1f] via-[#3a3a3a] to-[#111111]">
