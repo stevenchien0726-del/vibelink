@@ -881,12 +881,43 @@ if (matchedUsers.length > 0) {
 
 <AnimatePresence>
   {selectedProfileUser && (
-    <OtherUserProfilePage
-      user={selectedProfileUser}
-      userId={selectedProfileUser.id}
-      onClose={() => setSelectedProfileUser(null)}
-      locale={safeLocale}
-    />
+    <motion.div
+      className="fixed inset-0 z-[999] bg-[#f3f3f3]"
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{
+        type: 'spring',
+        stiffness: 360,
+        damping: 34,
+      }}
+      drag="x"
+      dragDirectionLock
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={{
+        left: 0,
+        right: 0.22,
+      }}
+      style={{
+        touchAction: 'pan-y',
+      }}
+      onDragEnd={(_, info) => {
+        const shouldClose =
+          info.offset.x > 110 ||
+          info.velocity.x > 520
+
+        if (shouldClose) {
+          setSelectedProfileUser(null)
+        }
+      }}
+    >
+      <OtherUserProfilePage
+        user={selectedProfileUser}
+        userId={selectedProfileUser.id}
+        locale={safeLocale}
+        onClose={() => setSelectedProfileUser(null)}
+      />
+    </motion.div>
   )}
 </AnimatePresence>
     </>
