@@ -54,9 +54,18 @@ type HomePageProps = {
 
 type CreatedPostPayload = {
   id: string
+  user_id?: string
+
+  author?: string
+
   caption: string
+
+  likes?: number
+
   imageUrl: string
   imageUrls: string[]
+
+  aiTags?: string[]
 }
 
 type CommentItem = {
@@ -141,6 +150,7 @@ const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 const [shortVideoStartId, setShortVideoStartId] = useState<string | undefined>()
 
 const detailTouchStartXRef = useRef<number | null>(null)
+const isLoadingShortVideosRef = useRef(false)
 useEffect(() => {
   const saved = localStorage.getItem('vibelink_mock_saved_posts')
 
@@ -173,6 +183,7 @@ useEffect(() => {
 
 void safeTask(() => loadPosts(user), 'home_load_posts')
 void safeTask(() => loadShortVideos(user), 'home_load_short_videos')
+
   }
 
   initHome()
@@ -199,24 +210,27 @@ void safeTask(() => loadShortVideos(user), 'home_load_short_videos')
 function handlePostCreated(post: CreatedPostPayload) {
   const newPost: PostItem = {
     id: post.id,
-    author: 'Vibelink User',
+    user_id: post.user_id,
+
+    author: post.author || 'You',
     text: post.caption || '',
-    likes: 0,
+    likes: post.likes ?? 0,
+
     images: post.imageUrls?.length ? post.imageUrls : [post.imageUrl],
-    aiTags: ['真實發文'],
+
+    aiTags: post.aiTags ?? [],
+    type: 'post',
+
     isMine: true,
+    isLiked: false,
     isSaved: false,
   }
 
   setRealPosts((prev) => [newPost, ...prev])
 
-  // ✅ 顯示 Toast
   setToast('發文成功')
-
-  // ✅ 自動關閉 Upload
   setIsUploadOpen(false)
 
-  // ✅ 1.8 秒後消失
   setTimeout(() => {
     setToast(null)
   }, 1800)
@@ -346,104 +360,58 @@ async function safeTask<T>(
 }
 
 async function loadShortVideos(user?: any, retry = 0) {
-  const { data, error } = await withTimeout(
-  Promise.resolve(
-    supabase
-      .from('short_videos')
-      .select(`
-  id,
-  caption,
-  video_url,
-  thumbnail_url,
-  created_at,
-  user_id
-`)
-      .order('created_at', { ascending: false })
-  ),
-  4000,
-  'short_videos'
-)
-
-  if (error) {
-  console.error('讀取短影片失敗:', error)
-
-  if (retry < 1) {
-    window.setTimeout(() => {
-      loadShortVideos(user, retry + 1)
-    }, 600)
-    return
-  }
-
-  setToast('短影片讀取失敗，請重新整理')
-  return
-}
-
-  const videoIds = (data ?? []).map((video: any) => video.id)
-
-  const { data: likeRows } =
-    videoIds.length > 0
-      ? await supabase
-          .from('short_video_likes')
-          .select('short_video_id, user_id')
-          .in('short_video_id', videoIds)
-      : { data: [] }
-
-  const { data: savedRows } =
-    videoIds.length > 0
-      ? await supabase
-          .from('saved_short_videos')
-          .select('short_video_id, user_id')
-          .in('short_video_id', videoIds)
-      : { data: [] }
-
-  const likeCountMap = new Map<string, number>()
-  const likedSet = new Set<string>()
-  const savedSet = new Set<string>()
-
-  ;(likeRows ?? []).forEach((like: any) => {
-    likeCountMap.set(
-      like.short_video_id,
-      (likeCountMap.get(like.short_video_id) ?? 0) + 1
+  try {
+    const { data, error } = await withTimeout(
+      Promise.resolve(
+        supabase
+          .from('short_videos')
+          .select(`
+            id,
+            caption,
+            video_url,
+            thumbnail_url,
+            created_at,
+            user_id
+          `)
+          .order('created_at', { ascending: false })
+          .limit(20)
+      ),
+      4000,
+      'short_videos'
     )
 
-    if (like.user_id === user?.id) {
-      likedSet.add(like.short_video_id)
+    if (error) throw error
+
+    const mappedVideos: PostItem[] = (data ?? []).map((video: any) => ({
+      id: video.id,
+      user_id: video.user_id,
+      author: 'Vibelink User',
+      text: video.caption || '',
+      likes: 0,
+      images: video.thumbnail_url ? [video.thumbnail_url] : [],
+      thumbnailUrl: video.thumbnail_url || '',
+      videoUrl: video.video_url,
+      type: 'video',
+      aiTags: ['短影片'],
+      isMine: video.user_id === user?.id,
+      isLiked: false,
+      isSaved: false,
+    }))
+
+    setRealVideos(mappedVideos)
+  } catch (error) {
+    console.error('讀取短影片失敗:', error)
+
+    if (retry < 1) {
+      window.setTimeout(() => {
+        loadShortVideos(user, retry + 1)
+      }, 600)
+      return
     }
-  })
 
-  ;(savedRows ?? []).forEach((saved: any) => {
-    if (saved.user_id === user?.id) {
-      savedSet.add(saved.short_video_id)
-    }
-  })
-
-  const { data: myProfile } = await supabase
-    .from('profiles')
-    .select('username, display_name')
-    .eq('id', user?.id)
-    .maybeSingle()
-
-  const mappedVideos: PostItem[] = (data ?? []).map((video: any) => ({
-    id: video.id,
-    user_id: video.user_id,
-    author:
-      video.user_id === user?.id
-        ? myProfile?.display_name || myProfile?.username || 'Vibelink User'
-        : 'Vibelink User',
-    text: video.caption || '',
-    likes: likeCountMap.get(video.id) ?? 0,
-    images: video.thumbnail_url ? [video.thumbnail_url] : [],
-thumbnailUrl: video.thumbnail_url || '',
-videoUrl: video.video_url,
-    type: 'video',
-    aiTags: ['短影片'],
-    isMine: video.user_id === user?.id,
-    isLiked: likedSet.has(video.id),
-    isSaved: savedSet.has(video.id),
-  }))
-
-  setRealVideos(mappedVideos)
+    setToast('短影片讀取失敗，請重新整理')
   }
+}
 
 async function handleDeletePost(post: PostItem) {
   if (!post.id) return
@@ -458,7 +426,12 @@ async function handleDeletePost(post: PostItem) {
     return
   }
 
-  setRealPosts((prev) => prev.filter((p) => p.id !== post.id))
+  if (post.videoUrl || post.type === 'video') {
+  setRealVideos((prev) => prev.filter((p) => p.id !== post.id))
+  return
+}
+
+setRealPosts((prev) => prev.filter((p) => p.id !== post.id))
 }
 
 async function toggleShortVideoLike(post: PostItem) {
@@ -471,7 +444,7 @@ async function toggleShortVideoLike(post: PostItem) {
   const isLiked = !!post.isLiked
   const nextLiked = !isLiked
 
-  setRealPosts((prev) =>
+  setRealVideos((prev) =>
     prev.map((item) =>
       item.id === post.id
         ? {
@@ -509,7 +482,7 @@ async function toggleShortVideoSave(post: PostItem) {
   const isSaved = !!post.isSaved
   const nextSaved = !isSaved
 
-  setRealPosts((prev) =>
+  setRealVideos((prev) =>
     prev.map((item) =>
       item.id === post.id
         ? {
@@ -1110,7 +1083,11 @@ if (isTap) {
 const mergedPosts = [
   ...realVideos,
   ...realPosts,
-  ...mockShortVideos,
+
+  ...(realVideos.length > 0
+  ? mockShortVideos
+  : mockShortVideos.slice(0, 4)),
+
   ...mockPosts.map((post) => ({
     ...post,
     isSaved: mockSavedPostIds.includes(post.id),
@@ -1320,7 +1297,10 @@ const mergedPosts = [
 const user = data.session?.user ?? null
 
 void safeTask(() => loadPosts(user), 'upload_reload_posts')
-void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
+
+if (realVideos.length > 0) {
+  void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
+}
 }}
   onPostCreated={handlePostCreated}
 />
@@ -1337,10 +1317,23 @@ void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
   posts={mergedPosts}
   onOpenPost={(post) => {
   if (post.type === 'video' || post.videoUrl) {
-    setShortVideoStartId(post.id)
-    setIsShortVideoPageOpen(true)
-    return
-  }
+  setShortVideoStartId(post.id)
+  setIsShortVideoPageOpen(true)
+
+  if (realVideos.length === 0 && !isLoadingShortVideosRef.current) {
+  isLoadingShortVideosRef.current = true
+
+  void safeTask(async () => {
+    const { data } = await supabase.auth.getSession()
+    const user = data.session?.user ?? null
+    await loadShortVideos(user)
+  }, 'lazy_load_short_videos').finally(() => {
+    isLoadingShortVideosRef.current = false
+  })
+}
+
+  return
+}
 
   openDetailPost(post)
 }}

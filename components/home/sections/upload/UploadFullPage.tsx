@@ -26,6 +26,8 @@ export default function UploadFullPage({
   const [activeTab, setActiveTab] = useState<UploadTab>('post')
   const [isReadyToPost, setIsReadyToPost] = useState(false)
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const createPostRef = useRef<CreatePostBoxRef>(null)
   const createShortVideoRef = useRef<CreateShortVideoBoxRef>(null)
 
@@ -69,7 +71,10 @@ export default function UploadFullPage({
           <div className="flex items-center justify-between">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+  if (isSubmitting) return
+  onClose()
+}}
               className="text-[15px] font-medium text-[var(--app-text)]"
             >
               CLOSE
@@ -77,18 +82,34 @@ export default function UploadFullPage({
 
             <button
               type="button"
-              disabled={!isReadyToPost}
-              onClick={() => {
-                if (!isReadyToPost) return
+              disabled={!isReadyToPost || isSubmitting}
+              onClick={async () => {
+  if (!isReadyToPost || isSubmitting) return
 
-                if (activeTab === 'post') {
-                  createPostRef.current?.submitPost()
-                }
+  setIsSubmitting(true)
 
-                if (activeTab === 'video') {
-                  createShortVideoRef.current?.submitVideo()
-                }
-              }}
+  try {
+    const submitPromise =
+      activeTab === 'post'
+        ? createPostRef.current?.submitPost()
+        : createShortVideoRef.current?.submitVideo()
+
+    await Promise.race([
+      Promise.resolve(submitPromise),
+      new Promise((_, reject) => {
+        window.setTimeout(() => {
+          reject(new Error('upload timeout'))
+        }, 15000)
+      }),
+    ])
+  } catch (error) {
+    console.error('發佈失敗或逾時:', error)
+    alert('發佈失敗，請檢查網路後再試一次。')
+  } finally {
+    setIsSubmitting(false)
+  }
+}}
+
               className="flex h-[40px] min-w-[120px] items-center justify-center rounded-[14px] px-6 text-[15px] font-medium"
               style={{
                 background: isReadyToPost ? '#c86cff' : '#efd6f4',
@@ -96,7 +117,7 @@ export default function UploadFullPage({
                 opacity: isReadyToPost ? 1 : 0.7,
               }}
             >
-              發佈
+              {isSubmitting ? '發佈中...' : '發佈'}
             </button>
           </div>
 

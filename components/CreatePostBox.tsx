@@ -3,15 +3,97 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
+async function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.readAsDataURL(file)
+
+    reader.onload = () => {
+      const img = new Image()
+
+      img.src = reader.result as string
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+
+        const MAX_WIDTH = 1600
+        const scale = Math.min(
+          1,
+          MAX_WIDTH / img.width
+        )
+
+        canvas.width = img.width * scale
+        canvas.height = img.height * scale
+
+        const ctx = canvas.getContext('2d')
+
+        if (!ctx) {
+          reject(new Error('canvas error'))
+          return
+        }
+
+        ctx.drawImage(
+          img,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        )
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('compress failed'))
+              return
+            }
+
+            const compressedFile = new File(
+              [blob],
+              file.name.replace(/\.\w+$/, '.jpg'),
+              {
+                type: 'image/jpeg',
+              }
+            )
+
+            resolve(compressedFile)
+          },
+          'image/jpeg',
+          0.82
+        )
+      }
+
+      img.onerror = reject
+    }
+
+    reader.onerror = reject
+  })
+}
+
 export type CreatePostBoxRef = {
   submitPost: () => Promise<void>
 }
 
 export type CreatedPostPayload = {
   id: string
+  user_id: string
+
+  author: string
+
   caption: string
+
   imageUrl: string
   imageUrls: string[]
+
+  likes: number
+
+  aiTags: string[]
+
+  type: 'post'
+
+  isMine: boolean
+  isLiked: boolean
+  isSaved: boolean
 }
 
 type CreatePostBoxProps = {
@@ -25,6 +107,8 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
     const [files, setFiles] = useState<File[]>([])
     const [previewUrls, setPreviewUrls] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
+
+    const [uploadStatus, setUploadStatus] = useState('')
 
     useEffect(() => {
       if (files.length === 0) {
@@ -41,8 +125,8 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
     }, [files])
 
     useEffect(() => {
-  onReadyChange?.(files.length > 0)
-}, [files])
+  onReadyChange?.(files.length > 0 && !loading)
+}, [files, loading, onReadyChange])
 
     async function submitPost() {
       if (loading) return
@@ -58,6 +142,8 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
       }
 
       setLoading(true)
+      onReadyChange?.(false)
+      setUploadStatus('準備上傳中...')
 
       try {
         const {
@@ -70,30 +156,57 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
           return
         }
 
-        const uploadedImageUrls: string[] = []
+        const uploadedImageUrls = await Promise.all(
+  files.map(async (rawFile, index) => {
+    if (rawFile.size > 12 * 1024 * 1024) {
+  throw new Error('單張圖片不能超過 12MB')
+}
 
-        for (const file of files) {
-          const fileExt = file.name.split('.').pop() || 'png'
-          const safeFileName = `${crypto.randomUUID()}.${fileExt}`
-          const filePath = `${user.id}/${Date.now()}-${safeFileName}`
+let file = rawFile
 
-          const { error: uploadError } = await supabase.storage
-            .from('post-images')
-            .upload(filePath, file)
+try {
+  file = await compressImage(rawFile)
+} catch (error) {
+  console.warn('圖片壓縮失敗，改用原圖上傳:', error)
+}
 
-          if (uploadError) {
-            console.error(uploadError)
-            alert('圖片上傳失敗')
-            return
-          }
+    const fileExt = file.type === 'image/jpeg'
+  ? 'jpg'
+  : file.name.split('.').pop() || 'jpg'
 
-          const { data: publicUrlData } = supabase.storage
-            .from('post-images')
-            .getPublicUrl(filePath)
+    const safeFileName =
+      `${crypto.randomUUID()}.${fileExt}`
 
-          uploadedImageUrls.push(publicUrlData.publicUrl)
-        }
+    const filePath =
+      `${user.id}/${Date.now()}-${safeFileName}`
 
+      setUploadStatus(`正在上傳第 ${index + 1} / ${files.length} 張圖片...`)
+    const uploadResult = await Promise.race([
+  supabase.storage
+    .from('post-images')
+    .upload(filePath, file),
+
+  new Promise<never>((_, reject) => {
+    window.setTimeout(() => {
+      reject(new Error('upload timeout'))
+    }, 12000)
+  }),
+])
+
+if (uploadResult.error) {
+  throw uploadResult.error
+}
+
+    const { data: publicUrlData } =
+      supabase.storage
+        .from('post-images')
+        .getPublicUrl(filePath)
+
+    return publicUrlData.publicUrl
+  })
+)
+
+setUploadStatus('正在建立貼文...')
         const { data: postData, error: postError } = await supabase
           .from('posts')
           .insert({
@@ -104,32 +217,47 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
           .single()
 
         if (postError || !postData) {
-          console.error(postError)
-          alert('建立貼文失敗')
-          return
-        }
+  console.error(postError)
+  throw postError || new Error('建立貼文失敗')
+}
 
         const imageRows = uploadedImageUrls.map((imageUrl) => ({
           post_id: postData.id,
           image_url: imageUrl,
         }))
 
+        setUploadStatus('正在寫入圖片資料...')
         const { error: imageError } = await supabase
           .from('post_images')
           .insert(imageRows)
 
         if (imageError) {
-          console.error(imageError)
-          alert('圖片資料寫入失敗')
-          return
-        }
+  console.error(imageError)
+  throw imageError
+}
 
         const createdPost: CreatedPostPayload = {
-          id: postData.id,
-          caption,
-          imageUrl: uploadedImageUrls[0],
-          imageUrls: uploadedImageUrls,
-        }
+  id: postData.id,
+
+  user_id: user.id,
+
+  author: 'You',
+
+  caption,
+
+  imageUrl: uploadedImageUrls[0],
+  imageUrls: uploadedImageUrls,
+
+  likes: 0,
+
+  aiTags: [],
+
+  type: 'post',
+
+  isMine: true,
+  isLiked: false,
+  isSaved: false,
+}
 
 console.log(
   '🟣 analyze trigger:',
@@ -162,12 +290,17 @@ console.log(
     )
   })
 
-        setCaption('')
+                setCaption('')
         setFiles([])
         onSuccess?.(createdPost)
+      } catch (error) {
+        console.error('發文失敗:', error)
+        alert('發文失敗，請檢查網路或圖片大小後再試一次。')
       } finally {
-        setLoading(false)
-      }
+      setLoading(false)
+setUploadStatus('')
+onReadyChange?.(false)
+}
     }
 
     useImperativeHandle(ref, () => ({
@@ -235,8 +368,10 @@ console.log(
         )}
 
         {loading && (
-          <p className="mt-3 text-center text-sm text-[#777]">發文中...</p>
-        )}
+  <p className="mt-3 text-center text-sm text-[#777]">
+    {uploadStatus || '發文中...'}
+  </p>
+)}
       </div>
     )
   }

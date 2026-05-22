@@ -120,8 +120,6 @@ setProfileLoading(false)
 Promise.allSettled([
   safeTask(() => loadMyFollowerCount(), 'followers'),
   safeTask(() => loadMyPosts(), 'my_posts'),
-  safeTask(() => loadMyShortVideos(), 'my_short_videos'),
-  safeTask(() => loadSavedPosts(), 'saved_posts'),
 ])
   } catch (error) {
     console.error('自己 Profile 初始化失敗:', error)
@@ -162,8 +160,6 @@ Promise.allSettled([
   safeTask(() => ensureMyProfile(), 'auth_ensure_profile'),
   safeTask(() => loadMyFollowerCount(), 'auth_followers'),
   safeTask(() => loadMyPosts(), 'auth_my_posts'),
-  safeTask(() => loadMyShortVideos(), 'auth_my_short_videos'),
-  safeTask(() => loadSavedPosts(), 'auth_saved_posts'),
 ])
     }, 0)
   })
@@ -201,11 +197,33 @@ const [profileError, setProfileError] = useState('')
   const tabTouchDeltaX = useRef(0)
 
   const [myPosts, setMyPosts] = useState<any[]>([])
+
+  const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false)
+const [hasMorePosts, setHasMorePosts] = useState(true)
+const loadMorePostsRef = useRef<HTMLDivElement | null>(null)
+
   const [myShortVideos, setMyShortVideos] = useState<any[]>([])
   const [selectedShortVideoId, setSelectedShortVideoId] = useState<string | undefined>()
 const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 
   const [savedPosts, setSavedPosts] = useState<any[]>([])
+
+  const [hasLoadedSavedPosts, setHasLoadedSavedPosts] = useState(false)
+const [isLoadingSavedPosts, setIsLoadingSavedPosts] = useState(false)
+
+async function lazyLoadSavedPosts() {
+  if (hasLoadedSavedPosts || isLoadingSavedPosts) return
+
+  setIsLoadingSavedPosts(true)
+
+  try {
+    await safeTask(() => loadSavedPosts(), 'lazy_saved_posts')
+    setHasLoadedSavedPosts(true)
+  } finally {
+    setIsLoadingSavedPosts(false)
+  }
+}
+
   const [archivedPosts, setArchivedPosts] = useState<any[]>([])
   const [archivedShortVideos, setArchivedShortVideos] = useState<any[]>([])
 
@@ -406,7 +424,7 @@ async function updateProfile() {
   setIsEditProfileOpen(false)
 }
 
-async function loadMyPosts() {
+async function loadMyPosts(start = 0, end = 11, append = false) {
   const {
     data: { user },
     error: userError,
@@ -430,6 +448,7 @@ async function loadMyPosts() {
   `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
+.range(start, end)
 
   if (error) {
   console.error('讀取我的貼文失敗:', error)
@@ -438,6 +457,10 @@ async function loadMyPosts() {
 
   const postIds = (data ?? []).map((post: any) => post.id)
 
+  if (postIds.length === 0) {
+  setMyPosts([])
+  return
+}
   const { data: likeRows } =
     postIds.length > 0
       ? await supabase
@@ -466,7 +489,29 @@ async function loadMyPosts() {
     isLiked: likedSet.has(post.id),
   }))
 
-  setMyPosts(postsWithLikes)
+  setMyPosts((prev) =>
+  append ? [...prev, ...postsWithLikes] : postsWithLikes
+)
+
+setHasMorePosts((data ?? []).length === end - start + 1)
+}
+
+async function loadMoreMyPosts() {
+  if (isLoadingMorePosts || !hasMorePosts) return
+
+  setIsLoadingMorePosts(true)
+
+  try {
+    const start = myPosts.length
+    const end = start + 11
+
+    await safeTask(
+      () => loadMyPosts(start, end, true),
+      'load_more_my_posts'
+    )
+  } finally {
+    setIsLoadingMorePosts(false)
+  }
 }
 
 async function loadMyShortVideos() {
@@ -891,11 +936,18 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 }
 
   function goToTab(index: number) {
-    if (index < 0 || index > 2) return
-    setActiveTab(index)
+  if (index < 0 || index > 2) return
+
+  setActiveTab(index)
+
+  if (index === 1) {
+    void safeTask(() => loadMyShortVideos(), 'lazy_my_short_videos')
   }
 
-  
+  if (index === 2) {
+    void lazyLoadSavedPosts()
+  }
+}
 
   function handleTabTouchStart(e: React.TouchEvent<HTMLDivElement>) {
     const touch = e.touches[0]
@@ -930,6 +982,32 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   tabTouchStartX.current = null
   tabTouchDeltaX.current = 0
 }
+
+useEffect(() => {
+  if (activeTab !== 0) return
+
+  const node = loadMorePostsRef.current
+  if (!node) return
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0]
+
+      if (entry.isIntersecting) {
+        void loadMoreMyPosts()
+      }
+    },
+    {
+      root: null,
+      rootMargin: '300px',
+      threshold: 0.1,
+    }
+  )
+
+  observer.observe(node)
+
+  return () => observer.disconnect()
+}, [activeTab, myPosts.length, hasMorePosts, isLoadingMorePosts])
 
   return (
     <div className="relative min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] pb-[110px]">
@@ -1019,6 +1097,8 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
     setComments,
   })
 }
+
+
   onOpenShortVideo={(videoId) => {
     setSelectedShortVideoId(videoId)
     setIsShortVideoPageOpen(true)
@@ -1027,6 +1107,17 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   onTouchMove={handleTabTouchMove}
   onTouchEnd={handleTabTouchEnd}
 />
+
+{activeTab === 0 && (
+  <div ref={loadMorePostsRef} className="h-12">
+    {isLoadingMorePosts && (
+      <div className="py-4 text-center text-[13px] text-[var(--app-muted)]">
+        載入更多貼文...
+      </div>
+    )}
+  </div>
+)}
+
         </div>
 
 <AnimatePresence>
@@ -1076,6 +1167,7 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
 ])
 
   loadMyPosts()
+  
 }}
 />
         )}

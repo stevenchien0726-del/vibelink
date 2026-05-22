@@ -213,8 +213,6 @@ if (isStuck && reloadCount < 2) {
   }
 }
 
-
-
   function resetDrag() {
     animate(dragX, 0, {
       type: 'spring',

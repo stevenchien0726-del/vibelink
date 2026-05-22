@@ -1,17 +1,7 @@
 'use client'
 
-import WideMenuSheet from '@/components/WideMenuSheet'
-import { useEffect, useRef, useState } from 'react'
-import {
-  Heart,
-  MessageCircle,
-  MoreHorizontal,
-  Send,
-  Bookmark,
-} from 'lucide-react'
+import { memo, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-
-import { supabase } from '@/lib/supabase'
 
 export type PostItem = {
   id: string
@@ -22,10 +12,8 @@ export type PostItem = {
   videoUrl?: string
   thumbnailUrl?: string
   aiTags: string[]
-
   feedScore?: number
   feedReasons?: string[]
-
   isMine?: boolean
   isLiked?: boolean
   isSaved?: boolean
@@ -46,51 +34,13 @@ type FeedGridProps = {
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
 
-
-export default function FeedGrid({
+function FeedGrid({
   posts = [],
   onOpenPost,
-  onOpenComments,
-  onOpenShare,
-  onDeletePost,
-  onOpenProfile,
 }: FeedGridProps) {
-  const [slideMap, setSlideMap] = useState<Record<string, number>>({})
-  const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null)
-  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({})
-  const [likeCountMap, setLikeCountMap] = useState<Record<string, number>>({})
-  const [bigHeartPostId, setBigHeartPostId] = useState<string | null>(null)
-  const [savedMap, setSavedMap] = useState<Record<string, boolean>>({})
+  const visiblePosts = useMemo(() => posts.slice(0, 40), [posts])
 
-  const touchStartXRef = useRef<number | null>(null)
-  const touchStartYRef = useRef<number | null>(null)
-  const isHorizontalGestureRef = useRef(false)
-  const activeTouchPostIdRef = useRef<string | null>(null)
-
-  const lastTapPostIdRef = useRef<string | null>(null)
-  const lastTapTimeRef = useRef(0)
-
-  useEffect(() => {
-    const nextCounts: Record<string, number> = {}
-    const nextLiked: Record<string, boolean> = {}
-    const nextSaved: Record<string, boolean> = {}
-
-    posts.forEach((post) => {
-      nextCounts[post.id] = post.likes ?? 0
-      nextLiked[post.id] = !!post.isLiked
-      nextSaved[post.id] = !!post.isSaved
-    })
-
-    setLikeCountMap(nextCounts)
-    setLikedMap(nextLiked)
-    setSavedMap(nextSaved)
-  }, [posts])
-
-  const getPostImages = (post: PostItem) => {
-    return post.images && post.images.length > 0 ? post.images : [FALLBACK_IMAGE]
-  }
-
-  if (!posts || posts.length === 0) return null
+  if (visiblePosts.length === 0) return null
 
   return (
     <AnimatePresence mode="wait">
@@ -102,11 +52,11 @@ export default function FeedGrid({
         transition={{ type: 'spring', stiffness: 320, damping: 30 }}
         className="grid grid-cols-2 gap-[3px]"
       >
-        {posts.map((post) => {
+        {visiblePosts.map((post) => {
           const image =
-  post.thumbnailUrl ||
-  post.images?.[0] ||
-  FALLBACK_IMAGE
+            post.thumbnailUrl ||
+            post.images?.[0] ||
+            FALLBACK_IMAGE
 
           return (
             <motion.button
@@ -116,48 +66,74 @@ export default function FeedGrid({
               onClick={() => onOpenPost?.(post)}
               className="relative h-[280px] w-full overflow-hidden rounded-[6px] bg-[#dddddd]"
             >
+
+              {!post.videoUrl && post.images?.length > 1 && (
+  <div className="pointer-events-none absolute right-[10px] top-[10px] z-10">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    className="h-[20px] w-[20px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]"
+  >
+    <rect
+      x="7"
+      y="5"
+      width="11"
+      height="11"
+      rx="2"
+      stroke="white"
+      strokeWidth="2"
+    />
+    <rect
+      x="4"
+      y="8"
+      width="11"
+      height="11"
+      rx="2"
+      stroke="white"
+      strokeWidth="2"
+    />
+  </svg>
+</div>
+)}
+
               {post.videoUrl ? (
   <>
-    {image ? (
-  <img
-    src={image}
-    alt={post.author}
-    className="h-full w-full object-cover"
-    draggable={false}
-    onError={(e) => {
-  e.currentTarget.src = FALLBACK_IMAGE
-}}
-  />
-) : (
-  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1f1f1f] via-[#3a3a3a] to-[#111111]">
-    <div className="text-[13px] font-semibold text-white/70">
-      Vibe Video
-    </div>
-  </div>
-)}
+    <video
+      src={post.videoUrl}
+      className="h-full w-full object-cover"
+      muted
+      loop
+      playsInline
+      autoPlay
+      preload="metadata"
+    />
 
     <div className="pointer-events-none absolute inset-0 bg-black/5" />
 
-    <div className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/45 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-md">
-      ▶
-    </div>
+    <div className="pointer-events-none absolute right-[10px] top-[10px] z-10">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="white"
+    className="h-[20px] w-[20px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]"
+  >
+    <path d="M8 5.14v14l11-7-11-7z" />
+  </svg>
+</div>
   </>
-) : image ? (
+) : (
   <img
     src={image}
-    alt={post.author}
+    alt={post.author || 'Vibelink post'}
+    loading="lazy"
+    decoding="async"
     className="h-full w-full object-cover"
     draggable={false}
     onError={(e) => {
-      e.currentTarget.style.display = 'none'
+      e.currentTarget.src = FALLBACK_IMAGE
     }}
   />
-) : (
-  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1f1f1f] via-[#3a3a3a] to-[#111111]">
-    <div className="text-[13px] font-semibold text-white/70">
-      Vibe Video
-    </div>
-    </div>
 )}
             </motion.button>
           )
@@ -166,3 +142,5 @@ export default function FeedGrid({
     </AnimatePresence>
   )
 }
+
+export default memo(FeedGrid)
