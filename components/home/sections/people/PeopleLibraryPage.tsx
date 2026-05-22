@@ -232,19 +232,30 @@ async function fetchFavoriteUser(retry = 0) {
   }
 }
 
-    function reloadPeopleLibrary() {
-    setPeopleLoading(true)
-    setPeopleError('')
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
+}
 
-    Promise.allSettled([
-  fetchRecentFollowedUser(),
-  fetchFavoriteUser(),
-]).finally(() => {
-      if (!cancelled) {
-        setPeopleLoading(false)
-      }
-    })
+    async function reloadPeopleLibrary() {
+  setPeopleLoading(true)
+  setPeopleError('')
+
+  // 第一批：最近追蹤
+  await fetchRecentFollowedUser()
+
+  if (cancelled) return
+
+  // 第二批：我的最愛，延後讀
+  await delay(600)
+
+  if (cancelled) return
+
+  await fetchFavoriteUser()
+
+  if (!cancelled) {
+    setPeopleLoading(false)
   }
+}
 
   reloadPeopleLibrary()
 
@@ -253,15 +264,13 @@ async function fetchFavoriteUser(retry = 0) {
       console.warn('People Library 讀取超時，自動重新讀取')
       reloadPeopleLibrary()
     }
-  }, 4000)
+  }, 18000)
 
   return () => {
     cancelled = true
     window.clearTimeout(timeoutId)
   }
 }, [])
-
-
 
   function closeSheet() {
     animate(sheetY, 540, {

@@ -63,7 +63,7 @@ export default function ProfilePage({
 
   function withTimeout<T>(
   promise: PromiseLike<T>,
-  ms = 4000,
+  ms = 10000,
   label = 'request'
 ): Promise<T> {
   return Promise.race([
@@ -80,7 +80,7 @@ async function safeTask<T>(
   label: string
 ): Promise<T | null> {
   try {
-    return await withTimeout(task(), 4000, label)
+    return await withTimeout(task(), 10000, label)
   } catch (error) {
     console.warn(`${label} failed:`, error)
     return null
@@ -111,16 +111,28 @@ async function safeTask<T>(
 
     setCurrentUserId(user.id)
 
-await withTimeout(ensureMyProfile(), 4000, 'ensure_my_profile')
+await withTimeout(ensureMyProfile(), 10000, 'ensure_my_profile')
 
 if (!alive) return
 
 setProfileLoading(false)
 
-Promise.allSettled([
-  safeTask(() => loadMyFollowerCount(), 'followers'),
-  safeTask(() => loadMyPosts(), 'my_posts'),
-])
+// 第二批：先讀貼文
+await delay(500)
+
+if (!alive) return
+
+void safeTask(() => loadMyPosts(), 'my_posts')
+
+// 第三批：再讀 followers
+await delay(700)
+
+if (!alive) return
+
+void safeTask(
+  () => loadMyFollowerCount(),
+  'followers'
+)
   } catch (error) {
     console.error('自己 Profile 初始化失敗:', error)
 
@@ -139,6 +151,10 @@ Promise.allSettled([
   }
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
+}
+
   init()
 
   const {
@@ -153,15 +169,32 @@ Promise.allSettled([
 
     setCurrentUserId(user.id)
 
-    setTimeout(() => {
-      if (!alive) return
+    window.setTimeout(async () => {
+  if (!alive) return
 
-      Promise.allSettled([
-  safeTask(() => ensureMyProfile(), 'auth_ensure_profile'),
-  safeTask(() => loadMyFollowerCount(), 'auth_followers'),
-  safeTask(() => loadMyPosts(), 'auth_my_posts'),
-])
-    }, 0)
+  await safeTask(
+    () => ensureMyProfile(),
+    'auth_ensure_profile'
+  )
+
+  await delay(500)
+
+  if (!alive) return
+
+  void safeTask(
+    () => loadMyPosts(),
+    'auth_my_posts'
+  )
+
+  await delay(700)
+
+  if (!alive) return
+
+  void safeTask(
+    () => loadMyFollowerCount(),
+    'auth_followers'
+  )
+}, 300)
   })
 
   return () => {

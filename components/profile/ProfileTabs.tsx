@@ -2,6 +2,8 @@
 
 import { Bookmark, Grid2x2, PlaySquare } from 'lucide-react'
 
+import { motion } from 'framer-motion'
+
 type Props = {
   activeTab: number
   onChangeTab: (index: number) => void
@@ -54,15 +56,19 @@ export default function ProfileTabs({
         </button>
       </div>
 
-      <div
-        className="pointer-events-none absolute bottom-0 h-[4px] px-2 transition-all duration-300 ease-out"
-        style={{
-          left: `${activeTab * 33.3333}%`,
-          width: '33.3333%',
+            <motion.div
+        className="absolute bottom-0 w-[33.3333%] px-2"
+        animate={{
+          x: `${activeTab * 100}%`,
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 380,
+          damping: 32,
         }}
       >
         <div className="h-[4px] w-full rounded-full bg-[#d89ad0]" />
-      </div>
+      </motion.div>
     </div>
   )
 }

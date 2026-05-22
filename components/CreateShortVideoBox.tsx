@@ -263,7 +263,7 @@ if (newVideo?.id) {
     } finally {
       setAiAnalyzing(false)
     }
-  }, 300)
+  }, 1500)
 }
 
     }
@@ -300,7 +300,7 @@ if (newVideo?.id) {
         console.warn('手機短影片載入超時，自動重讀')
         setVideoReloadKey((prev) => prev + 1)
       }
-    }, 4000)
+    }, 10000)
   }}
             className="h-[360px] w-full max-w-[280px] rounded-[20px] bg-black object-cover"
           />

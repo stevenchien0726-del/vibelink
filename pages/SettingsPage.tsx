@@ -275,7 +275,7 @@ export default function SettingsPage({
           label={text.blocked}
           onClick={onBlockedClick}
         />
-      </div>
+      </div>ProfilePage.tsx
 
       <div className="mt-[24px] overflow-hidden rounded-[22px] bg-[var(--app-card)] py-[20px]">
         <SettingsRow

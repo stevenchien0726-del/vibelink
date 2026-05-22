@@ -174,14 +174,20 @@ useEffect(() => {
 
     setIsAuthModalOpen(false)
 
-    void safeTask(
+    // 第一批：先確保登入者 profile
+void safeTask(
   () => ensureUserProfile(),
   'home_ensure_profile'
 ).then((profile) => {
   console.log('目前登入者 Profile:', profile)
 })
 
+// 第二批：先讀首頁 feed
+await delay(500)
 void safeTask(() => loadPosts(user), 'home_load_posts')
+
+// 第三批：短影片延後讀，避免跟 feed 搶
+await delay(900)
 void safeTask(() => loadShortVideos(user), 'home_load_short_videos')
 
   }
@@ -196,8 +202,26 @@ void safeTask(() => loadShortVideos(user), 'home_load_short_videos')
   console.log('登入成功 ✅')
   setIsAuthModalOpen(false)
 
-  const profile = await ensureUserProfile()
-  console.log('目前登入者 Profile:', profile)
+  const profile = await safeTask(
+  () => ensureUserProfile(),
+  'home_auth_ensure_profile'
+)
+
+console.log('目前登入者 Profile:', profile)
+
+await delay(500)
+
+void safeTask(
+  () => loadPosts(session.user),
+  'home_auth_load_posts'
+)
+
+await delay(900)
+
+void safeTask(
+  () => loadShortVideos(session.user),
+  'home_auth_load_short_videos'
+)
 }
   }
 )
@@ -272,7 +296,7 @@ function handlePostCreated(post: CreatedPostPayload) {
 
   function withTimeout<T>(
   promise: Promise<T>,
-  ms = 4000,
+  ms = 10000,
   label = 'request'
 ): Promise<T> {
   return Promise.race([
@@ -290,11 +314,15 @@ async function safeTask<T>(
   label: string
 ): Promise<T | null> {
   try {
-    return await withTimeout(Promise.resolve(task()), 4000, label)
+    return await withTimeout(Promise.resolve(task()), 10000, label)
   } catch (error) {
     console.warn(`${label} failed:`, error)
     return null
   }
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
 }
 
   async function loadPosts(user?: any, retry = 0) {
@@ -304,7 +332,7 @@ async function safeTask<T>(
     method: 'GET',
     cache: 'no-store',
   }),
-  4000,
+  10000,
   'feed'
 )
 
@@ -376,7 +404,7 @@ async function loadShortVideos(user?: any, retry = 0) {
           .order('created_at', { ascending: false })
           .limit(20)
       ),
-      4000,
+      10000,
       'short_videos'
     )
 

@@ -95,6 +95,7 @@ const [showMorePrompts, setShowMorePrompts] = useState(false)
 const [rewritePrompts, setRewritePrompts] = useState<string[]>([])
 
 const [starterPrompts, setStarterPrompts] = useState<string[]>([])
+const [isGeneratingPrompts, setIsGeneratingPrompts] = useState(true)
 
 const [showTopBar, setShowTopBar] = useState(true)
 
@@ -127,7 +128,7 @@ const mainScrollRef = useRef<HTMLElement | null>(null)
 
 function withTimeout<T>(
   promise: PromiseLike<T>,
-  ms = 4000,
+  ms = 10000,
   label = 'request'
 ): Promise<T | null> {
   return Promise.race([
@@ -146,7 +147,7 @@ async function safeTask<T>(
   label: string
 ): Promise<T | null> {
   try {
-    return await withTimeout(task(), 4000, label)
+    return await withTimeout(task(), 10000, label)
   } catch (error) {
     console.warn(`${label} failed:`, error)
     return null
@@ -155,25 +156,30 @@ async function safeTask<T>(
 
 useEffect(() => {
   async function loadStarterPrompts() {
+    setIsGeneratingPrompts(true)
+    
     try {
       const response = await withTimeout(
   fetch('/api/ai-radar/starter-prompts'),
-  4000,
-  'ai_radar_starter_prompts'
+12000,
+'ai_radar_starter_prompts'
 )
 
 if (!response) return
 
 const data = await response.json()
 
-      if (Array.isArray(data?.prompts)) {
-        setStarterPrompts(data.prompts)
-      }
+      if (Array.isArray(data?.prompts) && data.prompts.length > 0) {
+  setStarterPrompts(data.prompts)
+}
+
     } catch (error) {
       console.error(
         'loadStarterPrompts failed:',
         error
       )
+    } finally {
+      setIsGeneratingPrompts(false)
     }
   }
 
@@ -355,25 +361,73 @@ function handleVoiceInput() {
 
 function getCandidateDescription(user: any) {
   const tags = user.tags ?? user.vibe_tags ?? []
-  const tagText = tags.slice(0, 3).join('、')
+  const reasons = (user.matchedReasons ?? []).filter(
+  (reason: string) =>
+    !reason.toLowerCase().includes('vector similarity')
+)
 
-  if (tags.includes('nightlife') || tags.includes('techno') || tags.includes('rave') || tags.includes('dj')) {
-    return `${user.displayName} 偏夜生活與音樂派對感，標籤包含 ${tagText}，適合喜歡高能量社交的人。`
+  const name = user.displayName || user.username || '這位用戶'
+
+  // 優先使用 AI matchedReasons
+  if (reasons.length > 0) {
+  return `${name} 的內容和你的搜尋方向很接近，整體氛圍看起來自然、有生活感，也比較容易產生共鳴。`
+}
+
+  // 夜生活 / 音樂派對
+  if (
+    tags.includes('nightlife') ||
+    tags.includes('techno') ||
+    tags.includes('rave') ||
+    tags.includes('dj')
+  ) {
+    return `${name} 偏音樂派對與夜生活 vibe，照片裡有不少活動感與社交氛圍，整體能量感比較強。`
   }
 
-  if (tags.includes('gym') || tags.includes('fitness') || tags.includes('workout')) {
-    return `${user.displayName} 偏健身與運動生活感，標籤包含 ${tagText}，整體比較自律、有活力。`
+  // 健身 / 戶外
+  if (
+    tags.includes('gym') ||
+    tags.includes('fitness') ||
+    tags.includes('workout')
+  ) {
+    return `${name} 的內容偏運動與戶外生活感，整體給人比較自律、有活力，也帶一點陽光系氛圍。`
   }
 
-  if (tags.includes('coffee') || tags.includes('cafe')) {
-    return `${user.displayName} 偏咖啡與生活感，標籤包含 ${tagText}，整體氛圍比較日常、放鬆。`
+  // 文青 / 咖啡
+  if (
+    tags.includes('coffee') ||
+    tags.includes('cafe') ||
+    tags.includes('book')
+  ) {
+    return `${name} 的照片有不少咖啡廳與生活日常感，整體氛圍偏安靜、慢節奏，帶一點文青氣質。`
   }
 
-  if (tags.includes('dance') || tags.includes('kpop')) {
-    return `${user.displayName} 偏舞蹈與韓系感，標籤包含 ${tagText}，互動氛圍比較活潑。`
+  // 舞蹈 / 韓系
+  if (
+    tags.includes('dance') ||
+    tags.includes('kpop')
+  ) {
+    return `${name} 偏舞蹈與韓系 vibe，內容看起來比較活潑，也有一點小網紅感。`
   }
 
-  return `${user.displayName} 和你的搜尋條件有部分重疊，標籤包含 ${tagText}。`
+  // 寵物 / 柔和日常
+  if (
+    tags.includes('cat') ||
+    tags.includes('dog') ||
+    tags.includes('pet')
+  ) {
+    return `${name} 的內容有不少寵物與日常生活感，整體氛圍比較柔和、安靜，也帶有一點療癒感。`
+  }
+
+  // 海邊 / 旅行
+  if (
+    tags.includes('beach') ||
+    tags.includes('travel')
+  ) {
+    return `${name} 的照片偏旅行與戶外探索感，整體像是喜歡自由生活與體驗新事物的人。`
+  }
+
+  // fallback
+  return `${name} 的內容和你的搜尋方向有部分重疊，整體 vibe 看起來自然舒服，也有一定程度的生活感。`
 }
 
     const handleSubmit = async () => {
@@ -411,7 +465,7 @@ try {
 
   const timeoutId = setTimeout(() => {
     controller.abort()
-  }, 15000)
+  }, 20000)
 
   const response = await fetch('/api/ai-radar', {
     method: 'POST',
@@ -585,29 +639,58 @@ if (matchedUsers.length > 0) {
 
 {!loading && !aiText && results.length === 0 && (
   <div className="fixed left-1/2 top-[40%] z-[55] w-full max-w-[430px] -translate-x-1/2 -translate-y-1/2 px-8">
-    <div className="mb-6 flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
-      <Sparkles size={17} fill="currentColor" />
-      <span>{text.heroTitle}</span>
-    </div>
-
-    <div className="flex flex-col gap-3">
-      {(
-  starterPrompts.length > 0
-    ? starterPrompts
-    : text.suggestions
-).map((item) => (
-        <button
-          key={item}
-          type="button"
-          onClick={() => setInputValue(item)}
-          className="min-h-[52px] rounded-[18px] bg-[rgba(255,255,255,0.78)] px-4 py-3 text-center shadow-[0_6px_18px_rgba(0,0,0,0.06)] backdrop-blur-[8px] transition active:scale-[0.98]"
+    <AnimatePresence mode="wait">
+      {isGeneratingPrompts ? (
+        <motion.div
+          key="generating-prompts"
+          initial={{ opacity: 0, y: 10, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -8, scale: 0.98 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+          className="rounded-[22px] bg-white px-5 py-4 text-center text-[15px] font-semibold text-purple-700 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
         >
-          <span className="block text-[14px] leading-[1.35] text-[#111]">
-            {item}
-          </span>
-        </button>
-      ))}
-    </div>
+          生成提示詞中...
+        </motion.div>
+      ) : (
+        <motion.div
+          key="starter-prompts"
+          initial={{ opacity: 0, y: 18, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -8, scale: 0.98 }}
+          transition={{
+            duration: 0.42,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+        >
+          <div className="mb-6 flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
+            <Sparkles size={17} fill="currentColor" />
+            <span>{text.heroTitle}</span>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {starterPrompts.map((item, index) => (
+              <motion.button
+                key={item}
+                type="button"
+                onClick={() => setInputValue(item)}
+                initial={{ opacity: 0, y: 14, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{
+                  delay: index * 0.08,
+                  duration: 0.36,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className="min-h-[52px] rounded-[18px] bg-[rgba(255,255,255,0.78)] px-4 py-3 text-center shadow-[0_6px_18px_rgba(0,0,0,0.06)] backdrop-blur-[8px] transition active:scale-[0.98]"
+              >
+                <span className="block text-[14px] leading-[1.35] text-[#111]">
+                  {item}
+                </span>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   </div>
 )}
 

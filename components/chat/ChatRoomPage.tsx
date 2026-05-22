@@ -69,7 +69,7 @@ const [chatError, setChatError] = useState('')
 
 function withTimeout<T>(
   promise: PromiseLike<T>,
-  ms = 4000,
+  ms = 10000,
   label = 'request'
 ): Promise<T | null> {
   return Promise.race([
@@ -83,6 +83,10 @@ function withTimeout<T>(
   ])
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
+}
+
   useEffect(() => {
     async function loadOtherUserProfile() {
   if (!otherUserId) return
@@ -94,7 +98,7 @@ function withTimeout<T>(
     .eq('id', otherUserId)
     .maybeSingle()
     ,
-4000,
+10000,
 'chat_other_avatar'
 )
 
@@ -105,7 +109,6 @@ const data = result?.data
   }
 }
 
-loadOtherUserProfile()
     async function initConversation() {
       const {
         data: { user },
@@ -184,7 +187,17 @@ loadOtherUserProfile()
       setChatLoading(false)
     }
 
-    initConversation()
+    async function initChatRoom() {
+  // 第一批：先建立聊天室與讀訊息
+  await initConversation()
+
+  // 第二批：延後讀對方頭像
+  await delay(600)
+
+  await loadOtherUserProfile()
+}
+
+initChatRoom()
   }, [otherUserId])
 
   function closeWithAnimation() {

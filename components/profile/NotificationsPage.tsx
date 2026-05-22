@@ -28,9 +28,9 @@ export default function NotificationsPage({
   onPointerDown={(e) => e.stopPropagation()}
   onClick={(e) => e.stopPropagation()}
 >
-      <div className="relative min-h-screen w-full max-w-[430px] bg-[#f3f3f3] text-[#111]">
+      <div className="relative min-h-screen w-full max-w-[430px] bg-[var(--app-bg)] text-[var(--app-text)]">
         {/* Top Bar */}
-        <div className="fixed left-1/2 top-0 z-[20] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pb-3 pt-3 backdrop-blur-md">
+        <div className="fixed left-1/2 top-0 z-[20] w-full max-w-[430px] -translate-x-1/2 bg-[var(--app-bg)]/95 px-4 pb-3 pt-3 backdrop-blur-md">
           <div className="relative flex h-[40px] items-center justify-center">
             <button
               type="button"
@@ -48,7 +48,7 @@ export default function NotificationsPage({
 
         {/* Empty State */}
         <div className="flex min-h-screen flex-col items-center justify-center px-6 pb-[120px] pt-[90px] text-center">
-          <div className="flex h-[78px] w-[78px] items-center justify-center rounded-full bg-[#d9d9d9]">
+          <div className="flex h-[78px] w-[78px] items-center justify-center rounded-full bg-[var(--app-surface)]">
             <Bell size={34} strokeWidth={2} />
           </div>
 
@@ -56,7 +56,7 @@ export default function NotificationsPage({
             目前沒有通知
           </div>
 
-          <div className="mt-2 max-w-[260px] text-[14px] leading-relaxed text-[#777]">
+          <div className="mt-2 max-w-[260px] text-[14px] leading-relaxed text-[var(--app-muted)]">
             新的追蹤、按讚、留言與互動通知之後會顯示在這裡。
           </div>
         </div>

@@ -133,7 +133,7 @@ export default function OtherUserProfilePage({
 
   function withTimeout<T>(
   promise: PromiseLike<T>,
-  ms = 4000,
+  ms = 10000,
   label = 'request'
 ): Promise<T | null> {
   return Promise.race([
@@ -152,13 +152,16 @@ async function safeTask<T>(
   label: string
 ): Promise<T | null> {
   try {
-    return await withTimeout(task(), 4000, label)
+    return await withTimeout(task(), 10000, label)
   } catch (error) {
     console.warn(`${label} failed:`, error)
     return null
   }
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
+}
 
   const [profile, setProfile] = useState<any>(null)
   const [posts, setPosts] = useState<any[]>([])
@@ -171,7 +174,37 @@ const [selectedPost, setSelectedPost] = useState<any>(null)
 const [activeTab, setActiveTab] = useState(0)
   function goToTab(index: number) {
   if (index < 0 || index > 2) return
+
   setActiveTab(index)
+
+  if (index === 1 && shortVideos.length === 0 && !videosLoading) {
+    setVideosLoading(true)
+
+    void safeTask(
+      () =>
+        supabase
+          .from('short_videos')
+          .select(`
+            id,
+            caption,
+            video_url,
+            thumbnail_url,
+            created_at,
+            user_id
+          `)
+          .eq('user_id', resolvedUserId)
+          .order('created_at', { ascending: false }),
+      'lazy_other_profile_short_videos'
+    ).then((videosResult) => {
+      if (videosResult && 'data' in videosResult) {
+        setShortVideos(videosResult.data ?? [])
+      } else {
+        setShortVideos([])
+      }
+
+      setVideosLoading(false)
+    })
+  }
 }
 
   const [loading, setLoading] = useState(true)
@@ -262,7 +295,7 @@ if (user) {
     .select('id, username, display_name, avatar_url, bio')
     .eq('id', userId)
     .maybeSingle(),
-  4000,
+  10000,
   'other_profile'
 )
 
@@ -291,47 +324,14 @@ const { data: profileData, error: profileError } = profileResult
       setProfile(profileData)
       setLoading(false)
 
-      setFollowersLoading(true)
-setPostsLoading(true)
-setVideosLoading(true)
+      setPostsLoading(true)
+setFollowersLoading(true)
+setVideosLoading(false)
 
-void safeTask(
-  () => supabase.auth.getUser(),
-  'other_profile_auth'
-).then(async (authResult) => {
-  const user = authResult?.data?.user
+// 第二批：先讀貼文，讓 Profile 內容最快出現
+await delay(400)
 
-  const followerResult = await safeTask(
-    () =>
-      supabase
-        .from('follows')
-        .select('*', { count: 'exact', head: true })
-        .eq('following_id', resolvedUserId),
-    'other_profile_followers'
-  )
-
-  if (!alive) return
-
-  setFollowerCount(followerResult?.count ?? 0)
-  setFollowersLoading(false)
-
-  if (!user) return
-
-  const followResult = await safeTask(
-    () =>
-      supabase
-        .from('follows')
-        .select('id')
-        .eq('follower_id', user.id)
-        .eq('following_id', resolvedUserId)
-        .maybeSingle(),
-    'other_profile_follow_state'
-  )
-
-  if (!alive) return
-
-  setIsFollowing(!!followResult?.data)
-})
+if (!alive) return
 
 void safeTask(
   () =>
@@ -361,32 +361,50 @@ void safeTask(
   setPostsLoading(false)
 })
 
+// 第三批：再讀粉絲數與追蹤狀態
+await delay(700)
+
+if (!alive) return
+
 void safeTask(
-  () =>
-    supabase
-      .from('short_videos')
-      .select(`
-        id,
-        caption,
-        video_url,
-        thumbnail_url,
-        created_at,
-        user_id
-      `)
-      .eq('user_id', resolvedUserId)
-      .order('created_at', { ascending: false }),
-  'other_profile_short_videos'
-).then((videosResult) => {
+  () => supabase.auth.getUser(),
+  'other_profile_auth'
+).then(async (authResult) => {
+  const authUser = authResult?.data?.user
+
+  const followerResult = await safeTask(
+    () =>
+      supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', resolvedUserId),
+    'other_profile_followers'
+  )
+
   if (!alive) return
 
-  if (videosResult && 'data' in videosResult) {
-    setShortVideos(videosResult.data ?? [])
-  } else {
-    setShortVideos([])
-  }
+  setFollowerCount(followerResult?.count ?? 0)
+  setFollowersLoading(false)
 
-  setVideosLoading(false)
+  if (!authUser) return
+
+  const followResult = await safeTask(
+    () =>
+      supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', authUser.id)
+        .eq('following_id', resolvedUserId)
+        .maybeSingle(),
+    'other_profile_follow_state'
+  )
+
+  if (!alive) return
+
+  setIsFollowing(!!followResult?.data)
 })
+
+// 短影片不要初始化就讀，等用戶點第二個 tab 再讀
 
     } catch (error) {
       console.error('對方 Profile 讀取失敗:', error)
@@ -714,15 +732,19 @@ async function toggleFavorite() {
                 )}
               </div>
 
-              <div
-                className="pointer-events-none absolute bottom-0 h-[4px] px-2 transition-all duration-300 ease-out"
-                style={{
-  left: `${activeTab * 33.3333}%`,
-  width: '33.3333%',
-}}
-              >
-                <div className="h-[4px] w-full rounded-full bg-[#d89ad0]" />
-              </div>
+              <motion.div
+  className="pointer-events-none absolute bottom-0 w-[33.3333%] px-2"
+  animate={{
+    x: `${activeTab * 100}%`,
+  }}
+  transition={{
+    type: 'spring',
+    stiffness: 380,
+    damping: 32,
+  }}
+>
+  <div className="h-[4px] w-full rounded-full bg-[#d89ad0]" />
+</motion.div>
             </div>
 
             <div className="overflow-hidden">

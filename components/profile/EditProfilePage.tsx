@@ -81,8 +81,7 @@ export default function EditProfilePage({
                 }))
               }
               className="h-[46px] rounded-[14px] 
-              
-              outline-none"
+               outline-none"
               placeholder={text.displayNamePlaceholder}
             />
           </label>
