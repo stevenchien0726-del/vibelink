@@ -80,8 +80,7 @@ export default function EditProfilePage({
                   display_name: e.target.value,
                 }))
               }
-              className="h-[46px] rounded-[14px] 
-               outline-none"
+              className="h-[46px] rounded-[14px] border border-[#ddd] bg-white px-4 text-[16px] text-[#222] outline-none"
               placeholder={text.displayNamePlaceholder}
             />
           </label>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 
 import ProfileHeader from '@/components/profile/ProfileHeader'
 import ProfileActionButtons from '@/components/profile/ProfileActionButtons'
@@ -207,6 +207,9 @@ function delay(ms: number) {
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [isLinkPortOpen, setIsLinkPortOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
+
+  const [tabDragX, setTabDragX] = useState(0)
+
   const [showSettingsPage, setShowSettingsPage] = useState(false)
   const [showAnalyticsPage, setShowAnalyticsPage] = useState(false)
 
@@ -991,17 +994,26 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
   }
 
   function handleTabTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-    if (tabTouchStartX.current == null) return
+  if (tabTouchStartX.current == null) return
 
-    const touch = e.touches[0]
-    const deltaX = touch.clientX - tabTouchStartX.current
-    tabTouchDeltaX.current = deltaX
+  const touch = e.touches[0]
+  const deltaX = touch.clientX - tabTouchStartX.current
 
+  tabTouchDeltaX.current = deltaX
 
-    if (Math.abs(deltaX) > 8) {
-      e.stopPropagation()
-    }
+  if (
+    (activeTab === 0 && deltaX > 0) ||
+    (activeTab === 2 && deltaX < 0)
+  ) {
+    setTabDragX(deltaX * 0.25)
+  } else {
+    setTabDragX(deltaX)
   }
+
+  if (Math.abs(deltaX) > 8) {
+    e.stopPropagation()
+  }
+}
 
   function handleTabTouchEnd() {
   const deltaX = tabTouchDeltaX.current
@@ -1013,6 +1025,8 @@ function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
       goToTab(activeTab - 1)
     }
   }
+
+  setTabDragX(0)
 
   tabTouchStartX.current = null
   tabTouchDeltaX.current = 0
@@ -1108,40 +1122,49 @@ useEffect(() => {
   onChangeTab={goToTab}
 />
 
-<ProfilePostGridTabs
-  activeTab={activeTab}
-  text={text}
-  gridItems={gridItems}
-  myShortVideos={myShortVideos}
-  savedPosts={savedPosts}
-  archivedShortVideos={archivedShortVideos}
-  isFavoritesPublic={isFavoritesPublic}
-  onToggleFavoritesPublic={() =>
-    setIsFavoritesPublic((prev) => !prev)
-  }
-  onOpenPost={(post) =>
-  openSelectedPostHandler({
-    post,
-    savedPosts,
-    setSelectedPost,
-    setSelectedPostImageIndex,
-    setSelectedPostLiked,
-    setSelectedPostLikeCount,
-    setSelectedPostSaved,
-    setCommentText,
-    setComments,
-  })
-}
-
-
-  onOpenShortVideo={(videoId) => {
-    setSelectedShortVideoId(videoId)
-    setIsShortVideoPageOpen(true)
+<motion.div
+  animate={{
+    x: tabDragX,
   }}
-  onTouchStart={handleTabTouchStart}
-  onTouchMove={handleTabTouchMove}
-  onTouchEnd={handleTabTouchEnd}
-/>
+  transition={{
+    type: 'spring',
+    stiffness: 360,
+    damping: 34,
+  }}
+>
+  <ProfilePostGridTabs
+    activeTab={activeTab}
+    text={text}
+    gridItems={gridItems}
+    myShortVideos={myShortVideos}
+    savedPosts={savedPosts}
+    archivedShortVideos={archivedShortVideos}
+    isFavoritesPublic={isFavoritesPublic}
+    onToggleFavoritesPublic={() =>
+      setIsFavoritesPublic((prev) => !prev)
+    }
+    onOpenPost={(post) =>
+      openSelectedPostHandler({
+        post,
+        savedPosts,
+        setSelectedPost,
+        setSelectedPostImageIndex,
+        setSelectedPostLiked,
+        setSelectedPostLikeCount,
+        setSelectedPostSaved,
+        setCommentText,
+        setComments,
+      })
+    }
+    onOpenShortVideo={(videoId) => {
+      setSelectedShortVideoId(videoId)
+      setIsShortVideoPageOpen(true)
+    }}
+    onTouchStart={handleTabTouchStart}
+    onTouchMove={handleTabTouchMove}
+    onTouchEnd={handleTabTouchEnd}
+  />
+</motion.div>
 
 {activeTab === 0 && (
   <div ref={loadMorePostsRef} className="h-12">

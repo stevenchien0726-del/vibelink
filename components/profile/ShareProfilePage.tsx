@@ -109,15 +109,7 @@ export default function ShareProfilePage({
                   {profile?.display_name || 'Vibelink User'}
                 </div>
 
-                <div className="mt-1 text-[16px] text-[#666]">
-                  @{profile?.username || 'username'}
-                </div>
 
-                {profile?.bio && (
-                  <div className="mt-4 text-center text-[14px] leading-[1.5] text-[#555]">
-                    {profile.bio}
-                  </div>
-                )}
               </div>
 
               <div className="mt-7 flex justify-center">
@@ -133,11 +125,6 @@ export default function ShareProfilePage({
                 </div>
               </div>
 
-              <div className="mt-6 rounded-[20px] bg-white/80 px-4 py-4 text-center shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
-                <div className="truncate text-[14px] text-[#666]">
-                  {profileUrl}
-                </div>
-              </div>
             </motion.div>
 
             <div className="mt-7 grid w-full grid-cols-3 gap-3">
