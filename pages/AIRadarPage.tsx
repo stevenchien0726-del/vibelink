@@ -85,7 +85,8 @@ const [aiText, setAiText] = useState('')
 const [errorType, setErrorType] = useState('')
 const [lastQuery, setLastQuery] = useState('')
 
-const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null)
+const [selectedProfileUser, setSelectedProfileUser] =
+  useState<any | null>(null)
 
 const [displayedAiText, setDisplayedAiText] = useState('')
 const [showCandidates, setShowCandidates] = useState(false)
@@ -638,20 +639,20 @@ if (matchedUsers.length > 0) {
   <div className="space-y-4">
     {results.slice(0, 2).map((user) => (
       <AIRadarResultCard
-  key={user.id}
-  user={user}
-  getCandidateDescription={getCandidateDescription}
-  onTouchStart={stopSwipePropagation}
-  onTouchMove={stopSwipePropagation}
-  onPointerDown={stopPointerPropagation}
-  onPointerMove={stopPointerPropagation}
-  onWheel={stopWheelPropagation}
-  onOpenProfile={(user) => {
-    setSelectedProfileUserId(user.id)
-  }}
-/>
+        key={user.id}
+        user={user}
+        getCandidateDescription={getCandidateDescription}
+        onTouchStart={stopSwipePropagation}
+        onTouchMove={stopSwipePropagation}
+        onPointerDown={stopPointerPropagation}
+        onPointerMove={stopPointerPropagation}
+        onWheel={stopWheelPropagation}
+        onOpenProfile={(user) => {
+          setSelectedProfileUser(user)
+        }}
+      />
     ))}
-    </div>
+  </div>
 )}
 
 {showWalls && (
@@ -796,12 +797,13 @@ if (matchedUsers.length > 0) {
 </AnimatePresence>
 
 <AnimatePresence>
-  {selectedProfileUserId && (
-    <OtherUserProfilePage 
-  userId={selectedProfileUserId}
-  onClose={() => setSelectedProfileUserId(null)}
-  locale={safeLocale}
-/>
+  {selectedProfileUser && (
+    <OtherUserProfilePage
+      user={selectedProfileUser}
+      userId={selectedProfileUser.id}
+      onClose={() => setSelectedProfileUser(null)}
+      locale={safeLocale}
+    />
   )}
 </AnimatePresence>
     </>

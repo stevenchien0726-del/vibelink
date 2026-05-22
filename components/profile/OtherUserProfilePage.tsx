@@ -30,7 +30,8 @@ import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPa
 import WideMenuSheet from '@/components/WideMenuSheet'
 
 type Props = {
-  userId: string
+  userId?: string
+  user?: any
   onClose: () => void
   locale: Locale
   onOpenChat?: () => void
@@ -121,11 +122,14 @@ const isUuid = (value: string) =>
 
 export default function OtherUserProfilePage({
   userId,
+  user,
   onClose,
   locale,
   onOpenChat,
 }: Props) {
+
   const text = otherProfileText[locale]
+  const resolvedUserId = userId ?? user?.id ?? ''
 
   function withTimeout<T>(
   promise: PromiseLike<T>,
@@ -193,6 +197,42 @@ const [followersLoading, setFollowersLoading] = useState(false)
 
     async function loadProfile(retry = 0) {
   try {
+    const fallbackId = userId ?? user?.id ?? ''
+
+if (user) {
+  setProfile({
+    id: fallbackId,
+    username:
+      user.username ||
+      user.author ||
+      user.displayName ||
+      'user',
+
+    display_name:
+      user.displayName ||
+      user.display_name ||
+      user.author ||
+      'Vibelink User',
+
+    avatar_url:
+      user.avatar ||
+      user.avatar_url ||
+      '',
+
+    bio: user.bio || '',
+  })
+
+  setPosts(
+    (user.images || []).map((image: string, index: number) => ({
+      id: `${fallbackId || 'ai-user'}-${index}`,
+      caption: user.bio || '',
+      user_id: fallbackId,
+      post_images: [{ image_url: image }],
+    }))
+  )
+
+  setLoading(false)
+}
     setLoading(true)
     setLoadError('')
 
@@ -266,7 +306,7 @@ void safeTask(
       supabase
         .from('follows')
         .select('*', { count: 'exact', head: true })
-        .eq('following_id', userId),
+        .eq('following_id', resolvedUserId),
     'other_profile_followers'
   )
 
@@ -283,7 +323,7 @@ void safeTask(
         .from('follows')
         .select('id')
         .eq('follower_id', user.id)
-        .eq('following_id', userId)
+        .eq('following_id', resolvedUserId)
         .maybeSingle(),
     'other_profile_follow_state'
   )
@@ -306,7 +346,7 @@ void safeTask(
           image_url
         )
       `)
-      .eq('user_id', userId)
+      .eq('user_id', resolvedUserId)
       .order('created_at', { ascending: false }),
   'other_profile_posts'
 ).then((postsResult) => {
@@ -333,7 +373,7 @@ void safeTask(
         created_at,
         user_id
       `)
-      .eq('user_id', userId)
+      .eq('user_id', resolvedUserId)
       .order('created_at', { ascending: false }),
   'other_profile_short_videos'
 ).then((videosResult) => {
@@ -465,7 +505,7 @@ async function toggleFavorite() {
         .from('follows')
         .delete()
         .eq('follower_id', user.id)
-        .eq('following_id', userId)
+        .eq('following_id', resolvedUserId)
 
       if (error) {
         console.error(text.unfollowFailed, error)
@@ -1014,7 +1054,7 @@ async function toggleFavorite() {
             <LinkPortSheet
         open={isLinkPortOpen}
         onClose={() => setIsLinkPortOpen(false)}
-        userId={userId}
+        userId={resolvedUserId}
         isOwner={false}
       />
       <AnimatePresence>
@@ -1174,7 +1214,7 @@ async function toggleFavorite() {
     <AnimatePresence>
   {isChatOpen && (
     <ChatRoomPage
-  otherUserId={userId}
+  otherUserId={resolvedUserId}
   userName={
     profile?.display_name ||
     profile?.username ||
