@@ -359,18 +359,19 @@ const postDetailTouchStartY = useRef<number | null>(null)
     bio: '',
   }
 
-  const { data: createdProfile, error: insertError } = await supabase
-    .from('profiles')
-    .insert(newProfile)
-    .select()
-    .single()
+  const { error: insertError } = await supabase
+  .from('profiles')
+  .insert(newProfile)
 
-  if (insertError) {
+if (insertError) {
   console.error('建立 profile 失敗:', insertError)
-  throw insertError
+
+  setProfile(newProfile)
+
+  return
 }
 
-  setProfile(createdProfile)
+setProfile(newProfile)
 }
 
 async function loadMyFollowerCount() {
@@ -492,6 +493,7 @@ async function loadMyPosts(start = 0, end = 11, append = false) {
 
   if (postIds.length === 0) {
   setMyPosts([])
+  setHasMorePosts(false)
   return
 }
   const { data: likeRows } =
