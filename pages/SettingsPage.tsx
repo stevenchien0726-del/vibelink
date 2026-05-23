@@ -230,8 +230,8 @@ export default function SettingsPage({
             </button>
 
             <div className="text-[20px] font-medium tracking-[0.01em] text-[var(--app-text)]">
-              {languageOpen ? text.language : text.title}
-            </div>
+  {languageOpen ? text.language : '設定'}
+</div>
           </div>
         </div>
 
@@ -257,13 +257,43 @@ export default function SettingsPage({
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-[16px] text-[var(--app-text)]">
-              {darkMode ? text.darkOn : text.darkOff}
-            </span>
+          <button
+  type="button"
+  onClick={handleToggleDarkMode}
+  className="flex items-center gap-[14px] active:scale-[0.97]"
+>
+  <span className="text-[15px] font-medium text-[var(--app-text)]">
+    {darkMode ? text.darkOn : text.darkOff}
+  </span>
 
-            <Switch checked={darkMode} onClick={handleToggleDarkMode} />
-          </div>
+  <div
+  style={{
+    position: 'relative',
+    width: 76,
+    minWidth: 76,
+    height: 36,
+    borderRadius: 999,
+    border: '2px solid #8B1FA9',
+    background: '#efc9f3',
+    overflow: 'hidden',
+    flexShrink: 0,
+  }}
+>
+  <div
+    style={{
+      position: 'absolute',
+      top: 3,
+      left: darkMode ? 43 : 4,
+      width: 26,
+      height: 26,
+      borderRadius: 999,
+      background: '#ffffff',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.22)',
+      transition: 'left 0.3s ease',
+    }}
+  />
+</div>
+</button>
         </div>
       </div>
 
@@ -379,27 +409,34 @@ function LanguageRow({
   )
 }
 
-function Switch({
-  checked,
-  onClick,
-}: {
-  checked: boolean
-  onClick: () => void
-}) {
+function Switch({ checked }: { checked: boolean }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={onClick}
-      className="relative h-[28px] w-[52px] rounded-full bg-[var(--switch-track)] transition-colors duration-250"
+    <span
+      style={{
+        position: 'relative',
+        display: 'flex',
+        width: 76,
+        height: 36,
+        borderRadius: 999,
+        border: '2px solid #8B1FA9',
+        background: '#efc9f3',
+        boxShadow: '0 2px 8px rgba(139,31,169,0.16)',
+      }}
     >
       <span
-        className={`absolute top-[3px] h-[22px] w-[22px] rounded-full bg-[#d39ad8] shadow-sm transition-all duration-250 ${
-          checked ? 'left-[27px]' : 'left-[3px]'
-        }`}
+        style={{
+          position: 'absolute',
+          top: 3,
+          left: checked ? 43 : 4,
+          width: 26,
+          height: 26,
+          borderRadius: 999,
+          background: '#ffffff',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.22)',
+          transition: 'left 0.3s ease',
+        }}
       />
-    </button>
+    </span>
   )
 }
 

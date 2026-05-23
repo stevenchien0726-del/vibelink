@@ -220,6 +220,8 @@ function delay(ms: number) {
 
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
   const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
+  const [darkMode, setDarkMode] = useState(false)
+
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
 
@@ -260,6 +262,14 @@ async function lazyLoadSavedPosts() {
   }
 }
 
+  useEffect(() => {
+  const saved = localStorage.getItem('vibelink-dark-mode')
+  const next = saved === 'dark'
+
+  setDarkMode(next)
+  document.documentElement.classList.toggle('dark', next)
+}, [])
+  
   const [archivedPosts, setArchivedPosts] = useState<any[]>([])
   const [archivedShortVideos, setArchivedShortVideos] = useState<any[]>([])
 
@@ -1242,12 +1252,13 @@ useEffect(() => {
   
   locale={safeLocale}
   onChangeLocale={onChangeLocale}
-  initialDarkMode={false}
+  initialDarkMode={darkMode}
   initialShowCity={false}
             
             onDarkModeChange={(value) => {
-              console.log('dark mode:', value)
-            }}
+  setDarkMode(value)
+}}
+
             onShowCityChange={(value) => {
               console.log('show city:', value)
             }}
