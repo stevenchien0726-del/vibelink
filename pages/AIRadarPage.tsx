@@ -596,13 +596,13 @@ if (matchedUsers.length > 0) {
 
       {isAuthModalOpen && (
   <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6 backdrop-blur-[10px]">
-    <div className="w-full max-w-[360px] rounded-[36px] bg-white px-7 py-9 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+    <div className="w-full max-w-[360px] rounded-[36px] bg-[var(--app-card)] px-7 py-9 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
 
-      <h2 className="text-[28px] font-semibold text-[#222]">
+      <h2 className="text-[28px] font-semibold text-[var(--app-text)]">
         {text.loginTitle}
       </h2>
 
-      <p className="mt-4 text-[16px] text-[#888]">
+      <p className="mt-4 text-[16px] text-[var(--app-muted)]">
         {text.loginSubtitle}
       </p>
 
@@ -610,7 +610,7 @@ if (matchedUsers.length > 0) {
         type="button"
         disabled={authLoading}
         onClick={handleGoogleLogin}
-        className="mt-8 flex h-[54px] w-full items-center justify-center rounded-full bg-white text-[18px] font-medium text-[#111] shadow-[0_4px_14px_rgba(0,0,0,0.14)] transition active:scale-[0.98] disabled:opacity-60"
+        className="mt-8 flex h-[54px] w-full items-center justify-center rounded-full bg-[var(--app-card)] text-[18px] font-medium text-[var(--app-text)] shadow-[0_4px_14px_rgba(0,0,0,0.14)] transition active:scale-[0.98] disabled:opacity-60"
       >
         {authLoading
   ? text.loggingIn
@@ -631,7 +631,7 @@ if (matchedUsers.length > 0) {
     touchAction: 'pan-y',
   }}
   ref={mainScrollRef}
-  className="h-screen overflow-y-auto px-4 pt-[76px] pb-[170px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  className="h-screen overflow-y-auto bg-[var(--app-bg)] px-4 pt-[76px] pb-[170px] text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 >
         <div className="flex min-h-[calc(100vh-76px)] flex-col">
          
@@ -647,7 +647,7 @@ if (matchedUsers.length > 0) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -8, scale: 0.98 }}
           transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-[22px] bg-white px-5 py-4 text-center text-[15px] font-semibold text-purple-700 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+          className="rounded-[22px] bg-[var(--app-card)] px-5 py-4 text-center text-[15px] font-semibold text-purple-700 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
         >
           生成提示詞中...
         </motion.div>
@@ -662,7 +662,7 @@ if (matchedUsers.length > 0) {
             ease: [0.22, 1, 0.36, 1],
           }}
         >
-          <div className="mb-6 flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
+          <div className="mb-6 flex items-center justify-center gap-2 rounded-[18px] bg-[var(--app-card)] px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
             <Sparkles size={17} fill="currentColor" />
             <span>{text.heroTitle}</span>
           </div>
@@ -680,9 +680,9 @@ if (matchedUsers.length > 0) {
                   duration: 0.36,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="min-h-[52px] rounded-[18px] bg-[rgba(255,255,255,0.78)] px-4 py-3 text-center shadow-[0_6px_18px_rgba(0,0,0,0.06)] backdrop-blur-[8px] transition active:scale-[0.98]"
+                className="min-h-[52px] rounded-[18px] bg-[var(--app-card)] px-4 py-3 text-center shadow-[0_6px_18px_rgba(0,0,0,0.06)] backdrop-blur-[8px] transition active:scale-[0.98]"
               >
-                <span className="block text-[14px] leading-[1.35] text-[#111]">
+                <span className="block text-[14px] leading-[1.35] text-[var(--app-text)]">
                   {item}
                 </span>
               </motion.button>
@@ -699,7 +699,7 @@ if (matchedUsers.length > 0) {
   
 
   {displayedAiText && (
-  <div className="rounded-[18px] bg-[#ead8f5] px-4 py-10 text-[14px] leading-[1.45] text-[#3f2c4f] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+  <div className="rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 py-10 text-[14px] leading-[1.45] text-[var(--app-text)] shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
     {displayedAiText}
   </div>
 )}
@@ -791,7 +791,7 @@ if (matchedUsers.length > 0) {
     <button
       type="button"
       onClick={handleClearInput}
-      className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-white/35 text-black shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95"
+      className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/35 text-[var(--app-text)] shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95"
     >
       <BrushCleaning size={22} strokeWidth={2} />
     </button>
@@ -799,7 +799,7 @@ if (matchedUsers.length > 0) {
     <button
       type="button"
       onClick={handleVoiceInput}
-      className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-white/35 text-black shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95 ${
+      className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/35 text-[var(--app-text)] shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95 ${
         isListening ? 'ring-2 ring-purple-400' : ''
       }`}
     >
@@ -859,7 +859,7 @@ if (matchedUsers.length > 0) {
         setSelectedLibraryUser(flyingUser.user)
         setFlyingUser(null)
       }}
-      className="pointer-events-none overflow-hidden bg-[#D9D9D9] shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+      className="pointer-events-none overflow-hidden border border-[var(--app-card-border)] bg-[var(--app-card)] shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
     >
       <div className="flex h-full w-full items-center gap-2 px-[12px]">
         {flyingUser.user.avatar ? (
@@ -871,7 +871,7 @@ if (matchedUsers.length > 0) {
 ) : (
   <div className="h-[30px] w-[30px] shrink-0 rounded-full bg-[#c893cf]" />
 )}
-        <span className="min-w-0 truncate text-[13px] text-[#222]">
+        <span className="min-w-0 truncate text-[13px] text-[var(--app-text)]">
           {flyingUser.user.name}
         </span>
       </div>
@@ -882,7 +882,7 @@ if (matchedUsers.length > 0) {
 <AnimatePresence>
   {selectedProfileUser && (
     <motion.div
-      className="fixed inset-0 z-[999] bg-[#f3f3f3]"
+      className="fixed inset-0 z-[999] bg-[var(--app-bg)]"
       initial={{ x: '100%' }}
       animate={{ x: 0 }}
       exit={{ x: '100%' }}

@@ -21,7 +21,7 @@ export default function AIRadarPromptList({
 
   return (
     <div className="mt-6 px-1">
-      <div className="flex items-center gap-1 text-[16px] font-medium text-[#6b4f7f]">
+      <div className="flex items-center gap-1 text-[16px] font-medium text-[var(--app-muted)]">
         <span>
           {title ??
             (isRewrite
@@ -36,24 +36,22 @@ export default function AIRadarPromptList({
             key={prompt}
             type="button"
             onClick={() => onSelectPrompt(prompt)}
-            className={`
+            className="
               w-full rounded-[16px]
+              border border-[var(--app-card-border)]
+              bg-[var(--app-card)]
               px-4 py-4
-              text-left text-[14px]
+              text-left text-[14px] text-[var(--app-text)]
+              shadow-[0_4px_14px_rgba(0,0,0,0.08)]
               transition active:scale-[0.98]
-              ${
-                isRewrite
-                  ? 'bg-gradient-to-br from-[#f7efff] to-[#f4f0ff] text-[#5b3d75] shadow-[0_4px_14px_rgba(124,58,237,0.08)]'
-                  : 'bg-white text-[#222] shadow-[0_3px_10px_rgba(0,0,0,0.04)]'
-              }
-            `}
+            "
           >
             <div className="flex items-start gap-2">
               {isRewrite && (
-  <div className="mt-[1px] text-[16px] text-[#8B5CF6]">
-    ✦
-  </div>
-)}
+                <div className="mt-[1px] text-[16px] text-[#8B5CF6]">
+                  ✦
+                </div>
+              )}
 
               <div className="leading-[1.5]">
                 {prompt}

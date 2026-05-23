@@ -28,7 +28,7 @@ export default function AIRadarMoreWall({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-[16px] text-[#3d3d3d]">
+        <div className="flex items-center gap-1 text-[16px] text-[var(--app-muted)]">
           <span>更多人選</span>
         </div>
 
@@ -36,12 +36,14 @@ export default function AIRadarMoreWall({
   type="button"
   disabled={refreshCount >= 2}
   onClick={onRefresh}
-  className={`rounded-full bg-[#ead7f6] px-3 py-1.5 text-[15px] font-semibold text-[#7b2cbf] transition active:scale-95 ${
+  className={`rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] px-3 py-1.5 text-[15px] font-semibold text-[#a855f7] shadow-[0_2px_10px_rgba(0,0,0,0.08)] transition active:scale-95 ${
     refreshCount >= 2 ? 'opacity-40 active:scale-100' : ''
   }`}
 >
   <span className="flex items-center gap-[6px]">
-    <span className="text-[17px] leading-none text-[#9f44d3]">✦</span>
+    <span className="text-[17px] leading-none text-[#c084fc]">
+  ✦
+</span>
 
     <span>
       {refreshCount >= 2
@@ -84,7 +86,7 @@ export default function AIRadarMoreWall({
                 type="button"
                 className="shrink-0"
               >
-                <div className="h-[160px] w-[110px] overflow-hidden rounded-[16px] bg-[#ead8f5]">
+                <div className="h-[160px] w-[110px] overflow-hidden rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-card)]">
                   <img
                     src={imgSrc}
                     alt={`photo ${photoIndex + 1}`}

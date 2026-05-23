@@ -43,7 +43,6 @@ export default function PeopleFolderPage({
   onPickUser,
   onOpenProfile,
 }: PeopleFolderPageProps) {
-
   const touchStartYRef = useRef<number | null>(null)
   const touchStartXRef = useRef<number | null>(null)
 
@@ -105,7 +104,7 @@ export default function PeopleFolderPage({
   return (
     <AnimatePresence>
       <motion.div
-        className="absolute inset-0 z-[260] bg-[rgba(243,243,243,0.96)]"
+        className="absolute inset-0 z-[260] bg-[var(--app-bg)]/95 text-[var(--app-text)]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -113,7 +112,7 @@ export default function PeopleFolderPage({
         transition={{ duration: 0.18 }}
       >
         <motion.div
-          className="relative min-h-screen w-full bg-[#f3f3f3]"
+          className="relative min-h-screen w-full bg-[var(--app-bg)]"
           initial={{ y: 28, opacity: 0, scale: 0.985 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
           exit={{ y: 36, opacity: 0, scale: 0.985 }}
@@ -129,15 +128,15 @@ export default function PeopleFolderPage({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="flex items-center justify-between px-5 pb-3 pt-4">
-            <div className="truncate text-[16px] font-medium text-[#222]">
+          <div className="flex items-center justify-between border-b border-[var(--app-card-border)] bg-[var(--app-bg)]/95 px-5 pb-3 pt-4 backdrop-blur-md">
+            <div className="truncate text-[16px] font-medium text-[var(--app-text)]">
               {title}
             </div>
 
             <div className="flex items-center gap-4">
               <button
                 type="button"
-                className="grid h-[28px] w-[28px] place-items-center text-[#111]"
+                className="grid h-[28px] w-[28px] place-items-center text-[var(--app-text)] active:scale-95"
               >
                 <Trash2 size={21} strokeWidth={2.2} />
               </button>
@@ -145,64 +144,64 @@ export default function PeopleFolderPage({
               <button
                 type="button"
                 onClick={onClose}
-                className="text-[14px] font-medium text-[#111]"
+                className="text-[14px] font-medium text-[var(--app-text)] active:scale-95"
               >
                 CLOSE
               </button>
             </div>
           </div>
 
-          <div className="px-5 pb-[120px]">
+          <div className="px-5 pb-[120px] pt-5">
             <div className="grid grid-cols-4 gap-x-5 gap-y-8">
               <button
-  type="button"
-  onClick={(e) => {
-    if (folderId !== 'recent' || !recentUser?.id) return
+                type="button"
+                onClick={(e) => {
+                  if (folderId !== 'recent' || !recentUser?.id) return
 
-    const sourceRect = e.currentTarget.getBoundingClientRect()
+                  const sourceRect = e.currentTarget.getBoundingClientRect()
 
-    if (onPickUser) {
-      onPickUser({
-        user: recentUser,
-        sourceRect,
-      })
-      return
-    }
+                  if (onPickUser) {
+                    onPickUser({
+                      user: recentUser,
+                      sourceRect,
+                    })
+                    return
+                  }
 
-    onOpenProfile?.(recentUser.id)
-  }}
-  className="flex flex-col items-center active:scale-95"
->
-  {folderId === 'recent' && recentUser ? (
-    recentUser.avatar ? (
-      <img
-        src={recentUser.avatar}
-        alt={recentUser.name}
-        className="h-[62px] w-[62px] rounded-full object-cover"
-      />
-    ) : (
-      <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
-    )
-  ) : (
-    <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
-  )}
+                  onOpenProfile?.(recentUser.id)
+                }}
+                className="flex flex-col items-center active:scale-95"
+              >
+                {folderId === 'recent' && recentUser ? (
+                  recentUser.avatar ? (
+                    <img
+                      src={recentUser.avatar}
+                      alt={recentUser.name}
+                      className="h-[62px] w-[62px] rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
+                  )
+                ) : (
+                  <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
+                )}
 
-  <div className="mt-3 max-w-[72px] truncate text-[13px] text-[#555]">
-    {folderId === 'recent' && recentUser
-      ? recentUser.name
-      : '(用戶名)'}
-  </div>
-</button>
+                <div className="mt-3 max-w-[72px] truncate text-[13px] text-[var(--app-muted)]">
+                  {folderId === 'recent' && recentUser
+                    ? recentUser.name
+                    : '(用戶名)'}
+                </div>
+              </button>
 
               {mockUsers.slice(1).map((user) => (
                 <button
-  key={user.id}
-  type="button"
-  onClick={() => onOpenProfile?.(user.id)}
-  className="flex flex-col items-center active:scale-95"
->
+                  key={user.id}
+                  type="button"
+                  onClick={() => onOpenProfile?.(user.id)}
+                  className="flex flex-col items-center active:scale-95"
+                >
                   <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
-                  <div className="mt-3 text-[13px] text-[#555]">
+                  <div className="mt-3 text-[13px] text-[var(--app-muted)]">
                     {user.name}
                   </div>
                 </button>

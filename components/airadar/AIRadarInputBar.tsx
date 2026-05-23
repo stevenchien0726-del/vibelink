@@ -73,17 +73,17 @@ export default function AIRadarInputBar({
           </div>
         ) : (
           <button
-            type="button"
-            aria-label="Open People Library"
-            onClick={onOpenPeopleLibrary}
-            className="flex h-[50px] w-full items-center justify-center gap-[8px] rounded-full bg-[#D9D9D9] px-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition active:scale-95"
-          >
-            <UserCircleIcon />
+  type="button"
+  aria-label="Open People Library"
+  onClick={onOpenPeopleLibrary}
+  className="flex h-[50px] w-full items-center justify-center gap-[8px] rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-[20px] text-[var(--app-text)] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition active:scale-95"
+>
+  <UserCircleIcon />
 
-            <span className="text-[22px] font-semibold leading-none text-[#111]">
-              +
-            </span>
-          </button>
+  <span className="text-[22px] font-semibold leading-none text-[var(--app-text)]">
+    +
+  </span>
+</button>
         )}
       </div>
 
@@ -113,10 +113,28 @@ export default function AIRadarInputBar({
 
 function UserCircleIcon() {
   return (
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.9" />
+    <svg
+      width="34"
+      height="34"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="text-[var(--app-text)]"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth="1.9"
+      />
 
-      <circle cx="12" cy="9" r="3" stroke="currentColor" strokeWidth="1.8" />
+      <circle
+        cx="12"
+        cy="9"
+        r="3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
 
       <path
         d="M7 18c1-2.2 2.9-3.5 5-3.5s4 1.3 5 3.5"

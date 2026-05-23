@@ -1135,11 +1135,12 @@ const mergedPosts = [
   return (
   <div
   data-auth-modal-open={isAuthModalOpen ? 'true' : 'false'}
-  className="relative min-h-screen w-full overflow-x-hidden bg-[#f5f5f5]"
+  className="relative min-h-screen w-full overflow-x-hidden bg-[var(--app-bg)] text-[var(--app-text)]"
 >
 
     <motion.div
-      className="fixed top-0 left-1/2 z-[500] pointer-events-auto h-[60px] w-full max-w-[430px] -translate-x-1/2 bg-[rgba(245,245,245,0.96)] px-[14px] py-[8px] backdrop-blur-md"
+      className="fixed top-0 left-1/2 z-[500] pointer-events-auto h-[60px] w-full max-w-[430px] -translate-x-1/2 border-b border-[var(--app-card-border)] bg-[var(--app-bg)]/95 px-[14px] py-[8px] backdrop-blur-md"
+
       ref={searchRef}
       animate={{
         y: isTopBarVisible || isSearchOpen ? 0 : -72,
@@ -1167,11 +1168,11 @@ const mergedPosts = [
             }}
             className="flex h-full items-center gap-2"
           >
-            <div className="flex h-[42px] flex-1 items-center gap-2 rounded-full border border-[#e6d8ee] bg-[#f7f1fa] px-4 shadow-[0_8px_22px_rgba(0,0,0,0.08)]">
+            <div className="flex h-[42px] flex-1 items-center gap-2 rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 shadow-[0_8px_22px_rgba(0,0,0,0.08)]">
               <button
                 type="button"
                 onClick={handleSubmitSearch}
-                className="shrink-0 text-[#444]"
+                className="shrink-0 text-white"
               >
                 <SearchIcon />
               </button>
@@ -1186,14 +1187,14 @@ const mergedPosts = [
                   }
                 }}
                 placeholder="搜尋"
-                className="w-full bg-transparent text-[16px] text-[#333] outline-none placeholder:text-[#999]"
+                className="w-full bg-transparent text-[16px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
               />
             </div>
 
             <button
               type="button"
               onClick={() => setIsSearchOpen(false)}
-              className="shrink-0 text-[15px] font-medium text-[#666]"
+              className="shrink-0 text-[15px] font-medium text-[var(--app-muted)]"
             >
               CLOSE
             </button>
@@ -1213,7 +1214,7 @@ const mergedPosts = [
     <button
       type="button"
       onClick={() => setIsTopMenuOpen((prev) => !prev)}
-      className="flex h-[38px] items-center gap-1 rounded-[12px] bg-[#e9e9e9] px-3 transition-all active:scale-[0.96] active:bg-[#dddddd]"
+      className="flex h-[38px] items-center gap-1 rounded-[12px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-3 text-[var(--app-text)] transition-all active:scale-[0.96] active:bg-white/10"
     >
       <img
         src="/vibelink-logo.png"
@@ -1224,7 +1225,7 @@ const mergedPosts = [
       <motion.span
         animate={{ rotate: isTopMenuOpen ? 180 : 0 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="flex items-center justify-center text-[#222]"
+        className="flex items-center justify-center text-[var(--app-text)]"
       >
         <ChevronDownIcon />
       </motion.span>
@@ -1237,7 +1238,7 @@ const mergedPosts = [
   animate={{ opacity: 1, scale: 1, y: 0 }}
   exit={{ opacity: 0, scale: 0.96, y: -6 }}
   transition={{ duration: 0.18, ease: 'easeOut' }}
-  className="absolute left-0 top-[46px] z-[200] w-[200px] rounded-[20px] border border-[#e4d7ea] bg-[#f3f3f3] p-4 shadow-[0_10px_26px_rgba(0,0,0,0.12)]"
+  className="absolute left-0 top-[46px] z-[200] w-[200px] rounded-[20px] border border-[var(--app-card-border)] bg-[var(--app-card)] p-4 text-[var(--app-text)] shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
 >
   <div className="flex flex-col gap-6">
   <button
@@ -1246,7 +1247,8 @@ const mergedPosts = [
       openLink(MEMBERSHIP_URL)
       setIsTopMenuOpen(false)
     }}
-    className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
+    className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] 
+     transition-colors active:bg-black/5"
   >
     <MembershipIcon />
     <span>Vibe會員</span>
@@ -1258,7 +1260,7 @@ const mergedPosts = [
     setIsTopMenuOpen(false)
     setIsFollowingFeedOpen(true)
   }}
-  className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
+  className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[var(--app-text)] transition-colors active:bg-black/5"
 >
   <FollowingIcon />
   <span>追蹤中</span>
@@ -1270,7 +1272,7 @@ const mergedPosts = [
     setIsTopMenuOpen(false)
     setIsFavoriteFeedOpen(true)
   }}
-  className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[#222] transition-colors active:bg-black/5"
+  className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[var(--app-text)] transition-colors active:bg-black/5"
 >
   <FavoriteIcon />
   <span>最愛</span>
@@ -1282,7 +1284,7 @@ const mergedPosts = [
   </div>
 
     {/* 右：功能膠囊 */}
-  <div className="flex h-[40px] items-center gap-6 rounded-full bg-[#e5e5e5] px-4 shadow-inner">
+  <div className="flex h-[40px] items-center gap-6 rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 text-[var(--app-text)] shadow-inner">
 
     
 
@@ -1305,7 +1307,7 @@ const mergedPosts = [
     <button
   type="button"
   onClick={() => setIsNotificationsOpen(true)}
-  className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-black transition-all active:scale-[0.95] active:bg-black/5"
+  
 >
   <Bell size={20} strokeWidth={2.1} />
 </button>
@@ -1381,7 +1383,7 @@ onOpenProfile={(post) => {
   {selectedPost && (
     <motion.div
   data-block-page-swipe="true"
-  className="fixed inset-0 z-[700] overflow-x-hidden bg-[#f3f3f3]"
+  className="fixed inset-0 z-[700] overflow-x-hidden bg-[var(--app-bg)] text-[var(--app-text)]"
       initial={{ x: '100%' }}
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
@@ -1390,7 +1392,7 @@ onOpenProfile={(post) => {
       onTouchEnd={handleDetailTouchEnd}
     >
       <div className="mx-auto h-full w-full max-w-[430px] overflow-x-hidden overflow-y-auto pb-[110px] scrollbar-hide">
-        <div className="sticky top-0 z-[20] flex h-[56px] items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
+        <div className="sticky top-0 z-[20] flex h-[56px] items-center justify-between bg-[var(--app-surface)]/95 px-4 backdrop-blur-md">
           <button
             type="button"
             onClick={() => {
@@ -1426,7 +1428,7 @@ onOpenProfile={(post) => {
   }}
   className="mb-5 ml-7 flex items-center gap-3 py-3 pr-5 active:scale-95"
 >
-  <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#d6d6d6]">
+  <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[var(--app-card)]">
   {(selectedPost as any).avatarUrl ? (
     <img
       src={(selectedPost as any).avatarUrl}
@@ -1435,7 +1437,7 @@ onOpenProfile={(post) => {
   ) : null}
 </div>
 
-  <div className="text-[15px] font-medium text-[#222]">
+  <div className="text-[15px] font-medium text-[var(--app-text)]">
     {selectedPost.author}
   </div>
 </button>
@@ -1451,7 +1453,7 @@ onOpenProfile={(post) => {
 >
   <div
   onDoubleClick={handleDetailDoubleLike}
-  className="relative w-full aspect-square overflow-hidden rounded-[18px] bg-[#ddd]"
+  className="relative w-full aspect-square overflow-hidden rounded-[18px] bg-[var(--app-card)]"
 >
 
   {/* ✅ 圖片滑動 */}
@@ -1493,7 +1495,7 @@ onOpenProfile={(post) => {
 
     {/* 頁數 */}
   {selectedPost.images.length > 1 && (
-    <div className="absolute right-3 top-3 rounded-full bg-black/20 px-3 py-1 text-[14px] text-[#444] backdrop-blur-sm">
+    <div className="absolute right-3 top-3 rounded-full bg-black/20 px-3 py-1 text-[14px] text-[var(--app-text)] backdrop-blur-sm">
       {detailImageIndex + 1}/{selectedPost.images.length}
     </div>
   )}
@@ -1505,7 +1507,7 @@ onOpenProfile={(post) => {
       <span
         key={index}
         className={`h-[7px] w-[7px] rounded-full ${
-          detailImageIndex === index ? 'bg-[#c86cff]' : 'bg-[#ddd]'
+          detailImageIndex === index ? 'bg-[#c86cff]' : 'bg-[var(--app-muted)]'
         }`}
       />
     ))}
@@ -1521,7 +1523,7 @@ onOpenProfile={(post) => {
     color="#c86cff"
     fill={selectedPostLiked ? '#c86cff' : 'none'}
   />
-  <span className="text-[15px] text-[#555]">{selectedPostLikeCount}</span>
+  <span className="text-[15px] text-[var(--app-text)]">{selectedPostLikeCount}</span>
 </button>
 
             <button className="active:scale-90">
@@ -1551,16 +1553,16 @@ onOpenProfile={(post) => {
         </div>
 
         {selectedPost.text && (
-          <div className="px-4 pt-3 text-[15px] text-[#222]">
+          <div className="px-4 pt-3 text-[15px] text-[var(--app-text)]">
             {selectedPost.text}
           </div>
         )}
 
           <div
   ref={commentSectionRef}
-  className="mt-5 border-t border-[#ddd] px-4 pt-4"
+  className="mt-5 border-t border-[var(--app-card-border)] px-4 pt-4"
 >
-  <div className="mb-4 text-[15px] font-medium text-[#222]">
+  <div className="mb-4 text-[15px] font-medium text-[var(--app-text)]">
     留言
   </div>
 
@@ -1572,7 +1574,7 @@ onOpenProfile={(post) => {
         if (e.key === 'Enter') submitComment()
       }}
       placeholder="新增留言..."
-      className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[#222] outline-none"
+      className="h-[42px] flex-1 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 text-[14px] text-[var(--app-text)] outline-none"
     />
 
     <button
@@ -1582,7 +1584,7 @@ onOpenProfile={(post) => {
       className={`h-[42px] rounded-full px-4 text-[14px] font-medium ${
         commentText.trim()
           ? 'bg-[#c86cff] text-white'
-          : 'bg-[#e5e5e5] text-[#999]'
+          : 'bg-[#e5e5e5] text-[var(--app-muted)]'
       }`}
     >
       送出
@@ -1590,7 +1592,7 @@ onOpenProfile={(post) => {
   </div>
 
   {comments.length === 0 ? (
-    <div className="text-[14px] text-[#999]">
+    <div className="text-[14px] text-[var(--app-muted)]">
       尚無留言，成為第一個留言的人
     </div>
   ) : (
@@ -1600,11 +1602,11 @@ onOpenProfile={(post) => {
   <div className="h-[32px] w-[32px] rounded-full bg-[#d6d6d6]" />
 
   <div className="flex-1">
-    <div className="text-[13px] font-medium text-[#222]">
+    <div className="text-[13px] font-medium text-[var(--app-text)]">
       Vibelink User
     </div>
 
-    <div className="mt-1 text-[14px] text-[#444]">
+    <div className="mt-1 text-[14px] text-white">
       {comment.content}
     </div>
   </div>
@@ -1677,7 +1679,7 @@ onTouchEnd={(e) => e.stopPropagation()}
             alt="Vibelink"
             className="mx-auto mb-3 h-[48px]"
           />
-          <h2 className="text-[22px] font-semibold text-[#222]">
+          <h2 className="text-[22px] font-semibold text-[var(--app-text)]">
             登入 Vibelink
           </h2>
           <p className="mt-2 text-[14px] text-[#777]">
@@ -1688,7 +1690,7 @@ onTouchEnd={(e) => e.stopPropagation()}
         <button
   type="button"
   onClick={handleGoogleLogin}
-  className="mt-5 mb-5 flex h-[48px] w-full items-center justify-center gap-3 rounded-full border border-[#ddd] bg-white text-[15px] font-medium text-[#222] shadow-sm active:scale-[0.97]"
+  className="mt-5 mb-5 flex h-[48px] w-full items-center justify-center gap-3 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] text-[15px] font-medium text-[var(--app-text)] shadow-sm active:scale-[0.97]"
 >
   GOOGLE 登入
 </button>
@@ -1712,23 +1714,23 @@ onTouchEnd={(e) => e.stopPropagation()}
       />
 
       <motion.div
-        className="fixed bottom-0 left-1/2 z-[770] flex max-h-[78vh] w-full max-w-[430px] -translate-x-1/2 flex-col rounded-t-[26px] bg-[#f3f3f3] px-4 pt-4 pb-6 shadow-[0_-10px_30px_rgba(0,0,0,0.12)]"
+        className="fixed bottom-0 left-1/2 z-[770] flex max-h-[78vh] w-full max-w-[430px] -translate-x-1/2 flex-col rounded-t-[26px]  px-4 pt-4 pb-6 shadow-[0_-10px_30px_rgba(0,0,0,0.12)]"
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', stiffness: 320, damping: 30 }}
       >
         <div className="mb-3 flex justify-center">
-          <div className="h-[4px] w-[42px] rounded-full bg-[#bbb]" />
+          <div className="h-[4px] w-[42px] rounded-full bg-[var(--app-muted)]" />
         </div>
 
-        <div className="mb-4 text-center text-[16px] font-medium text-[#222]">
+        <div className="mb-4 text-center text-[16px] font-medium text-[var(--app-text)]">
           留言
         </div>
 
         <div className="flex-1 overflow-y-auto pb-4">
           {comments.length === 0 ? (
-            <div className="pt-4 text-[14px] text-[#999]">
+            <div className="pt-4 text-[14px] text-[var(--app-muted)]">
               尚無留言，成為第一個留言的人
             </div>
           ) : (
@@ -1738,10 +1740,10 @@ onTouchEnd={(e) => e.stopPropagation()}
                   <div className="h-[32px] w-[32px] rounded-full bg-[#d6d6d6]" />
 
                   <div className="flex-1">
-                    <div className="text-[13px] font-medium text-[#222]">
+                    <div className="text-[13px] font-medium text-[var(--app-text)]">
                       Vibelink User
                     </div>
-                    <div className="mt-1 text-[14px] text-[#444]">
+                    <div className="mt-1 text-[14px] text-white">
                       {comment.content}
                     </div>
                   </div>
@@ -1767,7 +1769,7 @@ onTouchEnd={(e) => e.stopPropagation()}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: -4 }}
         transition={{ duration: 0.16 }}
-        className="absolute right-1 top-[34px] z-[950] w-[132px] overflow-hidden rounded-[16px] border border-[#ddd] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
+        className="absolute right-1 top-[34px] z-[950] w-[132px] overflow-hidden rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-surface)] shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
       >
         {comment.user_id === currentUserId ? (
           <button
@@ -1785,7 +1787,7 @@ onTouchEnd={(e) => e.stopPropagation()}
               setIsCommentMenuOpen(false)
               setSelectedComment(null)
             }}
-            className="flex h-[44px] w-full items-center justify-center text-[14px] font-medium text-[#222] active:bg-black/5"
+            className="flex h-[44px] w-full items-center justify-center text-[14px] font-medium text-[var(--app-text)] active:bg-black/5"
           >
             檢舉留言
           </button>
@@ -1800,7 +1802,7 @@ onTouchEnd={(e) => e.stopPropagation()}
           )}
         </div>
 
-        <div className="flex gap-2 border-t border-[#ddd] pt-3">
+        <div className="flex gap-2 border-t border-[var(--app-card-border)] pt-3">
           <input
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
@@ -1808,7 +1810,7 @@ onTouchEnd={(e) => e.stopPropagation()}
               if (e.key === 'Enter') submitComment()
             }}
             placeholder="新增留言..."
-            className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[#222] outline-none"
+            className="h-[42px] flex-1 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 text-[14px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
           />
 
           <button
@@ -1818,7 +1820,7 @@ onTouchEnd={(e) => e.stopPropagation()}
             className={`h-[42px] rounded-full px-4 text-[14px] font-medium ${
               commentText.trim()
                 ? 'bg-[#c86cff] text-white'
-                : 'bg-[#e5e5e5] text-[#999]'
+                : 'bg-[#e5e5e5] text-[var(--app-muted)]'
             }`}
           >
             送出

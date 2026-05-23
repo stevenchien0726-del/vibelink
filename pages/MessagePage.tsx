@@ -163,7 +163,7 @@ const [messageError, setMessageError] = useState('')
 
 function withTimeout<T>(
   promise: PromiseLike<T>,
-  ms = 4000,
+  ms = 6000,
   label = 'request'
 ): Promise<T | null> {
   return Promise.race([
@@ -240,7 +240,7 @@ const profilesResult =
           .from('profiles')
           .select('id, username, display_name, avatar_url')
           .in('id', otherUserIds),
-        4000,
+        6000,
         'message_profiles'
       )
     : null
@@ -386,28 +386,28 @@ useEffect(() => {
   return (
     <div
       onScroll={handleMessageScroll}
-      className="relative flex h-screen flex-col overflow-y-auto bg-transparent px-4 pt-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="relative flex h-screen flex-col overflow-y-auto bg-[var(--app-bg)] px-4 pt-4 pb-2 text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <div className="relative flex-1 px-0 pb-4 pt-[70px]">
         <div
-          className={`fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          className={`fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[var(--app-bg)]/95 px-4 pt-4 pb-3 backdrop-blur-md transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             isTopBarHidden ? '-translate-y-full' : 'translate-y-0'
           }`}
         >
           <div className="flex items-center justify-between">
-  <div className="rounded-full bg-[#d9d9d9] p-[8px]">
+  <div className="rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] p-[8px]">
   <button
     type="button"
     onClick={() => {
       closeAllTopPanels()
       setIsPeopleLibraryOpen(true)
     }}
-    className="flex min-w-[150px] items-center justify-center gap-2 rounded-full bg-[#d9d9d9] px-5 py-[8px] transition active:scale-[0.96]"
+    className="flex min-w-[150px] items-center justify-center gap-2 rounded-full bg-[var(--app-card)] px-5 py-[8px] text-[var(--app-text)] transition active:scale-[0.96]"
     
   >
     <UserRound size={22} strokeWidth={2.3} />
 
-    <span className="text-[15px] font-medium text-[#111]">
+    <span className="text-[15px] font-medium text-[var(--app-text)]">
       People Library
     </span>
     </button>
@@ -449,13 +449,13 @@ useEffect(() => {
                 onClick={(e) => e.stopPropagation()}
               >
                 {isSearchPanelOpen && (
-                  <div className="overflow-hidden rounded-[30px] bg-[#e9e9e9]/95 shadow-[0_14px_30px_rgba(0,0,0,0.14)] backdrop-blur-md">
+                  <div className="overflow-hidden rounded-[30px] border border-[var(--app-card-border)] bg-[var(--app-card)]/95 shadow-[0_14px_30px_rgba(0,0,0,0.14)] backdrop-blur-md">
                     <div className="flex items-center justify-between px-4 pt-4">
                       <div>
-                        <div className="text-[18px] font-medium text-[#111]">
+                        <div className="text-[18px] font-medium text-[var(--app-text)]">
                           {messageText[locale].searchAccounts}
                         </div>
-                        <div className="mt-1 text-[12px] text-[#666]">
+                        <div className="mt-1 text-[12px] text-[var(--app-muted)]">
                           {messageText[locale].searchAccountsSub}
                         </div>
                       </div>
@@ -463,30 +463,30 @@ useEffect(() => {
                       <button
                         type="button"
                         onClick={() => setIsSearchPanelOpen(false)}
-                        className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/60 active:scale-95"
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[var(--app-surface)] active:scale-95"
                       >
-                        <X size={22} strokeWidth={2.4} className="text-black" />
+                        <X size={22} strokeWidth={2.4} className="text-[var(--app-text)]" />
                       </button>
                     </div>
 
                     <div className="p-4 pt-3">
-                      <div className="mb-4 flex h-[46px] items-center rounded-full bg-white/65 px-4">
+                      <div className="mb-4 flex h-[46px] items-center rounded-full bg-[var(--app-surface)] px-4">
                         <Search
                           size={20}
                           strokeWidth={2.4}
-                          className="text-black"
+                          className="text-[var(--app-text)]"
                         />
                         <input
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}
                           placeholder={messageText[locale].searchPlaceholder}
-                          className="ml-3 w-full bg-transparent text-[15px] text-[#111] outline-none placeholder:text-[#777]"
+                          className="ml-3 w-full bg-transparent text-[15px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
                         />
                       </div>
 
                       <div className="flex flex-col gap-2">
                         {isSearchingAccounts ? (
-  <div className="rounded-[20px] bg-white/45 px-4 py-5 text-[14px] text-[#666]">
+  <div className="rounded-[20px] bg-[var(--app-surface)] px-4 py-5 text-[14px] text-[var(--app-muted)]">
     搜尋追蹤用戶中...
   </div>
 ) : filteredAccounts.length > 0 ? (
@@ -498,7 +498,7 @@ useEffect(() => {
     setIsSearchPanelOpen(false)
     setSelectedProfileUserId(account.id)
   }}
-  className="flex items-center gap-3 rounded-[20px] bg-white/45 px-3 py-3 text-left active:scale-[0.99]"
+  className="flex items-center gap-3 rounded-[20px] bg-[var(--app-surface)] px-3 py-3 text-left active:scale-[0.99]"
 >
                               <div className="flex h-[46px] w-[46px] items-center justify-center overflow-hidden rounded-full bg-[#d9d9d9]">
   {account.avatarUrl ? (
@@ -510,23 +510,23 @@ useEffect(() => {
     <UserRound
       size={24}
       strokeWidth={2.1}
-      className="text-black"
+      className="text-[var(--app-text)]"
     />
   )}
 </div>
 
                               <div className="flex flex-col">
-                                <span className="text-[15px] font-medium text-[#111]">
+                                <span className="text-[15px] font-medium text-[var(--app-text)]">
                                   {account.name}
                                 </span>
-                                <span className="text-[12px] text-[#666]">
+                                <span className="text-[12px] text-[var(--app-muted)]">
                                   {account.sub}
                                 </span>
                               </div>
                             </button>
                           ))
                         ) : (
-                          <div className="rounded-[20px] bg-white/45 px-4 py-5 text-[14px] text-[#666]">
+                          <div className="rounded-[20px] bg-[var(--app-surface)] px-4 py-5 text-[14px] text-[var(--app-muted)]">
                             {messageText[locale].noAccount}
                           </div>
                         )}
@@ -536,13 +536,13 @@ useEffect(() => {
                 )}
 
                 {isEditPanelOpen && (
-                  <div className="overflow-hidden rounded-[30px] bg-[#e9e9e9]/95 shadow-[0_14px_30px_rgba(0,0,0,0.14)] backdrop-blur-md">
+                  <div className="overflow-hidden rounded-[30px] border border-[var(--app-card-border)] bg-[var(--app-card)]/95 shadow-[0_14px_30px_rgba(0,0,0,0.14)] backdrop-blur-md">
                     <div className="flex items-center justify-between px-4 pt-4">
                       <div>
-                        <div className="text-[18px] font-medium text-[#111]">
+                        <div className="text-[18px] font-medium text-[var(--app-text)]">
                           {messageText[locale].editMessage}
                         </div>
-                        <div className="mt-1 text-[12px] text-[#666]">
+                        <div className="mt-1 text-[12px] text-[var(--app-muted)]">
                           {messageText[locale].editMessageSub}
                         </div>
                       </div>
@@ -550,9 +550,9 @@ useEffect(() => {
                       <button
                         type="button"
                         onClick={() => setIsEditPanelOpen(false)}
-                        className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/60 active:scale-95"
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[var(--app-surface)] active:scale-95"
                       >
-                        <X size={22} strokeWidth={2.4} className="text-black" />
+                        <X size={22} strokeWidth={2.4} className="text-[var(--app-text)]" />
                       </button>
                     </div>
 
@@ -569,14 +569,14 @@ useEffect(() => {
         )}
 
 {messageLoading && (
-  <div className="mb-4 rounded-[22px] bg-[#e9e9e9] px-4 py-4 text-[14px] text-[#666]">
+  <div className="mb-4 rounded-[22px] bg-[#e9e9e9] px-4 py-4 text-[14px] text-[var(--app-muted)]">
     訊息讀取中...
   </div>
 )}
 
 {messageError && !messageLoading && (
-  <div className="mb-4 rounded-[22px] bg-[#e9e9e9] px-4 py-4">
-    <div className="mb-3 text-[14px] text-[#666]">
+  <div className="mb-4 rounded-[22px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 py-4">
+    <div className="mb-3 text-[14px] text-[var(--app-muted)]">
       {messageError}
     </div>
 
@@ -603,7 +603,7 @@ useEffect(() => {
   onClick={() => setOpenedChat(conversation)}
   className="flex items-center gap-4 rounded-[24px] px-1 py-2 text-left active:scale-[0.99]"
 >
-      <div className="h-[58px] w-[58px] overflow-hidden rounded-full bg-[#d9d9d9]">
+      <div className="h-[58px] w-[58px] overflow-hidden rounded-full bg-[var(--app-card)]">
         {conversation.avatarUrl && (
           <img
             src={conversation.avatarUrl}
@@ -613,11 +613,11 @@ useEffect(() => {
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="text-[15px] font-medium text-[#111]">
+        <div className="text-[15px] font-medium text-[var(--app-text)]">
           {conversation.name}
         </div>
 
-        <div className="mt-1 truncate text-[13px] text-[#777]">
+        <div className="mt-1 truncate text-[13px] text-[var(--app-muted)]">
           {conversation.lastMessage || '開始聊天'}
         </div>
       </div>

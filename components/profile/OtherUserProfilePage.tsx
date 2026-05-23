@@ -113,7 +113,7 @@ const otherProfileText = {
 } as const
 
 const activeColor = '#d89ad0'
-const inactiveColor = '#222'
+const inactiveColor = 'var(--app-text)'
 
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -552,7 +552,7 @@ async function toggleFavorite() {
   return (
   <>
     <motion.div
-      className="fixed inset-0 z-[9999] overflow-y-auto bg-[#f3f3f3] pb-[110px]"
+      className="fixed inset-0 z-[9999] overflow-y-auto bg-[var(--app-bg)] pb-[110px] text-[var(--app-text)]"
       initial={{ opacity: 0, scale: 0.92, y: 24 }}
       animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
       exit={{ opacity: 0, scale: 0.92, y: 40 }}
@@ -573,12 +573,12 @@ async function toggleFavorite() {
       }}
     >
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[76px]">
-        <div className="fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-4 pb-3 backdrop-blur-md">
+        <div className="fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[var(--app-bg)]/95 px-4 pt-4 pb-3 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={onClose}
-              className="flex h-[38px] items-center gap-1 rounded-[14px] bg-[#d9d9d9] px-3 text-[13px] text-[#222] active:scale-95"
+              className="flex h-[38px] items-center gap-1 rounded-[14px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-3 text-[13px] text-[var(--app-text)] active:scale-95"
             >
               <ChevronLeft size={18} />
               <span>{text.back}</span>
@@ -589,7 +589,7 @@ async function toggleFavorite() {
             <button
               type="button"
               onClick={() => setIsPostMenuOpen(true)}
-              className="flex h-[38px] items-center gap-1 rounded-[14px] px-2 text-[13px] text-[#111] active:scale-95"
+              className="flex h-[38px] items-center gap-1 rounded-[14px] px-2 text-[13px] text-[var(--app-text)] active:scale-95"
             >
               <MoreHorizontal size={22} strokeWidth={2.4} />
               <span>MENU</span>
@@ -598,22 +598,22 @@ async function toggleFavorite() {
         </div>
 
         {loading ? (
-          <div className="py-20 text-center text-[14px] text-[#999]">
+          <div className="py-20 text-center text-[14px] text-[var(--app-muted)]">
             {text.loading}
           </div>
         ) : loadError ? (
-          <div className="py-20 text-center text-[14px] text-[#999]">
+          <div className="py-20 text-center text-[14px] text-[var(--app-muted)]">
             {loadError}
           </div>
         ) : !profile ? (
-          <div className="py-20 text-center text-[14px] text-[#999]">
+          <div className="py-20 text-center text-[14px] text-[var(--app-muted)]">
             {text.userNotFound}
           </div>
         ) : (
           <>
             <div className="mb-3 flex items-start justify-between">
               <div className="flex gap-3">
-                <div className="h-[58px] w-[58px] overflow-hidden rounded-full bg-[#d9d9d9]">
+                <div className="h-[58px] w-[58px] overflow-hidden rounded-full bg-[var(--app-card)]">
                   {profile?.avatar_url && (
                     <img
                       src={profile.avatar_url}
@@ -623,13 +623,13 @@ async function toggleFavorite() {
                 </div>
 
                 <div>
-                  <div className="text-[18px] font-medium text-[#222]">
+                  <div className="text-[18px] font-medium text-[var(--app-text)]">
                     {profile?.display_name ||
                       profile?.username ||
                       'Vibelink User'}
                   </div>
 
-                  <div className="text-[18px] font-medium text-[#444]">
+                  <div className="text-[18px] font-medium text-[var(--app-muted)]">
                     {profile?.username || 'user'}
                   </div>
                 </div>
@@ -637,15 +637,15 @@ async function toggleFavorite() {
 
               <div className="flex gap-10 pr-4">
                 <div className="flex flex-col items-center">
-                  <div className="text-[18px] text-[#222]">
+                  <div className="text-[18px] text-[var(--app-text)]">
                     {gridItems.length}
                   </div>
-                  <div className="text-[14px] text-[#666]">{text.posts}</div>
+                  <div className="text-[14px] text-[var(--app-muted)]">{text.posts}</div>
                 </div>
 
                 <div className="flex flex-col items-center">
-                  <div className="text-[18px] text-[#222]">{followerCount}</div>
-                  <div className="text-[14px] text-[#666]">
+                  <div className="text-[18px] text-[var(--app-text)]">{followerCount}</div>
+                  <div className="text-[14px] text-[var(--app-muted)]">
                     {text.followers}
                   </div>
                 </div>
@@ -653,7 +653,7 @@ async function toggleFavorite() {
             </div>
 
             <div className="mb-3">
-              <div className="text-[16px] leading-[1.45] text-[#333]">
+              <div className="text-[16px] leading-[1.45] text-[var(--app-text)]">
                 {profile?.bio || ''}
               </div>
             </div>
@@ -705,13 +705,13 @@ async function toggleFavorite() {
 
   setIsChatOpen(true)
 }}
-  className="flex h-[44px] flex-1 items-center justify-center rounded-full bg-white text-[15px] font-medium text-[#111] shadow-[0_4px_14px_rgba(0,0,0,0.06)] active:scale-95"
+  className="flex h-[44px] flex-1 items-center justify-center rounded-full bg-white text-[15px] font-medium text-[var(--app-text)] shadow-[0_4px_14px_rgba(0,0,0,0.06)] active:scale-95"
 >
   {text.message}
 </button>
             </div>
 
-            <div className="relative mb-2 border-b border-[#d9d9d9] pb-2">
+            <div className="relative mb-2 border-b border-[var(--app-card-border)] pb-2">
               <div className="grid grid-cols-3">
   {[Grid2x2, PlaySquare, Bookmark].map(
                   (Icon, index) => (
@@ -754,11 +754,11 @@ async function toggleFavorite() {
               >
                 <div className="w-full shrink-0">
                   {postsLoading ? (
-  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
+  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[var(--app-muted)]">
     貼文讀取中...
   </div>
 ) : gridItems.length === 0 ? (
-                    <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
+                    <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[var(--app-muted)]">
                       {text.noPublicPosts}
                     </div>
                   ) : (
@@ -771,7 +771,7 @@ async function toggleFavorite() {
   key={post.id}
   type="button"
   onClick={() => setSelectedPost(post)}
-  className="relative h-[190px] overflow-hidden bg-[#d9d9d9]"
+  className="relative h-[190px] overflow-hidden bg-[var(--app-card)]"
 >
                             {image && (
                               <img
@@ -794,11 +794,11 @@ async function toggleFavorite() {
 
                 <div className="w-full shrink-0">
   {videosLoading ? (
-  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
+  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[var(--app-muted)]">
     短影片讀取中...
   </div>
 ) : shortVideos.length === 0 ? (
-    <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
+    <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[var(--app-muted)]">
       {text.shortVideoNext}
     </div>
   ) : (
@@ -834,7 +834,7 @@ async function toggleFavorite() {
 </div>
 
                 <div className="w-full shrink-0">
-                  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[#999]">
+                  <div className="flex min-h-[220px] items-center justify-center text-[14px] text-[var(--app-muted)]">
                     {text.privateSaved}
                   </div>
                 </div>
@@ -857,7 +857,7 @@ async function toggleFavorite() {
             />
 
             <motion.div
-              className="fixed bottom-0 left-1/2 z-[210] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[#d9d9d9] px-4 pt-4 pb-8 shadow-[0_-12px_32px_rgba(0,0,0,0.12)]"
+              className="fixed bottom-0 left-1/2 z-[210] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[var(--app-card)] px-4 pt-4 pb-8 shadow-[0_-12px_32px_rgba(0,0,0,0.12)]"
               initial={{ y: 260, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 260, opacity: 0 }}
@@ -872,7 +872,7 @@ async function toggleFavorite() {
                   <button
                     type="button"
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex h-[42px] min-w-[112px] items-center justify-center rounded-[15px] bg-white text-[13px] text-[#111] active:scale-95"
+                    className="flex h-[42px] min-w-[112px] items-center justify-center rounded-[15px] bg-white text-[13px] text-[var(--app-text)] active:scale-95"
                   >
                     CLOSE
                   </button>
@@ -882,7 +882,7 @@ async function toggleFavorite() {
               <div className="overflow-hidden rounded-[16px] bg-white">
                 <button
                   type="button"
-                  className="flex h-[58px] w-full items-center pr-8 text-[14px] text-[#111] active:bg-black/5"
+                  className="flex h-[58px] w-full items-center pr-8 text-[14px] text-[var(--app-text)] active:bg-black/5"
                 >
                   <div className="flex w-[54px] items-center justify-center">
                     <Bell size={23} />
@@ -899,7 +899,7 @@ async function toggleFavorite() {
 
                 <button
                   type="button"
-                  className="flex h-[58px] w-full items-center pr-8 text-[14px] text-[#111] active:bg-black/5"
+                  className="flex h-[58px] w-full items-center pr-8 text-[14px] text-[var(--app-text)] active:bg-black/5"
                 >
                   <div className="flex w-[54px] items-center justify-center">
                     <Send size={23} />
@@ -912,7 +912,7 @@ async function toggleFavorite() {
               <div className="mt-5 overflow-hidden rounded-[16px] bg-white">
                 <button
                   type="button"
-                  className="flex h-[58px] w-full items-center pr-8 text-[14px] text-[#111] active:bg-black/5"
+                  className="flex h-[58px] w-full items-center pr-8 text-[14px] text-[var(--app-text)] active:bg-black/5"
                 >
                   <div className="flex w-[54px] items-center justify-center">
                     <BadgeAlert size={23} />
@@ -925,7 +925,7 @@ async function toggleFavorite() {
 
                 <button
                   type="button"
-                  className="flex h-[58px] w-full items-center pr-8 text-[14px] text-[#111] active:bg-black/5"
+                  className="flex h-[58px] w-full items-center pr-8 text-[14px] text-[var(--app-text)] active:bg-black/5"
                 >
                   <div className="flex w-[54px] items-center justify-center">
                     <Ban size={23} />
@@ -953,7 +953,7 @@ async function toggleFavorite() {
             />
 
             <motion.div
-              className="fixed bottom-0 left-1/2 z-[230] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[#d9d9d9] px-4 pt-4 pb-8 shadow-[0_-12px_32px_rgba(0,0,0,0.12)]"
+              className="fixed bottom-0 left-1/2 z-[230] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[var(--app-card)] px-4 pt-4 pb-8 shadow-[0_-12px_32px_rgba(0,0,0,0.12)]"
               initial={{ y: 230, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 230, opacity: 0 }}
@@ -965,7 +965,7 @@ async function toggleFavorite() {
                   <button
                     type="button"
                     onClick={() => setIsFollowMenuOpen(false)}
-                    className="flex h-[42px] min-w-[112px] items-center justify-center rounded-[15px] bg-white text-[13px] text-[#111] active:scale-95"
+                    className="flex h-[42px] min-w-[112px] items-center justify-center rounded-[15px] bg-white text-[13px] text-[var(--app-text)] active:scale-95"
                   >
                     CLOSE
                   </button>
@@ -976,7 +976,7 @@ async function toggleFavorite() {
                 <button
   type="button"
   onClick={toggleFavorite}
-  className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[#111] active:bg-black/5"
+  className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[var(--app-text)] active:bg-black/5"
 >
   <div className="flex w-[54px] items-center justify-end">
   <Star
@@ -999,7 +999,7 @@ async function toggleFavorite() {
                     setIsFollowMenuOpen(false)
                     setIsUnfollowConfirmOpen(true)
                   }}
-                  className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[#111] active:bg-black/5"
+                  className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[var(--app-text)] active:bg-black/5"
                 >
                   <div className="flex w-[54px] items-center justify-end">
                     <CircleX size={18} />
@@ -1036,7 +1036,7 @@ async function toggleFavorite() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-5 pt-6 pb-4 text-center">
-                <div className="text-[17px] font-semibold text-[#111]">
+                <div className="text-[17px] font-semibold text-[var(--app-text)]">
                   {text.unfollowTitle}
                 </div>
 
@@ -1063,7 +1063,7 @@ async function toggleFavorite() {
               <button
                 type="button"
                 onClick={() => setIsUnfollowConfirmOpen(false)}
-                className="flex h-[50px] w-full items-center justify-center text-[15px] text-[#111] active:bg-black/5"
+                className="flex h-[50px] w-full items-center justify-center text-[15px] text-[var(--app-text)] active:bg-black/5"
               >
                 {text.cancel}
               </button>
@@ -1082,14 +1082,14 @@ async function toggleFavorite() {
       <AnimatePresence>
   {selectedPost && (
      <motion.div
-  className="fixed inset-0 z-[260] flex justify-center overflow-y-auto bg-[#f3f3f3] pb-[110px]"
+  className="fixed inset-0 z-[260] flex justify-center overflow-y-auto bg-[var(--app-bg)] pb-[110px]"
   initial={{ x: '100%' }}
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', stiffness: 360, damping: 34 }}
     >
       <div className="w-full max-w-[430px]">
-      <div className="sticky top-0 z-[270] flex h-[56px] items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
+      <div className="sticky top-0 z-[270] flex h-[56px] items-center justify-between bg-[var(--app-bg)]/95 px-4 backdrop-blur-md">
         <button
           type="button"
           onClick={() => setSelectedPost(null)}
@@ -1114,7 +1114,7 @@ async function toggleFavorite() {
   onClick={() => setSelectedPost(null)}
   className="mb-10 flex h-[52px] items-center gap-3 active:scale-[0.98]"
 >
-          <div className="h-[40px] w-[40px] overflow-hidden rounded-full bg-[#d9d9d9]">
+          <div className="h-[40px] w-[40px] overflow-hidden rounded-full bg-[var(--app-card)]">
             {profile?.avatar_url && (
               <img
                 src={profile.avatar_url}
@@ -1123,12 +1123,12 @@ async function toggleFavorite() {
             )}
           </div>
 
-            <div className="text-[15px] font-medium text-[#222]">
+            <div className="text-[15px] font-medium text-[var(--app-text)]">
     {profile?.display_name || profile?.username || 'Vibelink User'}
   </div>
 </button>
 
-        <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[#ddd]">
+        <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[var(--app-card)]">
   {selectedPost.post_images?.[0]?.image_url && (
     <img
       src={selectedPost.post_images[0].image_url}
@@ -1161,31 +1161,31 @@ async function toggleFavorite() {
         </div>
 
         {selectedPost.caption && (
-          <div className="px-1 pt-3 text-[15px] text-[#222]">
+          <div className="px-1 pt-3 text-[15px] text-[var(--app-text)]">
             {selectedPost.caption}
           </div>
         )}
 
-        <div className="mt-5 border-t border-[#ddd] px-1 pt-4">
-          <div className="mb-4 text-[15px] font-medium text-[#222]">
+        <div className="mt-5 border-t border-[var(--app-card-border)] px-1 pt-4">
+          <div className="mb-4 text-[15px] font-medium text-[var(--app-text)]">
             留言
           </div>
 
           <div className="mb-4 flex gap-2">
             <input
               placeholder="新增留言..."
-              className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[#222] outline-none"
+              className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[var(--app-text)] outline-none"
             />
 
             <button
               type="button"
-              className="h-[42px] rounded-full px-4 text-[14px] font-medium text-[#222]"
+              className="h-[42px] rounded-full px-4 text-[14px] font-medium text-[var(--app-text)]"
             >
               送出
             </button>
           </div>
 
-                  <div className="text-[14px] text-[#999]">
+                  <div className="text-[14px] text-[var(--app-muted)]">
           尚無留言，成為第一個留言的人
         </div>
       </div>

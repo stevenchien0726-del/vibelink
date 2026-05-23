@@ -91,7 +91,7 @@ export default function AccountManagePage({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[230] flex justify-center bg-[#f3f3f3] touch-pan-y"
+      className="fixed inset-0 z-[230] flex justify-center bg-[var(--app-bg)] touch-pan-y"
       initial={{ x: '100%' }}
       animate={{ x: dragX }}
       exit={{ x: '100%' }}
@@ -107,54 +107,52 @@ export default function AccountManagePage({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative min-h-screen w-full max-w-[430px] bg-[#f3f3f3] text-[#222]">
-        <div className="fixed top-0 left-1/2 z-[30] w-full max-w-[430px] -translate-x-1/2 bg-[#f3f3f3]/95 px-4 pt-3 pb-3 backdrop-blur-md">
+      <div className="relative min-h-screen w-full max-w-[430px] bg-[var(--app-bg)] text-[var(--app-text)]">
+        <div className="fixed top-0 left-1/2 z-[30] w-full max-w-[430px] -translate-x-1/2 border-b border-[var(--app-card-border)] bg-[var(--app-bg)]/95 px-4 pt-3 pb-3 backdrop-blur-md">
           <div className="relative flex items-center justify-center">
             <button
               type="button"
               aria-label="返回"
               onClick={onClose}
-              className="absolute left-0 flex h-[40px] w-[40px] items-center justify-center rounded-full active:scale-95"
+              className="absolute left-0 flex h-[40px] w-[40px] items-center justify-center rounded-full text-[var(--app-text)] active:scale-95"
             >
               <ChevronLeft size={24} />
             </button>
 
-            <div className="text-[20px] font-medium tracking-[0.01em]">
+            <div className="text-[20px] font-medium tracking-[0.01em] text-[var(--app-text)]">
               帳號管理
             </div>
           </div>
         </div>
 
         <div className="px-4 pt-[78px] pb-10">
-          {/* 上方帳號區塊 */}
-          <div className="rounded-[24px] bg-[#d9d9d9] py-[12px] overflow-hidden">
+          <div className="overflow-hidden rounded-[24px] border border-[var(--app-card-border)] bg-[var(--app-card)] py-[12px]">
             <AccountMainRow
               icon={
-                <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#ececec] text-[#111]">
+                <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[var(--app-surface)] text-[var(--app-text)]">
                   <CircleUserRound size={25} strokeWidth={1.9} />
                 </div>
               }
               title="Sky_07_21"
               subtitle="Vibelink帳號"
-              trailing={<ChevronRight size={18} strokeWidth={2.4} className="text-[#333]" />}
+              trailing={<ChevronRight size={18} strokeWidth={2.4} className="text-[var(--app-muted)]" />}
             />
 
             <GroupDivider />
 
             <AccountMainRow
               icon={
-                <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#ececec] text-[#111]">
+                <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[var(--app-surface)] text-[var(--app-text)]">
                   <Plus size={25} strokeWidth={2.1} />
                 </div>
               }
               title="新增Vibelink帳號"
               subtitle="建立和切換身分"
-              trailing={<ChevronRight size={18} strokeWidth={2.4} className="text-[#333]" />}
+              trailing={<ChevronRight size={18} strokeWidth={2.4} className="text-[var(--app-muted)]" />}
             />
           </div>
 
-          {/* 下方操作區塊 */}
-          <div className="mt-[22px] rounded-[24px] bg-[#d9d9d9] py-[20px] overflow-hidden">
+          <div className="mt-[22px] overflow-hidden rounded-[24px] border border-[var(--app-card-border)] bg-[var(--app-card)] py-[20px]">
             <AccountActionRow
               icon={<LogOut size={21} strokeWidth={2.1} />}
               label="登出"
@@ -165,7 +163,7 @@ export default function AccountManagePage({
             <AccountActionRow
               icon={<Lock size={21} strokeWidth={2.1} />}
               label="密碼和安全"
-              trailing={<ChevronRight size={18} strokeWidth={2.4} className="text-[#333]" />}
+              trailing={<ChevronRight size={18} strokeWidth={2.4} className="text-[var(--app-muted)]" />}
             />
 
             <GroupDivider />
@@ -173,7 +171,7 @@ export default function AccountManagePage({
             <AccountActionRow
               icon={<TriangleAlert size={21} strokeWidth={2.1} />}
               label="停用或刪除(危險區)"
-              trailing={<Lock size={18} strokeWidth={2.1} className="text-[#333]" />}
+              trailing={<Lock size={18} strokeWidth={2.1} className="text-[var(--app-muted)]" />}
             />
           </div>
         </div>
@@ -196,17 +194,17 @@ function AccountMainRow({
   return (
     <button
       type="button"
-      className="grid w-full grid-cols-[56px_minmax(0,1fr)_28px] items-center gap-x-4 pl-[50px] pr-[18px] py-[18px] text-left active:bg-[#cfcfcf]"
+      className="grid w-full grid-cols-[56px_minmax(0,1fr)_28px] items-center gap-x-4 py-[18px] pl-[50px] pr-[18px] text-left active:bg-white/10"
     >
       <div className="flex items-center justify-center">
         {icon}
       </div>
 
       <div className="flex min-w-0 flex-col">
-        <span className="text-[16px] font-medium text-[#222]">
+        <span className="text-[16px] font-medium text-[var(--app-text)]">
           {title}
         </span>
-        <span className="mt-1 text-[13px] text-[#7a7a7a]">
+        <span className="mt-1 text-[13px] text-[var(--app-muted)]">
           {subtitle}
         </span>
       </div>
@@ -230,17 +228,17 @@ function AccountActionRow({
   return (
     <button
       type="button"
-      className="grid w-full grid-cols-[54px_minmax(0,1fr)_28px] items-center gap-x-4 pl-[22px] pr-[18px] py-[26px] text-left active:bg-[#cfcfcf]"
+      className="grid w-full grid-cols-[54px_minmax(0,1fr)_28px] items-center gap-x-4 py-[26px] pl-[22px] pr-[18px] text-left active:bg-white/10"
     >
-      <div className="flex items-center justify-center text-[#222]">
+      <div className="flex items-center justify-center text-[var(--app-text)]">
         {icon}
       </div>
 
-      <span className="text-[16px] font-medium text-[#222]">
+      <span className="text-[16px] font-medium text-[var(--app-text)]">
         {label}
       </span>
 
-      <div className="flex items-center justify-center text-[#333]">
+      <div className="flex items-center justify-center text-[var(--app-muted)]">
         {trailing ?? <span />}
       </div>
     </button>
@@ -248,5 +246,5 @@ function AccountActionRow({
 }
 
 function GroupDivider() {
-  return <div className="mx-[30px] my-[15px] h-px bg-[#2b2b2b]" />
+  return <div className="mx-[30px] my-[15px] h-px bg-[var(--app-card-border)]" />
 }

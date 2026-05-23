@@ -39,7 +39,7 @@ export default function ChatRoomPage({
   const [mounted, setMounted] = useState(false)
   const [messages, setMessages] = useState<MessageItem[]>([])
   const [chatLoading, setChatLoading] = useState(true)
-const [chatError, setChatError] = useState('')
+  const [chatError, setChatError] = useState('')
 
   const [input, setInput] = useState('')
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
@@ -67,47 +67,46 @@ const [chatError, setChatError] = useState('')
     })
   }, [dragX])
 
-function withTimeout<T>(
-  promise: PromiseLike<T>,
-  ms = 10000,
-  label = 'request'
-): Promise<T | null> {
-  return Promise.race([
-    Promise.resolve(promise),
-    new Promise<null>((resolve) => {
-      window.setTimeout(() => {
-        console.warn(`${label} timeout`)
-        resolve(null)
-      }, ms)
-    }),
-  ])
-}
+  function withTimeout<T>(
+    promise: PromiseLike<T>,
+    ms = 10000,
+    label = 'request'
+  ): Promise<T | null> {
+    return Promise.race([
+      Promise.resolve(promise),
+      new Promise<null>((resolve) => {
+        window.setTimeout(() => {
+          console.warn(`${label} timeout`)
+          resolve(null)
+        }, ms)
+      }),
+    ])
+  }
 
-function delay(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms))
-}
+  function delay(ms: number) {
+    return new Promise((resolve) => window.setTimeout(resolve, ms))
+  }
 
   useEffect(() => {
     async function loadOtherUserProfile() {
-  if (!otherUserId) return
+      if (!otherUserId) return
 
-  const result = await withTimeout(
-  supabase
-    .from('profiles')
-    .select('avatar_url')
-    .eq('id', otherUserId)
-    .maybeSingle()
-    ,
-10000,
-'chat_other_avatar'
-)
+      const result = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', otherUserId)
+          .maybeSingle(),
+        10000,
+        'chat_other_avatar'
+      )
 
-const data = result?.data
+      const data = result?.data
 
-  if (data?.avatar_url) {
-    setResolvedAvatar(data.avatar_url)
-  }
-}
+      if (data?.avatar_url) {
+        setResolvedAvatar(data.avatar_url)
+      }
+    }
 
     async function initConversation() {
       const {
@@ -115,9 +114,9 @@ const data = result?.data
       } = await supabase.auth.getUser()
 
       if (!user || !otherUserId) {
-  setChatLoading(false)
-  return
-}
+        setChatLoading(false)
+        return
+      }
 
       const sortedUsers = [user.id, otherUserId].sort()
 
@@ -129,11 +128,11 @@ const data = result?.data
         .maybeSingle()
 
       if (findError) {
-  console.error('讀取 conversation 失敗:', findError)
-  setChatError('聊天室讀取失敗')
-  setChatLoading(false)
-  return
-}
+        console.error('讀取 conversation 失敗:', findError)
+        setChatError('聊天室讀取失敗')
+        setChatLoading(false)
+        return
+      }
 
       if (!conversation) {
         const { data: newConversation, error: createError } = await supabase
@@ -146,20 +145,20 @@ const data = result?.data
           .single()
 
         if (createError) {
-  console.error('建立 conversation 失敗:', createError)
-  setChatError('聊天室建立失敗')
-  setChatLoading(false)
-  return
-}
+          console.error('建立 conversation 失敗:', createError)
+          setChatError('聊天室建立失敗')
+          setChatLoading(false)
+          return
+        }
 
         conversation = newConversation
       }
 
       if (!conversation) {
-  setChatError('找不到聊天室')
-  setChatLoading(false)
-  return
-}
+        setChatError('找不到聊天室')
+        setChatLoading(false)
+        return
+      }
 
       setConversationId(conversation.id)
 
@@ -170,11 +169,11 @@ const data = result?.data
         .order('created_at', { ascending: true })
 
       if (messageError) {
-  console.error('讀取聊天訊息失敗:', messageError)
-  setChatError('聊天室讀取失敗')
-  setChatLoading(false)
-  return
-}
+        console.error('讀取聊天訊息失敗:', messageError)
+        setChatError('聊天室讀取失敗')
+        setChatLoading(false)
+        return
+      }
 
       setMessages(
         (messageRows ?? []).map((msg) => ({
@@ -188,16 +187,12 @@ const data = result?.data
     }
 
     async function initChatRoom() {
-  // 第一批：先建立聊天室與讀訊息
-  await initConversation()
+      await initConversation()
+      await delay(600)
+      await loadOtherUserProfile()
+    }
 
-  // 第二批：延後讀對方頭像
-  await delay(600)
-
-  await loadOtherUserProfile()
-}
-
-initChatRoom()
+    initChatRoom()
   }, [otherUserId])
 
   function closeWithAnimation() {
@@ -271,8 +266,8 @@ initChatRoom()
       .eq('id', messageId)
 
     setMessages((prev) =>
-  prev.filter((message) => message.id !== messageId)
-)
+      prev.filter((message) => message.id !== messageId)
+    )
 
     setSelectedMessageId(null)
   }
@@ -323,7 +318,7 @@ initChatRoom()
   return createPortal(
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[999999] bg-[#f3f3f3]"
+        className="fixed inset-0 z-[999999] bg-[var(--app-bg)] text-[var(--app-text)]"
         style={{
           x: dragX,
           opacity: pageOpacity,
@@ -334,143 +329,138 @@ initChatRoom()
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden bg-[#f3f3f3]">
-          <div className="flex h-[56px] items-center gap-3 border-b border-[#dddddd] bg-[#d9d9d9] px-3">
+        <div className="mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden bg-[var(--app-bg)]">
+          <div className="flex h-[56px] items-center gap-3 border-b border-[var(--app-card-border)] bg-[var(--app-card)] px-3">
             <button
               type="button"
               onClick={closeWithAnimation}
-              className="flex h-[36px] w-[36px] items-center justify-center rounded-full active:scale-90"
+              className="flex h-[36px] w-[36px] items-center justify-center rounded-full text-[var(--app-text)] active:scale-90"
             >
               <ChevronLeft size={24} />
             </button>
 
             <button
-  type="button"
-  onClick={() => setIsProfileOpen(true)}
-  className="flex items-center gap-3 rounded-full px-1 py-1 active:scale-[0.97]"
->
-  <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#d49be0]">
-    {resolvedAvatar ? (
-  <img
-    src={resolvedAvatar}
-    className="h-full w-full object-cover"
-  />
-) : (
-  <div className="flex h-full w-full items-center justify-center text-[14px] font-semibold text-white">
-    {userName.slice(0, 1)}
-  </div>
-)}
+              type="button"
+              onClick={() => setIsProfileOpen(true)}
+              className="flex items-center gap-3 rounded-full px-1 py-1 active:scale-[0.97]"
+            >
+              <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#d49be0]">
+                {resolvedAvatar ? (
+                  <img
+                    src={resolvedAvatar}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[14px] font-semibold text-white">
+                    {userName.slice(0, 1)}
+                  </div>
+                )}
+              </div>
 
-  </div>
-
-  <div className="text-[15px] font-medium text-[#222]">
-    {userName}
-  </div>
-</button>
+              <div className="text-[15px] font-medium text-[var(--app-text)]">
+                {userName}
+              </div>
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-5">
             {chatLoading && (
-  <div className="pb-4 text-center text-[14px] text-[#777]">
-    聊天室讀取中...
-  </div>
-)}
+              <div className="pb-4 text-center text-[14px] text-[var(--app-muted)]">
+                聊天室讀取中...
+              </div>
+            )}
 
-{chatError && !chatLoading && (
-  <div className="pb-4 text-center">
-    <div className="mb-3 text-[14px] text-[#777]">
-      {chatError}
-    </div>
-
-    <button
-      type="button"
-      onClick={() => window.location.reload()}
-      className="rounded-full bg-[#c86cff] px-4 py-2 text-[13px] text-white"
-    >
-      重新讀取
-    </button>
-  </div>
-)}
-            <div className="flex min-h-full flex-col justify-end gap-3">
-              
-               {messages
-  .filter((message) => !message.recalled)
-  .map((message) => (
-    <div
-      key={message.id}
-      className={`relative flex ${
-        message.mine ? 'justify-end' : 'justify-start'
-      }`}
-    >
-            
-                  <div
-                    onContextMenu={(e) => {
-                      e.preventDefault()
-
-                      if (message.mine && !message.recalled) {
-                        setSelectedMessageId(message.id)
-                      }
-                    }}
-                    onTouchStart={(e) => {
-  e.stopPropagation()
-
-  if (!message.mine || message.recalled) return
-
-  
-
-
-                      const timer = window.setTimeout(() => {
-                        setSelectedMessageId(message.id)
-                      }, 520)
-
-                      const clear = () => {
-                        window.clearTimeout(timer)
-                        window.removeEventListener('touchend', clear)
-                        window.removeEventListener('touchmove', clear)
-                      }
-
-                      window.addEventListener('touchend', clear)
-                      window.addEventListener('touchmove', clear)
-                    }}
-                    onTouchMove={(e) => e.stopPropagation()}
-onTouchEnd={(e) => e.stopPropagation()}
-                    className={`inline-block min-w-[54px] max-w-[72%] rounded-[16px] px-4 py-3 text-left text-[15px] leading-[1.4] shadow-sm ${
-                      message.mine
-                        ? 'bg-[#ead3f5] text-[#222]'
-                        : 'bg-[#e2e2e2] text-[#222]'
-                    } ${message.recalled ? 'text-[#777]' : ''}`}
-                  >
-                    {message.text}
-                  </div>
-
-                  {selectedMessageId === message.id &&
-                    message.mine &&
-                    !message.recalled && (
-                      <div className="absolute right-0 top-[-44px] z-[20] rounded-[16px] bg-white px-4 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.16)]">
-                        <button
-                          type="button"
-                          onClick={() => handleRecallMessage(message.id)}
-                          className="text-[14px] font-medium text-red-500"
-                        >
-                          收回
-                        </button>
-                      </div>
-                    )}
+            {chatError && !chatLoading && (
+              <div className="pb-4 text-center">
+                <div className="mb-3 text-[14px] text-[var(--app-muted)]">
+                  {chatError}
                 </div>
-              ))}
+
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="rounded-full bg-[#c86cff] px-4 py-2 text-[13px] text-white"
+                >
+                  重新讀取
+                </button>
+              </div>
+            )}
+
+            <div className="flex min-h-full flex-col justify-end gap-3">
+              {messages
+                .filter((message) => !message.recalled)
+                .map((message) => (
+                  <div
+                    key={message.id}
+                    className={`relative flex ${
+                      message.mine ? 'justify-end' : 'justify-start'
+                    }`}
+                  >
+                    <div
+                      onContextMenu={(e) => {
+                        e.preventDefault()
+
+                        if (message.mine && !message.recalled) {
+                          setSelectedMessageId(message.id)
+                        }
+                      }}
+                      onTouchStart={(e) => {
+                        e.stopPropagation()
+
+                        if (!message.mine || message.recalled) return
+
+                        const timer = window.setTimeout(() => {
+                          setSelectedMessageId(message.id)
+                        }, 520)
+
+                        const clear = () => {
+                          window.clearTimeout(timer)
+                          window.removeEventListener('touchend', clear)
+                          window.removeEventListener('touchmove', clear)
+                        }
+
+                        window.addEventListener('touchend', clear)
+                        window.addEventListener('touchmove', clear)
+                      }}
+                      onTouchMove={(e) => e.stopPropagation()}
+                      onTouchEnd={(e) => e.stopPropagation()}
+                      className={`inline-block min-w-[54px] max-w-[72%] rounded-[16px] px-4 py-3 text-left text-[15px] leading-[1.4] shadow-sm ${
+                        message.mine
+                          ? 'bg-[#ead3f5] text-[#222]'
+                          : 'bg-[var(--app-card)] text-[var(--app-text)]'
+                      } ${message.recalled ? 'text-[var(--app-muted)]' : ''}`}
+                    >
+                      {message.text}
+                    </div>
+
+                    {selectedMessageId === message.id &&
+                      message.mine &&
+                      !message.recalled && (
+                        <div className="absolute right-0 top-[-44px] z-[20] rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.16)]">
+                          <button
+                            type="button"
+                            onClick={() => handleRecallMessage(message.id)}
+                            className="text-[14px] font-medium text-red-500"
+                          >
+                            收回
+                          </button>
+                        </div>
+                      )}
+                  </div>
+                ))}
             </div>
           </div>
 
           <div
-            className="border-t border-transparent bg-transparent px-3 py-3"
+            className="border-t border-[var(--app-card-border)] bg-[var(--app-bg)] px-3 py-3"
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 rounded-full bg-white px-3 py-2 shadow-[0_4px_14px_rgba(0,0,0,0.08)]">
+            <div className="flex items-center gap-3 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-3 py-2 shadow-[0_4px_14px_rgba(0,0,0,0.08)]">
               <button
                 type="button"
-                className="flex h-[38px] w-[38px] items-center justify-center rounded-full active:scale-90"
+                className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[var(--app-text)] active:scale-90"
               >
                 <ImageIcon size={22} strokeWidth={2.2} />
               </button>
@@ -484,7 +474,7 @@ onTouchEnd={(e) => e.stopPropagation()}
                   }
                 }}
                 placeholder="訊息"
-                className="flex-1 bg-transparent text-[15px] text-[#222] outline-none placeholder:text-[#777]"
+                className="flex-1 bg-transparent text-[15px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
               />
 
               <button
@@ -494,7 +484,7 @@ onTouchEnd={(e) => e.stopPropagation()}
                 className={`flex h-[36px] w-[36px] items-center justify-center rounded-full active:scale-90 ${
                   hasInput
                     ? 'bg-[#c86cff] text-white'
-                    : 'bg-transparent text-[#222]'
+                    : 'bg-transparent text-[var(--app-text)]'
                 }`}
               >
                 <ArrowUp size={18} strokeWidth={2.5} />
@@ -502,15 +492,15 @@ onTouchEnd={(e) => e.stopPropagation()}
             </div>
           </div>
         </div>
+
         {isProfileOpen && (
-  <OtherUserProfilePage
-    userId={otherUserId}
-    onClose={() => setIsProfileOpen(false)}
-    locale={locale}
-    onOpenChat={() => setIsProfileOpen(false)}
-  />
-)}
-      
+          <OtherUserProfilePage
+            userId={otherUserId}
+            onClose={() => setIsProfileOpen(false)}
+            locale={locale}
+            onOpenChat={() => setIsProfileOpen(false)}
+          />
+        )}
       </motion.div>
     </AnimatePresence>,
     document.body

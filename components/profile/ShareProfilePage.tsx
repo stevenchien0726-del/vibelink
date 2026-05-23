@@ -53,7 +53,7 @@ export default function ShareProfilePage({
       {open && (
         <motion.div
           data-block-page-swipe="true"
-          className="fixed inset-0 z-[1600] bg-[#f3f3f3]"
+          className="fixed inset-0 z-[1600] bg-[var(--app-bg)] text-[var(--app-text)]"
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
@@ -68,16 +68,16 @@ export default function ShareProfilePage({
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="fixed left-1/2 top-0 z-[1610] flex h-[64px] w-full max-w-[430px] -translate-x-1/2 items-center justify-between bg-[#f3f3f3]/95 px-4 backdrop-blur-md">
+          <div className="fixed left-1/2 top-0 z-[1610] flex h-[64px] w-full max-w-[430px] -translate-x-1/2 items-center justify-between border-b border-[var(--app-card-border)] bg-[var(--app-bg)]/95 px-4 backdrop-blur-md">
             <button
               type="button"
               onClick={onClose}
-              className="flex h-[40px] w-[40px] items-center justify-center rounded-full active:scale-90"
+              className="flex h-[40px] w-[40px] items-center justify-center rounded-full text-[var(--app-text)] active:scale-90"
             >
               <ChevronLeft size={24} />
             </button>
 
-            <div className="text-[18px] font-medium text-[#111]">
+            <div className="text-[18px] font-medium text-[var(--app-text)]">
               分享檔案
             </div>
 
@@ -93,10 +93,10 @@ export default function ShareProfilePage({
                 duration: 0.28,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="w-full overflow-hidden rounded-[34px] bg-gradient-to-b from-[#f6ebff] to-[#ffffff] p-6 shadow-[0_16px_40px_rgba(0,0,0,0.08)]"
+              className="w-full overflow-hidden rounded-[34px] border border-[var(--app-card-border)] bg-[var(--app-card)] p-6 shadow-[0_16px_40px_rgba(0,0,0,0.12)]"
             >
               <div className="flex flex-col items-center">
-                <div className="h-[88px] w-[88px] overflow-hidden rounded-full bg-[#d9d9d9]">
+                <div className="h-[88px] w-[88px] overflow-hidden rounded-full bg-[var(--app-surface)]">
                   {profile?.avatar_url && (
                     <img
                       src={profile.avatar_url}
@@ -105,15 +105,13 @@ export default function ShareProfilePage({
                   )}
                 </div>
 
-                <div className="mt-4 text-[22px] font-semibold text-[#111]">
+                <div className="mt-4 text-[22px] font-semibold text-[var(--app-text)]">
                   {profile?.display_name || 'Vibelink User'}
                 </div>
-
-
               </div>
 
               <div className="mt-7 flex justify-center">
-                <div className="flex h-[170px] w-[170px] items-center justify-center rounded-[28px] bg-white p-4 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+                <div className="flex h-[170px] w-[170px] items-center justify-center rounded-[28px] bg-white p-4 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
                   <QRCodeCanvas
                     value={profileUrl}
                     size={132}
@@ -124,34 +122,14 @@ export default function ShareProfilePage({
                   />
                 </div>
               </div>
-
             </motion.div>
 
             <div className="mt-7 grid w-full grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="flex h-[92px] flex-col items-center justify-center rounded-[26px] bg-white shadow-[0_10px_24px_rgba(0,0,0,0.06)] active:scale-[0.97]"
-              >
-                <Copy size={24} strokeWidth={2.2} />
-                <span className="mt-2 text-[14px] text-[#222]">
-                  複製連結
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleNativeShare}
-                className="flex h-[92px] flex-col items-center justify-center rounded-[26px] bg-white shadow-[0_10px_24px_rgba(0,0,0,0.06)] active:scale-[0.97]"
-              >
-                <Share2 size={24} strokeWidth={2.2} />
-                <span className="mt-2 text-[14px] text-[#222]">
-                  分享
-                </span>
-              </button>
-
-              <button
-                type="button"
+              <ShareActionButton icon={<Copy size={24} strokeWidth={2.2} />} label="複製連結" onClick={handleCopy} />
+              <ShareActionButton icon={<Share2 size={24} strokeWidth={2.2} />} label="分享" onClick={handleNativeShare} />
+              <ShareActionButton
+                icon={<Instagram size={24} strokeWidth={2.2} />}
+                label="IG Story"
                 onClick={() => {
                   window.open(
                     'https://instagram.com',
@@ -159,16 +137,10 @@ export default function ShareProfilePage({
                     'noopener,noreferrer'
                   )
                 }}
-                className="flex h-[92px] flex-col items-center justify-center rounded-[26px] bg-white shadow-[0_10px_24px_rgba(0,0,0,0.06)] active:scale-[0.97]"
-              >
-                <Instagram size={24} strokeWidth={2.2} />
-                <span className="mt-2 text-[14px] text-[#222]">
-                  IG Story
-                </span>
-              </button>
+              />
             </div>
 
-            <div className="mt-8 text-center text-[13px] leading-[1.5] text-[#888]">
+            <div className="mt-8 text-center text-[13px] leading-[1.5] text-[var(--app-muted)]">
               分享你的 Vibelink 個人檔案，
               <br />
               讓更多人認識你的 Vibe。
@@ -177,5 +149,28 @@ export default function ShareProfilePage({
         </motion.div>
       )}
     </AnimatePresence>
+  )
+}
+
+function ShareActionButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-[92px] flex-col items-center justify-center rounded-[26px] border border-[var(--app-card-border)] bg-[var(--app-card)] text-[var(--app-text)] shadow-[0_10px_24px_rgba(0,0,0,0.10)] active:scale-[0.97]"
+    >
+      {icon}
+      <span className="mt-2 text-[14px] text-[var(--app-text)]">
+        {label}
+      </span>
+    </button>
   )
 }

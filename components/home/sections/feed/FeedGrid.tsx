@@ -64,7 +64,7 @@ function FeedGrid({
               layout
               key={post.id}
               onClick={() => onOpenPost?.(post)}
-              className="relative h-[280px] w-full overflow-hidden rounded-[6px] bg-[#dddddd]"
+              className="relative h-[280px] w-full overflow-hidden rounded-[6px] border border-[var(--app-card-border)] bg-[var(--app-card)]"
             >
 
               {!post.videoUrl && post.images?.length > 1 && (

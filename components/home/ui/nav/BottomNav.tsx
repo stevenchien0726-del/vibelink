@@ -69,7 +69,16 @@ export default function BottomNav({ current, setPage }: Props) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[40] flex justify-center pb-5">
       <div
-        className="pointer-events-auto relative h-[58px] w-[330px] rounded-full bg-white shadow-[0_8px_30px_rgba(0,0,0,0.10)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="
+          pointer-events-auto relative h-[58px] w-[330px]
+          rounded-full
+          border border-[var(--app-card-border)]
+          bg-[var(--app-surface)]/95
+          shadow-[0_8px_30px_rgba(0,0,0,0.14)]
+          backdrop-blur-md
+          transition-transform duration-300
+          ease-[cubic-bezier(0.22,1,0.36,1)]
+        "
         style={{
           transform: `scale(${scale})`,
           transformOrigin: 'center center',
@@ -82,7 +91,7 @@ export default function BottomNav({ current, setPage }: Props) {
               transform: `translateX(${activeIndex * 100}%)`,
             }}
           >
-            <div className="h-[46px] w-[60px] rounded-full bg-[#d9d9d9]/55" />
+            <div className="h-[46px] w-[60px] rounded-full bg-[var(--app-card)]" />
           </div>
         </div>
 
@@ -99,7 +108,7 @@ export default function BottomNav({ current, setPage }: Props) {
               >
                 <Icon
                   className={`h-[24px] w-[24px] transition-all duration-300 ${
-                    active ? 'text-[#a855f7]' : 'text-black'
+                    active ? 'text-[#a855f7]' : 'text-[var(--app-text)]'
                   } ${
                     refreshingPage === key
                       ? 'scale-110 rotate-[-8deg]'

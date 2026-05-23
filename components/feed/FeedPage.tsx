@@ -50,16 +50,16 @@ export default function FeedPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-[#999]">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)] text-[var(--app-muted)]">
         Feed 載入中...
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f3f3] pb-[110px]">
+    <div className="min-h-screen bg-[var(--app-bg)] pb-[110px] text-[var(--app-text)]">
       <div className="mx-auto w-full max-w-[430px] px-3 pt-5">
-        <div className="mb-5 text-[24px] font-semibold text-[#111]">
+        <div className="mb-5 text-[24px] font-semibold text-[var(--app-text)]">
           Vibelink
         </div>
 
@@ -71,10 +71,10 @@ export default function FeedPage() {
             return (
               <div
                 key={post.id}
-                className="overflow-hidden rounded-[22px] bg-white shadow-sm"
+                className="overflow-hidden rounded-[22px] border border-[var(--app-card-border)] bg-[var(--app-surface)] shadow-sm"
               >
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <div className="h-[38px] w-[38px] overflow-hidden rounded-full bg-[#d9d9d9]">
+                  <div className="h-[38px] w-[38px] overflow-hidden rounded-full bg-[var(--app-card)]">
                     {post.profiles?.avatar_url && (
                       <img
                         src={post.profiles.avatar_url}
@@ -84,18 +84,18 @@ export default function FeedPage() {
                   </div>
 
                   <div>
-                    <div className="text-[15px] font-medium text-[#111]">
+                    <div className="text-[15px] font-medium text-[var(--app-text)]">
                       {post.profiles?.display_name ||
                         post.profiles?.username ||
                         'Vibelink User'}
                     </div>
-                    <div className="text-[12px] text-[#777]">
+                    <div className="text-[12px] text-[var(--app-muted)]">
                       @{post.profiles?.username || 'user'}
                     </div>
                   </div>
                 </div>
 
-                <div className="relative bg-[#ddd]">
+                <div className="relative bg-[var(--app-card)]">
                   {firstImage && (
                     <img
                       src={firstImage}
@@ -110,7 +110,7 @@ export default function FeedPage() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center justify-between px-4 py-3 text-[var(--app-text)]">
                   <div className="flex items-center gap-5">
                     <button className="active:scale-90">
                       <Heart size={25} />
@@ -131,7 +131,7 @@ export default function FeedPage() {
                 </div>
 
                 {post.caption && (
-                  <div className="px-4 pb-4 text-[15px] text-[#222]">
+                  <div className="px-4 pb-4 text-[15px] text-[var(--app-text)]">
                     {post.caption}
                   </div>
                 )}
