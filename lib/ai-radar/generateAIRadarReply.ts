@@ -1,4 +1,5 @@
 import type { AIRadarParsedQuery } from './aiRadarParser'
+import type { Locale } from '@/i18n'
 
 type AIRadarReplyUser = {
   displayName?: string
@@ -29,8 +30,25 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 function fallbackReply(
   query: string,
   users: AIRadarReplyUser[],
-  parsedQuery?: AIRadarParsedQuery
+  parsedQuery?: AIRadarParsedQuery,
+  locale: Locale = 'zh-TW'
 ) {
+  if (locale === 'en') {
+    if (users.length > 0) {
+      return `I found a few people who match “${query}” and ranked the closest vibes based on your description.`
+    }
+
+    const fallbackTags = parsedQuery?.tags?.slice(0, 3) ?? []
+
+    if (fallbackTags.length > 0) {
+      return `I couldn’t find an exact match for “${query}” yet. Try broadening the vibe, such as: ${fallbackTags.join(
+        ' / '
+      )}.`
+    }
+
+    return `I couldn’t find an exact match for “${query}” yet.`
+  }
+
   if (users.length > 0) {
     return `我幫你篩選出幾位符合「${query}」的用戶，並依照你的描述整理出最接近的推薦人選。`
   }
@@ -38,7 +56,9 @@ function fallbackReply(
   const fallbackTags = parsedQuery?.tags?.slice(0, 3) ?? []
 
   if (fallbackTags.length > 0) {
-    return `目前沒有完全符合「${query}」的用戶，你可以試著放寬條件，例如：${fallbackTags.join(' / ')}。`
+    return `目前沒有完全符合「${query}」的用戶，你可以試著放寬條件，例如：${fallbackTags.join(
+      ' / '
+    )}。`
   }
 
   return `目前沒有找到完全符合「${query}」的用戶。`
@@ -47,10 +67,9 @@ function fallbackReply(
 function compactUserForPrompt(user: AIRadarReplyUser) {
   return {
     name: user.displayName ?? user.username ?? 'Unknown user',
-tags: user.tags ?? [],
+    tags: user.tags ?? [],
     city: user.city ?? '',
     bio: user.bio ?? '',
-    
     matchedReasons: user.matchedReasons ?? [],
     score: user.aiScore ?? user.score ?? 0,
   }
@@ -60,17 +79,19 @@ export async function generateAIRadarReply({
   query,
   parsedQuery,
   users,
+  locale = 'zh-TW',
 }: {
   query: string
   parsedQuery: AIRadarParsedQuery
   users: AIRadarReplyUser[]
+  locale?: Locale
 }): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY
 
   if (!apiKey) {
-  console.warn('Missing OPENAI_API_KEY')
-  return fallbackReply(query, users, parsedQuery)
-}
+    console.warn('Missing OPENAI_API_KEY')
+    return fallbackReply(query, users, parsedQuery, locale)
+  }
 
   const topUsers = users.slice(0, 2).map(compactUserForPrompt)
 
@@ -78,9 +99,13 @@ export async function generateAIRadarReply({
     {
       role: 'system',
       content: `
-You are Vibelink AI Radar's social discovery assistant.
+You are Vibelink AI Radar's multilingual social discovery assistant.
 
-Write one short Traditional Chinese reply for the purple AI response bubble.
+Write one short reply for the purple AI response bubble.
+
+Reply language:
+- If locale is "zh-TW", use natural Traditional Chinese.
+- If locale is "en", use natural English.
 
 Goal:
 - Summarize the user's search intent.
@@ -92,13 +117,13 @@ Goal:
 - Do not mention internal JSON, tags, score, API, or model.
 - Do not list users one by one.
 - Keep it within 1 to 2 sentences.
-- Use Traditional Chinese.
       `.trim(),
     },
     {
       role: 'user',
       content: JSON.stringify(
         {
+          locale,
           userQuery: query,
           parsedQuery,
           matchedUsers: topUsers,
@@ -125,19 +150,19 @@ Goal:
 
     if (!response.ok) {
       console.error('OpenAI generate AI Radar reply failed:', response.status)
-      return fallbackReply(query, users, parsedQuery)
+      return fallbackReply(query, users, parsedQuery, locale)
     }
 
     const data = (await response.json()) as OpenAIChatResponse
     const content = data.choices?.[0]?.message?.content?.trim()
 
     if (!content) {
-      return fallbackReply(query, users, parsedQuery)
+      return fallbackReply(query, users, parsedQuery, locale)
     }
 
     return content
   } catch (error) {
     console.error('generateAIRadarReply error:', error)
-    return fallbackReply(query, users, parsedQuery)
+    return fallbackReply(query, users, parsedQuery, locale)
   }
 }

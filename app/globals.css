@@ -8,6 +8,7 @@
   --app-text: #222222;
   --app-muted: #666666;
   --app-border: #8f8f8f;
+  --ai-tool-icon: #111111;
 
   --switch-track: #f3f3f3;
 }
@@ -23,7 +24,7 @@ html.dark {
   --app-text: #f1f1f4;
   --app-muted: #9a9aa5;
   --app-border: #3f3f49;
-
+  --ai-tool-icon: #ffffff;
   --switch-track: #3a3a46;
 }
 

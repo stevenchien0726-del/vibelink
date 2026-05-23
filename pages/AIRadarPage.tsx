@@ -27,47 +27,15 @@ import { generateAIRadarRewriteQueries } from '@/lib/ai-radar/generateAIRadarRew
 import OtherUserProfilePage from '../components/profile/OtherUserProfilePage'
 import type { Locale } from '@/i18n'
 
+import { getAIRadarText } from '@/lib/ai-radar/aiRadarI18n'
+
 type AIRadarPageProps = {
   locale: Locale
 }
 
-const aiRadarText = {
-  'zh-TW': {
-    loginTitle: '登入 Vibelink',
-    loginSubtitle: '登入後即可使用 AI 雷達與完整功能',
-    loginButton: 'GOOGLE 登入',
-    loggingIn: '登入中...',
-    heroTitle: 'AI雷達：想找什麼Vibe的人?',
-    retry: '重新搜尋',
-    rewriteTitle: '你也可以試試這樣問',
-    suggestions: [
-      '幫我找可愛奶狗弟弟',
-      '喜歡大自然的女生',
-      '身材性感內建男模特',
-    ],
-  },
-
-  en: {
-    loginTitle: 'Log in to Vibelink',
-    loginSubtitle: 'Log in to use AI Radar and all features',
-    loginButton: 'Continue with Google',
-    loggingIn: 'Logging in...',
-    heroTitle: 'AI Radar: What kind of vibe are you looking for?',
-    retry: 'Search again',
-    rewriteTitle: 'You can also try asking',
-    suggestions: [
-      'Find me a cute softboy',
-      'Girls who love nature',
-      'Sexy model-type guys',
-    ],
-  },
-} as const
-
-
-
 export default function AIRadarPage({ locale }: AIRadarPageProps) {
   const safeLocale: Locale = locale ?? 'zh-TW'
-const text = aiRadarText[safeLocale]
+const text = getAIRadarText(safeLocale)
 
   const [refreshKey, setRefreshKey] = useState(0)
   const [refreshCount, setRefreshCount] = useState(0)
@@ -328,7 +296,7 @@ function handleVoiceInput() {
     (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
 
   if (!SpeechRecognition) {
-    alert('目前瀏覽器不支援語音輸入，建議使用 Chrome 測試。')
+    alert(text.voiceNotSupported)
     return
   }
 
@@ -454,7 +422,7 @@ function getCandidateDescription(user: any) {
 const finalQuery =
   currentInput ||
   (selectedLibraryUser
-    ? `以 ${selectedLibraryUser.name} 為參考，幫我找生活風格、照片氣質、互動感和整體 Vibe 相似的人`
+    ? text.similarToUserPrompt(selectedLibraryUser.name)
     : '')
   setLastQuery(finalQuery)
 
@@ -474,6 +442,7 @@ try {
     },
     body: JSON.stringify({
   query: finalQuery,
+  locale: safeLocale,
   referenceUserId: selectedLibraryUser?.id ?? null,
   referenceUserName: selectedLibraryUser?.name ?? null,
 }),
@@ -649,7 +618,7 @@ if (matchedUsers.length > 0) {
           transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
           className="rounded-[22px] bg-[var(--app-card)] px-5 py-4 text-center text-[15px] font-semibold text-purple-700 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
         >
-          生成提示詞中...
+          {text.loadingPrompts}
         </motion.div>
       ) : (
         <motion.div
@@ -791,19 +760,27 @@ if (matchedUsers.length > 0) {
     <button
       type="button"
       onClick={handleClearInput}
-      className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/35 text-[var(--app-text)] shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95"
+      className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-white/18 border border-white/10 text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95"
     >
-      <BrushCleaning size={22} strokeWidth={2} />
+      <BrushCleaning
+  size={22}
+  strokeWidth={2.2}
+  className="text-[var(--ai-tool-icon)]"
+/>
     </button>
 
     <button
       type="button"
       onClick={handleVoiceInput}
-      className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/35 text-[var(--app-text)] shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95 ${
-        isListening ? 'ring-2 ring-purple-400' : ''
-      }`}
+      className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-white/18 border border-white/10 text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95 ${
+  isListening ? 'ring-2 ring-purple-400' : ''
+}`}
     >
-      <Mic size={22} strokeWidth={2} />
+      <Mic
+  size={22}
+  strokeWidth={2.2}
+  className="text-[var(--ai-tool-icon)]"
+/>
     </button>
   </div>
 

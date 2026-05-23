@@ -18,7 +18,8 @@ export async function POST(req: Request) {
     console.log('🟣 [AI Radar] API called')
 
     const body = await req.json()
-    const query = body?.query?.trim() ?? ''
+const query = body?.query?.trim() ?? ''
+const locale = body?.locale ?? 'zh-TW'
 
     console.log('🟣 [AI Radar] query:', query)
 
@@ -130,6 +131,7 @@ console.log(
       query,
       parsedQuery,
       users: matchedUsers,
+      locale,
     })
 
     const rewritePrompts = await generateAIRadarRewritePrompts({
