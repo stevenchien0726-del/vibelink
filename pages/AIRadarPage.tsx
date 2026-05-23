@@ -128,7 +128,9 @@ useEffect(() => {
     
     try {
       const response = await withTimeout(
-  fetch('/api/ai-radar/starter-prompts'),
+  fetch(
+  `/api/ai-radar/starter-prompts?locale=${safeLocale}`
+),
 12000,
 'ai_radar_starter_prompts'
 )
@@ -302,7 +304,10 @@ function handleVoiceInput() {
 
   const recognition = new SpeechRecognition()
 
-  recognition.lang = 'zh-TW'
+  recognition.lang =
+  safeLocale === 'en'
+    ? 'en-US'
+    : 'zh-TW'
   recognition.interimResults = false
   recognition.maxAlternatives = 1
 
@@ -329,19 +334,80 @@ function handleVoiceInput() {
 
 function getCandidateDescription(user: any) {
   const tags = user.tags ?? user.vibe_tags ?? []
+
   const reasons = (user.matchedReasons ?? []).filter(
-  (reason: string) =>
-    !reason.toLowerCase().includes('vector similarity')
-)
+    (reason: string) =>
+      !reason.toLowerCase().includes('vector similarity')
+  )
 
-  const name = user.displayName || user.username || '這位用戶'
+  const isEnglish =
+    /[a-zA-Z]/.test(lastQuery) &&
+    !/[一-龥]/.test(lastQuery)
 
-  // 優先使用 AI matchedReasons
+  const name =
+    user.displayName ||
+    user.username ||
+    (isEnglish ? 'this user' : '這位用戶')
+
+  if (isEnglish) {
+    if (reasons.length > 0) {
+      return `${name}'s content is close to your search direction, with a natural lifestyle vibe and an energy that feels easy to connect with.`
+    }
+
+    if (
+      tags.includes('nightlife') ||
+      tags.includes('techno') ||
+      tags.includes('rave') ||
+      tags.includes('dj')
+    ) {
+      return `${name} has a nightlife and music-party vibe, with strong social energy and event-driven content.`
+    }
+
+    if (
+      tags.includes('gym') ||
+      tags.includes('fitness') ||
+      tags.includes('workout')
+    ) {
+      return `${name}'s content feels sporty and outdoorsy, with a disciplined, active, and sunny vibe.`
+    }
+
+    if (
+      tags.includes('coffee') ||
+      tags.includes('cafe') ||
+      tags.includes('book')
+    ) {
+      return `${name}'s photos include cafe and daily-life moments, creating a calm and artsy lifestyle vibe.`
+    }
+
+    if (
+      tags.includes('dance') ||
+      tags.includes('kpop')
+    ) {
+      return `${name} has a dance and Korean-style vibe, with lively and influencer-like energy.`
+    }
+
+    if (
+      tags.includes('cat') ||
+      tags.includes('dog') ||
+      tags.includes('pet')
+    ) {
+      return `${name}'s content includes pets and cozy daily-life moments, giving off a soft and healing vibe.`
+    }
+
+    if (
+      tags.includes('beach') ||
+      tags.includes('travel')
+    ) {
+      return `${name}'s photos lean toward travel and outdoor exploration, like someone who enjoys freedom and new experiences.`
+    }
+
+    return `${name}'s content overlaps with your search direction and has a natural, comfortable lifestyle vibe.`
+  }
+
   if (reasons.length > 0) {
-  return `${name} 的內容和你的搜尋方向很接近，整體氛圍看起來自然、有生活感，也比較容易產生共鳴。`
-}
+    return `${name} 的內容和你的搜尋方向很接近，整體氛圍看起來自然、有生活感，也比較容易產生共鳴。`
+  }
 
-  // 夜生活 / 音樂派對
   if (
     tags.includes('nightlife') ||
     tags.includes('techno') ||
@@ -351,7 +417,6 @@ function getCandidateDescription(user: any) {
     return `${name} 偏音樂派對與夜生活 vibe，照片裡有不少活動感與社交氛圍，整體能量感比較強。`
   }
 
-  // 健身 / 戶外
   if (
     tags.includes('gym') ||
     tags.includes('fitness') ||
@@ -360,7 +425,6 @@ function getCandidateDescription(user: any) {
     return `${name} 的內容偏運動與戶外生活感，整體給人比較自律、有活力，也帶一點陽光系氛圍。`
   }
 
-  // 文青 / 咖啡
   if (
     tags.includes('coffee') ||
     tags.includes('cafe') ||
@@ -369,7 +433,6 @@ function getCandidateDescription(user: any) {
     return `${name} 的照片有不少咖啡廳與生活日常感，整體氛圍偏安靜、慢節奏，帶一點文青氣質。`
   }
 
-  // 舞蹈 / 韓系
   if (
     tags.includes('dance') ||
     tags.includes('kpop')
@@ -377,7 +440,6 @@ function getCandidateDescription(user: any) {
     return `${name} 偏舞蹈與韓系 vibe，內容看起來比較活潑，也有一點小網紅感。`
   }
 
-  // 寵物 / 柔和日常
   if (
     tags.includes('cat') ||
     tags.includes('dog') ||
@@ -386,7 +448,6 @@ function getCandidateDescription(user: any) {
     return `${name} 的內容有不少寵物與日常生活感，整體氛圍比較柔和、安靜，也帶有一點療癒感。`
   }
 
-  // 海邊 / 旅行
   if (
     tags.includes('beach') ||
     tags.includes('travel')
@@ -394,7 +455,6 @@ function getCandidateDescription(user: any) {
     return `${name} 的照片偏旅行與戶外探索感，整體像是喜歡自由生活與體驗新事物的人。`
   }
 
-  // fallback
   return `${name} 的內容和你的搜尋方向有部分重疊，整體 vibe 看起來自然舒服，也有一定程度的生活感。`
 }
 
@@ -435,19 +495,24 @@ try {
     controller.abort()
   }, 20000)
 
-  const response = await fetch('/api/ai-radar', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-  query: finalQuery,
-  locale: safeLocale,
-  referenceUserId: selectedLibraryUser?.id ?? null,
-  referenceUserName: selectedLibraryUser?.name ?? null,
-}),
-    signal: controller.signal,
-  })
+  const queryLocale =
+  /[a-zA-Z]/.test(finalQuery) && !/[一-龥]/.test(finalQuery)
+    ? 'en'
+    : safeLocale
+
+const response = await fetch('/api/ai-radar', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    query: finalQuery,
+    locale: queryLocale,
+    referenceUserId: selectedLibraryUser?.id ?? null,
+    referenceUserName: selectedLibraryUser?.name ?? null,
+  }),
+  signal: controller.signal,
+})
 
   clearTimeout(timeoutId)
 
