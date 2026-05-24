@@ -10,7 +10,6 @@ type Props = {
 }
 
 const activeColor = '#d89ad0'
-const inactiveColor = '#222'
 
 export default function ProfileTabs({
   activeTab,
@@ -26,8 +25,12 @@ export default function ProfileTabs({
         >
           <Grid2x2
             size={20}
-            className="transition-colors duration-200"
-            color={activeTab === 0 ? activeColor : inactiveColor}
+            className={`transition-colors duration-200 ${
+              activeTab === 0
+                ? 'text-[#d89ad0]'
+                : 'text-[#222] [html.dark_&]:text-[#6f6f78]'
+            }`}
+            color={activeTab === 0 ? activeColor : 'currentColor'}
           />
         </button>
 
@@ -38,8 +41,12 @@ export default function ProfileTabs({
         >
           <PlaySquare
             size={20}
-            className="transition-colors duration-200"
-            color={activeTab === 1 ? activeColor : inactiveColor}
+            className={`transition-colors duration-200 ${
+              activeTab === 1
+                ? 'text-[#d89ad0]'
+                : 'text-[#222] [html.dark_&]:text-[#6f6f78]'
+            }`}
+            color={activeTab === 1 ? activeColor : 'currentColor'}
           />
         </button>
 
@@ -50,8 +57,12 @@ export default function ProfileTabs({
         >
           <Bookmark
             size={20}
-            className="transition-colors duration-200"
-            color={activeTab === 2 ? activeColor : inactiveColor}
+            className={`transition-colors duration-200 ${
+              activeTab === 2
+                ? 'text-[#d89ad0]'
+                : 'text-[#222] [html.dark_&]:text-[#6f6f78]'
+            }`}
+            color={activeTab === 2 ? activeColor : 'currentColor'}
           />
         </button>
       </div>

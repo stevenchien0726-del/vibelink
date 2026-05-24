@@ -10,35 +10,30 @@ import {
 } from 'framer-motion'
 import { Trash2 } from 'lucide-react'
 
-type PickedUser = {
+export type FolderUser = {
   id: string
   name: string
   avatar: string
 }
 
+export type FolderUsersMap = Record<string, FolderUser[]>
+
 type PickUserPayload = {
-  user: PickedUser
+  user: FolderUser
   sourceRect: DOMRect
 }
 
 type PeopleFolderPageProps = {
   title: string
-  folderId: string
-  recentUser?: PickedUser | null
+  users: FolderUser[]
   onClose: () => void
   onPickUser?: (payload: PickUserPayload) => void
   onOpenProfile?: (userId: string) => void
 }
 
-const mockUsers = Array.from({ length: 16 }, (_, i) => ({
-  id: `user-${i + 1}`,
-  name: '(用戶名)',
-}))
-
 export default function PeopleFolderPage({
   title,
-  folderId,
-  recentUser,
+  users,
   onClose,
   onPickUser,
   onOpenProfile,
@@ -101,6 +96,23 @@ export default function PeopleFolderPage({
     })
   }
 
+  function handlePickUser(
+    user: FolderUser,
+    e: React.MouseEvent<HTMLButtonElement>
+  ) {
+    const sourceRect = e.currentTarget.getBoundingClientRect()
+
+    if (onPickUser) {
+      onPickUser({
+        user,
+        sourceRect,
+      })
+      return
+    }
+
+    onOpenProfile?.(user.id)
+  }
+
   return (
     <AnimatePresence>
       <motion.div
@@ -152,61 +164,36 @@ export default function PeopleFolderPage({
           </div>
 
           <div className="px-5 pb-[120px] pt-5">
-            <div className="grid grid-cols-4 gap-x-5 gap-y-8">
-              <button
-                type="button"
-                onClick={(e) => {
-                  if (folderId !== 'recent' || !recentUser?.id) return
+            {users.length > 0 ? (
+              <div className="grid grid-cols-4 gap-x-5 gap-y-8">
+                {users.map((user) => (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={(e) => handlePickUser(user, e)}
+                    className="flex flex-col items-center active:scale-95"
+                  >
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="h-[62px] w-[62px] rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-[62px] w-[62px] rounded-full border border-[var(--app-card-border)] bg-[#b8b8b8]/45" />
+                    )}
 
-                  const sourceRect = e.currentTarget.getBoundingClientRect()
-
-                  if (onPickUser) {
-                    onPickUser({
-                      user: recentUser,
-                      sourceRect,
-                    })
-                    return
-                  }
-
-                  onOpenProfile?.(recentUser.id)
-                }}
-                className="flex flex-col items-center active:scale-95"
-              >
-                {folderId === 'recent' && recentUser ? (
-                  recentUser.avatar ? (
-                    <img
-                      src={recentUser.avatar}
-                      alt={recentUser.name}
-                      className="h-[62px] w-[62px] rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
-                  )
-                ) : (
-                  <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
-                )}
-
-                <div className="mt-3 max-w-[72px] truncate text-[13px] text-[var(--app-muted)]">
-                  {folderId === 'recent' && recentUser
-                    ? recentUser.name
-                    : '(用戶名)'}
-                </div>
-              </button>
-
-              {mockUsers.slice(1).map((user) => (
-                <button
-                  key={user.id}
-                  type="button"
-                  onClick={() => onOpenProfile?.(user.id)}
-                  className="flex flex-col items-center active:scale-95"
-                >
-                  <div className="h-[62px] w-[62px] rounded-full bg-[#c893cf]" />
-                  <div className="mt-3 text-[13px] text-[var(--app-muted)]">
-                    {user.name}
-                  </div>
-                </button>
-              ))}
-            </div>
+                    <div className="mt-3 max-w-[72px] truncate text-[13px] text-[var(--app-muted)]">
+                      {user.name}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 py-5 text-center text-[14px] text-[var(--app-muted)]">
+                目前沒有用戶
+              </div>
+            )}
           </div>
         </motion.div>
       </motion.div>

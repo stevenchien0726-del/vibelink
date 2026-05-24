@@ -7,6 +7,18 @@ type Props = {
   onShare: () => void
 }
 
+const buttonStyle: React.CSSProperties = {
+  WebkitAppearance: 'none',
+  appearance: 'none',
+  height: 44,
+  borderRadius: 999,
+  border: '1.5px solid rgba(255,255,255,0.22)',
+  background: 'rgba(255,255,255,0.075)',
+  color: 'var(--app-text)',
+  boxShadow:
+    'inset 0 0 0 1px rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.18)',
+}
+
 export default function ProfileActionButtons({
   editLabel,
   shareLabel,
@@ -19,24 +31,16 @@ export default function ProfileActionButtons({
         type="button"
         onClick={onEdit}
         className="
-          flex h-[46px] flex-1 items-center justify-center
-          rounded-full
-          border border-[#d9d9d9]
-          bg-[#f8f8f8]
+          flex flex-1 items-center justify-center
           px-4
           text-[15px]
           font-medium
           leading-none
           whitespace-nowrap
-          text-[var(--app-text)]
-          shadow-[0_4px_14px_rgba(0,0,0,0.04)]
-          transition-all duration-200
+          transition-transform duration-200
           active:scale-[0.97]
         "
-        style={{
-          WebkitAppearance: 'none',
-          appearance: 'none',
-        }}
+        style={buttonStyle}
       >
         {editLabel}
       </button>
@@ -45,24 +49,16 @@ export default function ProfileActionButtons({
         type="button"
         onClick={onShare}
         className="
-          flex h-[46px] flex-1 items-center justify-center
-          rounded-full
-          border border-[#d9d9d9]
-          bg-[#f8f8f8]
+          flex flex-1 items-center justify-center
           px-4
           text-[15px]
           font-medium
           leading-none
           whitespace-nowrap
-          text-[var(--app-text)]
-          shadow-[0_4px_14px_rgba(0,0,0,0.04)]
-          transition-all duration-200
+          transition-transform duration-200
           active:scale-[0.97]
         "
-        style={{
-          WebkitAppearance: 'none',
-          appearance: 'none',
-        }}
+        style={buttonStyle}
       >
         {shareLabel}
       </button>

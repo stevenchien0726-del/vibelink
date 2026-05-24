@@ -54,13 +54,13 @@ export default function ProfilePostGridTabs({
         {/* 第1頁：貼文 */}
         <div className="w-full shrink-0">
           <div className="grid grid-cols-3 gap-[2px]">
-            {gridItems.map((post) => {
+            {gridItems.map((post, index) => {
               const image = post?.post_images?.[0]?.image_url
 
               return (
                 <button
                   type="button"
-                  key={post.id}
+                  key={`${post.type || 'post'}-${post.id}-${index}`}
                   onClick={(e) => {
                     e.stopPropagation()
 
@@ -105,10 +105,10 @@ export default function ProfilePostGridTabs({
                   (video) =>
                     !archivedShortVideos.some((item) => item.id === video.id)
                 )
-                .map((video) => (
+                .map((video, index) => (
                   <button
                     type="button"
-                    key={video.id}
+                    key={`video-${video.id}-${index}`}
                     onClick={(e) => {
                       e.stopPropagation()
                       onOpenShortVideo(video.id)
@@ -136,14 +136,16 @@ export default function ProfilePostGridTabs({
         {/* 第3頁：收藏 */}
         <div className="w-full shrink-0">
           <div className="mb-3 mt-2 flex items-center justify-between">
-            <span className="text-[16px] font-medium text-[#111]">
+            <span className="text-[16px] font-medium text-[#111] dark:text-white">
               {text.favorites}
             </span>
 
             <div className="flex items-center gap-3">
               <span
                 className={`text-[14px] font-medium transition-colors ${
-                  isFavoritesPublic ? 'text-[#8B5CF6]' : 'text-[#666]'
+                  isFavoritesPublic
+                    ? 'text-[#8B5CF6]'
+                    : 'text-[#666] dark:text-white/45'
                 }`}
               >
                 {isFavoritesPublic ? text.public : text.private}
@@ -170,14 +172,14 @@ export default function ProfilePostGridTabs({
           </div>
 
           <div className="grid grid-cols-3 gap-[2px]">
-            {savedPosts.map((post) => {
+            {savedPosts.map((post, index) => {
               const isVideo = post.type === 'video' || !!post.video_url
               const image = post?.post_images?.[0]?.image_url
 
               return (
                 <button
                   type="button"
-                  key={post.id}
+                  key={`${post.type || 'saved'}-${post.id}-${index}`}
                   onClick={(e) => {
                     e.stopPropagation()
 

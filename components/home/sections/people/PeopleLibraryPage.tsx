@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AnimatePresence,
   motion,
@@ -10,14 +10,11 @@ import {
 } from 'framer-motion'
 import { Search } from 'lucide-react'
 import PeopleFolderPage from './PeopleFolderPage'
+import type { FolderUser, FolderUsersMap } from './PeopleFolderPage'
 import { supabase } from '../../../../lib/supabase'
 import type { Locale } from '@/i18n'
 
-type PickedUser = {
-  id: string
-  name: string
-  avatar: string
-}
+type PickedUser = FolderUser
 
 type PickUserPayload = {
   user: PickedUser
@@ -43,8 +40,6 @@ function getFolders(locale: Locale): FolderItem[] {
     { id: 'recent', label: locale === 'en' ? 'Recently Followed' : '最近追蹤', emoji: '🆕' },
     { id: 'favorite', label: locale === 'en' ? 'My Favorites' : '我的最愛', emoji: '✨' },
     { id: 'more-interaction', label: locale === 'en' ? 'Frequent Interactions' : '較常互動', emoji: '💬' },
-    { id: 'mutual-follow', label: locale === 'en' ? 'Mutual Following' : '互相關注中', emoji: '🔁' },
-    { id: 'social-lover', label: locale === 'en' ? 'Social Lovers' : '熱愛社交的人', emoji: '🥳' },
     { id: 'less-interaction', label: locale === 'en' ? 'Less Interaction' : '較少互動', emoji: '💤' },
     { id: 'creator', label: locale === 'en' ? 'Vibelink Creators' : 'Vibelink創作者', emoji: '🎨' },
     { id: 'official-business', label: locale === 'en' ? 'Official & Business' : '官方和商業帳戶', emoji: '🏢' },
@@ -77,11 +72,22 @@ export default function PeopleLibraryPage({
 }: PeopleLibraryPageProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
   const [recentUser, setRecentUser] = useState<PickedUser | null>(null)
-  const [favoriteUser, setFavoriteUser] = useState<PickedUser | null>(null)
+  const [favoriteUsers, setFavoriteUsers] = useState<FolderUser[]>([])
   const [peopleLoading, setPeopleLoading] = useState(true)
   const [peopleError, setPeopleError] = useState('')
 
-  const folders = getFolders(locale)
+  const folders = useMemo(() => getFolders(locale), [locale])
+  const folderUsers = useMemo<FolderUsersMap>(() => {
+  const emptyFolders = Object.fromEntries(
+    folders.map((folder) => [folder.id, [] as FolderUser[]])
+  ) as FolderUsersMap
+
+  return {
+    ...emptyFolders,
+    recent: recentUser ? [recentUser] : [],
+    favorite: favoriteUsers,
+  }
+}, [favoriteUsers, folders, recentUser])
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const canDragCloseRef = useRef(true)
@@ -167,68 +173,78 @@ export default function PeopleLibraryPage({
     }
 
     async function fetchFavoriteUser(retry = 0) {
-      try {
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
 
-        if (authError) throw authError
+    if (authError) throw authError
 
-        if (!user) {
-          if (!cancelled) setFavoriteUser(null)
-          return
-        }
-
-        const { data: favoriteRows, error: favoriteError } = await supabase
-          .from('favorite_users')
-          .select('favorite_user_id, created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-
-        if (favoriteError) throw favoriteError
-
-        const favoriteUserId = favoriteRows?.[0]?.favorite_user_id
-
-        if (!favoriteUserId) {
-          if (!cancelled) setFavoriteUser(null)
-          return
-        }
-
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, display_name, avatar_url')
-          .eq('id', favoriteUserId)
-          .maybeSingle()
-
-        if (profileError) throw profileError
-
-        if (!profileData) {
-          if (!cancelled) setFavoriteUser(null)
-          return
-        }
-
-        if (!cancelled) {
-          setFavoriteUser({
-            id: profileData.id,
-            name:
-              profileData.display_name ||
-              profileData.username ||
-              'Vibelink User',
-            avatar: profileData.avatar_url || '',
-          })
-        }
-      } catch (error) {
-        console.error('People Library 我的最愛讀取失敗:', error)
-
-        if (retry < 1) {
-          window.setTimeout(() => {
-            fetchFavoriteUser(retry + 1)
-          }, 600)
-        }
-      }
+    if (!user) {
+      if (!cancelled) setFavoriteUsers([])
+      return
     }
+
+    const { data: favoriteRows, error: favoriteError } = await supabase
+      .from('favorite_users')
+      .select('favorite_user_id, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true })
+      .limit(20)
+
+    if (favoriteError) throw favoriteError
+
+    const favoriteIds =
+      favoriteRows
+        ?.map((row: any) => row.favorite_user_id)
+        .filter(Boolean) ?? []
+
+    if (favoriteIds.length === 0) {
+      if (!cancelled) setFavoriteUsers([])
+      return
+    }
+
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url')
+      .in('id', favoriteIds)
+
+    if (profileError) throw profileError
+
+    const profileMap = new Map(
+      (profiles ?? []).map((profile: any) => [profile.id, profile])
+    )
+
+    const orderedUsers: FolderUser[] = favoriteIds
+      .map((id: string) => {
+        const profile: any = profileMap.get(id)
+        if (!profile) return null
+
+        return {
+          id: profile.id,
+          name:
+            profile.display_name ||
+            profile.username ||
+            'Vibelink User',
+          avatar: profile.avatar_url || '',
+        }
+      })
+      .filter(Boolean) as FolderUser[]
+
+    if (!cancelled) {
+      setFavoriteUsers(orderedUsers)
+    }
+  } catch (error) {
+    console.error('People Library 我的最愛讀取失敗:', error)
+
+    if (retry < 1) {
+      window.setTimeout(() => {
+        fetchFavoriteUser(retry + 1)
+      }, 600)
+    }
+  }
+}
 
     function delay(ms: number) {
       return new Promise((resolve) => window.setTimeout(resolve, ms))
@@ -419,9 +435,7 @@ export default function PeopleLibraryPage({
                 <div key={folder.id} className="flex flex-col items-center">
                   <div className="flex h-[170px] w-full items-center justify-center rounded-[20px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-4">
                     <FolderPreview
-                      folderId={folder.id}
-                      recentUser={recentUser}
-                      favoriteUser={favoriteUser}
+                      users={folderUsers[folder.id] ?? []}
                       onOpenFolder={() => setSelectedFolder(folder.id)}
                       onOpenProfile={(userId) => {
                         onOpenProfile?.(userId)
@@ -443,8 +457,7 @@ export default function PeopleLibraryPage({
             {selectedFolder && (
               <PeopleFolderPage
                 title={getFolderName(selectedFolder, locale)}
-                folderId={selectedFolder}
-                recentUser={recentUser}
+                users={folderUsers[selectedFolder] ?? []}
                 onClose={() => setSelectedFolder(null)}
                 onPickUser={onPickUser}
                 onOpenProfile={onOpenProfile}
@@ -500,111 +513,103 @@ function UserAvatarWithName({
   )
 }
 
-function PlaceholderUserButton({
-  userId,
-  onOpenProfile,
+function PlaceholderUserSlot() {
+  return <div className="h-[64px] w-[64px]" aria-hidden="true" />
+}
+
+function MoreUsersPreview({
+  users,
+  onOpenFolder,
 }: {
-  userId: string
-  onOpenProfile?: (userId: string) => void
+  users: FolderUser[]
+  onOpenFolder: () => void
 }) {
+  const previewUsers = users.slice(3, 7)
+
   return (
     <button
       type="button"
-      onClick={() => {
-        if (!onOpenProfile) return
-        onOpenProfile(userId)
-      }}
-      className={`flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95 ${
-        !onOpenProfile ? 'opacity-45' : ''
-      }`}
-      aria-label={`Open ${userId} profile`}
+      onClick={onOpenFolder}
+      className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
+      aria-label="Open folder"
     >
-      <div className="h-[42px] w-[42px] shrink-0 rounded-full bg-[#c893cf]" />
-
-      <span className="mt-[6px] max-w-[72px] truncate text-center text-[12px] leading-[1.1] text-[var(--app-muted)]">
-        （用戶名）
-      </span>
-    </button>
-  )
-}
-
-function FolderPreview({
-  folderId,
-  onOpenFolder,
-  onOpenProfile,
-  onPickUser,
-  recentUser,
-  favoriteUser,
-}: {
-  folderId: string
-  onOpenFolder: () => void
-  onOpenProfile: (userId: string) => void
-  onPickUser?: (payload: PickUserPayload) => void
-  recentUser: PickedUser | null
-  favoriteUser: PickedUser | null
-}) {
-  return (
-    <div className="grid w-full grid-cols-2 place-items-start gap-x-6 gap-y-5 pt-1">
-      {folderId === 'favorite' && favoriteUser ? (
-        <UserAvatarWithName
-          user={favoriteUser}
-          onClick={(e) => {
-            e.stopPropagation()
-
-            const sourceRect = e.currentTarget.getBoundingClientRect()
-
-            if (onPickUser) {
-              onPickUser({
-                user: favoriteUser,
-                sourceRect,
-              })
-
-              return
-            }
-
-            onOpenProfile?.(favoriteUser.id)
-          }}
-        />
-      ) : folderId === 'recent' && recentUser ? (
-        <UserAvatarWithName
-          user={recentUser}
-          onClick={(e) => {
-            e.stopPropagation()
-
-            const sourceRect = e.currentTarget.getBoundingClientRect()
-
-            if (onPickUser) {
-              onPickUser({
-                user: recentUser,
-                sourceRect,
-              })
-
-              return
-            }
-
-            onOpenProfile?.(recentUser.id)
-          }}
-        />
+      {previewUsers.length > 0 ? (
+        <div className="mt-[6px] grid grid-cols-2 gap-[6px]">
+          {previewUsers.map((user) =>
+            user.avatar ? (
+              <img
+                key={user.id}
+                src={user.avatar}
+                alt=""
+                className="h-[14px] w-[14px] rounded-full object-cover"
+              />
+            ) : (
+              <div
+                key={user.id}
+                className="h-[14px] w-[14px] rounded-full border border-[var(--app-card-border)] bg-[#b8b8b8]/55"
+              />
+            )
+          )}
+        </div>
       ) : (
-        <PlaceholderUserButton userId="user-1" />
-      )}
-
-      <PlaceholderUserButton userId="user-2" />
-      <PlaceholderUserButton userId="user-3" />
-
-      <button
-        type="button"
-        onClick={onOpenFolder}
-        className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
-        aria-label="Open folder"
-      >
         <div className="mt-[6px] grid grid-cols-2 gap-[6px]">
           <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
           <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
           <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
           <div className="h-[14px] w-[14px] rounded-full bg-[#c893cf]" />
         </div>
-      </button>
+      )}
+    </button>
+  )
+}
+
+function FolderPreview({
+  users,
+  onOpenFolder,
+  onOpenProfile,
+  onPickUser,
+}: {
+  users: FolderUser[]
+  onOpenFolder: () => void
+  onOpenProfile: (userId: string) => void
+  onPickUser?: (payload: PickUserPayload) => void
+}) {
+  const visibleUsers = users.slice(0, 3)
+
+  return (
+    <div className="grid w-full grid-cols-2 place-items-start gap-x-6 gap-y-5 pt-1">
+      {[0, 1, 2].map((slotIndex) => {
+        const user = visibleUsers[slotIndex]
+
+        if (!user) {
+          return <PlaceholderUserSlot key={`slot-${slotIndex}`} />
+        }
+
+        return (
+          <UserAvatarWithName
+            key={user.id}
+            user={user}
+            onClick={(e) => {
+              e.stopPropagation()
+
+              const sourceRect = e.currentTarget.getBoundingClientRect()
+
+              if (onPickUser) {
+                onPickUser({
+                  user,
+                  sourceRect,
+                })
+
+                return
+              }
+
+              onOpenProfile?.(user.id)
+            }}
+          />
+        )
+      })}
+
+      <MoreUsersPreview users={users} onOpenFolder={onOpenFolder} />
     </div>
   )
 }

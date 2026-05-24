@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AnimatePresence,
   motion,
@@ -416,7 +416,11 @@ async function loadShortVideos(user?: any, retry = 0) {
       author: 'Vibelink User',
       text: video.caption || '',
       likes: 0,
-      images: video.thumbnail_url ? [video.thumbnail_url] : [],
+      images: video.thumbnail_url
+        ? [video.thumbnail_url]
+        : video.video_url
+          ? [video.video_url]
+          : [],
       thumbnailUrl: video.thumbnail_url || '',
       videoUrl: video.video_url,
       type: 'video',
@@ -1108,19 +1112,65 @@ if (isTap) {
     return () => clearInterval(interval)
   }, [selectedStory, storyPage, isStoryPaused])
 
-const mergedPosts = [
-  ...realVideos,
-  ...realPosts,
+const mergedPosts = useMemo(
+  () => [
+    ...realVideos,
+    ...realPosts,
 
-  ...(realVideos.length > 0
-  ? mockShortVideos
-  : mockShortVideos.slice(0, 4)),
+    ...(realVideos.length > 0
+      ? mockShortVideos
+      : mockShortVideos.slice(0, 4)),
 
-  ...mockPosts.map((post) => ({
-    ...post,
-    isSaved: mockSavedPostIds.includes(post.id),
-  })),
-]
+    ...mockPosts.map((post) => ({
+      ...post,
+      isSaved: mockSavedPostIds.includes(post.id),
+    })),
+  ],
+  [realPosts, realVideos, mockSavedPostIds]
+)
+
+const shortVideoPosts = useMemo(
+  () => mergedPosts.filter((post) => post.type === 'video' || post.videoUrl),
+  [mergedPosts]
+)
+
+const realVideosLengthRef = useRef(realVideos.length)
+realVideosLengthRef.current = realVideos.length
+
+const loadShortVideosRef = useRef(loadShortVideos)
+loadShortVideosRef.current = loadShortVideos
+
+const openDetailPostRef = useRef(openDetailPost)
+openDetailPostRef.current = openDetailPost
+
+const safeTaskRef = useRef(safeTask)
+safeTaskRef.current = safeTask
+
+const handleOpenFeedPost = useCallback(
+  (post: PostItem) => {
+    if (post.type === 'video' || post.videoUrl) {
+      setShortVideoStartId(post.id)
+      setIsShortVideoPageOpen(true)
+
+      if (realVideosLengthRef.current === 0 && !isLoadingShortVideosRef.current) {
+        isLoadingShortVideosRef.current = true
+
+        void safeTaskRef.current(async () => {
+          const { data } = await supabase.auth.getSession()
+          const user = data.session?.user ?? null
+          await loadShortVideosRef.current(user)
+        }, 'lazy_load_short_videos').finally(() => {
+          isLoadingShortVideosRef.current = false
+        })
+      }
+
+      return
+    }
+
+    openDetailPostRef.current(post)
+  },
+  []
+)
 
   if (isSearchPageOpen) {
     return (
@@ -1345,28 +1395,7 @@ if (realVideos.length > 0) {
 >
   <FeedGrid
   posts={mergedPosts}
-  onOpenPost={(post) => {
-  if (post.type === 'video' || post.videoUrl) {
-  setShortVideoStartId(post.id)
-  setIsShortVideoPageOpen(true)
-
-  if (realVideos.length === 0 && !isLoadingShortVideosRef.current) {
-  isLoadingShortVideosRef.current = true
-
-  void safeTask(async () => {
-    const { data } = await supabase.auth.getSession()
-    const user = data.session?.user ?? null
-    await loadShortVideos(user)
-  }, 'lazy_load_short_videos').finally(() => {
-    isLoadingShortVideosRef.current = false
-  })
-}
-
-  return
-}
-
-  openDetailPost(post)
-}}
+  onOpenPost={handleOpenFeedPost}
   onOpenComments={openCommentSheet}
   onOpenShare={() => setIsShareSheetOpen(true)}
 onDeletePost={handleDeletePost}
@@ -1845,9 +1874,7 @@ onTouchEnd={(e) => e.stopPropagation()}
 
 <ShortVideoFullPage
   open={isShortVideoPageOpen}
-  videos={mergedPosts.filter(
-    (post) => post.type === 'video' || post.videoUrl
-  )}
+  videos={shortVideoPosts}
   initialVideoId={shortVideoStartId}
   onClose={() => setIsShortVideoPageOpen(false)}
   onLike={toggleShortVideoLike}

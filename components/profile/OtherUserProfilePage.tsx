@@ -698,14 +698,29 @@ async function toggleFavorite() {
               <button
   type="button"
   onClick={() => {
-  if (onOpenChat) {
-    onOpenChat()
-    return
-  }
+    if (onOpenChat) {
+      onOpenChat()
+      return
+    }
 
-  setIsChatOpen(true)
-}}
-  className="flex h-[44px] flex-1 items-center justify-center rounded-full bg-white text-[15px] font-medium text-[var(--app-text)] shadow-[0_4px_14px_rgba(0,0,0,0.06)] active:scale-95"
+    setIsChatOpen(true)
+  }}
+  className="
+    flex h-[44px] flex-1 items-center justify-center
+    rounded-full
+    text-[15px] font-medium
+    transition-transform
+    active:scale-95
+  "
+  style={{
+    WebkitAppearance: 'none',
+    appearance: 'none',
+    border: '1.5px solid rgba(255,255,255,0.22)',
+    background: 'rgba(255,255,255,0.075)',
+    color: 'var(--app-text)',
+    boxShadow:
+      'inset 0 0 0 1px rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.18)',
+  }}
 >
   {text.message}
 </button>

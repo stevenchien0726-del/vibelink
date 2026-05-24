@@ -11,6 +11,7 @@ export type PostItem = {
   images: string[]
   videoUrl?: string
   thumbnailUrl?: string
+  thumbnail_url?: string
   aiTags: string[]
   feedScore?: number
   feedReasons?: string[]
@@ -34,6 +35,15 @@ type FeedGridProps = {
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
 
+function getPostPreviewImage(post: PostItem) {
+  return (
+    post.thumbnailUrl ||
+    post.thumbnail_url ||
+    post.images?.[0] ||
+    FALLBACK_IMAGE
+  )
+}
+
 function FeedGrid({
   posts = [],
   onOpenPost,
@@ -53,10 +63,8 @@ function FeedGrid({
         className="grid grid-cols-2 gap-[3px]"
       >
         {visiblePosts.map((post) => {
-          const image =
-            post.thumbnailUrl ||
-            post.images?.[0] ||
-            FALLBACK_IMAGE
+          const image = getPostPreviewImage(post)
+          const isVideoPreview = post.videoUrl && image === post.videoUrl
 
           return (
             <motion.button
@@ -99,17 +107,30 @@ function FeedGrid({
 
               {post.videoUrl ? (
   <>
-    <video
-      src={post.videoUrl}
-      className="h-full w-full object-cover"
-      muted
-      loop
-      playsInline
-      autoPlay
-      preload="metadata"
-    />
+    {isVideoPreview ? (
+      <video
+        src={post.videoUrl}
+        preload="metadata"
+        muted
+        playsInline
+        poster={post.thumbnailUrl || undefined}
+        className="h-full w-full object-cover"
+      />
+    ) : (
+      <img
+        src={image}
+        alt={post.author || 'Vibelink video'}
+        loading="lazy"
+        decoding="async"
+        className="h-full w-full object-cover"
+        draggable={false}
+        onError={(e) => {
+          e.currentTarget.src = FALLBACK_IMAGE
+        }}
+      />
+    )}
 
-    <div className="pointer-events-none absolute inset-0 bg-black/5" />
+    <div className="pointer-events-none absolute inset-0 bg-black/10" />
 
     <div className="pointer-events-none absolute right-[10px] top-[10px] z-10">
   <svg
