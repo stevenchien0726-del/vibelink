@@ -42,7 +42,7 @@ export function useHomeFeed({
 
   function withTimeout<T>(
     promise: Promise<T>,
-    ms = 6000,
+    ms = 8000,
     label = 'request'
   ): Promise<T> {
     return Promise.race([
@@ -78,7 +78,7 @@ export function useHomeFeed({
         method: 'GET',
         cache: 'no-store',
       }),
-      6000,
+      8000,
       'feed'
     )
 
@@ -152,7 +152,7 @@ export function useHomeFeed({
             .order('created_at', { ascending: false })
             .limit(limit)
         ),
-        6000,
+        8000,
         'short_videos'
       )
 
@@ -260,7 +260,7 @@ window.setTimeout(() => {
     () => loadPosts(user, FEED_FULL_BATCH),
     'home_load_posts_full'
   )
-}, 3000)
+}, 8000)
 
 window.setTimeout(() => {
   void safeTask(
@@ -353,7 +353,7 @@ window.setTimeout(() => {
     () => loadPosts(session.user, FEED_FULL_BATCH),
     'home_auth_load_posts_full'
   )
-}, 3000)
+}, 8000)
 
 window.setTimeout(() => {
   void safeTask(
