@@ -112,7 +112,6 @@ export default function TopBar() {
 
             <div className="mx-1 h-5 w-px bg-[#cfcfcf]" />
 
-            {/* 先做視覺保留，不影響原本功能 */}
             <button
               type="button"
               aria-label="Notifications"
