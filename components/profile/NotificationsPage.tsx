@@ -7,6 +7,9 @@ import { supabase } from '@/lib/supabase'
 
 type Props = {
   onClose: () => void
+  onOpenProfile?: (userId: string) => void
+  onOpenPost?: (postId: string) => void
+  onOpenShortVideo?: (shortVideoId: string) => void
 }
 
 type NotificationItem = {
@@ -17,21 +20,16 @@ type NotificationItem = {
   is_read: boolean
   created_at: string
   actor_user_id: string | null
-
-actor_username?: string | null
-actor_display_name?: string | null
-actor_avatar_url?: string | null
+  post_id?: string | null
+  short_video_id?: string | null
+  actor_username?: string | null
+  actor_display_name?: string | null
+  actor_avatar_url?: string | null
 }
 
 function getNotificationIcon(type: NotificationItem['type']) {
-  if (type === 'like') {
-    return <Heart size={22} strokeWidth={2.2} />
-  }
-
-  if (type === 'comment') {
-    return <MessageCircle size={22} strokeWidth={2.2} />
-  }
-
+  if (type === 'like') return <Heart size={22} strokeWidth={2.2} />
+  if (type === 'comment') return <MessageCircle size={22} strokeWidth={2.2} />
   return <UserPlus size={22} strokeWidth={2.2} />
 }
 
@@ -51,23 +49,19 @@ function formatTime(createdAt: string) {
 }
 
 function getNotificationTitle(item: NotificationItem) {
-  const name =
-    item.actor_display_name ||
-    item.actor_username ||
-    'Vibelink User'
+  const name = item.actor_display_name || item.actor_username || 'Vibelink User'
 
-  if (item.type === 'like') {
-    return `${name} 按讚了你的貼文`
-  }
-
-  if (item.type === 'comment') {
-    return `${name} 留言了你的貼文`
-  }
-
+  if (item.type === 'like') return `${name} 按讚了你的貼文`
+  if (item.type === 'comment') return `${name} 留言了你的貼文`
   return `${name} 開始追蹤你`
 }
 
-export default function NotificationsPage({ onClose }: Props) {
+export default function NotificationsPage({
+  onClose,
+  onOpenProfile,
+  onOpenPost,
+onOpenShortVideo,
+}: Props) {
   const [items, setItems] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -90,19 +84,20 @@ export default function NotificationsPage({ onClose }: Props) {
 
     const { data, error } = await supabase
       .from('notifications_with_profiles')
-.select(`
-  id,
-  type,
-  title,
-  body,
-  is_read,
-  created_at,
-  actor_user_id,
-
-  actor_username,
-  actor_display_name,
-  actor_avatar_url
-`)
+      .select(`
+        id,
+        type,
+        title,
+        body,
+        is_read,
+        created_at,
+        actor_user_id,
+        post_id,
+        short_video_id,
+        actor_username,
+        actor_display_name,
+        actor_avatar_url
+      `)
       .eq('recipient_user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50)
@@ -126,6 +121,28 @@ export default function NotificationsPage({ onClose }: Props) {
         .from('notifications')
         .update({ is_read: true })
         .in('id', unreadIds)
+    }
+  }
+
+  function handleOpenNotification(item: NotificationItem) {
+    if (
+  (item.type === 'like' || item.type === 'comment') &&
+  item.short_video_id
+) {
+  onClose()
+  onOpenShortVideo?.(item.short_video_id)
+  return
+}
+
+    if ((item.type === 'like' || item.type === 'comment') && item.post_id) {
+      onClose()
+      onOpenPost?.(item.post_id)
+      return
+    }
+
+    if (item.actor_user_id) {
+      onClose()
+      onOpenProfile?.(item.actor_user_id)
     }
   }
 
@@ -186,27 +203,29 @@ export default function NotificationsPage({ onClose }: Props) {
           ) : (
             <div className="flex flex-col gap-2">
               {items.map((item) => (
-                <div
+                <button
                   key={item.id}
-                  className="flex gap-3 rounded-[20px] bg-[var(--app-surface)] px-4 py-4"
+                  type="button"
+                  onClick={() => handleOpenNotification(item)}
+                  className="flex w-full gap-3 rounded-[20px] bg-[var(--app-surface)] px-4 py-4 text-left active:scale-[0.99]"
                 >
                   <div className="relative h-[42px] w-[42px] shrink-0">
-  {item.actor_avatar_url ? (
-    <img
-      src={item.actor_avatar_url}
-      alt="avatar"
-      className="h-full w-full rounded-full object-cover"
-    />
-  ) : (
-    <div className="flex h-full w-full items-center justify-center rounded-full bg-[var(--app-card)] text-[#c86cff]">
-      {getNotificationIcon(item.type)}
-    </div>
-  )}
+                    {item.actor_avatar_url ? (
+                      <img
+                        src={item.actor_avatar_url}
+                        alt="avatar"
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center rounded-full bg-[var(--app-card)] text-[#c86cff]">
+                        {getNotificationIcon(item.type)}
+                      </div>
+                    )}
 
-  <div className="absolute bottom-[-2px] right-[-2px] flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#c86cff] text-white shadow-md">
-    {getNotificationIcon(item.type)}
-  </div>
-</div>
+                    <div className="absolute bottom-[-2px] right-[-2px] flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#c86cff] text-white shadow-md">
+                      {getNotificationIcon(item.type)}
+                    </div>
+                  </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="text-[15px] font-medium text-[var(--app-text)]">
@@ -227,7 +246,7 @@ export default function NotificationsPage({ onClose }: Props) {
                   {!item.is_read && (
                     <div className="mt-2 h-[8px] w-[8px] shrink-0 rounded-full bg-[#c86cff]" />
                   )}
-                </div>
+                </button>
               ))}
             </div>
           )}

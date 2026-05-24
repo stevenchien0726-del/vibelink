@@ -227,6 +227,7 @@ export function useHomeFeed({
       setCurrentUserId(user?.id ?? null)
 
       void loadUnreadNotificationCount(user?.id ?? null)
+      void setupNotificationRealtime(user?.id ?? null)
 
       if (!data.session) {
         setIsAuthModalOpen(true)
@@ -276,7 +277,47 @@ window.setTimeout(() => {
 }, 1500)
     }
 
-    initHome()
+
+    let notificationChannel: ReturnType<typeof supabase.channel> | null = null
+
+async function setupNotificationRealtime(userId: string | null) {
+  if (!userId) return
+
+  if (notificationChannel) {
+    await supabase.removeChannel(notificationChannel)
+    notificationChannel = null
+  }
+
+  supabase
+    .getChannels()
+    .filter((channel) =>
+      channel.topic.includes(`notifications-${userId}`)
+    )
+    .forEach((channel) => {
+      void supabase.removeChannel(channel)
+    })
+
+  notificationChannel = supabase.channel(
+    `notifications-${userId}-${Date.now()}`
+  )
+
+  notificationChannel.on(
+    'postgres_changes',
+    {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'notifications',
+      filter: `recipient_user_id=eq.${userId}`,
+    },
+    () => {
+      setUnreadNotificationCount((prev) => prev + 1)
+    }
+  )
+
+  notificationChannel.subscribe()
+}
+
+initHome()
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -286,6 +327,7 @@ window.setTimeout(() => {
           setIsAuthModalOpen(false)
           setCurrentUserId(session.user.id)
 void loadUnreadNotificationCount(session.user.id)
+void setupNotificationRealtime(session.user.id)
 
           void safeTask(
             () => ensureUserProfile(),
@@ -331,8 +373,12 @@ window.setTimeout(() => {
     )
 
     return () => {
-      listener.subscription.unsubscribe()
-    }
+  listener.subscription.unsubscribe()
+
+  if (notificationChannel) {
+    void supabase.removeChannel(notificationChannel)
+  }
+}
   }, [])
 
   const mergedPosts = useMemo(

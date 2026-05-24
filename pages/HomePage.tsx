@@ -243,6 +243,38 @@ async function handleDeletePost(post: PostItem) {
 setRealPosts((prev) => prev.filter((p) => p.id !== post.id))
 }
 
+async function createShortVideoLikeNotification(
+  post: PostItem,
+  actorUserId: string
+) {
+  if (!post.user_id) return
+  if (post.user_id === actorUserId) return
+  const duplicated = await hasRecentNotification({
+  recipientUserId: post.user_id,
+  actorUserId,
+  type: 'like',
+  shortVideoId: post.id,
+})
+
+if (duplicated) return
+
+
+  await supabase.from('notifications').insert({
+    recipient_user_id: post.user_id,
+    actor_user_id: actorUserId,
+
+    type: 'like',
+
+    post_id: null,
+    short_video_id: post.id,
+
+    title: '有人按讚了你的短影片',
+    body: `${post.author || '你的短影片'} 收到新的按讚`,
+
+    is_read: false,
+  })
+}
+
 async function toggleShortVideoLike(post: PostItem) {
   const {
     data: { user },
@@ -276,9 +308,11 @@ async function toggleShortVideoLike(post: PostItem) {
   }
 
   await supabase.from('short_video_likes').insert({
-    short_video_id: post.id,
-    user_id: user.id,
-  })
+  short_video_id: post.id,
+  user_id: user.id,
+})
+
+void createShortVideoLikeNotification(post, user.id)
 }
 
 async function toggleShortVideoSave(post: PostItem) {
@@ -491,6 +525,16 @@ async function createLikeNotification(
   // 不通知自己
   if (post.user_id === actorUserId) return
 
+  const duplicated = await hasRecentNotification({
+    recipientUserId: post.user_id,
+    actorUserId,
+    type: 'like',
+
+    postId: post.id,
+  })
+
+  if (duplicated) return
+
   await supabase.from('notifications').insert({
     recipient_user_id: post.user_id,
     actor_user_id: actorUserId,
@@ -507,6 +551,38 @@ async function createLikeNotification(
   })
 }
 
+async function hasRecentNotification({
+  recipientUserId,
+  actorUserId,
+  type,
+  postId,
+  shortVideoId,
+}: {
+  recipientUserId: string
+  actorUserId: string
+  type: 'like' | 'comment' | 'follow'
+  postId?: string | null
+  shortVideoId?: string | null
+}) {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+
+  let query = supabase
+    .from('notifications')
+    .select('id')
+    .eq('recipient_user_id', recipientUserId)
+    .eq('actor_user_id', actorUserId)
+    .eq('type', type)
+    .gte('created_at', since)
+    .limit(1)
+
+  if (postId) query = query.eq('post_id', postId)
+  if (shortVideoId) query = query.eq('short_video_id', shortVideoId)
+
+  const { data } = await query
+
+  return (data ?? []).length > 0
+}
+
 async function createCommentNotification(
   post: PostItem,
   actorUserId: string,
@@ -517,17 +593,39 @@ async function createCommentNotification(
   // 不通知自己
   if (post.user_id === actorUserId) return
 
+  const isVideo =
+    post.type === 'video' || !!post.videoUrl
+
+  const duplicated = await hasRecentNotification({
+    recipientUserId: post.user_id,
+    actorUserId,
+    type: 'comment',
+
+    postId: isVideo ? null : post.id,
+
+    shortVideoId: isVideo ? post.id : null,
+  })
+
+  if (duplicated) return
+
   await supabase.from('notifications').insert({
     recipient_user_id: post.user_id,
     actor_user_id: actorUserId,
 
     type: 'comment',
 
-    post_id: post.type === 'video' || post.videoUrl ? null : post.id,
-    short_video_id: post.type === 'video' || post.videoUrl ? post.id : null,
+    post_id: isVideo ? null : post.id,
 
-    title: '有人留言了你的貼文',
-    body: commentText.length > 36 ? `${commentText.slice(0, 36)}...` : commentText,
+    short_video_id: isVideo ? post.id : null,
+
+    title: isVideo
+      ? '有人留言了你的短影片'
+      : '有人留言了你的貼文',
+
+    body:
+      commentText.length > 36
+        ? `${commentText.slice(0, 36)}...`
+        : commentText,
 
     is_read: false,
   })
@@ -1278,18 +1376,40 @@ if (realVideos.length > 0) {
 <AnimatePresence>
   {isNotificationsOpen && (
     <NotificationsPage
-  onClose={() => {
-    setIsNotificationsOpen(false)
+      onClose={() => {
+        setIsNotificationsOpen(false)
+        setUnreadNotificationCount(0)
+      }}
+      onOpenProfile={(userId) => {
+        setIsNotificationsOpen(false)
+        setUnreadNotificationCount(0)
 
-    setUnreadNotificationCount(0)
-  }}
-/>
+        setSelectedProfileUserId(userId)
+      }}
+      onOpenPost={(postId) => {
+        const post = mergedPosts.find(
+          (item) => item.id === postId
+        )
+
+        setIsNotificationsOpen(false)
+        setUnreadNotificationCount(0)
+
+        if (post) {
+          openDetailPost(post)
+        } else {
+          setToast('找不到這篇貼文，可能已被刪除')
+        }
+      }}
+      onOpenShortVideo={(shortVideoId) => {
+  setIsNotificationsOpen(false)
+  setUnreadNotificationCount(0)
+
+  setShortVideoStartId(shortVideoId)
+  setIsShortVideoPageOpen(true)
+}}
+    />
   )}
 </AnimatePresence>
-
-
-
-
 
 <AnimatePresence mode="wait">
   {selectedProfileUserId && (
