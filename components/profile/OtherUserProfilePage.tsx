@@ -538,9 +538,27 @@ async function toggleFavorite() {
     setFollowerCount((prev) => prev + 1)
 
     const { error } = await supabase.from('follows').insert({
-      follower_id: user.id,
-      following_id: userId,
-    })
+  follower_id: user.id,
+  following_id: userId,
+})
+
+if (!error) {
+  void supabase.from('notifications').insert({
+    recipient_user_id: userId,
+    actor_user_id: user.id,
+
+    type: 'follow',
+
+    title: '有人開始追蹤你',
+
+    body:
+      profile?.display_name ||
+      profile?.username ||
+      '你收到新的追蹤',
+
+    is_read: false,
+  })
+}
 
     if (error) {
       console.error(text.followFailed, error)

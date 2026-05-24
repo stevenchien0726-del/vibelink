@@ -13,35 +13,26 @@ import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPa
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 
 import type { Locale } from '@/i18n'
-import WideMenuSheet from '@/components/WideMenuSheet'
 
 import ShareSheet from '@/components/ShareSheet'
 
 import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
 
 import {
-  Bell,
-  Heart,
-  MessageCircle,
-  Send,
-  Bookmark,
-  ChevronLeft,
   MoreHorizontal,
 } from 'lucide-react'
 
-import FeedGrid, { type PostItem } from '@/components/home/sections/feed/FeedGrid'
+import type { PostItem } from '@/components/home/sections/feed/FeedGrid'
 import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
-import FavoriteFeedPage from '@/components/home/sections/feed/FavoriteFeedPage'
 
 import { supabase } from '@/lib/supabase'
 
-import { MEMBERSHIP_URL, openLink } from '@/lib/links'
-
-import { ensureUserProfile } from '@/lib/profile'
-import { mockPosts, mockShortVideos } from '@/lib/mockPosts'
-
-import FollowingFeedPage from '@/components/home/sections/feed/FollowingFeedPage'
 import NotificationsPage from '@/components/profile/NotificationsPage'
+import HomeTopBar from '@/src/components/home/homepage/HomeTopBar'
+import HomeFeedSection from '@/src/components/home/homepage/HomeFeedSection'
+import HomeAuthModal from '@/src/components/home/homepage/HomeAuthModal'
+import HomeDetailPostModal from '@/src/components/home/homepage/HomeDetailPostModal'
+import { useHomeFeed } from '@/src/components/home/homepage/useHomeFeed'
 
 type StoryItem = {
   id: string
@@ -112,10 +103,6 @@ export default function HomePage({
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   
-  const [realPosts, setRealPosts] = useState<PostItem[]>([])
-  const [realVideos, setRealVideos] = useState<PostItem[]>([])
-
-  const [mockSavedPostIds, setMockSavedPostIds] = useState<string[]>([])
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null)
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null)
 
@@ -150,87 +137,28 @@ const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 const [shortVideoStartId, setShortVideoStartId] = useState<string | undefined>()
 
 const detailTouchStartXRef = useRef<number | null>(null)
-const isLoadingShortVideosRef = useRef(false)
-useEffect(() => {
-  const saved = localStorage.getItem('vibelink_mock_saved_posts')
-
-  if (saved) {
-    setMockSavedPostIds(JSON.parse(saved))
-  }
-}, [])
-  useEffect(() => {
-  async function initHome() {
-    const { data } = await supabase.auth.getSession()
-    const user = data.session?.user ?? null
-
-    console.log('當前 session:', data.session)
-
-    setCurrentUserId(user?.id ?? null)
-
-    if (!data.session) {
-      setIsAuthModalOpen(true)
-      return
-    }
-
-    setIsAuthModalOpen(false)
-
-    // 第一批：先確保登入者 profile
-void safeTask(
-  () => ensureUserProfile(),
-  'home_ensure_profile'
-).then((profile) => {
-  console.log('目前登入者 Profile:', profile)
+const {
+  realPosts,
+  setRealPosts,
+  realVideos,
+  setRealVideos,
+  mockSavedPostIds,
+  setMockSavedPostIds,
+  isLoadingShortVideosRef,
+  safeTask,
+  delay,
+  loadPosts,
+  loadShortVideos,
+  mergedPosts,
+  shortVideoPosts,
+unreadNotificationCount,
+setUnreadNotificationCount,
+loadUnreadNotificationCount,
+} = useHomeFeed({
+  setIsAuthModalOpen,
+  setCurrentUserId,
+  setToast,
 })
-
-// 第二批：先讀首頁 feed
-await delay(500)
-void safeTask(() => loadPosts(user), 'home_load_posts')
-
-// 第三批：短影片延後讀，避免跟 feed 搶
-await delay(900)
-void safeTask(() => loadShortVideos(user), 'home_load_short_videos')
-
-  }
-
-  initHome()
-
-  const { data: listener } = supabase.auth.onAuthStateChange(
-  async (_event, session) => {
-    console.log('登入狀態變化:', session)
-
-    if (session) {
-  console.log('登入成功 ✅')
-  setIsAuthModalOpen(false)
-
-  const profile = await safeTask(
-  () => ensureUserProfile(),
-  'home_auth_ensure_profile'
-)
-
-console.log('目前登入者 Profile:', profile)
-
-await delay(500)
-
-void safeTask(
-  () => loadPosts(session.user),
-  'home_auth_load_posts'
-)
-
-await delay(900)
-
-void safeTask(
-  () => loadShortVideos(session.user),
-  'home_auth_load_short_videos'
-)
-}
-  }
-)
-
-  return () => {
-    listener.subscription.unsubscribe()
-  }
-}, [])
-
 function handlePostCreated(post: CreatedPostPayload) {
   const newPost: PostItem = {
     id: post.id,
@@ -293,157 +221,6 @@ function handlePostCreated(post: CreatedPostPayload) {
   const storyOverlayOpacity = useTransform(storyDragY, [0, 320], [1, 0.86])
 
   const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
-
-  function withTimeout<T>(
-  promise: Promise<T>,
-  ms = 10000,
-  label = 'request'
-): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => {
-      window.setTimeout(() => {
-        reject(new Error(`${label} timeout`))
-      }, ms)
-    }),
-  ])
-}
-
-async function safeTask<T>(
-  task: () => PromiseLike<T>,
-  label: string
-): Promise<T | null> {
-  try {
-    return await withTimeout(Promise.resolve(task()), 10000, label)
-  } catch (error) {
-    console.warn(`${label} failed:`, error)
-    return null
-  }
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms))
-}
-
-  async function loadPosts(user?: any, retry = 0) {
-  try {
-    const response = await withTimeout(
-  fetch('/api/feed', {
-    method: 'GET',
-    cache: 'no-store',
-  }),
-  10000,
-  'feed'
-)
-
-    const data = await response.json()
-
-    if (!data?.ok) {
-  throw new Error('讀取演算法 feed 失敗')
-}
-
-    const mappedPosts: PostItem[] = (data.feed ?? [])
-      .map((post: any) => {
-        const images = (post.post_images ?? []).map(
-          (img: any) => img.image_url
-        )
-
-        return {
-          id: post.id,
-          user_id: post.user_id,
-          author:
-            post.profiles?.display_name ||
-            post.profiles?.username ||
-            'Vibelink User',
-            avatarUrl: post.profiles?.avatar_url || '',
-          text: post.caption || '',
-          likes: post.likes ?? 0,
-          isLiked: !!post.isLiked,
-          isSaved: !!post.isSaved,
-          images,
-          aiTags: post.ai_tags ?? [],
-          type: 'post' as const,
-          isMine: post.user_id === user?.id,
-          feedScore: post.feedScore,
-          feedReasons: post.feedReasons,
-        }
-      })
-      .filter((post: PostItem) => post.images.length > 0)
-
-    console.log('🟣 personalized feed:', mappedPosts)
-
-    setRealPosts(mappedPosts)
-  } catch (error) {
-  console.error('loadPosts /api/feed failed:', error)
-
-  if (retry < 1) {
-    window.setTimeout(() => {
-      loadPosts(user, retry + 1)
-    }, 600)
-    return
-  }
-
-  setToast('Feed 讀取失敗，請重新整理')
-}
-}
-
-async function loadShortVideos(user?: any, retry = 0) {
-  try {
-    const { data, error } = await withTimeout(
-      Promise.resolve(
-        supabase
-          .from('short_videos')
-          .select(`
-            id,
-            caption,
-            video_url,
-            thumbnail_url,
-            created_at,
-            user_id
-          `)
-          .order('created_at', { ascending: false })
-          .limit(20)
-      ),
-      10000,
-      'short_videos'
-    )
-
-    if (error) throw error
-
-    const mappedVideos: PostItem[] = (data ?? []).map((video: any) => ({
-      id: video.id,
-      user_id: video.user_id,
-      author: 'Vibelink User',
-      text: video.caption || '',
-      likes: 0,
-      images: video.thumbnail_url
-        ? [video.thumbnail_url]
-        : video.video_url
-          ? [video.video_url]
-          : [],
-      thumbnailUrl: video.thumbnail_url || '',
-      videoUrl: video.video_url,
-      type: 'video',
-      aiTags: ['短影片'],
-      isMine: video.user_id === user?.id,
-      isLiked: false,
-      isSaved: false,
-    }))
-
-    setRealVideos(mappedVideos)
-  } catch (error) {
-    console.error('讀取短影片失敗:', error)
-
-    if (retry < 1) {
-      window.setTimeout(() => {
-        loadShortVideos(user, retry + 1)
-      }, 600)
-      return
-    }
-
-    setToast('短影片讀取失敗，請重新整理')
-  }
-}
 
 async function handleDeletePost(post: PostItem) {
   if (!post.id) return
@@ -705,6 +482,57 @@ function handleDetailDoubleLike() {
   }, 700)
 }
 
+async function createLikeNotification(
+  post: PostItem,
+  actorUserId: string
+) {
+  if (!post.user_id) return
+
+  // 不通知自己
+  if (post.user_id === actorUserId) return
+
+  await supabase.from('notifications').insert({
+    recipient_user_id: post.user_id,
+    actor_user_id: actorUserId,
+
+    type: 'like',
+
+    post_id: post.id,
+
+    title: '有人按讚了你的貼文',
+
+    body: `${post.author || '你的貼文'} 收到新的按讚`,
+
+    is_read: false,
+  })
+}
+
+async function createCommentNotification(
+  post: PostItem,
+  actorUserId: string,
+  commentText: string
+) {
+  if (!post.user_id) return
+
+  // 不通知自己
+  if (post.user_id === actorUserId) return
+
+  await supabase.from('notifications').insert({
+    recipient_user_id: post.user_id,
+    actor_user_id: actorUserId,
+
+    type: 'comment',
+
+    post_id: post.type === 'video' || post.videoUrl ? null : post.id,
+    short_video_id: post.type === 'video' || post.videoUrl ? post.id : null,
+
+    title: '有人留言了你的貼文',
+    body: commentText.length > 36 ? `${commentText.slice(0, 36)}...` : commentText,
+
+    is_read: false,
+  })
+}
+
 async function toggleDetailLike() {
   const activePostId = selectedPost?.id || commentSheetPost?.id
 
@@ -745,9 +573,13 @@ if (selectedPost?.isMock) {
 
   if (nextLiked) {
     await supabase.from('likes').insert({
-      post_id: activePostId,
-      user_id: user.id,
-    })
+  post_id: activePostId,
+  user_id: user.id,
+})
+
+if (selectedPost) {
+  void createLikeNotification(selectedPost, user.id)
+}
   } else {
     await supabase
       .from('likes')
@@ -860,13 +692,15 @@ async function submitComment() {
 
   const isVideo = activePost?.type === 'video' || !!activePost?.videoUrl
 
-const { error } = await supabase
+const { data: insertedComment, error } = await supabase
   .from(isVideo ? 'short_video_comments' : 'comments')
   .insert({
     [isVideo ? 'short_video_id' : 'post_id']: activePostId,
     user_id: user.id,
     content: text,
   })
+  .select('id')
+  .single()
 
   if (error) {
     console.error('送出留言失敗:', error)
@@ -874,9 +708,13 @@ const { error } = await supabase
     return
   }
 
-  setCommentText('')
-  await loadComments(activePostId, isVideo ? 'video' : 'post')
-  setCommentLoading(false)
+  if (activePost) {
+  void createCommentNotification(activePost, user.id, text)
+}
+
+setCommentText('')
+await loadComments(activePostId, isVideo ? 'video' : 'post')
+setCommentLoading(false)
 }
 
 function handleDetailImageTouchStart(e: React.TouchEvent<HTMLDivElement>) {
@@ -1112,28 +950,6 @@ if (isTap) {
     return () => clearInterval(interval)
   }, [selectedStory, storyPage, isStoryPaused])
 
-const mergedPosts = useMemo(
-  () => [
-    ...realVideos,
-    ...realPosts,
-
-    ...(realVideos.length > 0
-      ? mockShortVideos
-      : mockShortVideos.slice(0, 4)),
-
-    ...mockPosts.map((post) => ({
-      ...post,
-      isSaved: mockSavedPostIds.includes(post.id),
-    })),
-  ],
-  [realPosts, realVideos, mockSavedPostIds]
-)
-
-const shortVideoPosts = useMemo(
-  () => mergedPosts.filter((post) => post.type === 'video' || post.videoUrl),
-  [mergedPosts]
-)
-
 const realVideosLengthRef = useRef(realVideos.length)
 realVideosLengthRef.current = realVideos.length
 
@@ -1188,185 +1004,23 @@ const handleOpenFeedPost = useCallback(
   className="relative min-h-screen w-full overflow-x-hidden bg-[var(--app-bg)] text-[var(--app-text)]"
 >
 
-    <motion.div
-      className="fixed top-0 left-1/2 z-[500] pointer-events-auto h-[60px] w-full max-w-[430px] -translate-x-1/2 border-b border-[var(--app-card-border)] bg-[var(--app-bg)]/95 px-[14px] py-[8px] backdrop-blur-md"
-
-      ref={searchRef}
-      animate={{
-        y: isTopBarVisible || isSearchOpen ? 0 : -72,
-        opacity: isTopBarVisible || isSearchOpen ? 1 : 0.92,
-      }}
-      transition={{
-        type: 'spring',
-        stiffness: 380,
-        damping: 34,
-        mass: 0.95,
-      }}
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        {isSearchOpen ? (
-          <motion.div
-            key="search-bar"
-            initial={{ opacity: 0, y: -10, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{
-              type: 'spring',
-              stiffness: 380,
-              damping: 28,
-              mass: 0.9,
-            }}
-            className="flex h-full items-center gap-2"
-          >
-            <div className="flex h-[42px] flex-1 items-center gap-2 rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 shadow-[0_8px_22px_rgba(0,0,0,0.08)]">
-              <button
-                type="button"
-                onClick={handleSubmitSearch}
-                className="shrink-0 text-white"
-              >
-                <SearchIcon />
-              </button>
-
-              <input
-                autoFocus
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSubmitSearch()
-                  }
-                }}
-                placeholder="搜尋"
-                className="w-full bg-transparent text-[16px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsSearchOpen(false)}
-              className="shrink-0 text-[15px] font-medium text-[var(--app-muted)]"
-            >
-              CLOSE
-            </button>
-          </motion.div>
-        ) : (
-          
-<motion.div
-  key="default-bar"
-  initial={{ opacity: 0, y: 8 }}
-  animate={{ opacity: 1, y: 0 }}
-  exit={{ opacity: 0, y: 8 }}
-  transition={{ duration: 0.18 }}
-  className="relative flex h-full items-center justify-between px-4"
->
-  {/* 左：logo 膠囊 + 小選單 */}
-  <div className="relative" ref={topMenuRef}>
-    <button
-      type="button"
-      onClick={() => setIsTopMenuOpen((prev) => !prev)}
-      className="flex h-[38px] items-center gap-1 rounded-[12px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-3 text-[var(--app-text)] transition-all active:scale-[0.96] active:bg-white/10"
-    >
-      <img
-        src="/vibelink-logo.png"
-        alt="Vibelink"
-        className="h-[36px] object-contain"
-      />
-
-      <motion.span
-        animate={{ rotate: isTopMenuOpen ? 180 : 0 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="flex items-center justify-center text-[var(--app-text)]"
-      >
-        <ChevronDownIcon />
-      </motion.span>
-    </button>
-
-    <AnimatePresence>
-  {isTopMenuOpen && (
-    <motion.div
-  initial={{ opacity: 0, scale: 0.94, y: -8 }}
-  animate={{ opacity: 1, scale: 1, y: 0 }}
-  exit={{ opacity: 0, scale: 0.96, y: -6 }}
-  transition={{ duration: 0.18, ease: 'easeOut' }}
-  className="absolute left-0 top-[46px] z-[200] w-[200px] rounded-[20px] border border-[var(--app-card-border)] bg-[var(--app-card)] p-4 text-[var(--app-text)] shadow-[0_10px_26px_rgba(0,0,0,0.18)]"
->
-  <div className="flex flex-col gap-6">
-  <button
-    type="button"
-    onClick={() => {
-      openLink(MEMBERSHIP_URL)
-      setIsTopMenuOpen(false)
-    }}
-    className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] 
-     transition-colors active:bg-black/5"
-  >
-    <MembershipIcon />
-    <span>Vibe會員</span>
-  </button>
-
-  <button
-  type="button"
-  onClick={() => {
-    setIsTopMenuOpen(false)
-    setIsFollowingFeedOpen(true)
-  }}
-  className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[var(--app-text)] transition-colors active:bg-black/5"
->
-  <FollowingIcon />
-  <span>追蹤中</span>
-</button>
-
-  <button
-  type="button"
-  onClick={() => {
-    setIsTopMenuOpen(false)
-    setIsFavoriteFeedOpen(true)
-  }}
-  className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[var(--app-text)] transition-colors active:bg-black/5"
->
-  <FavoriteIcon />
-  <span>最愛</span>
-</button>
-</div>
-</motion.div>
-  )}
-</AnimatePresence>
-  </div>
-
-    {/* 右：功能膠囊 */}
-  <div className="flex h-[40px] items-center gap-6 rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 text-[var(--app-text)] shadow-inner">
-
-    
-
-    <button
-      type="button"
-      onClick={() => setIsSearchOpen(true)}
-      className="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all active:scale-[0.95] active:bg-black/5"
-    >
-      <SearchIcon />
-    </button>
-
-    <button
-      type="button"
-      onClick={() => setIsUploadOpen(true)}
-      className="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all active:scale-[0.95] active:bg-black/5"
-    >
-      <PlusIcon />
-    </button>
-
-    <button
-  type="button"
-  onClick={() => setIsNotificationsOpen(true)}
-  
->
-  <Bell size={20} strokeWidth={2.1} />
-</button>
-  </div>
-</motion.div>
-
-            )}
-      </AnimatePresence>
-    </motion.div> 
+    <HomeTopBar
+      isTopBarVisible={isTopBarVisible}
+      isSearchOpen={isSearchOpen}
+      isTopMenuOpen={isTopMenuOpen}
+      searchText={searchText}
+      searchRef={searchRef}
+      topMenuRef={topMenuRef}
+      setSearchText={setSearchText}
+      setIsSearchOpen={setIsSearchOpen}
+      setIsTopMenuOpen={setIsTopMenuOpen}
+      setIsFollowingFeedOpen={setIsFollowingFeedOpen}
+      setIsFavoriteFeedOpen={setIsFavoriteFeedOpen}
+      setIsUploadOpen={setIsUploadOpen}
+setIsNotificationsOpen={setIsNotificationsOpen}
+unreadNotificationCount={unreadNotificationCount}
+handleSubmitSearch={handleSubmitSearch}
+    />
 
     <AnimatePresence>
       {isUploadOpen && (
@@ -1387,281 +1041,51 @@ if (realVideos.length > 0) {
       )}
     </AnimatePresence>
 
-      <main className="min-h-screen box-border px- pb-[90px] pt-[64px]">
-
-        <section
-  className="px-3 pt-2"
-  data-block-page-swipe="true"
->
-  <FeedGrid
-  posts={mergedPosts}
-  onOpenPost={handleOpenFeedPost}
-  onOpenComments={openCommentSheet}
-  onOpenShare={() => setIsShareSheetOpen(true)}
-onDeletePost={handleDeletePost}
-onOpenProfile={(post) => {
-  setSelectedProfileUserId(post.user_id || post.id)
-}}
-/>
-</section>
-
-        
-      </main>
-
-<AnimatePresence>
-  {selectedPost && (
-    <motion.div
-  data-block-page-swipe="true"
-  className="fixed inset-0 z-[700] overflow-x-hidden bg-[var(--app-bg)] text-[var(--app-text)]"
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-      onTouchStart={handleDetailTouchStart}
-      onTouchEnd={handleDetailTouchEnd}
-    >
-      <div className="mx-auto h-full w-full max-w-[430px] overflow-x-hidden overflow-y-auto pb-[110px] scrollbar-hide">
-        <div className="sticky top-0 z-[20] flex h-[56px] items-center justify-between bg-[var(--app-surface)]/95 px-4 backdrop-blur-md">
-          <button
-            type="button"
-            onClick={() => {
-  setIsDetailMenuOpen(false)
-  setSelectedPost(null)
-}}
-            className="flex h-10 w-10 items-center justify-center rounded-full active:scale-90"
-          >
-            <ChevronLeft size={26} />
-          </button>
-
-          <div className="relative">
-  <button
-    type="button"
-    onClick={() => setIsDetailMenuOpen(true)}
-    className="flex h-10 items-center gap-2 rounded-full px-2 active:scale-95"
-  >
-    <MoreHorizontal size={22} strokeWidth={2.4} />
-    <span className="text-[15px] font-medium">MENU</span>
-  </button>
-
-</div>
-        </div>
-
-        <button
-  type="button"
-  onClick={(e) => {
-    e.stopPropagation()
-    if (!selectedPost) return
-
-    setSelectedPost(null)
-    setSelectedProfileUserId(selectedPost.user_id || selectedPost.id)
-  }}
-  className="mb-5 ml-7 flex items-center gap-3 py-3 pr-5 active:scale-95"
->
-  <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[var(--app-card)]">
-  {(selectedPost as any).avatarUrl ? (
-    <img
-      src={(selectedPost as any).avatarUrl}
-      className="h-full w-full object-cover"
-    />
-  ) : null}
-</div>
-
-  <div className="text-[15px] font-medium text-[var(--app-text)]">
-    {selectedPost.author}
-  </div>
-</button>
-
-        <div
-  data-detail-image-area="true"
-  data-block-page-swipe="true"
-  className="mt-3 px-3"
-  style={{ touchAction: 'pan-y' }}
-  onTouchStart={handleDetailImageTouchStart}
-  onTouchMove={handleDetailImageTouchMove}
-  onTouchEnd={handleDetailImageTouchEnd}
->
-  <div
-  onDoubleClick={handleDetailDoubleLike}
-  className="relative w-full aspect-square overflow-hidden rounded-[18px] bg-[var(--app-card)]"
->
-
-  {/* ✅ 圖片滑動 */}
-  <motion.div
-    className="flex h-full w-full"
-    animate={{ x: `-${detailImageIndex * 100}%` }}
-    transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-  >
-    {selectedPost.images.map((image, index) => (
-      <div
-        key={`${selectedPost.id}-detail-${index}`}
-        className="w-full shrink-0 h-full"
-      >
-        <img
-          src={image}
-          className="block h-full w-full object-cover"
-          draggable={false}
-        />
-      </div>
-    ))}
-  </motion.div>
-
-  {/* ✅ 愛心動畫（正確位置） */}
-  <AnimatePresence>
-    {detailBigHeartVisible && (
-      <motion.div
-        initial={{ scale: 0.6, opacity: 0 }}
-        animate={{
-          scale: [0.6, 1.5, 1.2],
-          opacity: [0, 1, 0],
-        }}
-        transition={{ duration: 0.6 }}
-        className="pointer-events-none absolute inset-0 z-[80] flex items-center justify-center"
-      >
-        <Heart size={90} fill="#c86cff" color="#c86cff" />
-      </motion.div>
-    )}
-  </AnimatePresence>
-
-    {/* 頁數 */}
-  {selectedPost.images.length > 1 && (
-    <div className="absolute right-3 top-3 rounded-full bg-black/20 px-3 py-1 text-[14px] text-[var(--app-text)] backdrop-blur-sm">
-      {detailImageIndex + 1}/{selectedPost.images.length}
-    </div>
-  )}
-</div>
-
-{selectedPost.images.length > 1 && (
-  <div className="mt-2 flex justify-center gap-2">
-    {selectedPost.images.map((_, index) => (
-      <span
-        key={index}
-        className={`h-[7px] w-[7px] rounded-full ${
-          detailImageIndex === index ? 'bg-[#c86cff]' : 'bg-[var(--app-muted)]'
-        }`}
+      <HomeFeedSection
+        mergedPosts={mergedPosts}
+        handleOpenFeedPost={handleOpenFeedPost}
+        openCommentSheet={openCommentSheet}
+        setIsShareSheetOpen={setIsShareSheetOpen}
+        handleDeletePost={handleDeletePost}
+        setSelectedProfileUserId={setSelectedProfileUserId}
+        isFollowingFeedOpen={isFollowingFeedOpen}
+        setIsFollowingFeedOpen={setIsFollowingFeedOpen}
+        isFavoriteFeedOpen={isFavoriteFeedOpen}
+        setIsFavoriteFeedOpen={setIsFavoriteFeedOpen}
+        setShortVideoStartId={setShortVideoStartId}
+        setIsShortVideoPageOpen={setIsShortVideoPageOpen}
+        openDetailPost={openDetailPost}
       />
-    ))}
-  </div>
-)}
-</div>
 
-        <div className="flex items-center justify-between px-4 pt-4">
-          <div className="flex items-center gap-5">
-            <button onClick={toggleDetailLike} className="flex items-center gap-1.5 active:scale-90">
-  <Heart
-    size={25}
-    color="#c86cff"
-    fill={selectedPostLiked ? '#c86cff' : 'none'}
-  />
-  <span className="text-[15px] text-[var(--app-text)]">{selectedPostLikeCount}</span>
-</button>
-
-            <button className="active:scale-90">
-              <MessageCircle size={25} strokeWidth={2.1} />
-            </button>
-          </div>
-
-                    <div className="flex items-center gap-5">
-            <button
-              type="button"
-              onClick={() => setIsShareSheetOpen(true)}
-              className="active:scale-90"
-            >
-              <Send size={25} strokeWidth={2.1} />
-            </button>
-            
-
-            <button onClick={toggleDetailSave} className="active:scale-90">
-  <Bookmark
-    size={25}
-    color="#c86cff"
-    fill={selectedPostSaved ? '#c86cff' : 'none'}
-    strokeWidth={2.1}
-  />
-</button>
-          </div>
-        </div>
-
-        {selectedPost.text && (
-          <div className="px-4 pt-3 text-[15px] text-[var(--app-text)]">
-            {selectedPost.text}
-          </div>
-        )}
-
-          <div
-  ref={commentSectionRef}
-  className="mt-5 border-t border-[var(--app-card-border)] px-4 pt-4"
->
-  <div className="mb-4 text-[15px] font-medium text-[var(--app-text)]">
-    留言
-  </div>
-
-  <div className="mb-4 flex gap-2">
-    <input
-      value={commentText}
-      onChange={(e) => setCommentText(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') submitComment()
-      }}
-      placeholder="新增留言..."
-      className="h-[42px] flex-1 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 text-[14px] text-[var(--app-text)] outline-none"
-    />
-
-    <button
-      type="button"
-      onClick={submitComment}
-      disabled={commentLoading || !commentText.trim()}
-      className={`h-[42px] rounded-full px-4 text-[14px] font-medium ${
-        commentText.trim()
-          ? 'bg-[#c86cff] text-white'
-          : 'bg-[#e5e5e5] text-[var(--app-muted)]'
-      }`}
-    >
-      送出
-    </button>
-  </div>
-
-  {comments.length === 0 ? (
-    <div className="text-[14px] text-[var(--app-muted)]">
-      尚無留言，成為第一個留言的人
-    </div>
-  ) : (
-    <div className="flex flex-col gap-4">
-      {comments.map((comment) => (
-        <div key={comment.id} className="flex gap-3">
-  <div className="h-[32px] w-[32px] rounded-full bg-[#d6d6d6]" />
-
-  <div className="flex-1">
-    <div className="text-[13px] font-medium text-[var(--app-text)]">
-      Vibelink User
-    </div>
-
-    <div className="mt-1 text-[14px] text-white">
-      {comment.content}
-    </div>
-  </div>
-
-  <button
-    type="button"
-    onClick={() => {
-      setSelectedComment(comment)
-      requestAnimationFrame(() => {
-        setIsCommentMenuOpen(true)
-      })
-    }}
-    className="mr-[-6px] mt-[2px] flex h-[36px] w-[36px] items-center justify-center rounded-full active:scale-90"
-  >
-    <MoreHorizontal size={20} strokeWidth={2.2} />
-  </button>
-</div>
-      ))}
-    </div>
-  )}
-</div>
-      </div>
-      
-    </motion.div>
-  )}
-</AnimatePresence>
+<HomeDetailPostModal
+  selectedPost={selectedPost}
+  setSelectedPost={setSelectedPost}
+  setSelectedProfileUserId={setSelectedProfileUserId}
+  isDetailMenuOpen={isDetailMenuOpen}
+  setIsDetailMenuOpen={setIsDetailMenuOpen}
+  handleDetailTouchStart={handleDetailTouchStart}
+  handleDetailTouchEnd={handleDetailTouchEnd}
+  handleDetailImageTouchStart={handleDetailImageTouchStart}
+  handleDetailImageTouchMove={handleDetailImageTouchMove}
+  handleDetailImageTouchEnd={handleDetailImageTouchEnd}
+  handleDetailDoubleLike={handleDetailDoubleLike}
+  detailImageIndex={detailImageIndex}
+  detailBigHeartVisible={detailBigHeartVisible}
+  selectedPostLiked={selectedPostLiked}
+  selectedPostLikeCount={selectedPostLikeCount}
+  toggleDetailLike={toggleDetailLike}
+  setIsShareSheetOpen={setIsShareSheetOpen}
+  selectedPostSaved={selectedPostSaved}
+  toggleDetailSave={toggleDetailSave}
+  commentSectionRef={commentSectionRef}
+  commentText={commentText}
+  setCommentText={setCommentText}
+  submitComment={submitComment}
+  commentLoading={commentLoading}
+  comments={comments}
+  setSelectedComment={setSelectedComment}
+  setIsCommentMenuOpen={setIsCommentMenuOpen}
+/>
 
       <AnimatePresence>
         {isPeopleLibraryOpen && (
@@ -1684,49 +1108,10 @@ onOpenProfile={(post) => {
       </AnimatePresence>
 
 
-<AnimatePresence>
-  {isAuthModalOpen && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[10000] flex touch-none items-center justify-center bg-black/40 px-6 backdrop-blur-sm"
-onTouchStart={(e) => e.stopPropagation()}
-onTouchMove={(e) => e.stopPropagation()}
-onTouchEnd={(e) => e.stopPropagation()}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 18, scale: 0.96 }}
-        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-        className="w-full max-w-[340px] rounded-[28px] bg-white p-6 shadow-2xl"
-      >
-        <div className="mb-5 text-center">
-          <img
-            src="/vibelink-logo.png"
-            alt="Vibelink"
-            className="mx-auto mb-3 h-[48px]"
-          />
-          <h2 className="text-[22px] font-semibold text-[var(--app-text)]">
-            登入 Vibelink
-          </h2>
-          <p className="mt-2 text-[14px] text-[#777]">
-            登入後即可發文與使用完整功能
-          </p>
-        </div>
-
-        <button
-  type="button"
-  onClick={handleGoogleLogin}
-  className="mt-5 mb-5 flex h-[48px] w-full items-center justify-center gap-3 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] text-[15px] font-medium text-[var(--app-text)] shadow-sm active:scale-[0.97]"
->
-  GOOGLE 登入
-</button>
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
+<HomeAuthModal
+  isAuthModalOpen={isAuthModalOpen}
+  handleGoogleLogin={handleGoogleLogin}
+/>
 
 <AnimatePresence>
   {isCommentSheetOpen && commentSheetPost && (
@@ -1860,12 +1245,7 @@ onTouchEnd={(e) => e.stopPropagation()}
   )}
 </AnimatePresence>
 
-{isDetailMenuOpen && selectedPost && (
-  <WideMenuSheet
-    variant={selectedPost.isMine ? 'mine' : 'other'}
-    onClose={() => setIsDetailMenuOpen(false)}
-  />
-)}
+
 
 <ShareSheet
   open={isShareSheetOpen}
@@ -1898,49 +1278,18 @@ onTouchEnd={(e) => e.stopPropagation()}
 <AnimatePresence>
   {isNotificationsOpen && (
     <NotificationsPage
-      onClose={() => setIsNotificationsOpen(false)}
-    />
-  )}
-</AnimatePresence>
+  onClose={() => {
+    setIsNotificationsOpen(false)
 
-<AnimatePresence>
-  {isFollowingFeedOpen && (
-    <FollowingFeedPage
-      onClose={() => setIsFollowingFeedOpen(false)}
-      onOpenPost={(post) => {
-        setIsFollowingFeedOpen(false)
-
-        if (post.type === 'video' || post.videoUrl) {
-          setShortVideoStartId(post.id)
-          setIsShortVideoPageOpen(true)
-          return
-        }
-
-        openDetailPost(post)
-      }}
-    />
-  )}
-</AnimatePresence>
-
-<AnimatePresence>
-  {isFavoriteFeedOpen && (
-    <FavoriteFeedPage
-  posts={mergedPosts}
-  onClose={() => setIsFavoriteFeedOpen(false)}
-  onOpenPost={(post) => {
-    setIsFavoriteFeedOpen(false)
-
-    if (post.type === 'video' || post.videoUrl) {
-      setShortVideoStartId(post.id)
-      setIsShortVideoPageOpen(true)
-      return
-    }
-
-    openDetailPost(post)
+    setUnreadNotificationCount(0)
   }}
 />
   )}
 </AnimatePresence>
+
+
+
+
 
 <AnimatePresence mode="wait">
   {selectedProfileUserId && (
@@ -1976,124 +1325,3 @@ onTouchEnd={(e) => e.stopPropagation()}
   )
 }
 
-function PlusIcon() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 5v14M5 12h14"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
-function SearchIcon() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2.2" />
-      <path
-        d="M20 20l-3.2-3.2"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M6 9l6 6 6-6"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function FollowingIcon() {
-  return (
-    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d="M6.5 18c1-2.8 3.3-4.2 5.5-4.2s4.5 1.4 5.5 4.2"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
-function FavoriteIcon() {
-  return (
-    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 4l2.4 4.9 5.4.8-3.9 3.8.9 5.5L12 16.8 7.2 19l.9-5.5-3.9-3.8 5.4-.8L12 4z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function MembershipIcon() {
-  return (
-    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M7 6.5h10a2 2 0 012 2v2.2a1.8 1.8 0 000 3.6V16a2 2 0 01-2 2H7a2 2 0 01-2-2v-1.7a1.8 1.8 0 000-3.6V8.5a2 2 0 012-2z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d="M12 8v8"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeDasharray="1.8 1.8"
-      />
-    </svg>
-  )
-}
-
-function ProfileIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d="M5.5 19c1.1-3 3.6-4.5 6.5-4.5s5.4 1.5 6.5 4.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
-function MailIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M4 7h16v10H4z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M5 8l7 6 7-6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}

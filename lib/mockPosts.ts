@@ -10,10 +10,13 @@ function getStableLikeCount(seed: string) {
     total += seed.charCodeAt(i)
   }
 
-  return 20 + (total % 180)
+  return 12 + (total % 88)
 }
 
-export const mockPosts: PostItem[] = mockUsers.map((user) => {
+// ✅ 只保留前 12 個 mock user
+const reducedMockUsers = mockUsers.slice(0, 12)
+
+export const mockPosts: PostItem[] = reducedMockUsers.map((user) => {
   const id = `${user.id}-post-main`
 
   return {
@@ -22,9 +25,13 @@ export const mockPosts: PostItem[] = mockUsers.map((user) => {
     author: user.display_name,
     text: user.bio,
     likes: getStableLikeCount(id),
-    images: user.images,
+
+    // ✅ 避免太多圖造成初始化壓力
+    images: user.images.slice(0, 1),
+
     aiTags: user.vibe_tags,
-    type: 'post' as const,
+    type: 'post',
+
     isMine: false,
     isLiked: false,
     isSaved: false,
@@ -32,4 +39,5 @@ export const mockPosts: PostItem[] = mockUsers.map((user) => {
   }
 })
 
+// ✅ 暫時完全移除假短影片
 export const mockShortVideos: PostItem[] = []

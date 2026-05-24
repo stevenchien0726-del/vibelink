@@ -3,7 +3,6 @@
 import type { MockUser } from './mockUsers'
 
 const vibeSets = [
-  ['gym', 'fitness', 'workout'],
   ['kpop', 'dance', 'fashion'],
   ['beach', 'travel', 'summer'],
   ['coffee', 'cafe', 'softgirl'],
@@ -130,16 +129,18 @@ const feedImageIds = [
 ]
 
 const mockNames = [
-  'Aiden', 'Emma', 'Jay', 'Yuna', 'Ryan', 'Lucas', 'Mia', 'Ethan', 'Nina', 'Alex',
-  'Sophie', 'Kaio', 'Lily', 'Dylan', 'Ava', 'Max', 'Ella', 'Noah', 'Zoe', 'Logan',
-  'Ivy', 'Leo', 'Celine', 'Miles', 'Aria', 'Theo', 'Nora', 'Finn', 'Iris', 'Cole',
-  'Lana', 'Owen', 'Jade', 'Kairos', 'Mira', 'Rex', 'Tina', 'Axel', 'June', 'Eli',
-  'Skye', 'Duke', 'Rina', 'Ash', 'Vera', 'Jett', 'Luna K', 'Nico', 'Sia', 'Troy',
-  'May', 'Kane', 'Rosa', 'Dean', 'Elle', 'Hugo', 'Kira', 'Ace', 'Momo', 'Ray',
-  'Lia', 'Blake', 'Yuki', 'Sean', 'Faye', 'Ian', 'Nami', 'Chris', 'Aya', 'Ben',
-  'Tara', 'Zion', 'Mina K', 'Louis', 'Nell', 'Marco', 'Jia', 'Evan', 'Rumi', 'Carl',
-  'Vivi', 'Jules', 'Mei', 'Dante', 'Nola', 'Eason', 'Bella', 'Kobe', 'Irene', 'Rio',
-  'Hana', 'Mason', 'Ruby', 'Kenji', 'Stella', 'Claire', 'Adam', 'Isaac', 'Grace', 'Aaron',
+  'Aiden',
+  'Emma',
+  'Jay',
+  'Yuna',
+  'Ryan',
+  'Lucas',
+  'Mia',
+  'Ethan',
+  'Nina',
+  'Alex',
+  'Sophie',
+  'Kaio',
 ]
 
 function getGender(index: number) {
@@ -175,7 +176,7 @@ export const mockUsersExtra: MockUser[] = mockNames.map((name, index) => {
     images: [
   `https://images.unsplash.com/photo-${
     feedImageIds[index % feedImageIds.length]
-  }?q=80&w=1200&auto=format&fit=crop&sig=${index}`,
+  }?q=75&w=900&auto=format&fit=crop&sig=${index}`,
 ],
   }
 })
