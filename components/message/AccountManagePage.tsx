@@ -160,13 +160,7 @@ export default function AccountManagePage({
 
             <GroupDivider />
 
-            <AccountActionRow
-              icon={<Lock size={21} strokeWidth={2.1} />}
-              label="密碼和安全"
-              trailing={<ChevronRight size={18} strokeWidth={2.4} className="text-[var(--app-muted)]" />}
-            />
-
-            <GroupDivider />
+            
 
             <AccountActionRow
               icon={<TriangleAlert size={21} strokeWidth={2.1} />}
