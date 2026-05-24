@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 export type PostItem = {
@@ -35,80 +35,88 @@ type FeedGridProps = {
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
 
-function getPostPreviewImage(post: PostItem) {
+const MOBILE_SAFE_INITIAL_LIMIT = 24
+
+function getVideoSrc(post: PostItem) {
+  return post.videoUrl || (post as any).video_url || ''
+}
+
+function getPreviewImage(post: PostItem) {
   return (
     post.thumbnailUrl ||
     post.thumbnail_url ||
+    (post as any).thumbnail ||
+    (post as any).poster_url ||
+    (post as any).cover_url ||
     post.images?.[0] ||
-    FALLBACK_IMAGE
+    ''
   )
 }
 
-function RetryImage({
+function NormalImage({
   src,
   alt,
-  className,
 }: {
   src: string
   alt: string
-  className?: string
 }) {
-  const [retryKey, setRetryKey] = useState(0)
-  const [loaded, setLoaded] = useState(false)
-  const [failedCount, setFailedCount] = useState(0)
-
-  useEffect(() => {
-    setLoaded(false)
-    setFailedCount(0)
-    setRetryKey(0)
-  }, [src])
-
-  useEffect(() => {
-    if (!src || loaded || failedCount >= 3) return
-
-    const timer = window.setTimeout(() => {
-      if (!loaded) {
-        setRetryKey((v) => v + 1)
-        setFailedCount((v) => v + 1)
-      }
-    }, 3500)
-
-    return () => window.clearTimeout(timer)
-  }, [src, retryKey, loaded, failedCount])
-
-  const safeSrc =
-    failedCount >= 3
-      ? FALLBACK_IMAGE
-      : `${src}${src.includes('?') ? '&' : '?'}retry=${retryKey}`
+  const [failed, setFailed] = useState(false)
 
   return (
     <img
-      key={`${src}-${retryKey}`}
-      src={safeSrc}
+      src={failed ? FALLBACK_IMAGE : src}
       alt={alt}
       loading="lazy"
       decoding="async"
-      className={className}
       draggable={false}
-      onLoad={() => {
-        setLoaded(true)
-      }}
-      onError={() => {
-        if (failedCount < 3) {
-          window.setTimeout(() => {
-            setRetryKey((v) => v + 1)
-            setFailedCount((v) => v + 1)
-          }, 800)
-        } else {
-          setLoaded(true)
-        }
-      }}
+      className="h-full w-full object-cover"
+      onError={() => setFailed(true)}
     />
   )
 }
 
+function VideoPreview({
+  post,
+}: {
+  post: PostItem
+}) {
+  const previewImage = getPreviewImage(post)
+  const videoSrc = getVideoSrc(post)
+  const [imageFailed, setImageFailed] = useState(false)
+
+  if (previewImage && !imageFailed) {
+    return (
+      <img
+        src={previewImage}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+        className="h-full w-full object-cover"
+        onError={() => setImageFailed(true)}
+      />
+    )
+  }
+
+  if (videoSrc) {
+    return (
+      <video
+        src={videoSrc}
+        muted
+        playsInline
+        preload="metadata"
+        className="h-full w-full object-cover"
+      />
+    )
+  }
+
+  return <div className="h-full w-full bg-black" />
+}
+
 function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
-  const visiblePosts = useMemo(() => posts.slice(0, 40), [posts])
+  const visiblePosts = useMemo(() => {
+    return posts.slice(0, MOBILE_SAFE_INITIAL_LIMIT)
+  }, [posts])
 
   if (visiblePosts.length === 0) return null
 
@@ -123,8 +131,8 @@ function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
         className="grid grid-cols-2 gap-[3px]"
       >
         {visiblePosts.map((post) => {
-          const image = getPostPreviewImage(post)
-          const isVideoPreview = Boolean(post.videoUrl && image === post.videoUrl)
+          const isVideo = Boolean(getVideoSrc(post) || post.type === 'video')
+          const previewImage = getPreviewImage(post)
 
           return (
             <motion.button
@@ -132,56 +140,11 @@ function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
               layout
               key={post.id}
               onClick={() => onOpenPost?.(post)}
-              className="relative h-[280px] w-full overflow-hidden rounded-[6px] border border-[var(--app-card-border)] bg-[var(--app-card)]"
+              className="relative h-[280px] w-full overflow-hidden rounded-[6px] border border-[var(--app-card-border)] bg-black"
             >
-              {!post.videoUrl && post.images?.length > 1 && (
-                <div className="pointer-events-none absolute right-[10px] top-[10px] z-10">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="h-[20px] w-[20px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]"
-                  >
-                    <rect
-                      x="7"
-                      y="5"
-                      width="11"
-                      height="11"
-                      rx="2"
-                      stroke="white"
-                      strokeWidth="2"
-                    />
-                    <rect
-                      x="4"
-                      y="8"
-                      width="11"
-                      height="11"
-                      rx="2"
-                      stroke="white"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                </div>
-              )}
-
-              {post.videoUrl ? (
+              {isVideo ? (
                 <>
-                  {isVideoPreview ? (
-                    <video
-                      src={post.videoUrl}
-                      preload="metadata"
-                      muted
-                      playsInline
-                      poster={post.thumbnailUrl || post.thumbnail_url || undefined}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <RetryImage
-                      src={image}
-                      alt={post.author || 'Vibelink video'}
-                      className="h-full w-full object-cover"
-                    />
-                  )}
+                  <VideoPreview post={post} />
 
                   <div className="pointer-events-none absolute inset-0 bg-black/10" />
 
@@ -197,11 +160,42 @@ function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
                   </div>
                 </>
               ) : (
-                <RetryImage
-                  src={image}
-                  alt={post.author || 'Vibelink post'}
-                  className="h-full w-full object-cover"
-                />
+                <>
+                  {post.images?.length > 1 && (
+                    <div className="pointer-events-none absolute right-[10px] top-[10px] z-10">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="h-[20px] w-[20px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]"
+                      >
+                        <rect
+                          x="7"
+                          y="5"
+                          width="11"
+                          height="11"
+                          rx="2"
+                          stroke="white"
+                          strokeWidth="2"
+                        />
+                        <rect
+                          x="4"
+                          y="8"
+                          width="11"
+                          height="11"
+                          rx="2"
+                          stroke="white"
+                          strokeWidth="2"
+                        />
+                      </svg>
+                    </div>
+                  )}
+
+                  <NormalImage
+                    src={previewImage || FALLBACK_IMAGE}
+                    alt={post.author || 'Vibelink post'}
+                  />
+                </>
               )}
             </motion.button>
           )

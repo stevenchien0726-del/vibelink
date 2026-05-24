@@ -340,13 +340,23 @@ onError={() => {
                     />
                   ) : (
   <img
-    src={(video as any).thumbnailUrl || video.images?.[0] || undefined}
-    className="absolute inset-0 z-[10] h-full w-full object-cover"
-    draggable={false}
-    onError={(e) => {
-  e.currentTarget.style.display = 'none'
-}}
-  />
+  src={
+    (video as any).thumbnailUrl ||
+    (video as any).thumbnail_url ||
+    video.images?.[0] ||
+    ''
+  }
+  className="absolute inset-0 z-[10] h-full w-full bg-black object-cover"
+  draggable={false}
+  onError={(e) => {
+    const el = e.currentTarget
+
+    // 短影片縮圖讀不到時，不再換沙漠圖
+    // 直接保持黑底，避免錯誤 fallback 圖破壞版面
+    el.removeAttribute('src')
+    el.style.display = 'none'
+  }}
+/>
 )}
 
                   <div className="pointer-events-none absolute inset-0 z-[20] bg-gradient-to-b from-black/20 via-transparent to-black/55" />
