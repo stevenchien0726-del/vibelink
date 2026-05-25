@@ -338,26 +338,31 @@ onError={() => {
 }}
                       className="absolute inset-0 z-[10] h-full w-full bg-black object-cover"
                     />
-                  ) : (
-  <img
-  src={
+                  
+  ) : (() => {
+  const thumbnailSrc =
     (video as any).thumbnailUrl ||
     (video as any).thumbnail_url ||
     video.images?.[0] ||
-    ''
-  }
-  className="absolute inset-0 z-[10] h-full w-full bg-black object-cover"
-  draggable={false}
-  onError={(e) => {
-    const el = e.currentTarget
+    null
 
-    // 短影片縮圖讀不到時，不再換沙漠圖
-    // 直接保持黑底，避免錯誤 fallback 圖破壞版面
-    el.removeAttribute('src')
-    el.style.display = 'none'
-  }}
-/>
-)}
+  if (!thumbnailSrc) {
+    return <div className="absolute inset-0 z-[10] bg-black" />
+  }
+
+  return (
+    <img
+      src={thumbnailSrc}
+      className="absolute inset-0 z-[10] h-full w-full bg-black object-cover"
+      draggable={false}
+      onError={(e) => {
+        const el = e.currentTarget
+        el.removeAttribute('src')
+        el.style.display = 'none'
+      }}
+    />
+  )
+})()}
 
                   <div className="pointer-events-none absolute inset-0 z-[20] bg-gradient-to-b from-black/20 via-transparent to-black/55" />
                   <AnimatePresence>

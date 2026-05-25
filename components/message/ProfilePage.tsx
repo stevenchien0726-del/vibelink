@@ -12,6 +12,8 @@ import EditProfilePage from '@/components/profile/EditProfilePage'
 import ProfilePostDetailModal from '@/components/profile/ProfilePostDetailModal'
 import ProfilePostGridTabs from '@/components/profile/ProfilePostGridTabs'
 
+import TrafficReportPage from '@/components/profile/TrafficReportPage'
+
 import { profileText } from '@/lib/profile/profileText'
 
 import type { Locale } from '@/i18n'
@@ -212,6 +214,7 @@ function delay(ms: number) {
 
   const [showSettingsPage, setShowSettingsPage] = useState(false)
   const [showAnalyticsPage, setShowAnalyticsPage] = useState(false)
+  const [showTrafficReportPage, setShowTrafficReportPage] = useState(false)
 
   const [showArchivedPage, setShowArchivedPage] = useState(false)
   const [showNotificationsPage, setShowNotificationsPage] = useState(false)
@@ -1286,9 +1289,9 @@ useEffect(() => {
       setIsMenuOpen(false)
     }}
     onAnalytics={() => {
-      setShowAnalyticsPage(true)
-      setIsMenuOpen(false)
-    }}
+  setShowTrafficReportPage(true)
+  setIsMenuOpen(false)
+}}
     onArchive={() => {
       setShowArchivedPage(true)
       setIsMenuOpen(false)
@@ -1311,13 +1314,16 @@ useEffect(() => {
   />
 </AnimatePresence>
 
-      <AnalyticsPage
-  open={showAnalyticsPage}
-  onClose={() => {
-    setShowAnalyticsPage(false)
-    setIsMenuOpen(true)
-  }}
-/>
+      <AnimatePresence>
+  {showTrafficReportPage && (
+    <TrafficReportPage
+      onClose={() => {
+        setShowTrafficReportPage(false)
+        setIsMenuOpen(true)
+      }}
+    />
+  )}
+</AnimatePresence>
 
 <AnimatePresence>
   {showNotificationsPage && (
@@ -1365,13 +1371,11 @@ useEffect(() => {
 <AnimatePresence>
   {showPostInsightsPage && (
     <PostInsightsPage
-      onClose={() => {
-        setShowPostInsightsPage(false)
-      }}
-      views={0}
-      likes={selectedPostLikeCount}
-      comments={comments.length}
-    />
+  onClose={() => {
+    setShowPostInsightsPage(false)
+  }}
+  postId={selectedPost?.id}
+/>
   )}
 </AnimatePresence>
 
