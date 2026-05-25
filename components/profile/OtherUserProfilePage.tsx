@@ -28,6 +28,7 @@ import ChatRoomPage from '@/components/chat/ChatRoomPage'
 import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
 
 import WideMenuSheet from '@/components/WideMenuSheet'
+import ShareSheet from '@/components/ShareSheet'
 
 type Props = {
   userId?: string
@@ -224,6 +225,11 @@ const [followersLoading, setFollowersLoading] = useState(false)
   const [isLinkPortOpen, setIsLinkPortOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isFavorite, setIsFavorite] = useState(false)
+  const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
+
+  const [isCommentSheetOpen, setIsCommentSheetOpen] = useState(false)
+const [commentVideo, setCommentVideo] = useState<any>(null)
+const [commentText, setCommentText] = useState('')
 
   useEffect(() => {
     let alive = true
@@ -1245,26 +1251,130 @@ if (!error) {
     user_id: video.user_id,
     author: profile?.display_name || profile?.username || 'Vibelink User',
     text: video.caption || '',
-    likes: 0,
+    likes: video.likes ?? 0,
     images: video.thumbnail_url ? [video.thumbnail_url] : [],
     thumbnailUrl: video.thumbnail_url || '',
     videoUrl: video.video_url,
     type: 'video',
     aiTags: ['短影片'],
     isMine: false,
-    isLiked: false,
-    isSaved: false,
+    isLiked: !!video.isLiked,
+    isSaved: !!video.isSaved,
   }))}
   initialVideoId={selectedShortVideoId}
   onClose={() => setIsShortVideoPageOpen(false)}
-  onOpenProfile={(clickedUserId) => {
-  if (!clickedUserId) return
-
-  setIsShortVideoPageOpen(false)
-
-  console.log('開啟對方 Profile:', clickedUserId)
+  onLike={(video) => {
+  setShortVideos((prev) =>
+    prev.map((item) =>
+      item.id === video.id
+        ? {
+            ...item,
+            isLiked: !item.isLiked,
+            likes: Math.max(
+              0,
+              (item.likes ?? 0) + (item.isLiked ? -1 : 1)
+            ),
+          }
+        : item
+    )
+  )
 }}
+
+onComment={(video) => {
+  setCommentVideo(video)
+  setCommentText('')
+  setIsCommentSheetOpen(true)
+}}
+
+onShare={(video) => {
+  setIsShareSheetOpen(true)
+}}
+
+onSave={(video) => {
+  setShortVideos((prev) =>
+    prev.map((item) =>
+      item.id === video.id
+        ? {
+            ...item,
+            isSaved: !item.isSaved,
+          }
+        : item
+    )
+  )
+}}
+  onOpenProfile={(clickedUserId) => {
+    if (!clickedUserId) return
+    setIsShortVideoPageOpen(false)
+  }}
 />
+
+<ShareSheet
+  open={isShareSheetOpen}
+  onClose={() => setIsShareSheetOpen(false)}
+/>
+
+<AnimatePresence>
+  {isCommentSheetOpen && commentVideo && (
+    <motion.div
+      className="fixed inset-0 z-[10080] flex items-end justify-center bg-black/35"
+      onClick={() => {
+        setIsCommentSheetOpen(false)
+        setCommentVideo(null)
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex max-h-[78vh] w-full max-w-[430px] flex-col rounded-t-[26px] bg-[var(--app-bg)] px-4 pb-6 pt-4 text-[var(--app-text)] shadow-[0_-10px_40px_rgba(0,0,0,0.35)]"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+      >
+        <div className="mb-3 flex justify-center">
+          <div className="h-[4px] w-[42px] rounded-full bg-[var(--app-muted)]" />
+        </div>
+
+        <div className="mb-4 text-center text-[16px] font-medium">
+          留言
+        </div>
+
+        <div className="flex-1 overflow-y-auto pb-4">
+          <div className="pt-4 text-[14px] text-[var(--app-muted)]">
+            尚無留言，成為第一個留言的人
+          </div>
+        </div>
+
+        <div className="flex gap-2 border-t border-[var(--app-card-border)] pt-3">
+          <input
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="新增留言..."
+            className="h-[42px] flex-1 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 text-[14px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
+          />
+
+          <button
+            type="button"
+            onClick={() => {
+              if (!commentText.trim()) return
+              setCommentText('')
+            }}
+            disabled={!commentText.trim()}
+            className={`h-[42px] rounded-full px-4 text-[14px] font-medium ${
+              commentText.trim()
+                ? 'bg-[#c86cff] text-white'
+                : 'bg-[#e5e5e5] text-[var(--app-muted)]'
+            }`}
+          >
+            送出
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
     <AnimatePresence>
   {isChatOpen && (

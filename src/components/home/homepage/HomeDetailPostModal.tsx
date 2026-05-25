@@ -33,6 +33,7 @@ type Props = {
   comments: any[]
   setSelectedComment: (comment: any) => void
   setIsCommentMenuOpen: (open: boolean) => void
+  
 }
 
 export default function HomeDetailPostModal({
@@ -63,6 +64,7 @@ export default function HomeDetailPostModal({
   comments,
   setSelectedComment,
   setIsCommentMenuOpen,
+  
 }: Props) {
   return (
     <>
@@ -323,9 +325,9 @@ export default function HomeDetailPostModal({
 
 {isDetailMenuOpen && selectedPost && (
   <WideMenuSheet
-    variant={selectedPost.isMine ? 'mine' : 'other'}
-    onClose={() => setIsDetailMenuOpen(false)}
-  />
+  variant={selectedPost.isMine ? 'mine' : 'other'}
+  onClose={() => setIsDetailMenuOpen(false)}
+/>
 )}
     </>
   )

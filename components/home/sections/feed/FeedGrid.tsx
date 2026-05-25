@@ -21,6 +21,8 @@ export type PostItem = {
   user_id?: string
   type?: 'post' | 'video'
   isMock?: boolean
+  isPinned?: boolean
+pinned_at?: string | null
 }
 
 type FeedGridProps = {
@@ -130,7 +132,7 @@ function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
         transition={{ type: 'spring', stiffness: 320, damping: 30 }}
         className="grid grid-cols-2 gap-[3px]"
       >
-        {visiblePosts.map((post) => {
+        {visiblePosts.map((post, index) => {
           const isVideo = Boolean(getVideoSrc(post) || post.type === 'video')
           const previewImage = getPreviewImage(post)
 
@@ -138,7 +140,7 @@ function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
             <motion.button
               type="button"
               layout
-              key={post.id}
+              key={`${post.type || 'post'}-${post.id}-${index}`}
               onClick={() => onOpenPost?.(post)}
               className="relative h-[280px] w-full overflow-hidden rounded-[6px] border border-[var(--app-card-border)] bg-black"
             >

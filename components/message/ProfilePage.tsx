@@ -328,11 +328,26 @@ const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
   const postDetailTouchStartX = useRef<number | null>(null)
 const postDetailTouchStartY = useRef<number | null>(null)
 
-  const gridItems = myPosts.filter(
-  (post) =>
-    post.post_images?.length > 0 &&
-    !archivedPosts.some((archived) => archived.id === post.id)
-)
+  const gridItems = [...myPosts]
+  .filter(
+    (post) =>
+      post.post_images?.length > 0 &&
+      !archivedPosts.some((archived) => archived.id === post.id)
+  )
+  .sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1
+    if (!a.isPinned && b.isPinned) return 1
+
+    const aTime = new Date(
+      a.pinned_at || a.created_at || 0
+    ).getTime()
+
+    const bTime = new Date(
+      b.pinned_at || b.created_at || 0
+    ).getTime()
+
+    return bTime - aTime
+  })
 
   async function ensureMyProfile() {
   const {
@@ -490,8 +505,10 @@ async function loadMyPosts(start = 0, end = 11, append = false) {
   .select(`
     id,
     caption,
-    created_at,
-    user_id,
+created_at,
+user_id,
+is_pinned,
+pinned_at,
     post_images (
       image_url
     )
@@ -538,6 +555,8 @@ async function loadMyPosts(start = 0, end = 11, append = false) {
     ...post,
     likes: likeCountMap.get(post.id) ?? 0,
     isLiked: likedSet.has(post.id),
+    isPinned: post.is_pinned,
+pinned_at: post.pinned_at,
   }))
 
   setMyPosts((prev) =>
@@ -1457,6 +1476,62 @@ useEffect(() => {
   onClose={() => setIsPostMenuOpen(false)}
   onArchive={archiveSelectedPost}
   onDelete={deleteSelectedPost}
+
+  isPinned={!!selectedPost?.isPinned}
+
+onTogglePin={async () => {
+  if (!selectedPost?.id) return
+
+  const nextPinned = !selectedPost.isPinned
+
+  if (nextPinned) {
+    const pinnedCount = myPosts.filter(
+      (item) => item.isPinned
+    ).length
+
+    if (pinnedCount >= 3) {
+      alert('最多只能釘選 3 篇貼文')
+      return
+    }
+  }
+
+  const now = new Date().toISOString()
+
+  const { error } = await supabase
+    .from('posts')
+    .update({
+      is_pinned: nextPinned,
+      pinned_at: nextPinned ? now : null,
+    })
+    .eq('id', selectedPost.id)
+
+  if (error) {
+    console.error('釘選失敗:', error)
+    return
+  }
+
+  setMyPosts((prev) =>
+    prev.map((item) =>
+      item.id === selectedPost.id
+        ? {
+            ...item,
+            isPinned: nextPinned,
+            pinned_at: nextPinned ? now : null,
+          }
+        : item
+    )
+  )
+
+    setSelectedPost((prev: any) =>
+    prev
+      ? {
+          ...prev,
+          isPinned: nextPinned,
+          pinned_at: nextPinned ? now : null,
+        }
+      : prev
+  )
+}}
 />
   )}
 </AnimatePresence>

@@ -1,6 +1,6 @@
 'use client'
 
-import { Copy } from 'lucide-react'
+import { Copy, Pin } from 'lucide-react'
 
 type Props = {
   activeTab: number
@@ -86,6 +86,16 @@ export default function ProfilePostGridTabs({
                       <Copy size={15} strokeWidth={2.3} />
                     </div>
                   )}
+                  {post.isPinned && (
+  <div className="pointer-events-none absolute left-2 top-2 z-20 flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm">
+    <Pin
+      size={13}
+      strokeWidth={2}
+      className="rotate-[45deg]"
+      fill="white"
+    />
+  </div>
+)}
                 </button>
               )
             })}

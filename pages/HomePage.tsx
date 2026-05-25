@@ -1140,7 +1140,7 @@ if (realVideos.length > 0) {
     </AnimatePresence>
 
       <HomeFeedSection
-        mergedPosts={mergedPosts}
+  mergedPosts={mergedPosts}
         handleOpenFeedPost={handleOpenFeedPost}
         openCommentSheet={openCommentSheet}
         setIsShareSheetOpen={setIsShareSheetOpen}
@@ -1213,20 +1213,19 @@ if (realVideos.length > 0) {
 
 <AnimatePresence>
   {isCommentSheetOpen && commentSheetPost && (
-    <>
+    <motion.div
+      className="fixed inset-0 z-[10050] flex items-end justify-center bg-black/35"
+      onClick={() => {
+        setIsCommentSheetOpen(false)
+        setCommentSheetPost(null)
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       <motion.div
-        className="fixed inset-0 z-[760] bg-black/20"
-        onClick={() => {
-  setIsCommentSheetOpen(false)
-  setCommentSheetPost(null)
-}}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      />
-
-      <motion.div
-        className="fixed bottom-0 left-1/2 z-[770] flex max-h-[78vh] w-full max-w-[430px] -translate-x-1/2 flex-col rounded-t-[26px]  px-4 pt-4 pb-6 shadow-[0_-10px_30px_rgba(0,0,0,0.12)]"
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex max-h-[78vh] w-full max-w-[430px] flex-col rounded-t-[26px] bg-[var(--app-bg)] px-4 pb-6 pt-4 text-[var(--app-text)] shadow-[0_-10px_40px_rgba(0,0,0,0.35)]"
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
@@ -1236,7 +1235,7 @@ if (realVideos.length > 0) {
           <div className="h-[4px] w-[42px] rounded-full bg-[var(--app-muted)]" />
         </div>
 
-        <div className="mb-4 text-center text-[16px] font-medium text-[var(--app-text)]">
+        <div className="mb-4 text-center text-[16px] font-medium">
           留言
         </div>
 
@@ -1255,58 +1254,61 @@ if (realVideos.length > 0) {
                     <div className="text-[13px] font-medium text-[var(--app-text)]">
                       Vibelink User
                     </div>
-                    <div className="mt-1 text-[14px] text-white">
+
+                    <div className="mt-1 text-[14px] text-[var(--app-text)]">
                       {comment.content}
                     </div>
                   </div>
 
                   <div className="relative">
-  <button
-    type="button"
-    onClick={() => {
-      setSelectedComment(comment)
-      setIsCommentMenuOpen((prev) =>
-        selectedComment?.id === comment.id ? !prev : true
-      )
-    }}
-    className="mr-[-6px] mt-[2px] flex h-[36px] w-[36px] items-center justify-center rounded-full active:scale-90"
-  >
-    <MoreHorizontal size={20} strokeWidth={2.2} />
-  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedComment(comment)
+                        setIsCommentMenuOpen((prev) =>
+                          selectedComment?.id === comment.id ? !prev : true
+                        )
+                      }}
+                      className="mr-[-6px] mt-[2px] flex h-[36px] w-[36px] items-center justify-center rounded-full active:scale-90"
+                    >
+                      <MoreHorizontal size={20} strokeWidth={2.2} />
+                    </button>
 
-  <AnimatePresence>
-    {isCommentMenuOpen && selectedComment?.id === comment.id && (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.94, y: -4 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: -4 }}
-        transition={{ duration: 0.16 }}
-        className="absolute right-1 top-[34px] z-[950] w-[132px] overflow-hidden rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-surface)] shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
-      >
-        {comment.user_id === currentUserId ? (
-          <button
-            type="button"
-            onClick={deleteComment}
-            className="flex h-[44px] w-full items-center justify-center text-[14px] font-medium text-red-500 active:bg-black/5"
-          >
-            刪除留言
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              alert('已收到檢舉')
-              setIsCommentMenuOpen(false)
-              setSelectedComment(null)
-            }}
-            className="flex h-[44px] w-full items-center justify-center text-[14px] font-medium text-[var(--app-text)] active:bg-black/5"
-          >
-            檢舉留言
-          </button>
-        )}
-      </motion.div>
-    )}
-  </AnimatePresence>
+                    <AnimatePresence>
+                      {isCommentMenuOpen && selectedComment?.id === comment.id && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.94, y: -4 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.96, y: -4 }}
+                          transition={{ duration: 0.16 }}
+                          className="absolute right-1 top-[34px] z-[10070] w-[132px] overflow-hidden rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-surface)] shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
+                        >
+                          {comment.user_id === currentUserId ? (
+                            <button
+                              type="button"
+                              onClick={deleteComment}
+                              className="flex h-[44px] w-full items-center justify-center text-[14px] font-medium text-red-500 active:bg-black/5"
+                            >
+                              刪除留言
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                alert('已收到檢舉')
+                                setIsCommentMenuOpen(false)
+                                setSelectedComment(null)
+                              }}
+                              className="flex h-[44px] w-full items-center justify-center text-[14px] font-medium text-[var(--app-text)] active:bg-black/5"
+                            >
+                              檢舉留言
+                            </button>
+                          )}
+                        </motion.div>
+                      )}
+                      
+                    </AnimatePresence>
+                  
 </div>
                 </div>
               ))}
@@ -1337,13 +1339,11 @@ if (realVideos.length > 0) {
           >
             送出
           </button>
-        </div>
+                </div>
       </motion.div>
-    </>
+    </motion.div>
   )}
 </AnimatePresence>
-
-
 
 <ShareSheet
   open={isShareSheetOpen}

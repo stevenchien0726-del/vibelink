@@ -16,7 +16,7 @@ export default function ShareSheet({ open, onClose }: ShareSheetProps) {
       {open && (
         <>
           <motion.div
-            className="fixed inset-0 z-[880] bg-black/25"
+            className="fixed inset-0 z-[10060] bg-black/25"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -24,7 +24,7 @@ export default function ShareSheet({ open, onClose }: ShareSheetProps) {
           />
 
           <motion.div
-            className="fixed bottom-0 left-1/2 z-[890] w-full max-w-[430px] -translate-x-1/2 rounded-t-[28px] bg-[#d9d9d9] px-4 pt-5 pb-7 shadow-[0_-12px_34px_rgba(0,0,0,0.16)]"
+            className="fixed bottom-0 left-1/2 z-[10070] w-full max-w-[430px] -translate-x-1/2 rounded-t-[28px] bg-[#d9d9d9] px-4 pt-5 pb-7 shadow-[0_-12px_34px_rgba(0,0,0,0.16)]"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

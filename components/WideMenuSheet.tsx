@@ -19,6 +19,8 @@ type Props = {
   onArchive?: () => void
   onDelete?: () => void
   onOpenInsights?: () => void
+  onTogglePin?: () => void
+isPinned?: boolean
 }
 
 export default function WideMenuSheet({
@@ -27,6 +29,8 @@ export default function WideMenuSheet({
   onArchive,
   onDelete,
   onOpenInsights,
+  onTogglePin,
+isPinned = false,
 }: Props) {
   const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
@@ -83,14 +87,19 @@ const handleClose = () => {
                 </button>
 
                 <button
-                  type="button"
-                  className="flex items-center gap-7"
-                >
-                  <Pin size={20} />
-                  <span className="text-[16px] text-[var(--app-text)]">
-                    釘選
-                  </span>
-                </button>
+  type="button"
+  onClick={() => {
+    onTogglePin?.()
+    handleClose()
+  }}
+  className="flex items-center gap-7"
+>
+  <Pin size={20} />
+
+  <span className="text-[16px] text-[var(--app-text)]">
+    {isPinned ? '取消釘選' : '釘選'}
+  </span>
+</button>
 
                 <button
                   type="button"

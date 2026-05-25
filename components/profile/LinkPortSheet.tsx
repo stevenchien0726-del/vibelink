@@ -112,16 +112,22 @@ export default function LinkPortSheet({
         >
           <motion.div
             onClick={(e) => e.stopPropagation()}
-            className="absolute bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[#f3f3f3] px-5 pt-4 pb-6"
+            className="absolute bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[var(--app-bg)] px-5 pb-6 pt-4 text-[var(--app-text)] shadow-[0_-12px_40px_rgba(0,0,0,0.28)]"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 30 }}
           >
             <div className="mb-5 flex items-center justify-between">
-              <div className="text-[18px] font-medium">LINKPORT</div>
+              <div className="text-[18px] font-medium text-[var(--app-text)]">
+                LINKPORT
+              </div>
 
-              <button type="button" onClick={onClose} className="active:scale-95">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-[var(--app-text)] active:scale-95"
+              >
                 <X size={24} />
               </button>
             </div>
@@ -130,7 +136,7 @@ export default function LinkPortSheet({
               {links.map((link) => (
                 <div
                   key={link.id}
-                  className="flex items-center justify-between rounded-[16px] bg-white px-4 py-3"
+                  className="flex items-center justify-between rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 py-3"
                 >
                   <a
                     href={link.url}
@@ -138,9 +144,9 @@ export default function LinkPortSheet({
                     rel="noopener noreferrer"
                     className="flex min-w-0 flex-1 items-center gap-3"
                   >
-                    <LinkIcon size={18} className="shrink-0 text-[#6D28D9]" />
+                    <LinkIcon size={18} className="shrink-0 text-[#8B5CF6]" />
 
-                    <span className="truncate text-[15px] font-medium text-[#111]">
+                    <span className="truncate text-[15px] font-medium text-[var(--app-text)]">
                       {link.title}
                     </span>
                   </a>
@@ -149,7 +155,7 @@ export default function LinkPortSheet({
                     <button
                       type="button"
                       onClick={() => deleteLink(link.id)}
-                      className="ml-3 shrink-0 rounded-full p-2 active:scale-95"
+                      className="ml-3 shrink-0 rounded-full p-2 text-[var(--app-muted)] active:scale-95"
                     >
                       <Trash2 size={17} />
                     </button>
@@ -158,7 +164,7 @@ export default function LinkPortSheet({
               ))}
 
               {links.length === 0 && (
-                <div className="py-8 text-center text-[14px] text-[#888]">
+                <div className="py-8 text-center text-[14px] text-[var(--app-muted)]">
                   尚未新增任何連結
                 </div>
               )}
@@ -174,7 +180,9 @@ export default function LinkPortSheet({
                     setIsAddOpen((prev) => !prev)
                   }}
                   className={`flex h-[44px] w-full items-center justify-center gap-2 text-[17px] active:scale-95 ${
-                    isMaxLinks ? 'text-[#aaa]' : 'text-[#111]'
+                    isMaxLinks
+                      ? 'text-[var(--app-muted)]'
+                      : 'text-[var(--app-text)]'
                   }`}
                 >
                   <Plus size={20} />
@@ -194,22 +202,20 @@ export default function LinkPortSheet({
                         placeholder="名稱"
                         value={newTitle}
                         onChange={(e) => setNewTitle(e.target.value)}
-                        className="h-[50px] rounded-[16px] border border-[#ddd] bg-white px-4 text-[15px] text-[#222] outline-none placeholder:text-[#999]"
+                        className="h-[50px] rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 text-[15px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
                       />
 
                       <input
                         placeholder="連結"
                         value={newUrl}
                         onChange={(e) => setNewUrl(e.target.value)}
-                        className="h-[50px] rounded-[16px] border border-[#ddd] bg-white px-4 text-[15px] text-[#222] outline-none placeholder:text-[#999]"
+                        className="h-[50px] rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 text-[15px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
                       />
 
                       <button
                         type="button"
                         onClick={addLink}
-                        disabled={
-                          loading || !newTitle.trim() || !newUrl.trim()
-                        }
+                        disabled={loading || !newTitle.trim() || !newUrl.trim()}
                         className="flex h-[46px] items-center justify-center rounded-[16px] bg-[#8B5CF6] text-[15px] font-medium text-white active:scale-95 disabled:opacity-40"
                       >
                         {loading ? '儲存中...' : '儲存連結'}
