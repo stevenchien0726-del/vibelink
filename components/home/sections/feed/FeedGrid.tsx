@@ -122,8 +122,53 @@ function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
 
   if (visiblePosts.length === 0) return null
 
+  const preloadVideos = visiblePosts
+  .filter(
+    (post) =>
+      Boolean(getVideoSrc(post) || post.type === 'video')
+  )
+  .slice(0, 4)
+
+  const preloadImages = visiblePosts
+  .filter(
+    (post) =>
+      !Boolean(getVideoSrc(post) || post.type === 'video')
+  )
+  .flatMap((post) => post.images?.slice(0, 2) ?? [])
+  .filter(Boolean)
+  .slice(0, 10)
+
   return (
     <AnimatePresence mode="wait">
+
+      <div className="hidden">
+  {preloadVideos.map((post) => {
+    const videoSrc = getVideoSrc(post)
+
+    if (!videoSrc) return null
+
+    return (
+      <video
+        key={`feed-preload-video-${post.id}`}
+        src={videoSrc}
+        muted
+        playsInline
+        preload="metadata"
+      />
+    )
+  })}
+
+  {preloadImages.map((src, index) => (
+    <img
+      key={`feed-preload-image-${index}-${src}`}
+      src={src}
+      alt=""
+      loading="eager"
+      decoding="async"
+    />
+  ))}
+</div>
+       
       <motion.div
         key="feed-2x2"
         initial={{ opacity: 0, y: 20, scale: 0.98 }}

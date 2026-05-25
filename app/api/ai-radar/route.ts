@@ -18,6 +18,16 @@ export async function POST(req: Request) {
     console.log('🟣 [AI Radar] API called')
 
     const body = await req.json()
+
+if (body?.warmup) {
+  console.log('🟢 [AI Radar] warmup route only')
+
+  return NextResponse.json({
+    ok: true,
+    warmed: true,
+  })
+}
+
 const query = body?.query?.trim() ?? ''
 const locale = body?.locale ?? 'zh-TW'
 

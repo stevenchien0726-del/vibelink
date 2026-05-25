@@ -65,6 +65,11 @@ const [rewritePrompts, setRewritePrompts] = useState<string[]>([])
 const [starterPrompts, setStarterPrompts] = useState<string[]>([])
 const [isGeneratingPrompts, setIsGeneratingPrompts] = useState(true)
 
+const [warmImages, setWarmImages] = useState<string[]>([])
+
+const [homeWarmImages, setHomeWarmImages] = useState<string[]>([])
+const [homeWarmVideos, setHomeWarmVideos] = useState<string[]>([])
+
 const [showTopBar, setShowTopBar] = useState(true)
 
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
@@ -121,6 +126,90 @@ async function safeTask<T>(
     return null
   }
 }
+
+useEffect(() => {
+  const timer = window.setTimeout(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          id,
+          post_images (
+            image_url
+          )
+        `)
+        .not('post_images', 'is', null)
+        .limit(40)
+
+      if (error) {
+        console.warn('AI Radar warm images failed:', error)
+        return
+      }
+
+      const images =
+        data
+          ?.flatMap((post: any) =>
+            post.post_images?.map((img: any) => img.image_url) ?? []
+          )
+          .filter(Boolean)
+          .slice(0, 12) ?? []
+
+      setWarmImages(images)
+    } catch (error) {
+      console.warn('AI Radar warm image preload failed:', error)
+    }
+  }, 900)
+
+  return () => window.clearTimeout(timer)
+}, [])
+
+useEffect(() => {
+  const timer = window.setTimeout(async () => {
+    try {
+      const { data: postsData } = await supabase
+        .from('posts')
+        .select(`
+          id,
+          post_images (
+            image_url
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      const { data: videosData } = await supabase
+        .from('short_videos')
+        .select(`
+          id,
+          video_url,
+          thumbnail_url
+        `)
+        .order('created_at', { ascending: false })
+        .limit(8)
+
+      const images =
+        postsData
+          ?.flatMap((post: any) =>
+            post.post_images?.map((img: any) => img.image_url) ?? []
+          )
+          .filter(Boolean)
+          .slice(0, 12) ?? []
+
+      const videoUrls =
+        videosData
+          ?.map((video: any) => video.video_url)
+          .filter(Boolean)
+          .slice(0, 4) ?? []
+
+      setHomeWarmImages(images)
+      setHomeWarmVideos(videoUrls)
+    } catch (error) {
+      console.warn('Home feed warmup failed:', error)
+    }
+  }, 1600)
+
+  return () => window.clearTimeout(timer)
+}, [])
 
 useEffect(() => {
   async function loadStarterPrompts() {
@@ -625,8 +714,42 @@ if (matchedUsers.length > 0) {
 }
 
   return (
-    <>
-      <AIRadarLoadingOverlay open={isLoading} />
+  <>
+    <div className="hidden">
+  {homeWarmImages
+  .filter((src) => !warmImages.includes(src))
+  .map((src) => (
+    <img
+      key={`ai-radar-warm-${src}`}
+      src={src}
+      alt=""
+      loading="eager"
+      decoding="async"
+    />
+  ))}
+
+  {homeWarmImages.map((src) => (
+    <img
+      key={`home-feed-image-warm-${src}`}
+      src={src}
+      alt=""
+      loading="eager"
+      decoding="async"
+    />
+  ))}
+
+  {homeWarmVideos.map((src) => (
+    <video
+      key={`home-feed-video-warm-${src}`}
+      src={src}
+      muted
+      playsInline
+      preload="metadata"
+    />
+  ))}
+</div>
+
+    <AIRadarLoadingOverlay open={isLoading} />
 
       {isAuthModalOpen && (
   <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6 backdrop-blur-[10px]">

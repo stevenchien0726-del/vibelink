@@ -103,6 +103,10 @@ const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
   const lastScrollYRef = useRef(0)
 
   const [conversations, setConversations] = useState<ConversationItem[]>([])
+  const [peopleLibraryWarmUsers, setPeopleLibraryWarmUsers] = useState<any[]>([])
+
+const [myProfileWarmImages, setMyProfileWarmImages] = useState<string[]>([])
+
 const [openedChat, setOpenedChat] = useState<ConversationItem | null>(null)
 
 const [messageLoading, setMessageLoading] = useState(true)
@@ -290,11 +294,85 @@ mapped.forEach((conversation) => {
 })
 
 setConversations(Array.from(conversationMap.values()))
+const preloadChats = Array.from(conversationMap.values()).slice(0, 3)
+
+window.setTimeout(() => {
+  preloadChats.forEach(async (chat) => {
+    try {
+      await supabase
+        .from('chat_messages')
+        .select('id')
+        .eq('conversation_id', chat.id)
+        .limit(8)
+    } catch (err) {
+      console.warn('chat preload failed', err)
+    }
+  })
+}, 900)
 
     setMessageLoading(false)
   }
 
   loadConversations()
+  window.setTimeout(async () => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    const { data } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', user.id)
+      .limit(12)
+
+    setPeopleLibraryWarmUsers(data ?? [])
+  } catch (err) {
+    console.warn('People Library warmup failed', err)
+  }
+}, 1200)
+
+window.setTimeout(async () => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url, bio')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const { data: postsData } = await supabase
+      .from('posts')
+      .select(`
+        id,
+        post_images (
+          image_url
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(9)
+
+    const images =
+      postsData
+        ?.flatMap((post: any) =>
+          post.post_images?.map((img: any) => img.image_url) ?? []
+        )
+        .filter(Boolean)
+        .slice(0, 12) ?? []
+
+    setMyProfileWarmImages(images)
+  } catch (err) {
+    console.warn('My profile warmup failed', err)
+  }
+}, 1600)
 }, [])
 
 useEffect(() => {
@@ -384,6 +462,19 @@ useEffect(() => {
   }
 
   return (
+  <>
+    <div className="hidden">
+      {myProfileWarmImages.map((src) => (
+        <img
+          key={`my-profile-warm-${src}`}
+          src={src}
+          alt=""
+          loading="eager"
+          decoding="async"
+        />
+      ))}
+    </div>
+
     <div
       onScroll={handleMessageScroll}
       className="relative flex h-screen flex-col overflow-y-auto bg-[var(--app-bg)] px-4 pt-4 pb-2 text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -659,6 +750,7 @@ useEffect(() => {
     onClose={() => setOpenedChat(null)}
   />
 )}
-    </div>
+        </div>
+  </>
   )
 }

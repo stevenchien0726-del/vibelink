@@ -119,6 +119,40 @@ if (!alive) return
 
 setProfileLoading(false)
 
+window.setTimeout(async () => {
+  try {
+    await loadMyShortVideos()
+
+    const topVideos =
+      (myShortVideos ?? [])
+        .map((video: any) => video.video_url)
+        .filter(Boolean)
+        .slice(0, 4)
+
+    setProfileWarmVideoUrls(topVideos)
+  } catch (err) {
+    console.warn('profile short video warmup failed', err)
+  }
+}, 1200)
+
+window.setTimeout(async () => {
+  try {
+    await lazyLoadSavedPosts()
+
+    const images =
+      (savedPosts ?? [])
+        .flatMap((post: any) =>
+          post.post_images?.map((img: any) => img.image_url) ?? []
+        )
+        .filter(Boolean)
+        .slice(0, 12)
+
+    setProfileWarmSavedImages(images)
+  } catch (err) {
+    console.warn('profile saved warmup failed', err)
+  }
+}, 2000)
+
 // 第二批：先讀貼文
 await delay(500)
 
@@ -248,6 +282,9 @@ const loadMorePostsRef = useRef<HTMLDivElement | null>(null)
 const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 
   const [savedPosts, setSavedPosts] = useState<any[]>([])
+
+  const [profileWarmVideoUrls, setProfileWarmVideoUrls] = useState<string[]>([])
+const [profileWarmSavedImages, setProfileWarmSavedImages] = useState<string[]>([])
 
   const [hasLoadedSavedPosts, setHasLoadedSavedPosts] = useState(false)
 const [isLoadingSavedPosts, setIsLoadingSavedPosts] = useState(false)
@@ -1091,6 +1128,29 @@ useEffect(() => {
 }, [activeTab, myPosts.length, hasMorePosts, isLoadingMorePosts])
 
   return (
+  <>
+    <div className="hidden">
+      {profileWarmVideoUrls.map((src) => (
+        <video
+          key={`profile-warm-video-${src}`}
+          src={src}
+          muted
+          playsInline
+          preload="metadata"
+        />
+      ))}
+
+      {profileWarmSavedImages.map((src) => (
+        <img
+          key={`profile-warm-saved-${src}`}
+          src={src}
+          alt=""
+          loading="eager"
+          decoding="async"
+        />
+      ))}
+    </div>
+
     <div className="relative min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] pb-[110px]">
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[90px]">
         {profileLoading && (
@@ -1603,6 +1663,7 @@ onArchive={(video) => {
 }}
 />
     
-    </div>
+        </div>
+  </>
   )
 }

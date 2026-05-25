@@ -256,7 +256,16 @@ if (isStuck && reloadCount < 2) {
           >
             {orderedVideos.map((video, index) => {
   
-  const shouldRenderVideo = video.id === activeVideoId
+  const activeIndex = orderedVideos.findIndex(
+  (item) => item.id === activeVideoId
+)
+
+const distanceFromActive =
+  activeIndex >= 0 ? Math.abs(index - activeIndex) : 999
+
+const shouldRenderVideo = distanceFromActive <= 2
+const shouldPreloadVideo = distanceFromActive <= 2
+const isActiveVideo = video.id === activeVideoId
               const videoSrc = video.videoUrl || (video as any).video_url
 
               return (
@@ -313,11 +322,11 @@ window.clearTimeout((window as any).__vibeSoundTimer)
                       webkit-playsinline="true"
 disablePictureInPicture
                       controls={false}
-                      preload={video.id === activeVideoId ? 'metadata' : 'none'}
+                      preload={isActiveVideo ? 'auto' : shouldPreloadVideo ? 'metadata' : 'none'}
                       onLoadedData={(e) => {
   const el = e.currentTarget
 
-  if (video.id === activeVideoId) {
+  if (isActiveVideo) {
     el.muted = !soundOn
 
     window.setTimeout(() => {
