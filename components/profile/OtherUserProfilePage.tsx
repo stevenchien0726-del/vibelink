@@ -168,6 +168,8 @@ function delay(ms: number) {
   const [posts, setPosts] = useState<any[]>([])
 
 const [shortVideos, setShortVideos] = useState<any[]>([])
+const [visibleShortVideos, setVisibleShortVideos] = useState<any[]>([])
+
 const [selectedShortVideoId, setSelectedShortVideoId] = useState<string | undefined>()
 const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 
@@ -847,9 +849,17 @@ if (!error) {
           key={video.id}
           type="button"
           onClick={() => {
-            setSelectedShortVideoId(video.id)
-            setIsShortVideoPageOpen(true)
-          }}
+  setSelectedShortVideoId(video.id)
+
+  setVisibleShortVideos([video])
+
+  setIsShortVideoPageOpen(true)
+
+  window.setTimeout(() => {
+    setVisibleShortVideos(shortVideos)
+  }, 600)
+}}
+
           className="relative h-[190px] overflow-hidden bg-black"
         >
           {video.thumbnail_url ? (
@@ -1246,7 +1256,7 @@ if (!error) {
 
 <ShortVideoFullPage
   open={isShortVideoPageOpen}
-  videos={shortVideos.map((video) => ({
+  videos={visibleShortVideos.map((video) => ({
     id: video.id,
     user_id: video.user_id,
     author: profile?.display_name || profile?.username || 'Vibelink User',
