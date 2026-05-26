@@ -26,7 +26,7 @@ export default function EmailOtpLogin() {
 
     if (error) {
       console.error('Email OTP failed:', error)
-      alert('登入信寄送失敗')
+      alert(`登入信寄送失敗：${error.message}`)
       return
     }
 
