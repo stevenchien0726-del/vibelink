@@ -427,18 +427,27 @@ onError={() => {
 
                   <div className="absolute bottom-[118px] right-5 z-[50] flex flex-col items-center gap-6 text-white">
                     <button
-                      type="button"
-                      onClick={(e) => {
-  e.stopPropagation()
-  if (!video.user_id) return
-  onOpenProfile?.(video.user_id)
-}}
-                      className="flex h-[48px] w-[48px] items-center justify-center rounded-full border-2 border-white bg-white shadow-[0_4px_14px_rgba(0,0,0,0.25)] active:scale-90"
-                    >
-                      <span className="text-[17px] font-semibold text-[#555]">
-                        {(video.author || 'V').slice(0, 1)}
-                      </span>
-                    </button>
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation()
+    if (!video.user_id) return
+    onOpenProfile?.(video.user_id)
+  }}
+  className="flex h-[48px] w-[48px] items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#d9d9d9] shadow-[0_4px_14px_rgba(0,0,0,0.25)] active:scale-90"
+>
+  {(video as any).avatarUrl ? (
+    <img
+      src={(video as any).avatarUrl}
+      alt={video.author || 'Vibelink User'}
+      className="h-full w-full rounded-full object-cover"
+      draggable={false}
+    />
+  ) : (
+    <span className="text-[17px] font-semibold text-[#555]">
+      {(video.author || 'V').slice(0, 1)}
+    </span>
+  )}
+</button>
 
                     <button
   type="button"
@@ -496,9 +505,11 @@ onError={() => {
                       {video.author || '用戶名'}
                     </div>
 
-                    <div className="text-[14px] leading-[1.45] text-white/95">
-                      {video.text || '用戶文案......'}
-                    </div>
+                    {video.text?.trim() ? (
+  <div className="text-[14px] leading-[1.45] text-white/95">
+    {video.text}
+  </div>
+) : null}
                   </div>
                 </section>
               )
