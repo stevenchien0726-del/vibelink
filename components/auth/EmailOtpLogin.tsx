@@ -12,6 +12,7 @@ export default function EmailOtpLogin() {
     const safeEmail = email.trim()
 
     if (!safeEmail) return
+    if (loading || sent) return
 
     setLoading(true)
 
