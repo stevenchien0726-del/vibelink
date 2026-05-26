@@ -51,7 +51,8 @@ export default function ChatRoomPage({
 
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const typingTimeoutRef = useRef<number | null>(null)
-  const realtimeChannelRef = useRef<any>(null)
+const otherTypingTimeoutRef = useRef<number | null>(null)
+const realtimeChannelRef = useRef<any>(null)
 
   const touchStartXRef = useRef<number | null>(null)
   const touchStartYRef = useRef<number | null>(null)
@@ -264,7 +265,12 @@ export default function ChatRoomPage({
 
             setIsOtherTyping(false)
 
-            setMessages((prev) => {
+if (otherTypingTimeoutRef.current) {
+  window.clearTimeout(otherTypingTimeoutRef.current)
+  otherTypingTimeoutRef.current = null
+}
+
+setMessages((prev) => {
               if (prev.some((msg) => msg.id === row.id)) return prev
 
               return [
@@ -317,13 +323,25 @@ export default function ChatRoomPage({
 
         console.log('🟠 presence sync state:', state)
 
-        const otherTyping = Object.values(state)
+                const otherTyping = Object.values(state)
           .flat()
           .some((presence: any) => {
             return presence?.user_id === otherUserId && presence?.typing === true
           })
 
         setIsOtherTyping(otherTyping)
+
+        if (otherTypingTimeoutRef.current) {
+          window.clearTimeout(otherTypingTimeoutRef.current)
+          otherTypingTimeoutRef.current = null
+        }
+
+        if (otherTyping) {
+          otherTypingTimeoutRef.current = window.setTimeout(() => {
+            setIsOtherTyping(false)
+            otherTypingTimeoutRef.current = null
+          }, 1800)
+        }
       })
       .on('presence', { event: 'track' }, ({ key, newPresences }: any) => {
         console.log('⌨️ presence track:', {
@@ -332,11 +350,23 @@ export default function ChatRoomPage({
           otherUserId,
         })
 
-        const otherTyping = newPresences.some((presence: any) => {
+                const otherTyping = newPresences.some((presence: any) => {
           return presence?.user_id === otherUserId && presence?.typing === true
         })
 
         setIsOtherTyping(otherTyping)
+
+        if (otherTypingTimeoutRef.current) {
+          window.clearTimeout(otherTypingTimeoutRef.current)
+          otherTypingTimeoutRef.current = null
+        }
+
+        if (otherTyping) {
+          otherTypingTimeoutRef.current = window.setTimeout(() => {
+            setIsOtherTyping(false)
+            otherTypingTimeoutRef.current = null
+          }, 1800)
+        }
       })
       .on('presence', { event: 'untrack' }, ({ key, leftPresences }: any) => {
         console.log('⌨️ presence untrack:', {
@@ -366,10 +396,22 @@ export default function ChatRoomPage({
       })
 
     return () => {
-      channel.untrack()
-      supabase.removeChannel(channel)
-      realtimeChannelRef.current = null
-    }
+  if (typingTimeoutRef.current) {
+    window.clearTimeout(typingTimeoutRef.current)
+    typingTimeoutRef.current = null
+  }
+
+  if (otherTypingTimeoutRef.current) {
+    window.clearTimeout(otherTypingTimeoutRef.current)
+    otherTypingTimeoutRef.current = null
+  }
+
+  setIsOtherTyping(false)
+
+  channel.untrack()
+  supabase.removeChannel(channel)
+  realtimeChannelRef.current = null
+}
   }, [conversationId, currentUserId, otherUserId])
 
     async function updateTypingPresence(typing: boolean) {
