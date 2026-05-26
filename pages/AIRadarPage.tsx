@@ -23,6 +23,8 @@ import AIRadarPromptList from '@/components/airadar/AIRadarPromptList'
 import AIRadarTopBar from '@/components/airadar/AIRadarTopBar'
 import AIRadarInputBar from '@/components/airadar/AIRadarInputBar'
 
+import EmailOtpLogin from '@/components/auth/EmailOtpLogin'
+
 import { generateAIRadarRewriteQueries } from '@/lib/ai-radar/generateAIRadarRewriteQueries'
 import OtherUserProfilePage from '../components/profile/OtherUserProfilePage'
 import type { Locale } from '@/i18n'
@@ -763,7 +765,14 @@ if (matchedUsers.length > 0) {
         {text.loginSubtitle}
       </p>
 
-      <button
+      <EmailOtpLogin />
+
+<div className="my-5 text-center text-[13px] text-[var(--app-muted)]">
+  OR
+</div>
+
+      {false && (
+  <button
         type="button"
         disabled={authLoading}
         onClick={handleGoogleLogin}
@@ -773,6 +782,7 @@ if (matchedUsers.length > 0) {
   ? text.loggingIn
   : text.loginButton}
       </button>
+      )}
     </div>
   </div>
 )}
