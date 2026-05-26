@@ -36,16 +36,22 @@ export default function ChatRoomPage({
   locale = 'zh-TW',
   onClose,
 }: Props) {
+  console.log('🔥 ChatRoomPage realtime version mounted')
   const [mounted, setMounted] = useState(false)
   const [messages, setMessages] = useState<MessageItem[]>([])
   const [chatLoading, setChatLoading] = useState(true)
   const [chatError, setChatError] = useState('')
-
   const [input, setInput] = useState('')
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [resolvedAvatar, setResolvedAvatar] = useState(userAvatar || '')
+  const [isOtherTyping, setIsOtherTyping] = useState(false)
+
+  const bottomRef = useRef<HTMLDivElement | null>(null)
+  const typingTimeoutRef = useRef<number | null>(null)
+  const realtimeChannelRef = useRef<any>(null)
 
   const touchStartXRef = useRef<number | null>(null)
   const touchStartYRef = useRef<number | null>(null)
@@ -66,6 +72,13 @@ export default function ChatRoomPage({
       damping: 34,
     })
   }, [dragX])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end',
+    })
+  }, [messages, isOtherTyping])
 
   function withTimeout<T>(
     promise: PromiseLike<T>,
@@ -117,6 +130,8 @@ export default function ChatRoomPage({
         setChatLoading(false)
         return
       }
+
+      setCurrentUserId(user.id)
 
       const sortedUsers = [user.id, otherUserId].sort()
 
@@ -183,6 +198,7 @@ export default function ChatRoomPage({
           recalled: msg.recalled,
         }))
       )
+
       setChatLoading(false)
     }
 
@@ -194,6 +210,202 @@ export default function ChatRoomPage({
 
     initChatRoom()
   }, [otherUserId])
+
+  useEffect(() => {
+  if (!conversationId || !currentUserId) {
+    console.log('🟡 realtime skipped:', {
+      conversationId,
+      currentUserId,
+    })
+    return
+  }
+
+  console.log('🟣 realtime init:', {
+    conversationId,
+    currentUserId,
+    otherUserId,
+  })
+
+  const channel: any = supabase.channel(`chat-room-${conversationId}`, {
+      config: {
+        presence: {
+          key: currentUserId,
+        },
+      },
+    })
+
+    realtimeChannelRef.current = channel
+
+    channel
+            .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload: any) => {
+                    console.log('📩 realtime payload:', payload)
+
+          const eventType = payload.eventType
+          const row: any = payload.new
+          const oldRow: any = payload.old
+
+          if (eventType === 'INSERT') {
+            if (!row) return
+
+            if (row.sender_id === currentUserId) {
+              console.log('📩 skip my own realtime message')
+              return
+            }
+
+            console.log('📩 receive other message:', row)
+
+            setIsOtherTyping(false)
+
+            setMessages((prev) => {
+              if (prev.some((msg) => msg.id === row.id)) return prev
+
+              return [
+                ...prev,
+                {
+                  id: row.id,
+                  text: row.recalled ? '已收回訊息' : row.text,
+                  mine: false,
+                  recalled: row.recalled,
+                },
+              ]
+            })
+
+            return
+          }
+
+          if (eventType === 'UPDATE') {
+            if (!row) return
+
+            console.log('♻️ realtime update message:', row)
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === row.id
+                  ? {
+                      ...msg,
+                      text: row.recalled ? '已收回訊息' : row.text,
+                      recalled: row.recalled,
+                    }
+                  : msg
+              )
+            )
+
+            return
+          }
+
+          if (eventType === 'DELETE') {
+            const deletedId = oldRow?.id
+
+            if (!deletedId) return
+
+            console.log('🗑️ realtime delete message:', deletedId)
+
+            setMessages((prev) => prev.filter((msg) => msg.id !== deletedId))
+          }
+        }
+      )
+                  .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState()
+
+        console.log('🟠 presence sync state:', state)
+
+        const otherTyping = Object.values(state)
+          .flat()
+          .some((presence: any) => {
+            return presence?.user_id === otherUserId && presence?.typing === true
+          })
+
+        setIsOtherTyping(otherTyping)
+      })
+      .on('presence', { event: 'track' }, ({ key, newPresences }: any) => {
+        console.log('⌨️ presence track:', {
+          key,
+          newPresences,
+          otherUserId,
+        })
+
+        const otherTyping = newPresences.some((presence: any) => {
+          return presence?.user_id === otherUserId && presence?.typing === true
+        })
+
+        setIsOtherTyping(otherTyping)
+      })
+      .on('presence', { event: 'untrack' }, ({ key, leftPresences }: any) => {
+        console.log('⌨️ presence untrack:', {
+          key,
+          leftPresences,
+        })
+
+        const leftOther = leftPresences.some((presence: any) => {
+          return presence?.user_id === otherUserId
+        })
+
+        if (leftOther) {
+          setIsOtherTyping(false)
+        }
+      })
+            .subscribe(async (status: any) => {
+        console.log('🟢 realtime status:', status)
+
+        if (status === 'SUBSCRIBED') {
+          console.log('🟢 realtime subscribed')
+
+          await channel.track({
+            user_id: currentUserId,
+            typing: false,
+          })
+        }
+      })
+
+    return () => {
+      channel.untrack()
+      supabase.removeChannel(channel)
+      realtimeChannelRef.current = null
+    }
+  }, [conversationId, currentUserId, otherUserId])
+
+    async function updateTypingPresence(typing: boolean) {
+    if (!realtimeChannelRef.current || !currentUserId) {
+      console.log('🔴 typing skipped:', {
+        hasChannel: !!realtimeChannelRef.current,
+        currentUserId,
+        typing,
+      })
+      return
+    }
+
+    console.log('⌨️ typing track:', {
+      currentUserId,
+      typing,
+    })
+
+    await realtimeChannelRef.current.track({
+      user_id: currentUserId,
+      typing,
+    })
+  }
+
+  function handleInputChange(value: string) {
+    setInput(value)
+
+    updateTypingPresence(value.trim().length > 0)
+
+    if (typingTimeoutRef.current) {
+      window.clearTimeout(typingTimeoutRef.current)
+    }
+
+    typingTimeoutRef.current = window.setTimeout(() => {
+      updateTypingPresence(false)
+    }, 1200)
+  }
 
   function closeWithAnimation() {
     animate(dragX, window.innerWidth, {
@@ -214,6 +426,8 @@ export default function ChatRoomPage({
     } = await supabase.auth.getUser()
 
     if (!user) return
+
+    updateTypingPresence(false)
 
     const tempId = crypto.randomUUID()
 
@@ -265,9 +479,7 @@ export default function ChatRoomPage({
       })
       .eq('id', messageId)
 
-    setMessages((prev) =>
-      prev.filter((message) => message.id !== messageId)
-    )
+    setMessages((prev) => prev.filter((message) => message.id !== messageId))
 
     setSelectedMessageId(null)
   }
@@ -346,10 +558,7 @@ export default function ChatRoomPage({
             >
               <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#d49be0]">
                 {resolvedAvatar ? (
-                  <img
-                    src={resolvedAvatar}
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={resolvedAvatar} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-[14px] font-semibold text-white">
                     {userName.slice(0, 1)}
@@ -387,67 +596,138 @@ export default function ChatRoomPage({
             )}
 
             <div className="flex min-h-full flex-col justify-end gap-3">
-              {messages
-                .filter((message) => !message.recalled)
-                .map((message) => (
-                  <div
-                    key={message.id}
-                    className={`relative flex ${
-                      message.mine ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    <div
-                      onContextMenu={(e) => {
-                        e.preventDefault()
-
-                        if (message.mine && !message.recalled) {
-                          setSelectedMessageId(message.id)
-                        }
+              <AnimatePresence initial={false}>
+                {messages
+                  .filter((message) => !message.recalled)
+                  .map((message) => (
+                    <motion.div
+                      key={message.id}
+                      layout
+                      initial={{
+                        opacity: 0,
+                        y: 14,
+                        scale: 0.92,
                       }}
-                      onTouchStart={(e) => {
-                        e.stopPropagation()
-
-                        if (!message.mine || message.recalled) return
-
-                        const timer = window.setTimeout(() => {
-                          setSelectedMessageId(message.id)
-                        }, 520)
-
-                        const clear = () => {
-                          window.clearTimeout(timer)
-                          window.removeEventListener('touchend', clear)
-                          window.removeEventListener('touchmove', clear)
-                        }
-
-                        window.addEventListener('touchend', clear)
-                        window.addEventListener('touchmove', clear)
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
                       }}
-                      onTouchMove={(e) => e.stopPropagation()}
-                      onTouchEnd={(e) => e.stopPropagation()}
-                      className={`inline-block min-w-[54px] max-w-[72%] rounded-[16px] px-4 py-3 text-left text-[15px] leading-[1.4] shadow-sm ${
-                        message.mine
-                          ? 'bg-[#ead3f5] text-[#222]'
-                          : 'bg-[var(--app-card)] text-[var(--app-text)]'
-                      } ${message.recalled ? 'text-[var(--app-muted)]' : ''}`}
+                      exit={{
+                        opacity: 0,
+                        scale: 0.92,
+                      }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 520,
+                        damping: 34,
+                        mass: 0.7,
+                      }}
+                      className={`relative flex ${
+                        message.mine ? 'justify-end' : 'justify-start'
+                      }`}
                     >
-                      {message.text}
-                    </div>
+                      <div
+                        onContextMenu={(e) => {
+                          e.preventDefault()
 
-                    {selectedMessageId === message.id &&
-                      message.mine &&
-                      !message.recalled && (
-                        <div className="absolute right-0 top-[-44px] z-[20] rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.16)]">
-                          <button
-                            type="button"
-                            onClick={() => handleRecallMessage(message.id)}
-                            className="text-[14px] font-medium text-red-500"
-                          >
-                            收回
-                          </button>
-                        </div>
-                      )}
-                  </div>
-                ))}
+                          if (message.mine && !message.recalled) {
+                            setSelectedMessageId(message.id)
+                          }
+                        }}
+                        onTouchStart={(e) => {
+                          e.stopPropagation()
+
+                          if (!message.mine || message.recalled) return
+
+                          const timer = window.setTimeout(() => {
+                            setSelectedMessageId(message.id)
+                          }, 520)
+
+                          const clear = () => {
+                            window.clearTimeout(timer)
+                            window.removeEventListener('touchend', clear)
+                            window.removeEventListener('touchmove', clear)
+                          }
+
+                          window.addEventListener('touchend', clear)
+                          window.addEventListener('touchmove', clear)
+                        }}
+                        onTouchMove={(e) => e.stopPropagation()}
+                        onTouchEnd={(e) => e.stopPropagation()}
+                        className={`inline-block min-w-[54px] max-w-[72%] rounded-[16px] px-4 py-3 text-left text-[15px] leading-[1.4] shadow-sm ${
+                          message.mine
+                            ? 'bg-[#ead3f5] text-[#222]'
+                            : 'bg-[var(--app-card)] text-[var(--app-text)]'
+                        } ${message.recalled ? 'text-[var(--app-muted)]' : ''}`}
+                      >
+                        {message.text}
+                      </div>
+
+                      {selectedMessageId === message.id &&
+                        message.mine &&
+                        !message.recalled && (
+                          <div className="absolute right-0 top-[-44px] z-[20] rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.16)]">
+                            <button
+                              type="button"
+                              onClick={() => handleRecallMessage(message.id)}
+                              className="text-[14px] font-medium text-red-500"
+                            >
+                              收回
+                            </button>
+                          </div>
+                        )}
+                    </motion.div>
+                  ))}
+
+                {isOtherTyping && (
+                  <motion.div
+                    key="typing-indicator"
+                    initial={{
+                      opacity: 0,
+                      y: 12,
+                      scale: 0.92,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: 6,
+                      scale: 0.92,
+                    }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 520,
+                      damping: 34,
+                    }}
+                    className="flex justify-start"
+                  >
+                    <div className="flex h-[42px] items-center gap-1 rounded-[16px] bg-[var(--app-card)] px-4 shadow-sm">
+                      {[0, 1, 2].map((i) => (
+                        <motion.span
+                          key={i}
+                          className="h-[7px] w-[7px] rounded-full bg-[var(--app-muted)]"
+                          animate={{
+                            y: [0, -5, 0],
+                            opacity: [0.35, 1, 0.35],
+                          }}
+                          transition={{
+                            duration: 0.72,
+                            repeat: Infinity,
+                            delay: i * 0.14,
+                            ease: 'easeInOut',
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div ref={bottomRef} />
             </div>
           </div>
 
@@ -467,7 +747,7 @@ export default function ChatRoomPage({
 
               <input
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleSend()
