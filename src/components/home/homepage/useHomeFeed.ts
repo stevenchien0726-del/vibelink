@@ -16,7 +16,7 @@ const FEED_FIRST_BATCH = 18
 const FEED_SECOND_BATCH = 36
 const FEED_FULL_BATCH = 60
 
-const SHORT_VIDEO_FIRST_BATCH = 6
+const SHORT_VIDEO_FIRST_BATCH = 3
 const SHORT_VIDEO_SECOND_BATCH = 12
 const SHORT_VIDEO_FULL_BATCH = 24
 
@@ -165,10 +165,9 @@ export function useHomeFeed({
         text: video.caption || '',
         likes: 0,
         images: video.thumbnail_url
-          ? [video.thumbnail_url]
-          : video.video_url
-            ? [video.video_url]
-            : [],
+  ? [video.thumbnail_url]
+  : [],
+
         thumbnailUrl: video.thumbnail_url || '',
         thumbnail_url: video.thumbnail_url || '',
         videoUrl: video.video_url,
@@ -262,12 +261,10 @@ window.setTimeout(() => {
   )
 }, 15000)
 
-window.setTimeout(() => {
-  void safeTask(
-    () => loadShortVideos(user, SHORT_VIDEO_FIRST_BATCH),
-    'home_load_short_videos_first'
-  )
-}, 150)
+void safeTask(
+  () => loadShortVideos(user, SHORT_VIDEO_FIRST_BATCH),
+  'home_load_short_videos_first'
+)
 
 window.setTimeout(() => {
   void safeTask(
@@ -381,17 +378,23 @@ window.setTimeout(() => {
 }
   }, [])
 
-  const mergedPosts = useMemo(
-    () => [
-      ...realVideos,
-      ...realPosts,
+  const mergedPosts = useMemo(() => {
+  const mixed: PostItem[] = []
+  const maxLength = Math.max(realPosts.length, realVideos.length)
 
-      ...(realPosts.length < 18
-        ? mockPosts.slice(0, 6)
-        : []),
-    ],
-    [realPosts, realVideos]
-  )
+  for (let i = 0; i < maxLength; i += 1) {
+    if (realPosts[i]) mixed.push(realPosts[i])
+
+    if (i < 3 && realVideos[i]) {
+      mixed.push(realVideos[i])
+    }
+  }
+
+  return [
+    ...mixed,
+    ...(realPosts.length < 18 ? mockPosts.slice(0, 6) : []),
+  ]
+}, [realPosts, realVideos])
 
   const shortVideoPosts = useMemo(
     () => mergedPosts.filter((post) => post.type === 'video' || post.videoUrl),

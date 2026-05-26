@@ -185,7 +185,7 @@ useEffect(() => {
           thumbnail_url
         `)
         .order('created_at', { ascending: false })
-        .limit(8)
+        .limit(3)
 
       const images =
         postsData
@@ -199,14 +199,14 @@ useEffect(() => {
         videosData
           ?.map((video: any) => video.video_url)
           .filter(Boolean)
-          .slice(0, 4) ?? []
+          .slice(0, 3) ?? []
 
       setHomeWarmImages(images)
       setHomeWarmVideos(videoUrls)
     } catch (error) {
       console.warn('Home feed warmup failed:', error)
     }
-  }, 1600)
+  }, 900)
 
   return () => window.clearTimeout(timer)
 }, [])

@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 export type PostItem = {
@@ -84,35 +84,95 @@ function VideoPreview({
 }) {
   const previewImage = getPreviewImage(post)
   const videoSrc = getVideoSrc(post)
-  const [imageFailed, setImageFailed] = useState(false)
 
-  if (previewImage && !imageFailed) {
-    return (
-      <img
-        src={previewImage}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        draggable={false}
-        className="h-full w-full object-cover"
-        onError={() => setImageFailed(true)}
-      />
-    )
+  const [displaySrc, setDisplaySrc] = useState(previewImage || '')
+  const [imageReady, setImageReady] = useState(false)
+  const [imageFailed, setImageFailed] = useState(!previewImage)
+  const [videoReady, setVideoReady] = useState(false)
+
+  const retryRef = useRef(0)
+
+  useEffect(() => {
+    setDisplaySrc(previewImage || '')
+    setImageReady(false)
+    setImageFailed(!previewImage)
+    setVideoReady(false)
+    retryRef.current = 0
+  }, [previewImage, videoSrc])
+
+  function retryLoadImage() {
+    if (!previewImage) {
+      setImageFailed(true)
+      return
+    }
+
+    if (retryRef.current >= 3) {
+      setImageFailed(true)
+      return
+    }
+
+    retryRef.current += 1
+
+    const nextSrc = `${previewImage}${
+      previewImage.includes('?') ? '&' : '?'
+    }retry=${Date.now()}`
+
+    const img = new Image()
+
+    img.onload = () => {
+      setDisplaySrc(nextSrc)
+      setImageReady(true)
+      setImageFailed(false)
+    }
+
+    img.onerror = () => {
+      window.setTimeout(retryLoadImage, 700 * retryRef.current)
+    }
+
+    img.src = nextSrc
   }
 
-  if (videoSrc) {
-    return (
-      <video
-        src={videoSrc}
-        muted
-        playsInline
-        preload="metadata"
-        className="h-full w-full object-cover"
-      />
-    )
-  }
+  const showImage = displaySrc && !imageFailed
+  const showVideo = imageFailed && videoSrc
 
-  return <div className="h-full w-full bg-black" />
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-[#15151a]">
+      {showImage && (
+        <img
+          src={displaySrc}
+          alt=""
+          loading="eager"
+          decoding="async"
+          draggable={false}
+          className={`h-full w-full object-cover transition-opacity duration-300 ${
+            imageReady ? 'opacity-100' : 'opacity-0'
+          }`}
+          onLoad={() => setImageReady(true)}
+          onError={retryLoadImage}
+        />
+      )}
+
+      {showVideo && (
+        <video
+          src={videoSrc}
+          muted
+          playsInline
+          preload="metadata"
+          className={`h-full w-full object-cover transition-opacity duration-300 ${
+            videoReady ? 'opacity-100' : 'opacity-0'
+          }`}
+          onLoadedData={() => setVideoReady(true)}
+          onCanPlay={() => setVideoReady(true)}
+        />
+      )}
+
+      {!imageReady && !videoReady && (
+        <div className="absolute inset-0 bg-[#17171d]">
+          <div className="h-full w-full animate-pulse bg-white/[0.035]" />
+        </div>
+      )}
+    </div>
+  )
 }
 
 function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
