@@ -767,10 +767,6 @@ if (matchedUsers.length > 0) {
 
       <EmailOtpLogin />
 
-<div className="my-5 text-center text-[13px] text-[var(--app-muted)]">
-  OR
-</div>
-
       {false && (
   <button
         type="button"

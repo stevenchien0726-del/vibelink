@@ -74,11 +74,7 @@ export default function EmailOtpLogin() {
             disabled:opacity-60
           "
         >
-          {loading
-            ? 'Sending...'
-            : sent
-            ? 'Email Sent'
-            : 'Continue with Email'}
+          {loading ? 'Sending...' : sent ? 'Email Sent' : 'Continue with Email'}
         </button>
       </div>
     </div>
