@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronLeft, Copy, Instagram, Share2 } from 'lucide-react'
+import { Camera, ChevronLeft, Copy, Share2 } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 
 type Props = {
@@ -128,7 +128,7 @@ export default function ShareProfilePage({
               <ShareActionButton icon={<Copy size={24} strokeWidth={2.2} />} label="複製連結" onClick={handleCopy} />
               <ShareActionButton icon={<Share2 size={24} strokeWidth={2.2} />} label="分享" onClick={handleNativeShare} />
               <ShareActionButton
-                icon={<Instagram size={24} strokeWidth={2.2} />}
+                icon={<Camera size={24} strokeWidth={2.2} />}
                 label="IG Story"
                 onClick={() => {
                   window.open(
