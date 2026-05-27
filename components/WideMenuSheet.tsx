@@ -20,7 +20,15 @@ type Props = {
   onDelete?: () => void
   onOpenInsights?: () => void
   onTogglePin?: () => void
-isPinned?: boolean
+  onBlock?: () => void
+
+  isPinned?: boolean
+
+  replyPermission?: 'everyone' | 'following' | 'off'
+
+  onChangeReplyPermission?: (
+    value: 'everyone' | 'following' | 'off'
+  ) => void
 }
 
 export default function WideMenuSheet({
@@ -30,10 +38,15 @@ export default function WideMenuSheet({
   onDelete,
   onOpenInsights,
   onTogglePin,
+onBlock,
 isPinned = false,
+replyPermission = 'everyone',
+onChangeReplyPermission,
 }: Props) {
   const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+
+  const [replyMenuOpen, setReplyMenuOpen] = useState(false)
 
   const [isClosing, setIsClosing] = useState(false)
 
@@ -72,12 +85,12 @@ const handleClose = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    handleClose()
+  handleClose()
 
-                    setTimeout(() => {
-                      onOpenInsights?.()
-                    }, 220)
-                  }}
+  setTimeout(() => {
+    onOpenInsights?.()
+  }, 220)
+}}
                   className="flex items-center gap-7"
                 >
                   <BarChart3 size={20} />
@@ -101,15 +114,60 @@ const handleClose = () => {
   </span>
 </button>
 
-                <button
-                  type="button"
-                  className="flex items-center gap-7"
-                >
-                  <MessageCircleMore size={20} />
-                  <span className="text-[16px] text-[var(--app-text)]">
-                    變更可回復對象
-                  </span>
-                </button>
+                <div className="relative">
+  <button
+    type="button"
+    onClick={() => setReplyMenuOpen((prev) => !prev)}
+    className="flex items-center gap-7"
+  >
+    <MessageCircleMore size={20} />
+    <span className="text-[16px] text-[var(--app-text)]">
+      變更可回復對象
+    </span>
+  </button>
+
+  <AnimatePresence>
+    {replyMenuOpen && (
+      <motion.div
+        initial={{ opacity: 0, y: -6, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -6, scale: 0.96 }}
+        transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+        className="ml-[18px] mt-4 overflow-hidden rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-surface)] shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
+      >
+        {[
+          { value: 'everyone', label: '所有人' },
+          { value: 'following', label: '你跟隨的用戶' },
+          { value: 'off', label: '關閉回復功能' },
+        ].map((item) => {
+          const active = replyPermission === item.value
+
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => {
+                onChangeReplyPermission?.(
+  item.value as 'everyone' | 'following' | 'off'
+)
+
+                setReplyMenuOpen(false)
+              }}
+              className={`flex h-[46px] w-full items-center justify-between px-4 text-left text-[15px] ${
+                active
+                  ? 'bg-purple-500/15 text-purple-400'
+                  : 'text-[var(--app-text)] active:bg-black/5'
+              }`}
+            >
+              <span>{item.label}</span>
+              {active && <span className="text-[14px]">✓</span>}
+            </button>
+          )
+        })}
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
 
                 <button
                   type="button"
@@ -162,9 +220,13 @@ const handleClose = () => {
                   </button>
 
                   <button
-                    type="button"
-                    className="flex items-center gap-7"
-                  >
+  type="button"
+  onClick={() => {
+    onBlock?.()
+    handleClose()
+  }}
+  className="flex items-center gap-7"
+>
                     <Ban size={18} />
                     <span className="text-[16px] text-[var(--app-text)]">
                       封鎖

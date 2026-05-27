@@ -33,6 +33,10 @@ type Props = {
   comments: any[]
   setSelectedComment: (comment: any) => void
   setIsCommentMenuOpen: (open: boolean) => void
+  onChangeReplyPermission?: (
+  postId: string,
+  value: 'everyone' | 'following' | 'off'
+) => void
   
 }
 
@@ -64,6 +68,7 @@ export default function HomeDetailPostModal({
   comments,
   setSelectedComment,
   setIsCommentMenuOpen,
+  onChangeReplyPermission,
   
 }: Props) {
   return (
@@ -325,9 +330,22 @@ export default function HomeDetailPostModal({
 
 {isDetailMenuOpen && selectedPost && (
   <WideMenuSheet
-  variant={selectedPost.isMine ? 'mine' : 'other'}
-  onClose={() => setIsDetailMenuOpen(false)}
-/>
+    variant={selectedPost.isMine ? 'mine' : 'other'}
+    onClose={() => setIsDetailMenuOpen(false)}
+
+    replyPermission={
+      selectedPost.reply_permission || 'everyone'
+    }
+
+    onChangeReplyPermission={(value) => {
+      if (!selectedPost?.id) return
+
+      onChangeReplyPermission?.(
+        selectedPost.id,
+        value
+      )
+    }}
+  />
 )}
     </>
   )

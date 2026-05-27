@@ -23,6 +23,7 @@ export type PostItem = {
   isMock?: boolean
   isPinned?: boolean
 pinned_at?: string | null
+reply_permission?: 'everyone' | 'following' | 'off'
 }
 
 type FeedGridProps = {

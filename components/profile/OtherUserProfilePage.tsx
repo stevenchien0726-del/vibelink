@@ -1240,9 +1240,42 @@ if (!error) {
 <AnimatePresence>
   {isPostMenuOpen && (
     <WideMenuSheet
-      variant="other"
-      onClose={() => setIsPostMenuOpen(false)}
-    />
+  variant="other"
+  onClose={() => setIsPostMenuOpen(false)}
+
+  onBlock={async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user || !resolvedUserId) {
+      alert(text.loginFirst)
+      return
+    }
+
+    if (user.id === resolvedUserId) return
+
+    const { error } = await supabase
+      .from('blocked_users')
+      .upsert(
+        {
+          blocker_id: user.id,
+          blocked_user_id: resolvedUserId,
+        },
+        {
+          onConflict: 'blocker_id,blocked_user_id',
+        }
+      )
+
+    if (error) {
+      console.error('封鎖失敗:', error)
+      return
+    }
+
+    setIsPostMenuOpen(false)
+    onClose()
+  }}
+/>
   )}
 </AnimatePresence>
 

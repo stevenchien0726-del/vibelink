@@ -14,6 +14,7 @@ Check,
 } from 'lucide-react'
 
 import type { Locale } from '@/i18n'
+import { supabase } from '@/lib/supabase'
 
 type SettingsPageProps = {
   onClose: () => void
@@ -86,6 +87,11 @@ export default function SettingsPage({
 
   const [languageOpen, setLanguageOpen] = useState(false)
 
+  const [blockedOpen, setBlockedOpen] = useState(false)
+const [blockedUsers, setBlockedUsers] = useState<any[]>([])
+const [blockedLoading, setBlockedLoading] = useState(false)
+const [confirmUnblockUser, setConfirmUnblockUser] = useState<any>(null)
+
   const [dragX, setDragX] = useState(0)
   const [isDraggingBack, setIsDraggingBack] = useState(false)
 
@@ -116,6 +122,79 @@ export default function SettingsPage({
     setShowCity(next)
     onShowCityChange?.(next)
   }
+
+  async function loadBlockedUsers() {
+  setBlockedLoading(true)
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    setBlockedLoading(false)
+    return
+  }
+
+  const { data: blockRows, error: blockError } = await supabase
+  .from('blocked_users')
+  .select('id, blocked_user_id, created_at')
+  .eq('blocker_id', user.id)
+  .order('created_at', { ascending: false })
+
+if (blockError) {
+  console.error('讀取封鎖名單失敗:', blockError)
+  setBlockedUsers([])
+  setBlockedLoading(false)
+  return
+}
+
+const blockedIds = (blockRows ?? [])
+  .map((row) => row.blocked_user_id)
+  .filter(Boolean)
+
+if (blockedIds.length === 0) {
+  setBlockedUsers([])
+  setBlockedLoading(false)
+  return
+}
+
+const { data: profiles, error: profileError } = await supabase
+  .from('profiles')
+  .select('id, username, display_name, avatar_url')
+  .in('id', blockedIds)
+
+if (profileError) {
+  console.error('讀取封鎖用戶 Profile 失敗:', profileError)
+}
+
+const profileMap = new Map(
+  (profiles ?? []).map((profile) => [profile.id, profile])
+)
+
+setBlockedUsers(
+  (blockRows ?? []).map((row) => ({
+    ...row,
+    profiles: profileMap.get(row.blocked_user_id) ?? null,
+  }))
+)
+
+setBlockedLoading(false)
+}
+
+async function unblockUser(row: any) {
+  const { error } = await supabase
+    .from('blocked_users')
+    .delete()
+    .eq('id', row.id)
+
+  if (error) {
+    console.error('取消封鎖失敗:', error)
+    return
+  }
+
+  setBlockedUsers((prev) => prev.filter((item) => item.id !== row.id))
+  setConfirmUnblockUser(null)
+}
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     e.stopPropagation()
@@ -179,6 +258,11 @@ export default function SettingsPage({
     return
   }
 
+  if (blockedOpen) {
+  setBlockedOpen(false)
+  return
+}
+
   onClose()
 }
     else {
@@ -230,14 +314,70 @@ export default function SettingsPage({
             </button>
 
             <div className="text-[20px] font-medium tracking-[0.01em] text-[var(--app-text)]">
-  {languageOpen ? text.language : '設定'}
+  {blockedOpen ? text.blocked : languageOpen ? text.language : text.title}
 </div>
           </div>
         </div>
 
         <div className="px-4 pb-10 pt-[72px]">
           <AnimatePresence mode="wait">
-  {!languageOpen ? (
+  {blockedOpen ? (
+  <motion.div
+    key="blocked-page"
+    initial={{ x: '100%' }}
+    animate={{ x: 0 }}
+    exit={{ x: '100%' }}
+    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+    className="mt-[4px] overflow-hidden rounded-[22px] bg-[var(--app-card)] py-[10px]"
+  >
+    {blockedLoading ? (
+      <div className="py-10 text-center text-[14px] text-[var(--app-muted)]">
+        讀取中...
+      </div>
+    ) : blockedUsers.length === 0 ? (
+      <div className="py-10 text-center text-[14px] text-[var(--app-muted)]">
+        目前沒有封鎖用戶
+      </div>
+    ) : (
+      blockedUsers.map((row) => {
+        const user = row.profiles
+
+        return (
+          <div
+            key={row.id}
+            className="flex h-[76px] items-center gap-3 px-4"
+          >
+            <div className="h-[44px] w-[44px] overflow-hidden rounded-full bg-[var(--app-surface)]">
+              {user?.avatar_url && (
+                <img
+                  src={user.avatar_url}
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[15px] font-medium text-[var(--app-text)]">
+                {user?.display_name || user?.username || 'Vibelink User'}
+              </div>
+              <div className="truncate text-[13px] text-[var(--app-muted)]">
+                @{user?.username || 'user'}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setConfirmUnblockUser(row)}
+              className="rounded-full bg-[#c86cff] px-4 py-2 text-[13px] font-medium text-white active:scale-95"
+            >
+              取消封鎖
+            </button>
+          </div>
+        )
+      })
+    )}
+  </motion.div>
+) : !languageOpen ? (
     <motion.div
       key="settings-main"
       initial={{ x: -24, opacity: 0 }}
@@ -303,7 +443,11 @@ export default function SettingsPage({
         <SettingsRow
           icon={<Ban size={21} strokeWidth={2.1} />}
           label={text.blocked}
-          onClick={onBlockedClick}
+          onClick={() => {
+  setBlockedOpen(true)
+  loadBlockedUsers()
+  onBlockedClick?.()
+}}
         />
       </div>
 
@@ -340,11 +484,61 @@ export default function SettingsPage({
 </AnimatePresence>
 
         </div>
-      </div>
+            </div>
+
+      <AnimatePresence>
+        {confirmUnblockUser && (
+          <motion.div
+            className="fixed inset-0 z-[260] flex items-center justify-center bg-black/40 px-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setConfirmUnblockUser(null)}
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[320px] overflow-hidden rounded-[24px] bg-[var(--app-card)] text-center shadow-xl"
+              initial={{ opacity: 0, scale: 0.9, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 10 }}
+              transition={{
+                type: 'spring',
+                stiffness: 420,
+                damping: 28,
+              }}
+            >
+              <div className="px-6 pb-5 pt-6">
+                <div className="text-[18px] font-semibold text-[var(--app-text)]">
+                  取消封鎖？
+                </div>
+
+                <div className="mt-2 text-[14px] leading-relaxed text-[var(--app-muted)]">
+                  取消後，對方可以再次與你互動。
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => unblockUser(confirmUnblockUser)}
+                className="h-[48px] w-full border-t border-[var(--app-card-border)] text-[16px] font-medium text-red-500"
+              >
+                確認取消封鎖
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setConfirmUnblockUser(null)}
+                className="h-[48px] w-full border-t border-[var(--app-card-border)] text-[16px] text-[var(--app-text)]"
+              >
+                取消
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+            </AnimatePresence>
     </motion.div>
   )
 }
-
 function SettingsRow({
   icon,
   label,

@@ -540,16 +540,17 @@ async function loadMyPosts(start = 0, end = 11, append = false) {
   const { data, error } = await supabase
   .from('posts')
   .select(`
-    id,
-    caption,
-created_at,
-user_id,
-is_pinned,
-pinned_at,
-    post_images (
-      image_url
-    )
-  `)
+  id,
+  caption,
+  created_at,
+  user_id,
+  is_pinned,
+  pinned_at,
+  reply_permission,
+  post_images (
+    image_url
+  )
+`)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 .range(start, end)
@@ -589,12 +590,14 @@ pinned_at,
   })
 
   const postsWithLikes = (data ?? []).map((post: any) => ({
-    ...post,
-    likes: likeCountMap.get(post.id) ?? 0,
-    isLiked: likedSet.has(post.id),
-    isPinned: post.is_pinned,
-pinned_at: post.pinned_at,
-  }))
+  ...post,
+  likes: likeCountMap.get(post.id) ?? 0,
+  isLiked: likedSet.has(post.id),
+  isPinned: post.is_pinned,
+  pinned_at: post.pinned_at,
+  reply_permission:
+    post.reply_permission || 'everyone',
+}))
 
   setMyPosts((prev) =>
   append ? [...prev, ...postsWithLikes] : postsWithLikes
@@ -1536,62 +1539,94 @@ useEffect(() => {
   onClose={() => setIsPostMenuOpen(false)}
   onArchive={archiveSelectedPost}
   onDelete={deleteSelectedPost}
-
   isPinned={!!selectedPost?.isPinned}
+  onTogglePin={async () => {
+    if (!selectedPost?.id) return
 
-onTogglePin={async () => {
-  if (!selectedPost?.id) return
+    const nextPinned = !selectedPost.isPinned
 
-  const nextPinned = !selectedPost.isPinned
+    if (nextPinned) {
+      const pinnedCount = myPosts.filter((item) => item.isPinned).length
 
-  if (nextPinned) {
-    const pinnedCount = myPosts.filter(
-      (item) => item.isPinned
-    ).length
+      if (pinnedCount >= 3) {
+        alert('最多只能釘選 3 篇貼文')
+        return
+      }
+    }
 
-    if (pinnedCount >= 3) {
-      alert('最多只能釘選 3 篇貼文')
+    const now = new Date().toISOString()
+
+    const { error } = await supabase
+      .from('posts')
+      .update({
+        is_pinned: nextPinned,
+        pinned_at: nextPinned ? now : null,
+      })
+      .eq('id', selectedPost.id)
+
+    if (error) {
+      console.error('釘選失敗:', error)
       return
     }
-  }
 
-  const now = new Date().toISOString()
+    setMyPosts((prev) =>
+      prev.map((item) =>
+        item.id === selectedPost.id
+          ? {
+              ...item,
+              isPinned: nextPinned,
+              pinned_at: nextPinned ? now : null,
+            }
+          : item
+      )
+    )
 
-  const { error } = await supabase
-    .from('posts')
-    .update({
-      is_pinned: nextPinned,
-      pinned_at: nextPinned ? now : null,
-    })
-    .eq('id', selectedPost.id)
-
-  if (error) {
-    console.error('釘選失敗:', error)
-    return
-  }
-
-  setMyPosts((prev) =>
-    prev.map((item) =>
-      item.id === selectedPost.id
+    setSelectedPost((prev: any) =>
+      prev
         ? {
-            ...item,
+            ...prev,
             isPinned: nextPinned,
             pinned_at: nextPinned ? now : null,
           }
-        : item
+        : prev
     )
-  )
+  }}
+  replyPermission={selectedPost?.reply_permission || 'everyone'}
+  onChangeReplyPermission={async (value) => {
+    if (!selectedPost?.id) return
+
+    const { error } = await supabase
+      .from('posts')
+      .update({
+        reply_permission: value,
+      })
+      .eq('id', selectedPost.id)
+
+    if (error) {
+      console.error('更新回復權限失敗:', error)
+      return
+    }
+
+    setMyPosts((prev) =>
+      prev.map((item) =>
+        item.id === selectedPost.id
+          ? {
+              ...item,
+              reply_permission: value,
+            }
+          : item
+      )
+    )
 
     setSelectedPost((prev: any) =>
-    prev
-      ? {
-          ...prev,
-          isPinned: nextPinned,
-          pinned_at: nextPinned ? now : null,
-        }
-      : prev
-  )
-}}
+      prev
+        ? {
+            ...prev,
+            reply_permission: value,
+          }
+        : prev
+    )
+  }}
 />
   )}
 </AnimatePresence>
