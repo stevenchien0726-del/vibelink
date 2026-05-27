@@ -7,12 +7,13 @@ export default function EmailOtpLogin() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
 
   async function handleSendOtp() {
     const safeEmail = email.trim()
 
     if (!safeEmail) return
-    if (loading || sent) return
+if (loading || sent || cooldown > 0) return
 
     setLoading(true)
 
@@ -32,6 +33,19 @@ export default function EmailOtpLogin() {
     }
 
     setSent(true)
+setCooldown(60)
+
+const timer = window.setInterval(() => {
+  setCooldown((prev) => {
+    if (prev <= 1) {
+      window.clearInterval(timer)
+      setSent(false)
+      return 0
+    }
+
+    return prev - 1
+  })
+}, 1000)
   }
 
   return (
@@ -58,7 +72,7 @@ export default function EmailOtpLogin() {
 
         <button
           type="button"
-          disabled={loading}
+          disabled={loading || sent || cooldown > 0}
           onClick={handleSendOtp}
           className="
             flex
@@ -75,7 +89,13 @@ export default function EmailOtpLogin() {
             disabled:opacity-60
           "
         >
-          {loading ? 'Sending...' : sent ? 'Email Sent' : 'Continue with Email'}
+          {loading
+  ? '寄送中...'
+  : cooldown > 0
+  ? `請查看您的信箱｜${cooldown}s 後可重寄`
+  : sent
+  ? '請查看您的信箱'
+  : 'Continue with Email'}
         </button>
       </div>
     </div>
