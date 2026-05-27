@@ -159,7 +159,7 @@ Return ONLY the final text.
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-nano',
+      model: 'gpt-4o-mini',
       temperature: 1.15,
       presence_penalty: 0.8,
       frequency_penalty: 0.5,
