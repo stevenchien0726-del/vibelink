@@ -10,6 +10,7 @@ import { searchVectorUsers } from '@/lib/ai-radar/searchVectorUsers'
 import { transformVectorResults } from '@/lib/ai-radar/transformVectorResults'
 
 import { generateAIRadarRewritePrompts } from '@/lib/ai-radar/generateAIRadarRewritePrompts'
+import { generateHumanFeeling } from '@/lib/ai-radar/generateHumanFeeling'
 
 export async function POST(req: Request) {
   const startedAt = Date.now()
@@ -19,17 +20,17 @@ export async function POST(req: Request) {
 
     const body = await req.json()
 
-if (body?.warmup) {
-  console.log('🟢 [AI Radar] warmup route only')
+    if (body?.warmup) {
+      console.log('🟢 [AI Radar] warmup route only')
 
-  return NextResponse.json({
-    ok: true,
-    warmed: true,
-  })
-}
+      return NextResponse.json({
+        ok: true,
+        warmed: true,
+      })
+    }
 
-const query = body?.query?.trim() ?? ''
-const locale = body?.locale ?? 'zh-TW'
+    const query = body?.query?.trim() ?? ''
+    const locale = body?.locale ?? 'zh-TW'
 
     console.log('🟣 [AI Radar] query:', query)
 
@@ -50,121 +51,175 @@ const locale = body?.locale ?? 'zh-TW'
 
     console.log('🟢 [AI Radar] parsedQuery:', parsedQuery)
 
-    const tags =
-  parsedQuery?.tags ?? []
+    const tags = parsedQuery?.tags ?? []
 
-const supabaseUsers =
-  await searchAIRadarUsersSupabase({
-    tags,
-  })
+    const supabaseUsers = await searchAIRadarUsersSupabase({
+      tags,
+    })
 
-const transformedSupabaseUsers =
-  transformSupabaseAIRadarUsers(
-    supabaseUsers
-  ).map((user: any) => {
-    const userTags = user.tags ?? []
+    const transformedSupabaseUsers = transformSupabaseAIRadarUsers(
+      supabaseUsers
+    )
+      .map((user: any) => {
+        const userTags = user.tags ?? []
 
-    const matchScore = tags.reduce((score: number, tag: string) => {
-      return userTags.includes(tag) ? score + 20 : score
-    }, 0)
+        const matchScore = tags.reduce(
+          (score: number, tag: string) => {
+            return userTags.includes(tag) ? score + 20 : score
+          },
+          0
+        )
 
-    return {
-      ...user,
-      aiScore: matchScore,
-      matchedReasons: tags.filter((tag: string) =>
-        userTags.includes(tag)
-      ),
+        return {
+          ...user,
+          aiScore: matchScore,
+          matchedReasons: tags.filter((tag: string) =>
+            userTags.includes(tag)
+          ),
+        }
+      })
+      .sort((a: any, b: any) => {
+        const scoreA =
+          (a.aiScore ?? 0) +
+          (a.matchCount ?? 0) * 2 +
+          (a.images?.length ?? 0) * 3
+
+        const scoreB =
+          (b.aiScore ?? 0) +
+          (b.matchCount ?? 0) * 2 +
+          (b.images?.length ?? 0) * 3
+
+        return scoreB - scoreA
+      })
+
+    console.log(
+      '🟢 [AI Radar] transformedSupabaseUsers:',
+      transformedSupabaseUsers
+    )
+
+    let matchedUsers: any[] = []
+
+    try {
+      const vectorRows = await searchVectorUsers(query)
+
+      const vectorUsers = transformVectorResults(vectorRows)
+
+      matchedUsers =
+        vectorUsers.length > 0
+          ? vectorUsers
+          : transformedSupabaseUsers.length > 0
+          ? transformedSupabaseUsers
+          : searchAIRadarUsers(parsedQuery)
+    } catch (vectorError) {
+      console.error(
+        'AI Radar vector search failed, fallback:',
+        vectorError
+      )
+
+      matchedUsers =
+        transformedSupabaseUsers.length > 0
+          ? transformedSupabaseUsers
+          : searchAIRadarUsers(parsedQuery)
     }
-  })
-  .sort((a: any, b: any) => {
-  const scoreA =
-    (a.aiScore ?? 0) +
-    (a.matchCount ?? 0) * 2 +
-    (a.images?.length ?? 0) * 3
 
-  const scoreB =
-    (b.aiScore ?? 0) +
-    (b.matchCount ?? 0) * 2 +
-    (b.images?.length ?? 0) * 3
+    console.log('🟢 [AI Radar] search tags:', tags)
 
-  return scoreB - scoreA
-})
+    console.log(
+      '🟢 [AI Radar] supabaseUsers count:',
+      supabaseUsers.length
+    )
 
-  console.log(
-  '🟢 [AI Radar] transformedSupabaseUsers:',
-  transformedSupabaseUsers
-)
+    console.log(
+      '🟢 [AI Radar] final matchedUsers count:',
+      matchedUsers.length
+    )
 
-let matchedUsers: any[] = []
+    console.log('🟣 [AI Radar] generating human feeling...')
 
-try {
-  const vectorRows =
-    await searchVectorUsers(query)
+    const topUsersWithFeeling = await Promise.all(
+      matchedUsers.slice(0, 2).map(async (user: any) => {
+        const humanFeeling = await generateHumanFeeling({
+          locale,
+          username:
+            user.displayName ||
+            user.display_name ||
+            user.username ||
+            user.name,
+          aiTags:
+            user.aiTags ||
+            user.ai_tags ||
+            user.tags ||
+            user.vibe_tags ||
+            [],
+          aiStyleTags:
+            user.aiStyleTags ||
+            user.ai_style_tags ||
+            user.styleTags ||
+            [],
+          aiCaption:
+            user.aiCaption ||
+            user.ai_caption ||
+            user.caption ||
+            user.text ||
+            '',
+          captions:
+            user.captions ||
+            user.recentCaptions ||
+            user.recent_captions ||
+            [],
+        })
 
-  const vectorUsers =
-    transformVectorResults(vectorRows)
+        return {
+          ...user,
+          humanFeeling,
+        }
+      })
+    )
 
-  matchedUsers =
-    vectorUsers.length > 0
-      ? vectorUsers
-      : transformedSupabaseUsers.length > 0
-        ? transformedSupabaseUsers
-        : searchAIRadarUsers(parsedQuery)
-
-} catch (vectorError) {
-  console.error(
-    'AI Radar vector search failed, fallback:',
-    vectorError
-  )
-
-  matchedUsers =
-    transformedSupabaseUsers.length > 0
-      ? transformedSupabaseUsers
-      : searchAIRadarUsers(parsedQuery)
-}
-
-console.log('🟢 [AI Radar] search tags:', tags)
-
-console.log(
-  '🟢 [AI Radar] supabaseUsers count:',
-  supabaseUsers.length
-)
-
-console.log(
-  '🟢 [AI Radar] final matchedUsers count:',
-  matchedUsers.length
-)
+    const displayUsers =
+      topUsersWithFeeling.length > 0
+        ? [
+            ...topUsersWithFeeling,
+            ...matchedUsers.slice(topUsersWithFeeling.length),
+          ]
+        : matchedUsers
 
     console.log('🟣 [AI Radar] generating reply...')
 
     const aiReply = await generateAIRadarReply({
       query,
       parsedQuery,
-      users: matchedUsers,
+      users: displayUsers,
       locale,
     })
 
     const rewritePrompts = await generateAIRadarRewritePrompts({
-  query,
-  parsedQuery,
-  matchedUsers,
-})
+      query,
+      parsedQuery,
+      matchedUsers: displayUsers,
+    })
 
     console.log('🟢 [AI Radar] aiReply:', aiReply)
-    console.log('✅ [AI Radar] success in', Date.now() - startedAt, 'ms')
+    console.log(
+      '✅ [AI Radar] success in',
+      Date.now() - startedAt,
+      'ms'
+    )
 
-
-return NextResponse.json({
-  ok: true,
-  parsedQuery,
-  matchedUsers,
-  aiReply,
-  rewritePrompts,
-})
-
+    return NextResponse.json({
+      ok: true,
+      parsedQuery,
+      matchedUsers: displayUsers,
+      aiReply,
+      rewritePrompts,
+    })
   } catch (error) {
     console.error('🔴 [AI Radar] API route failed:', error)
-    console.error('🔴 [AI Radar] failed after', Date.now() - startedAt, 'ms')
+    console.error(
+      '🔴 [AI Radar] failed after',
+      Date.now() - startedAt,
+      'ms'
+    )
 
     return NextResponse.json(
       {

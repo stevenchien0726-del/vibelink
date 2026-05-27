@@ -38,7 +38,60 @@ type AIRadarPageProps = {
 export default function AIRadarPage({ locale }: AIRadarPageProps) {
   const safeLocale: Locale = locale ?? 'zh-TW'
 const text = getAIRadarText(safeLocale)
-const FALLBACK_STARTER_PROMPTS =
+const FALLBACK_STARTER_PROMPTS_POOL =
+  safeLocale === 'en'
+    ? [
+        'Find people who look emotionally warm and easy to talk to',
+        'Find introverted people who love late-night conversations',
+        'Find stylish people with a Korean vibe',
+        'Find people who love techno, rave, and nightlife',
+        'Find soft and healing personalities',
+        'Find gym people with a sunny personality',
+        'Find people who love fashion and outfit photos',
+        'Find creative people into photography and art',
+        'Find people who feel mysterious and hard to read',
+        'Find cute people with anime or gamer vibes',
+        'Find people who enjoy cafes and slow daily life',
+        'Find extroverted social butterflies',
+        'Find emotionally mature people',
+        'Find people who feel like party girls or party boys',
+        'Find people with a luxury rich-kid vibe',
+        'Find people who love pets and cozy daily life',
+        'Find chill people you can travel with',
+        'Find people with a strong music taste',
+        'Find emotionally healing personalities',
+        'Find people who look good in black outfits',
+      ]
+    : [
+        '幫我找感覺情緒穩定、好聊天的人',
+        '幫我找喜歡深夜聊天的人',
+        '幫我找韓系穿搭 vibe 的人',
+        '幫我找喜歡 Techno、Rave、夜生活的人',
+        '幫我找有療癒感的人',
+        '幫我找陽光健身系的人',
+        '幫我找很會穿搭的人',
+        '幫我找喜歡攝影和創作的人',
+        '幫我找有神秘感的人',
+        '幫我找動漫或遊戲 vibe 的人',
+        '幫我找喜歡咖啡廳和慢生活的人',
+        '幫我找超愛社交的人',
+        '幫我找情緒成熟的人',
+        '幫我找 party girl / party boy vibe 的人',
+        '幫我找有富二代感的人',
+        '幫我找喜歡寵物的人',
+        '幫我找適合一起旅行的人',
+        '幫我找很懂音樂 vibe 的人',
+        '幫我找有情緒療癒感的人',
+        '幫我找穿黑色很好看的人',
+      ]
+
+function getRandomStarterPrompts() {
+  const shuffled = [...FALLBACK_STARTER_PROMPTS_POOL].sort(
+    () => Math.random() - 0.5
+  )
+
+  return shuffled.slice(0, 3)
+}
   safeLocale === 'en'
     ? [
         'Find people in Taipei who love fitness and the beach',
@@ -292,7 +345,7 @@ useEffect(() => {
     if (secondPrompts) {
       setStarterPrompts(secondPrompts)
     } else {
-      setStarterPrompts(FALLBACK_STARTER_PROMPTS)
+      setStarterPrompts(getRandomStarterPrompts())
     }
 
     setIsGeneratingPrompts(false)
@@ -482,6 +535,10 @@ function handleVoiceInput() {
 }
 
 function getCandidateDescription(user: any) {
+  if (user?.humanFeeling) {
+    return user.humanFeeling
+  }
+
   const tags = user.tags ?? user.vibe_tags ?? []
 
   const reasons = (user.matchedReasons ?? []).filter(
