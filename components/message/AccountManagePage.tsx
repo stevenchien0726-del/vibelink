@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import {
   ChevronLeft,
@@ -10,10 +10,21 @@ import {
   LogOut,
   Lock,
   TriangleAlert,
+  Check,
 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 type AccountManagePageProps = {
   onClose: () => void
+}
+
+type VibelinkProfile = {
+  id: string
+  username: string | null
+  display_name: string | null
+  avatar_url: string | null
+  is_active: boolean | null
+  created_at: string | null
 }
 
 export default function AccountManagePage({
@@ -21,10 +32,173 @@ export default function AccountManagePage({
 }: AccountManagePageProps) {
   const [dragX, setDragX] = useState(0)
   const [isDraggingBack, setIsDraggingBack] = useState(false)
+  const [profiles, setProfiles] = useState<VibelinkProfile[]>([])
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null)
+  const [loadingProfiles, setLoadingProfiles] = useState(true)
 
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
   const draggingEnabled = useRef(false)
+
+  const canAddAccount = profiles.length < 2
+
+  const [creatingAccount, setCreatingAccount] = useState(false)
+
+  useEffect(() => {
+    loadProfiles()
+  }, [])
+
+  async function loadProfiles() {
+    setLoadingProfiles(true)
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      setLoadingProfiles(false)
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url, is_active, created_at')
+      .eq('auth_user_id', user.id)
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('讀取 Vibelink 帳號失敗:', error)
+      setLoadingProfiles(false)
+      return
+    }
+
+    const safeProfiles = data ?? []
+    setProfiles(safeProfiles)
+
+    const active = safeProfiles.find((item) => item.is_active) ?? safeProfiles[0]
+    setActiveProfileId(active?.id ?? null)
+
+    if (active?.id) {
+      localStorage.setItem('vibelink-active-profile-id', active.id)
+    }
+
+    setLoadingProfiles(false)
+  }
+
+  async function switchProfile(profileId: string) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    const { error: resetError } = await supabase
+      .from('profiles')
+      .update({ is_active: false })
+      .eq('auth_user_id', user.id)
+
+    if (resetError) {
+      console.error('重設帳號狀態失敗:', resetError)
+      return
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_active: true })
+      .eq('id', profileId)
+      .eq('auth_user_id', user.id)
+
+    if (error) {
+      console.error('切換帳號失敗:', error)
+      return
+    }
+
+    setActiveProfileId(profileId)
+    localStorage.setItem('vibelink-active-profile-id', profileId)
+
+    setProfiles((prev) =>
+      prev.map((profile) => ({
+        ...profile,
+        is_active: profile.id === profileId,
+      }))
+    )
+  }
+
+  async function createNewProfile() {
+  if (!canAddAccount || creatingAccount) return
+
+  setCreatingAccount(true)
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    setCreatingAccount(false)
+    return
+  }
+
+  const nextNumber = profiles.length + 1
+
+  const username = `user_${user.id.slice(0, 4)}_${nextNumber}`
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert({
+      auth_user_id: user.id,
+      username,
+      display_name: `Vibelink ${nextNumber}`,
+      is_active: false,
+    })
+    .select('id, username, display_name, avatar_url, is_active, created_at')
+    .single()
+
+  setCreatingAccount(false)
+
+  if (error) {
+    console.error('新增 Vibelink 帳號失敗:', error)
+    alert('新增帳號失敗')
+    return
+  }
+
+await supabase
+  .from('profiles')
+  .update({
+    is_active: false,
+  })
+  .eq('auth_user_id', user.id)
+
+await supabase
+  .from('profiles')
+  .update({
+    is_active: true,
+  })
+  .eq('id', data.id)
+
+  setProfiles((prev) => [
+  ...prev.map((profile) => ({
+    ...profile,
+    is_active: false,
+  })),
+  {
+    ...data,
+    is_active: true,
+  },
+])
+
+setActiveProfileId(data.id)
+
+localStorage.setItem(
+  'vibelink-active-profile-id',
+  data.id
+)
+}
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    localStorage.removeItem('vibelink-active-profile-id')
+    window.location.reload()
+  }
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     e.stopPropagation()
@@ -127,45 +301,105 @@ export default function AccountManagePage({
 
         <div className="px-4 pt-[78px] pb-10">
           <div className="overflow-hidden rounded-[24px] border border-[var(--app-card-border)] bg-[var(--app-card)] py-[12px]">
-            <AccountMainRow
-              icon={
-                <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[var(--app-surface)] text-[var(--app-text)]">
-                  <CircleUserRound size={25} strokeWidth={1.9} />
-                </div>
-              }
-              title="Sky_07_21"
-              subtitle="Vibelink帳號"
-              trailing={<ChevronRight size={18} strokeWidth={2.4} className="text-[var(--app-muted)]" />}
-            />
+            {loadingProfiles ? (
+              <div className="py-8 text-center text-[14px] text-[var(--app-muted)]">
+                帳號讀取中...
+              </div>
+            ) : (
+              <>
+                {profiles.map((profile, index) => (
+                  <div key={profile.id}>
+                    {index > 0 && <GroupDivider />}
 
-            <GroupDivider />
+                    <AccountMainRow
+                      onClick={() => switchProfile(profile.id)}
+                      icon={
+                        <div className="flex h-[40px] w-[40px] items-center justify-center overflow-hidden rounded-full bg-[var(--app-surface)] text-[var(--app-text)]">
+                          {profile.avatar_url ? (
+                            <img
+                              src={profile.avatar_url}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <CircleUserRound size={25} style={{ strokeWidth: 1.9 }} />
+                          )}
+                        </div>
+                      }
+                      title={
+                        profile.display_name ||
+                        profile.username ||
+                        'Vibelink User'
+                      }
+                      subtitle={
+                        activeProfileId === profile.id
+                          ? '目前使用中'
+                          : 'Vibelink帳號'
+                      }
+                      trailing={
+                        activeProfileId === profile.id ? (
+                          <Check
+                            size={19}
+                            style={{ strokeWidth: 2.7 }}
+                            className="text-[#c86cff]"
+                          />
+                        ) : (
+                          <ChevronRight
+                            size={18}
+                            style={{ strokeWidth: 2.4 }}
+                            className="text-[var(--app-muted)]"
+                          />
+                        )
+                      }
+                    />
+                  </div>
+                ))}
 
-            <AccountMainRow
-              icon={
-                <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[var(--app-surface)] text-[var(--app-text)]">
-                  <Plus size={25} strokeWidth={2.1} />
-                </div>
-              }
-              title="新增Vibelink帳號"
-              subtitle="建立和切換身分"
-              trailing={<ChevronRight size={18} strokeWidth={2.4} className="text-[var(--app-muted)]" />}
-            />
+                {canAddAccount && (
+                  <>
+                    {profiles.length > 0 && <GroupDivider />}
+
+                    <AccountMainRow
+  onClick={createNewProfile}
+  icon={
+    <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[var(--app-surface)] text-[var(--app-text)]">
+      <Plus size={25} style={{ strokeWidth: 2.1 }} />
+    </div>
+  }
+  title={creatingAccount ? '建立中...' : '新增Vibelink帳號'}
+  subtitle="建立和切換身分"
+  trailing={
+    <ChevronRight
+      size={18}
+      style={{ strokeWidth: 2.4 }}
+      className="text-[var(--app-muted)]"
+    />
+  }
+/>
+                  </>
+                )}
+              </>
+            )}
           </div>
 
           <div className="mt-[22px] overflow-hidden rounded-[24px] border border-[var(--app-card-border)] bg-[var(--app-card)] py-[20px]">
             <AccountActionRow
-              icon={<LogOut size={21} strokeWidth={2.1} />}
+              onClick={handleLogout}
+              icon={<LogOut size={21} style={{ strokeWidth: 2.1 }} />}
               label="登出"
             />
 
             <GroupDivider />
 
-            
-
             <AccountActionRow
-              icon={<TriangleAlert size={21} strokeWidth={2.1} />}
+              icon={<TriangleAlert size={21} style={{ strokeWidth: 2.1 }} />}
               label="停用或刪除(危險區)"
-              trailing={<Lock size={18} strokeWidth={2.1} className="text-[var(--app-muted)]" />}
+              trailing={
+                <Lock
+                  size={18}
+                  style={{ strokeWidth: 2.1 }}
+                  className="text-[var(--app-muted)]"
+                />
+              }
             />
           </div>
         </div>
@@ -179,33 +413,32 @@ function AccountMainRow({
   title,
   subtitle,
   trailing,
+  onClick,
 }: {
-  icon: React.ReactNode
+  icon: ReactNode
   title: string
   subtitle: string
-  trailing: React.ReactNode
+  trailing: ReactNode
+  onClick?: () => void
 }) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="grid w-full grid-cols-[56px_minmax(0,1fr)_28px] items-center gap-x-4 py-[18px] pl-[50px] pr-[18px] text-left active:bg-white/10"
     >
-      <div className="flex items-center justify-center">
-        {icon}
-      </div>
+      <div className="flex items-center justify-center">{icon}</div>
 
       <div className="flex min-w-0 flex-col">
-        <span className="text-[16px] font-medium text-[var(--app-text)]">
+        <span className="truncate text-[16px] font-medium text-[var(--app-text)]">
           {title}
         </span>
-        <span className="mt-1 text-[13px] text-[var(--app-muted)]">
+        <span className="mt-1 truncate text-[13px] text-[var(--app-muted)]">
           {subtitle}
         </span>
       </div>
 
-      <div className="flex items-center justify-center">
-        {trailing}
-      </div>
+      <div className="flex items-center justify-center">{trailing}</div>
     </button>
   )
 }
@@ -214,14 +447,17 @@ function AccountActionRow({
   icon,
   label,
   trailing,
+  onClick,
 }: {
-  icon: React.ReactNode
+  icon: ReactNode
   label: string
-  trailing?: React.ReactNode
+  trailing?: ReactNode
+  onClick?: () => void
 }) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="grid w-full grid-cols-[54px_minmax(0,1fr)_28px] items-center gap-x-4 py-[26px] pl-[22px] pr-[18px] text-left active:bg-white/10"
     >
       <div className="flex items-center justify-center text-[var(--app-text)]">
