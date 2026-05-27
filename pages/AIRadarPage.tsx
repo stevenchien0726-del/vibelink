@@ -38,6 +38,18 @@ type AIRadarPageProps = {
 export default function AIRadarPage({ locale }: AIRadarPageProps) {
   const safeLocale: Locale = locale ?? 'zh-TW'
 const text = getAIRadarText(safeLocale)
+const FALLBACK_STARTER_PROMPTS =
+  safeLocale === 'en'
+    ? [
+        'Find people in Taipei who love fitness and the beach',
+        'Find someone with a chill cafe and travel vibe',
+        'Find people who like nightlife, music, and social events',
+      ]
+    : [
+        '幫我找台北喜歡健身、海邊旅行的人',
+        '幫我找有咖啡廳、旅行、生活感 vibe 的人',
+        '幫我找喜歡夜生活、音樂、社交活動的人',
+      ]
 
   const [refreshKey, setRefreshKey] = useState(0)
   const [refreshCount, setRefreshCount] = useState(0)
@@ -214,37 +226,83 @@ useEffect(() => {
 }, [])
 
 useEffect(() => {
-  async function loadStarterPrompts() {
-    setIsGeneratingPrompts(true)
-    
+  let cancelled = false
+
+  async function fetchStarterPromptsOnce(
+    attempt: number
+  ): Promise<string[] | null> {
     try {
       const response = await withTimeout(
-  fetch(
-  `/api/ai-radar/starter-prompts?locale=${safeLocale}`
-),
-12000,
-'ai_radar_starter_prompts'
-)
+        fetch(
+          `/api/ai-radar/starter-prompts?locale=${safeLocale}&attempt=${attempt}&t=${Date.now()}`,
+          {
+            cache: 'no-store',
+          }
+        ),
+        5000,
+        `ai_radar_starter_prompts_attempt_${attempt}`
+      )
 
-if (!response) return
+      if (!response) return null
+      if (!response.ok) return null
 
-const data = await response.json()
+      const data = await response.json()
 
-      if (Array.isArray(data?.prompts) && data.prompts.length > 0) {
-  setStarterPrompts(data.prompts)
-}
+      if (
+        Array.isArray(data?.prompts) &&
+        data.prompts.length > 0
+      ) {
+        return data.prompts.slice(0, 3)
+      }
 
+      return null
     } catch (error) {
-      console.error(
-        'loadStarterPrompts failed:',
+      console.warn(
+        `starter prompts attempt ${attempt} failed:`,
         error
       )
-    } finally {
-      setIsGeneratingPrompts(false)
+
+      return null
     }
   }
 
+  async function loadStarterPrompts() {
+    setIsGeneratingPrompts(true)
+
+    const firstPrompts = await fetchStarterPromptsOnce(1)
+
+    if (cancelled) return
+
+    if (firstPrompts) {
+      setStarterPrompts(firstPrompts)
+      setIsGeneratingPrompts(false)
+      return
+    }
+
+    await new Promise((resolve) =>
+      window.setTimeout(resolve, 800)
+    )
+
+    if (cancelled) return
+
+    const secondPrompts = await fetchStarterPromptsOnce(2)
+
+    if (cancelled) return
+
+    if (secondPrompts) {
+      setStarterPrompts(secondPrompts)
+    } else {
+      setStarterPrompts(FALLBACK_STARTER_PROMPTS)
+    }
+
+    setIsGeneratingPrompts(false)
+  }
+
   loadStarterPrompts()
+
+  return () => {
+    cancelled = true
+  }
 }, [])
 
 useEffect(() => {
@@ -958,7 +1016,7 @@ if (matchedUsers.length > 0) {
     >
       <BrushCleaning
   size={22}
-  strokeWidth={2.2}
+  style={{ strokeWidth: 2.2 }}
   className="text-[var(--ai-tool-icon)]"
 />
     </button>
@@ -972,7 +1030,7 @@ if (matchedUsers.length > 0) {
     >
       <Mic
   size={22}
-  strokeWidth={2.2}
+  style={{ strokeWidth: 2.2 }}
   className="text-[var(--ai-tool-icon)]"
 />
     </button>

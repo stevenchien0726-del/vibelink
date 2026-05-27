@@ -13,7 +13,7 @@ export default function EmailOtpLogin() {
     const safeEmail = email.trim()
 
     if (!safeEmail) return
-if (loading || sent || cooldown > 0) return
+    if (loading || sent || cooldown > 0) return
 
     setLoading(true)
 
@@ -33,23 +33,23 @@ if (loading || sent || cooldown > 0) return
     }
 
     setSent(true)
-setCooldown(60)
+    setCooldown(60)
 
-const timer = window.setInterval(() => {
-  setCooldown((prev) => {
-    if (prev <= 1) {
-      window.clearInterval(timer)
-      setSent(false)
-      return 0
-    }
+    const timer = window.setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          window.clearInterval(timer)
+          setSent(false)
+          return 0
+        }
 
-    return prev - 1
-  })
-}, 1000)
+        return prev - 1
+      })
+    }, 1000)
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full text-black dark:text-white">
       <div className="flex flex-col gap-3">
         <input
           type="email"
@@ -61,12 +61,18 @@ const timer = window.setInterval(() => {
             w-full
             rounded-full
             border
-            border-[var(--app-card-border)]
-            bg-[var(--app-surface)]
+            border-black/10
+            bg-white
             px-5
             text-[16px]
-            text-[var(--app-text)]
+            text-black
+            placeholder:text-black/45
             outline-none
+            shadow-[0_4px_14px_rgba(0,0,0,0.06)]
+            dark:border-white/15
+            dark:bg-white/10
+            dark:text-white
+            dark:placeholder:text-white/45
           "
         />
 
@@ -81,21 +87,28 @@ const timer = window.setInterval(() => {
             items-center
             justify-center
             rounded-full
-            bg-[#c86cff]
+            border
+            border-black/10
+            bg-white
             text-[16px]
             font-medium
-            text-white
+            text-black
+            shadow-[0_6px_18px_rgba(0,0,0,0.08)]
+            transition-all
             active:scale-[0.98]
             disabled:opacity-60
+            dark:border-white/15
+            dark:bg-white/10
+            dark:text-white
           "
         >
           {loading
-  ? '寄送中...'
-  : cooldown > 0
-  ? `請查看您的信箱｜${cooldown}s 後可重寄`
-  : sent
-  ? '請查看您的信箱'
-  : 'Continue with Email'}
+            ? '寄送中...'
+            : cooldown > 0
+            ? `請查看您的 Gmail｜${cooldown}s 後可重寄`
+            : sent
+            ? '請查看您的 Gmail'
+            : 'Continue with Gmail'}
         </button>
       </div>
     </div>

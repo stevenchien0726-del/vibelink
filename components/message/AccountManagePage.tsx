@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   ChevronLeft,
   ChevronRight,
@@ -43,6 +43,8 @@ export default function AccountManagePage({
   const canAddAccount = profiles.length < 2
 
   const [creatingAccount, setCreatingAccount] = useState(false)
+
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   useEffect(() => {
     loadProfiles()
@@ -383,10 +385,10 @@ localStorage.setItem(
 
           <div className="mt-[22px] overflow-hidden rounded-[24px] border border-[var(--app-card-border)] bg-[var(--app-card)] py-[20px]">
             <AccountActionRow
-              onClick={handleLogout}
-              icon={<LogOut size={21} style={{ strokeWidth: 2.1 }} />}
-              label="登出"
-            />
+  onClick={() => setShowLogoutConfirm(true)}
+  icon={<LogOut size={21} style={{ strokeWidth: 2.1 }} />}
+  label="登出"
+/>
 
             <GroupDivider />
 
@@ -404,6 +406,53 @@ localStorage.setItem(
           </div>
         </div>
       </div>
+      <AnimatePresence>
+  {showLogoutConfirm && (
+    <>
+      <motion.div
+        className="fixed inset-0 z-[500] bg-black/45"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => setShowLogoutConfirm(false)}
+      />
+
+      <motion.div
+        className="fixed left-1/2 top-1/2 z-[510] w-[82%] max-w-[340px] -translate-x-1/2 -translate-y-1/2 rounded-[28px] border border-[var(--app-card-border)] bg-[var(--app-card)] p-5 text-center shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
+        initial={{ opacity: 0, scale: 0.92, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 10 }}
+        transition={{ duration: 0.18 }}
+      >
+        <div className="text-[18px] font-semibold text-[var(--app-text)]">
+          確定要登出嗎？
+        </div>
+
+        <div className="mt-2 text-[14px] leading-relaxed text-[var(--app-muted)]">
+          登出後需要重新登入才能使用 Vibelink。
+        </div>
+
+        <div className="mt-5 flex gap-3">
+          <button
+            type="button"
+            onClick={() => setShowLogoutConfirm(false)}
+            className="h-[46px] flex-1 rounded-full bg-[var(--app-surface)] text-[15px] font-medium text-[var(--app-text)] active:scale-[0.98]"
+          >
+            取消
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="h-[46px] flex-1 rounded-full bg-[#c86cff] text-[15px] font-semibold text-white active:scale-[0.98]"
+          >
+            登出
+          </button>
+        </div>
+      </motion.div>
+    </>
+  )}
+</AnimatePresence>
     </motion.div>
   )
 }
