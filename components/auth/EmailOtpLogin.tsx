@@ -52,56 +52,65 @@ export default function EmailOtpLogin() {
     <div className="w-full text-black dark:text-white">
       <div className="flex flex-col gap-3">
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="
-            h-[54px]
-            w-full
-            rounded-full
-            border
-            border-black/10
-            bg-white
-            px-5
-            text-[16px]
-            text-black
-            placeholder:text-black/45
-            outline-none
-            shadow-[0_4px_14px_rgba(0,0,0,0.06)]
-            dark:border-white/15
-            dark:bg-white/10
-            dark:text-white
-            dark:placeholder:text-white/45
-          "
-        />
+  type="email"
+  placeholder="Email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  className="
+    h-[54px]
+    w-full
+    rounded-full
+    border
+    border-black/10
+    bg-white
+    px-5
+    text-[16px]
+
+    text-black
+    placeholder:text-black/45
+
+    outline-none
+    shadow-[0_4px_14px_rgba(0,0,0,0.06)]
+
+    dark:border-white/15
+    dark:bg-white/10
+
+    dark:text-black
+    dark:placeholder:text-black/45
+  "
+/>
 
         <button
-          type="button"
-          disabled={loading || sent || cooldown > 0}
-          onClick={handleSendOtp}
-          className="
-            flex
-            h-[54px]
-            w-full
-            items-center
-            justify-center
-            rounded-full
-            border
-            border-black/10
-            bg-white
-            text-[16px]
-            font-medium
-            text-black
-            shadow-[0_6px_18px_rgba(0,0,0,0.08)]
-            transition-all
-            active:scale-[0.98]
-            disabled:opacity-60
-            dark:border-white/15
-            dark:bg-white/10
-            dark:text-white
-          "
-        >
+  type="button"
+  disabled={loading || sent || cooldown > 0}
+  onClick={handleSendOtp}
+  className="
+    flex
+    h-[54px]
+    w-full
+    items-center
+    justify-center
+    rounded-full
+    border
+    border-black/10
+    bg-white
+
+    text-[16px]
+    font-medium
+
+    text-black
+
+    shadow-[0_6px_18px_rgba(0,0,0,0.08)]
+    transition-all
+    active:scale-[0.98]
+    disabled:opacity-60
+
+    dark:border-white/15
+    dark:bg-white/10
+
+    dark:text-black
+  "
+>
           {loading
             ? '寄送中...'
             : cooldown > 0
