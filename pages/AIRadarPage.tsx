@@ -107,6 +107,7 @@ function getRandomStarterPrompts() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [refreshCount, setRefreshCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingStep, setLoadingStep] = useState(0)
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 const [authLoading, setAuthLoading] = useState(false)
@@ -138,6 +139,19 @@ const [homeWarmImages, setHomeWarmImages] = useState<string[]>([])
 const [homeWarmVideos, setHomeWarmVideos] = useState<string[]>([])
 
 const [showTopBar, setShowTopBar] = useState(true)
+
+  const loadingTexts =
+  safeLocale === 'en'
+    ? [
+        'AI is scanning new vibes...',
+        'Matched users found...',
+        'Preparing results...',
+      ]
+    : [
+        'AI 正在掃描新的 vibe...',
+        '已找到匹配用戶...',
+        '準備生成中...',
+      ]
 
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const [selectedLibraryUser, setSelectedLibraryUser] = useState<{
@@ -670,6 +684,16 @@ function getCandidateDescription(user: any) {
 
     setIsLoading(true)
 
+    setLoadingStep(0)
+
+const loadingTimer1 = window.setTimeout(() => {
+  setLoadingStep(1)
+}, 1200)
+
+const loadingTimer2 = window.setTimeout(() => {
+  setLoadingStep(2)
+}, 2600)
+
   setShowTopBar(true)
 
   setLoading(true)
@@ -796,29 +820,30 @@ if (matchedUsers.length > 0) {
 }
 
     setAiText(nextAiText)
+    window.clearTimeout(loadingTimer1)
+window.clearTimeout(loadingTimer2)
     setLoading(false)
         setIsLoading(false)
 
-    typeText(nextAiText, () => {
-  if (matchedUsers.length > 0) {
-    setResults(matchedUsers as any)
+    if (matchedUsers.length > 0) {
+  setResults(matchedUsers as any)
 
-    setTimeout(() => {
-      setShowCandidates(true)
-    }, 120)
+  setTimeout(() => {
+    setShowCandidates(true)
+  }, 120)
 
-    setTimeout(() => {
-      setShowWalls(true)
-    }, 260)
+  setTimeout(() => {
+    setShowWalls(true)
+  }, 260)
 
-    setTimeout(() => {
-      setShowMorePrompts(true)
-    }, 420)
-  } else {
+  setTimeout(() => {
     setShowMorePrompts(true)
-  }
+  }, 420)
+} else {
+  setShowMorePrompts(true)
+}
 
-})
+typeText(nextAiText)
     } catch (renderError) {
     console.error('AI Radar render failed:', renderError)
     setLoading(false)
@@ -827,7 +852,7 @@ if (matchedUsers.length > 0) {
     setAiText('AI 雷達顯示結果時發生問題，請再試一次。')
     setDisplayedAiText('AI 雷達顯示結果時發生問題，請再試一次。')
   }
-}, 900)
+}, 320)
 }
 
   return (
@@ -866,7 +891,10 @@ if (matchedUsers.length > 0) {
   ))}
 </div>
 
-    <AIRadarLoadingOverlay open={isLoading} />
+    <AIRadarLoadingOverlay
+  open={isLoading}
+  text={loadingTexts[loadingStep]}
+/>
 
       {isAuthModalOpen && (
   <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6 backdrop-blur-[10px]">

@@ -5,9 +5,13 @@ import { Sparkles } from 'lucide-react'
 
 type Props = {
   open: boolean
+  text?: string
 }
 
-export default function AIRadarLoadingOverlay({ open }: Props) {
+export default function AIRadarLoadingOverlay({
+  open,
+  text = 'AI 正在掃描新的 vibe...',
+}: Props) {
   return (
     <AnimatePresence>
       {open && (
@@ -38,18 +42,18 @@ export default function AIRadarLoadingOverlay({ open }: Props) {
               <Sparkles size={24} strokeWidth={2.4} />
             </motion.div>
 
-            <motion.p
-              initial={{ opacity: 0.65 }}
-              animate={{ opacity: 1 }}
-              transition={{
-                duration: 0.9,
-                repeat: Infinity,
-                repeatType: 'reverse',
-              }}
-              className="text-[15px] font-medium text-[#8e3fd1]"
-            >
-              AI 正在掃描新的 vibe...
-            </motion.p>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={text}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.22 }}
+                className="text-[15px] font-medium text-[#8e3fd1]"
+              >
+                {text}
+              </motion.p>
+            </AnimatePresence>
           </motion.div>
         </motion.div>
       )}
