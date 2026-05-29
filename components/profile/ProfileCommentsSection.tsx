@@ -1,6 +1,7 @@
 'use client'
 
 import { MoreHorizontal } from 'lucide-react'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   comments: any[]
@@ -19,10 +20,17 @@ export default function ProfileCommentsSection({
   onSubmitComment,
   onOpenCommentMenu,
 }: Props) {
+  const text = {
+    comments: uiText('留言', 'Comments'),
+    placeholder: uiText('新增留言...', 'Add a comment...'),
+    send: uiText('送出', 'Send'),
+    empty: uiText('尚無留言，成為第一個留言的人', 'No comments yet. Be the first to comment.'),
+  }
+
   return (
     <div className="mt-5 border-t border-[#ddd] px-4 pt-4">
       <div className="mb-4 text-[15px] font-medium text-[#222]">
-        留言
+        {text.comments}
       </div>
 
       <div className="mb-4 flex gap-2">
@@ -32,7 +40,7 @@ export default function ProfileCommentsSection({
           onKeyDown={(e) => {
             if (e.key === 'Enter') onSubmitComment()
           }}
-          placeholder="新增留言..."
+          placeholder={text.placeholder}
           className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[#222] outline-none"
         />
 
@@ -46,13 +54,13 @@ export default function ProfileCommentsSection({
               : 'bg-[#e5e5e5] text-[#999]'
           }`}
         >
-          送出
+          {text.send}
         </button>
       </div>
 
       {comments.length === 0 ? (
         <div className="text-[14px] text-[#999]">
-          尚無留言，成為第一個留言的人
+          {text.empty}
         </div>
       ) : (
         <div className="flex flex-col gap-4 pb-8">

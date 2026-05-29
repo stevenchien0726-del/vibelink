@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { uiText } from '@/lib/uiText'
 
 export default function EmailOtpLogin() {
   const [email, setEmail] = useState('')
@@ -28,7 +29,7 @@ export default function EmailOtpLogin() {
 
     if (error) {
       console.error('Email OTP failed:', error)
-      alert(`登入信寄送失敗：${error.message}`)
+      alert(uiText(`登入信寄送失敗：${error.message}`, `Login email failed: ${error.message}`))
       return
     }
 
@@ -111,11 +112,11 @@ export default function EmailOtpLogin() {
           "
         >
           {loading
-            ? '寄送中...'
+            ? uiText('寄送中...', 'Sending...')
             : cooldown > 0
-            ? `請查看您的 Gmail｜${cooldown}s 後可重寄`
+            ? uiText(`請查看您的 Gmail｜${cooldown}s 後可重寄`, `Check your Gmail | resend in ${cooldown}s`)
             : sent
-            ? '請查看您的 Gmail'
+            ? uiText('請查看您的 Gmail', 'Check your Gmail')
             : 'Continue with Gmail'}
         </button>
       </div>

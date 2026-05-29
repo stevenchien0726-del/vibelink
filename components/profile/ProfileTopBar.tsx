@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Menu, PlusSquare } from 'lucide-react'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   isMenuOpen: boolean
@@ -16,6 +17,11 @@ export default function ProfileTopBar({
   onMenuClick,
   onUploadClick,
 }: Props) {
+  const text = {
+    close: uiText('關閉', 'CLOSE'),
+    menu: uiText('選單', 'MENU'),
+  }
+
   return (
     <div
       className="
@@ -49,7 +55,7 @@ export default function ProfileTopBar({
           "
         >
           <Menu size={18} />
-          <span>{isMenuOpen ? 'CLOSE' : 'MENU'}</span>
+          <span>{isMenuOpen ? text.close : text.menu}</span>
         </motion.button>
 
         <button

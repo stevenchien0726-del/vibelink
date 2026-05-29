@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ChevronLeft, Play } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { PostItem } from '@/components/home/sections/feed/FeedGrid'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   onClose: () => void
@@ -13,6 +14,11 @@ type Props = {
 export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
   const [items, setItems] = useState<PostItem[]>([])
   const [loading, setLoading] = useState(true)
+  const text = {
+    title: uiText('追蹤中', 'Following'),
+    loading: uiText('載入追蹤中貼文...', 'Loading following posts...'),
+    empty: uiText('目前追蹤用戶還沒有貼文或短影音', 'Followed users do not have posts or short videos yet'),
+  }
 
   useEffect(() => {
     async function loadFollowingFeed() {
@@ -153,17 +159,17 @@ export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
             className="flex items-center gap-1 text-[13px] text-[#111] active:scale-95"
           >
             <ChevronLeft size={16} />
-            <span>追蹤中</span>
+            <span>{text.title}</span>
           </button>
         </div>
 
         {loading ? (
           <div className="flex min-h-[300px] items-center justify-center text-[14px] text-[#999]">
-            載入追蹤中貼文...
+            {text.loading}
           </div>
         ) : items.length === 0 ? (
           <div className="flex min-h-[300px] items-center justify-center text-[14px] text-[#999]">
-            目前追蹤用戶還沒有貼文或短影音
+            {text.empty}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">

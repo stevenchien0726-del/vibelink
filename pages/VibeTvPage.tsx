@@ -2,8 +2,17 @@
 
 import { Ticket, ChevronRight } from 'lucide-react'
 import { VIBETV_APP_URL, openLink } from '@/lib/links'
+import { uiText } from '@/lib/uiText'
 
 export default function VibeTvPage() {
+  const text = {
+    membership: uiText('Vibe會員', 'Vibe Membership'),
+    comingSoon: uiText(
+      'Vibe TV 開發中，將隨著 Vibe 會員成長逐步開放，敬請期待!',
+      'Vibe TV is in development and will gradually open as Vibe membership grows. Stay tuned!'
+    ),
+  }
+
   return (
     <div className="min-h-screen bg-[var(--app-bg)] pb-[110px] text-[var(--app-text)]">
       <div className="mx-auto w-full max-w-[430px]">
@@ -17,7 +26,7 @@ export default function VibeTvPage() {
               className="flex h-10 items-center justify-center gap-2 rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 text-[18px] font-medium text-[var(--app-text)] active:scale-[0.98]"
             >
               <Ticket className="h-[18px] w-[18px]" strokeWidth={2.2} />
-              <span>Vibe會員</span>
+              <span>{text.membership}</span>
             </button>
 
             <div
@@ -69,7 +78,7 @@ export default function VibeTvPage() {
           <div className="mt-7 text-center">
             
             <p className="mt-3 px-6 text-[15px] leading-[1.55] text-[var(--app-muted)]">
-              Vibe TV 開發中，將隨著 Vibe 會員成長逐步開放，敬請期待!
+              {text.comingSoon}
             </p>
           </div>
         </main>

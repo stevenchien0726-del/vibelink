@@ -1,5 +1,7 @@
 'use client'
 
+import { uiText } from '@/lib/uiText'
+
 type Props = {
   refreshKey: number
   refreshCount: number
@@ -29,7 +31,7 @@ export default function AIRadarMoreWall({
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1 text-[16px] text-[var(--app-muted)]">
-          <span>更多人選</span>
+          <span>{uiText('更多人選', 'More People')}</span>
         </div>
 
         <button
@@ -42,13 +44,13 @@ export default function AIRadarMoreWall({
 >
   <span className="flex items-center gap-[6px]">
     <span className="text-[17px] leading-none text-[#c084fc]">
-  ✦
+  ↻
 </span>
 
     <span>
       {refreshCount >= 2
-        ? '已完成掃描'
-        : `再刷一次 (${2 - refreshCount}/2)`}
+        ? uiText('已完成掃描', 'Scan complete')
+        : uiText(`再刷一次 (${2 - refreshCount}/2)`, `Refresh (${2 - refreshCount}/2)`)}
     </span>
   </span>
 </button>

@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react'
 import { supabase } from '@/lib/supabase'
+import { uiText } from '@/lib/uiText'
 
 export type CreateShortVideoBoxRef = {
   submitVideo: () => Promise<void>
@@ -31,6 +32,19 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
     const [uploading, setUploading] = useState(false)
     const [aiAnalyzing, setAiAnalyzing] = useState(false)
     const [videoReloadKey, setVideoReloadKey] = useState(0)
+    const text = {
+      selectVideoFile: uiText('請選擇影片檔', 'Please select a video file'),
+      maxDuration: uiText('短影片不能超過 3 分鐘', 'Short videos cannot be longer than 3 minutes'),
+      loginFirst: uiText('請先登入', 'Please log in first'),
+      uploadFailed: (message: string) => uiText(`短影片上傳失敗：${message}`, `Short video upload failed: ${message}`),
+      thumbnailFailed: uiText('縮圖產生失敗', 'Failed to generate thumbnail'),
+      databaseFailed: (message: string) => uiText(`資料庫寫入失敗：${message}`, `Database write failed: ${message}`),
+      noVideo: uiText('尚未選擇短影片', 'No short video selected'),
+      selectVideo: uiText('選擇短影片', 'Select Short Video'),
+      captionPlaceholder: uiText('寫點內容...', 'Write something...'),
+      aiAnalyzing: uiText('AI 分析中...', 'AI analyzing...'),
+      uploading: uiText('影片上傳中...', 'Uploading video...'),
+    }
 
     useEffect(() => {
       onReadyChange?.(!!file && !uploading)
@@ -41,7 +55,7 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
       if (!selected) return
 
       if (!selected.type.startsWith('video/')) {
-        alert('請選擇影片檔')
+        alert(text.selectVideoFile)
         return
       }
 
@@ -54,7 +68,7 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
       video.onloadedmetadata = () => {
 
         if (video.duration > MAX_DURATION) {
-          alert('短影片不能超過 3 分鐘')
+          alert(text.maxDuration)
           setFile(null)
           setPreviewUrl('')
           onReadyChange?.(false)
@@ -119,7 +133,7 @@ async function extractFramesFromVideo(file: File) {
 
       if (userError || !user) {
         console.error('取得使用者失敗:', userError)
-        alert('請先登入')
+        alert(text.loginFirst)
         setUploading(false)
         onReadyChange?.(true)
         return
@@ -138,7 +152,7 @@ async function extractFramesFromVideo(file: File) {
 
       if (uploadError) {
         console.error('短影片上傳 Storage 失敗:', uploadError)
-        alert(`短影片上傳失敗：${uploadError.message}`)
+        alert(text.uploadFailed(uploadError.message))
         setUploading(false)
         onReadyChange?.(true)
         return
@@ -175,7 +189,7 @@ thumbnailCanvas.height = thumbnailVideo.videoHeight
 const ctx = thumbnailCanvas.getContext('2d')
 
 if (!ctx) {
-  alert('縮圖產生失敗')
+  alert(text.thumbnailFailed)
   setUploading(false)
   return
 }
@@ -229,7 +243,7 @@ const thumbnailUrl =
 
       if (insertError) {
         console.error('寫入 short_videos 失敗:', insertError)
-        alert(`資料庫寫入失敗：${insertError.message}`)
+        alert(text.databaseFailed(insertError.message))
         setUploading(false)
         onReadyChange?.(true)
         return
@@ -306,7 +320,7 @@ if (newVideo?.id) {
           />
         ) : (
           <div className="flex h-[360px] w-full max-w-[280px] items-center justify-center rounded-[20px] bg-black text-white/70">
-            尚未選擇短影片
+            {text.noVideo}
           </div>
         )}
 
@@ -315,19 +329,19 @@ if (newVideo?.id) {
           onClick={() => inputRef.current?.click()}
           className="h-[54px] w-full rounded-[18px] bg-[#eeeeee] text-[17px] font-medium text-[#111] shadow-sm active:scale-[0.98]"
         >
-          選擇短影片
+          {text.selectVideo}
         </button>
 
         <textarea
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          placeholder="寫點內容..."
+          placeholder={text.captionPlaceholder}
           className="min-h-[110px] w-full resize-none rounded-[18px] border border-[#e2e2e2] bg-white px-4 py-3 text-[15px] outline-none"
         />
 
         {(uploading || aiAnalyzing) && (
   <div className="text-[14px] text-[#777]">
-    {aiAnalyzing ? 'AI 分析中...' : '影片上傳中...'}
+    {aiAnalyzing ? text.aiAnalyzing : text.uploading}
   </div>
 )}
       </div>

@@ -1,24 +1,33 @@
 'use client'
 
+import { getUiLocale, uiText } from '@/lib/uiText'
+
 type SearchPageProps = {
   searchText?: string
   onBack: () => void
   onChangeSearchText: (value: string) => void
 }
 
-const mockResults = [
-  { id: 'u1', name: 'Sky.07_21', sub: '常互動對象', type: 'people' },
-  { id: 'u2', name: 'Ryan_88', sub: '最近追蹤', type: 'people' },
-  { id: 'u3', name: 'Leo_wave', sub: '配對牆創作者', type: 'people' },
-  { id: 'p1', name: '今天的海邊穿搭', sub: '貼文內容', type: 'post' },
-  { id: 'p2', name: '晚上想找人聊天', sub: '貼文內容', type: 'post' },
-]
-
 export default function SearchPage({
   searchText,
   onBack,
   onChangeSearchText,
 }: SearchPageProps) {
+  const locale = getUiLocale()
+  const text = {
+    back: uiText('返回', 'Back'),
+    search: uiText('搜尋', 'Search'),
+    results: uiText('搜尋結果', 'Search Results'),
+    noResults: uiText('找不到相關結果', 'No matching results'),
+  }
+  const mockResults = [
+    { id: 'u1', name: 'Sky.07_21', sub: locale === 'en' ? 'Popular creator' : '人氣創作者', type: 'people' },
+    { id: 'u2', name: 'Ryan_88', sub: locale === 'en' ? 'Recently active' : '最近很活躍', type: 'people' },
+    { id: 'u3', name: 'Leo_wave', sub: locale === 'en' ? 'Lifestyle and music' : '生活感與音樂', type: 'people' },
+    { id: 'p1', name: locale === 'en' ? 'Night city lifestyle' : '夜晚城市的生活感', sub: locale === 'en' ? 'Post' : '貼文', type: 'post' },
+    { id: 'p2', name: locale === 'en' ? 'Cafe daily inspiration' : '咖啡廳日常靈感', sub: locale === 'en' ? 'Post' : '貼文', type: 'post' },
+  ]
+
   const safeSearchText = (searchText ?? '').trim().toLowerCase()
 
   const filteredResults = mockResults.filter((item) =>
@@ -34,7 +43,7 @@ export default function SearchPage({
             onClick={onBack}
             className="shrink-0 text-[15px] font-medium text-[#666]"
           >
-            返回
+            {text.back}
           </button>
 
           <div className="flex h-[42px] flex-1 items-center gap-2 rounded-full border border-[#e6d8ee] bg-[#f7f1fa] px-4 shadow-[0_8px_22px_rgba(0,0,0,0.08)]">
@@ -43,7 +52,7 @@ export default function SearchPage({
               autoFocus
               value={searchText ?? ''}
               onChange={(e) => onChangeSearchText(e.target.value)}
-              placeholder="搜尋"
+              placeholder={text.search}
               className="w-full bg-transparent text-[16px] text-[#333] outline-none placeholder:text-[#999]"
             />
           </div>
@@ -51,7 +60,7 @@ export default function SearchPage({
       </div>
 
       <main className="px-[14px] pt-[74px]">
-        <h2 className="mb-3 text-[18px] font-semibold text-[#444]">搜尋結果</h2>
+        <h2 className="mb-3 text-[18px] font-semibold text-[#444]">{text.results}</h2>
 
         <div className="flex flex-col gap-3">
           {filteredResults.length > 0 ? (
@@ -72,7 +81,7 @@ export default function SearchPage({
             ))
           ) : (
             <div className="rounded-[18px] bg-white px-4 py-5 text-[15px] text-[#888] shadow-[0_4px_14px_rgba(0,0,0,0.05)]">
-              找不到符合「{searchText ?? ''}」的結果
+              {text.noResults}「{searchText ?? ''}」
             </div>
           )}
         </div>

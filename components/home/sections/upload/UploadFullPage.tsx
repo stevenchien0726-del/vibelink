@@ -11,6 +11,7 @@ import CreatePostBox, {
 import CreateShortVideoBox, {
   type CreateShortVideoBoxRef,
 } from '@/components/CreateShortVideoBox'
+import { uiText } from '@/lib/uiText'
 
 type UploadTab = 'video' | 'post'
 
@@ -30,6 +31,15 @@ export default function UploadFullPage({
 
   const createPostRef = useRef<CreatePostBoxRef>(null)
   const createShortVideoRef = useRef<CreateShortVideoBoxRef>(null)
+
+  const text = {
+    close: uiText('關閉', 'CLOSE'),
+    publishing: uiText('發佈中...', 'Publishing...'),
+    publish: uiText('發佈', 'Publish'),
+    publishFailed: uiText('發佈失敗，請檢查網路後再試一次。', 'Publishing failed. Please check your connection and try again.'),
+    shortVideo: uiText('短影片', 'Short Video'),
+    post: uiText('貼文', 'Post'),
+  }
 
   useEffect(() => {
     setIsReadyToPost(false)
@@ -77,7 +87,7 @@ export default function UploadFullPage({
 }}
               className="text-[15px] font-medium text-[var(--app-text)]"
             >
-              CLOSE
+              {text.close}
             </button>
 
             <button
@@ -104,7 +114,7 @@ export default function UploadFullPage({
     ])
   } catch (error) {
     console.error('發佈失敗或逾時:', error)
-    alert('發佈失敗，請檢查網路後再試一次。')
+    alert(text.publishFailed)
   } finally {
     setIsSubmitting(false)
   }
@@ -117,7 +127,7 @@ export default function UploadFullPage({
                 opacity: isReadyToPost ? 1 : 0.7,
               }}
             >
-              {isSubmitting ? '發佈中...' : '發佈'}
+              {isSubmitting ? text.publishing : text.publish}
             </button>
           </div>
 
@@ -192,7 +202,7 @@ export default function UploadFullPage({
                       : 'var(--app-muted)',
                 }}
               >
-                短影片
+                {text.shortVideo}
               </button>
 
               <button
@@ -206,7 +216,7 @@ export default function UploadFullPage({
                       : 'var(--app-muted)',
                 }}
               >
-                貼文
+                {text.post}
               </button>
             </div>
           </div>

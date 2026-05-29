@@ -166,7 +166,7 @@ export default function PeopleLibraryPage({
         }
 
         if (!cancelled) {
-          setPeopleError('People Library 讀取失敗，請再試一次')
+          setPeopleError(locale === 'en' ? 'People Library failed to load. Please try again.' : 'People Library 讀取失敗，請再試一次')
           setRecentUser(null)
         }
       }
@@ -405,13 +405,13 @@ export default function PeopleLibraryPage({
                 onClick={closeSheet}
                 className="flex h-[36px] min-w-[82px] items-center justify-center rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 text-[14px] font-medium text-[var(--app-text)] active:scale-[0.97]"
               >
-                CLOSE
+                {locale === 'en' ? 'CLOSE' : '關閉'}
               </button>
             </div>
 
             {peopleLoading && (
               <div className="mb-4 rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 py-3 text-center text-[13px] text-[var(--app-muted)]">
-                People Library 讀取中...
+                {locale === 'en' ? 'Loading People Library...' : 'People Library 讀取中...'}
               </div>
             )}
 
@@ -425,7 +425,7 @@ export default function PeopleLibraryPage({
                   onClick={() => window.location.reload()}
                   className="rounded-full bg-[#c893cf] px-4 py-2 text-[13px] font-medium text-white"
                 >
-                  重新讀取
+                  {locale === 'en' ? 'Retry' : '重新讀取'}
                 </button>
               </div>
             )}

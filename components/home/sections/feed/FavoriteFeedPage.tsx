@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ChevronLeft, Play } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { PostItem } from '@/components/home/sections/feed/FeedGrid'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   posts?: PostItem[]
@@ -14,6 +15,11 @@ type Props = {
 export default function FavoriteFeedPage({ onClose, onOpenPost }: Props) {
   const [items, setItems] = useState<PostItem[]>([])
   const [loading, setLoading] = useState(true)
+  const text = {
+    title: uiText('最愛', 'Favorites'),
+    loading: uiText('載入最愛貼文中...', 'Loading favorite posts...'),
+    empty: uiText('目前最愛用戶還沒有貼文或短影音', 'Favorite users do not have posts or short videos yet'),
+  }
 
   useEffect(() => {
     async function loadFavoriteFeed() {
@@ -168,17 +174,17 @@ const videoLikeCountMap = new Map<string, number>()
             className="flex items-center gap-1 text-[13px] text-[#111] active:scale-95"
           >
             <ChevronLeft size={16} />
-            <span>最愛</span>
+            <span>{text.title}</span>
           </button>
         </div>
 
         {loading ? (
           <div className="flex min-h-[300px] items-center justify-center text-[14px] text-[#999]">
-            載入最愛貼文中...
+            {text.loading}
           </div>
         ) : items.length === 0 ? (
           <div className="flex min-h-[300px] items-center justify-center text-[14px] text-[#999]">
-            目前最愛用戶還沒有貼文或短影音
+            {text.empty}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">

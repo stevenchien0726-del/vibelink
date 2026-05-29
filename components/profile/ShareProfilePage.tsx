@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Camera, ChevronLeft, Copy, Share2 } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   open: boolean
@@ -21,13 +22,22 @@ export default function ShareProfilePage({
   profile,
 }: Props) {
   const profileUrl = `https://vibelink.app/${profile?.username || 'user'}`
+  const text = {
+    copied: uiText('已複製個人檔案連結', 'Profile link copied'),
+    copyFailed: uiText('複製失敗', 'Copy failed'),
+    title: uiText('分享檔案', 'Share Profile'),
+    copyLink: uiText('複製連結', 'Copy Link'),
+    share: uiText('分享', 'Share'),
+    helperLine1: uiText('分享你的 Vibelink 個人檔案，', 'Share your Vibelink profile,'),
+    helperLine2: uiText('讓更多人認識你的 Vibe。', 'and let more people discover your vibe.'),
+  }
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(profileUrl)
-      alert('已複製個人檔案連結')
+      alert(text.copied)
     } catch {
-      alert('複製失敗')
+      alert(text.copyFailed)
     }
   }
 
@@ -78,7 +88,7 @@ export default function ShareProfilePage({
             </button>
 
             <div className="text-[18px] font-medium text-[var(--app-text)]">
-              分享檔案
+              {text.title}
             </div>
 
             <div className="w-[40px]" />
@@ -125,8 +135,8 @@ export default function ShareProfilePage({
             </motion.div>
 
             <div className="mt-7 grid w-full grid-cols-3 gap-3">
-              <ShareActionButton icon={<Copy size={24} strokeWidth={2.2} />} label="複製連結" onClick={handleCopy} />
-              <ShareActionButton icon={<Share2 size={24} strokeWidth={2.2} />} label="分享" onClick={handleNativeShare} />
+              <ShareActionButton icon={<Copy size={24} strokeWidth={2.2} />} label={text.copyLink} onClick={handleCopy} />
+              <ShareActionButton icon={<Share2 size={24} strokeWidth={2.2} />} label={text.share} onClick={handleNativeShare} />
               <ShareActionButton
                 icon={<Camera size={24} strokeWidth={2.2} />}
                 label="IG Story"
@@ -141,9 +151,9 @@ export default function ShareProfilePage({
             </div>
 
             <div className="mt-8 text-center text-[13px] leading-[1.5] text-[var(--app-muted)]">
-              分享你的 Vibelink 個人檔案，
+              {text.helperLine1}
               <br />
-              讓更多人認識你的 Vibe。
+              {text.helperLine2}
             </div>
           </div>
         </motion.div>

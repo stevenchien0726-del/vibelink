@@ -1,16 +1,20 @@
+import { uiText } from '@/lib/uiText'
+
 export default function UploadPanel() {
+  const items = [
+    ['📝', uiText('貼文', 'Post')],
+    ['🎬', uiText('短影片', 'Short Video')],
+    ['🖼️', uiText('限時動態', 'Story')],
+  ]
+
   return (
     <div className="w-[172px] rounded-[18px] border border-[#d98cf5] bg-[var(--app-surface)] px-4 py-4 text-[var(--app-text)] shadow-[0_20px_24px_rgba(0,0,0,0.18)]">
       <div className="mb-4 text-left text-[16px] font-medium text-[var(--app-muted)]">
-        上傳內容
+        {uiText('上傳內容', 'Upload Content')}
       </div>
 
       <div className="space-y-4">
-        {[
-          ['📝', '貼文'],
-          ['🎬', '短影片'],
-          ['🖼️', '限時動態'],
-        ].map(([icon, label]) => (
+        {items.map(([icon, label]) => (
           <button
             key={label}
             type="button"

@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { uiText } from '@/lib/uiText'
 
 async function compressImage(file: File): Promise<File> {
   return new Promise((resolve, reject) => {
@@ -109,6 +110,24 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
     const [loading, setLoading] = useState(false)
 
     const [uploadStatus, setUploadStatus] = useState('')
+    const text = {
+      selectImage: uiText('請先選擇圖片', 'Please select images first'),
+      maxImages: uiText('一次最多只能上傳 10 張圖片', 'You can upload up to 10 images at once'),
+      preparing: uiText('準備上傳中...', 'Preparing upload...'),
+      loginFirst: uiText('請先登入', 'Please log in first'),
+      imageTooLarge: uiText('單張圖片不能超過 12MB', 'Each image must be under 12MB'),
+      uploadingImage: (index: number, total: number) =>
+        uiText(`正在上傳第 ${index} / ${total} 張圖片...`, `Uploading image ${index} / ${total}...`),
+      creatingPost: uiText('正在建立貼文...', 'Creating post...'),
+      createPostFailed: uiText('建立貼文失敗', 'Failed to create post'),
+      writingImages: uiText('正在寫入圖片資料...', 'Writing image data...'),
+      postFailed: uiText('發文失敗，請檢查網路或圖片大小後再試一次。', 'Post failed. Please check your connection or image size and try again.'),
+      previewAlt: (index: number) => uiText(`預覽圖片 ${index}`, `Preview image ${index}`),
+      captionPlaceholder: uiText('寫點什麼...', 'Write something...'),
+      uploadPhotos: uiText('上傳相片（1–10張）', 'Upload Photos (1-10)'),
+      selectedCount: (count: number) => uiText(`已選擇 ${count} / 10 張`, `${count} / 10 selected`),
+      posting: uiText('發文中...', 'Posting...'),
+    }
 
     useEffect(() => {
       if (files.length === 0) {
@@ -132,18 +151,18 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
       if (loading) return
 
       if (files.length === 0) {
-        alert('請先選擇圖片')
+        alert(text.selectImage)
         return
       }
 
       if (files.length > 10) {
-        alert('一次最多只能上傳 10 張圖片')
+        alert(text.maxImages)
         return
       }
 
       setLoading(true)
       onReadyChange?.(false)
-      setUploadStatus('準備上傳中...')
+      setUploadStatus(text.preparing)
 
       try {
         const {
@@ -152,14 +171,14 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
         } = await supabase.auth.getUser()
 
         if (userError || !user) {
-          alert('請先登入')
+          alert(text.loginFirst)
           return
         }
 
         const uploadedImageUrls = await Promise.all(
   files.map(async (rawFile, index) => {
     if (rawFile.size > 12 * 1024 * 1024) {
-  throw new Error('單張圖片不能超過 12MB')
+  throw new Error(text.imageTooLarge)
 }
 
 let file = rawFile
@@ -180,7 +199,7 @@ try {
     const filePath =
       `${user.id}/${Date.now()}-${safeFileName}`
 
-      setUploadStatus(`正在上傳第 ${index + 1} / ${files.length} 張圖片...`)
+      setUploadStatus(text.uploadingImage(index + 1, files.length))
     const uploadResult = await Promise.race([
   supabase.storage
     .from('post-images')
@@ -206,7 +225,7 @@ if (uploadResult.error) {
   })
 )
 
-setUploadStatus('正在建立貼文...')
+setUploadStatus(text.creatingPost)
         const { data: postData, error: postError } = await supabase
           .from('posts')
           .insert({
@@ -218,7 +237,7 @@ setUploadStatus('正在建立貼文...')
 
         if (postError || !postData) {
   console.error(postError)
-  throw postError || new Error('建立貼文失敗')
+  throw postError || new Error(text.createPostFailed)
 }
 
         const imageRows = uploadedImageUrls.map((imageUrl) => ({
@@ -226,7 +245,7 @@ setUploadStatus('正在建立貼文...')
           image_url: imageUrl,
         }))
 
-        setUploadStatus('正在寫入圖片資料...')
+        setUploadStatus(text.writingImages)
         const { error: imageError } = await supabase
           .from('post_images')
           .insert(imageRows)
@@ -295,7 +314,7 @@ console.log(
         onSuccess?.(createdPost)
       } catch (error) {
         console.error('發文失敗:', error)
-        alert('發文失敗，請檢查網路或圖片大小後再試一次。')
+        alert(text.postFailed)
       } finally {
       setLoading(false)
 setUploadStatus('')
@@ -318,7 +337,7 @@ onReadyChange?.(false)
               >
                 <img
                   src={url}
-                  alt={`預覽圖片 ${index + 1}`}
+                  alt={text.previewAlt(index + 1)}
                   className="h-full w-full object-cover"
                 />
 
@@ -343,12 +362,12 @@ onReadyChange?.(false)
         <textarea
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          placeholder="寫點什麼..."
+          placeholder={text.captionPlaceholder}
           className="mb-3 h-28 w-full resize-none rounded-xl border border-gray-200 p-3 text-sm outline-none"
         />
 
         <label className="mt-2 flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-[#eeeeee] text-[15px] font-medium text-[#222] active:scale-[0.98]">
-          上傳相片（1–10張）
+          {text.uploadPhotos}
           <input
             type="file"
             accept="image/*"
@@ -363,13 +382,13 @@ onReadyChange?.(false)
 
         {files.length > 0 && (
           <p className="mt-2 text-center text-xs text-[#777]">
-            已選擇 {files.length} / 10 張
+            {text.selectedCount(files.length)}
           </p>
         )}
 
         {loading && (
   <p className="mt-3 text-center text-sm text-[#777]">
-    {uploadStatus || '發文中...'}
+    {uploadStatus || text.posting}
   </p>
 )}
       </div>

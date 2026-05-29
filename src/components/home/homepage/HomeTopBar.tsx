@@ -4,6 +4,7 @@ import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bell } from 'lucide-react'
 import { MEMBERSHIP_URL, openLink } from '@/lib/links'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   isTopBarVisible: boolean
@@ -40,6 +41,14 @@ export default function HomeTopBar({
   handleSubmitSearch,
 unreadNotificationCount = 0,
 }: Props) {
+  const text = {
+    search: uiText('搜尋', 'Search'),
+    close: uiText('關閉', 'CLOSE'),
+    membership: uiText('Vibe會員', 'Vibe Membership'),
+    following: uiText('追蹤中', 'Following'),
+    favorite: uiText('最愛', 'Favorites'),
+  }
+
   return (
     <motion.div
       className="fixed top-0 left-1/2 z-[500] pointer-events-auto h-[60px] w-full max-w-[430px] -translate-x-1/2 border-b border-[var(--app-card-border)] bg-[var(--app-bg)]/95 px-[14px] py-[8px] backdrop-blur-md"
@@ -89,7 +98,7 @@ unreadNotificationCount = 0,
                     handleSubmitSearch()
                   }
                 }}
-                placeholder="搜尋"
+                placeholder={text.search}
                 className="w-full bg-transparent text-[16px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
               />
             </div>
@@ -99,7 +108,7 @@ unreadNotificationCount = 0,
               onClick={() => setIsSearchOpen(false)}
               className="shrink-0 text-[15px] font-medium text-[var(--app-muted)]"
             >
-              CLOSE
+              {text.close}
             </button>
           </motion.div>
         ) : (
@@ -154,7 +163,7 @@ unreadNotificationCount = 0,
      transition-colors active:bg-black/5"
   >
     <MembershipIcon />
-    <span>Vibe會員</span>
+    <span>{text.membership}</span>
   </button>
 
   <button
@@ -166,7 +175,7 @@ unreadNotificationCount = 0,
   className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[var(--app-text)] transition-colors active:bg-black/5"
 >
   <FollowingIcon />
-  <span>追蹤中</span>
+  <span>{text.following}</span>
 </button>
 
   <button
@@ -178,7 +187,7 @@ unreadNotificationCount = 0,
   className="flex w-full items-center gap-3 rounded-[16px] px-4 py-4 text-[18px] text-[var(--app-text)] transition-colors active:bg-black/5"
 >
   <FavoriteIcon />
-  <span>最愛</span>
+  <span>{text.favorite}</span>
 </button>
 </div>
 </motion.div>

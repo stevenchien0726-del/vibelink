@@ -25,10 +25,16 @@ type Props = {
 const inputText = {
   'zh-TW': {
     placeholder: 'AI雷達',
+    clearSelectedUser: '清除選取用戶',
+    openPeopleLibrary: '開啟 People Library',
+    send: '送出',
   },
 
   en: {
     placeholder: 'AI Radar',
+    clearSelectedUser: 'Clear selected user',
+    openPeopleLibrary: 'Open People Library',
+    send: 'Send',
   },
 } as const
 
@@ -64,7 +70,7 @@ export default function AIRadarInputBar({
 
             <button
               type="button"
-              aria-label="Clear selected user"
+              aria-label={inputText[locale].clearSelectedUser}
               onClick={() => setSelectedLibraryUser(null)}
               className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-[#cfcfcf] text-[#555] transition active:scale-95"
             >
@@ -74,7 +80,7 @@ export default function AIRadarInputBar({
         ) : (
           <button
   type="button"
-  aria-label="Open People Library"
+  aria-label={inputText[locale].openPeopleLibrary}
   onClick={onOpenPeopleLibrary}
   className="flex h-[50px] w-full items-center justify-center gap-[8px] rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-[20px] text-[var(--app-text)] shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition active:scale-95"
 >
@@ -100,7 +106,7 @@ export default function AIRadarInputBar({
 
         <button
           type="button"
-          aria-label="Send"
+          aria-label={inputText[locale].send}
           onClick={onSubmit}
           className="ml-2 grid h-[36px] w-[36px] shrink-0 place-items-center rounded-full bg-transparent transition active:scale-95"
         >

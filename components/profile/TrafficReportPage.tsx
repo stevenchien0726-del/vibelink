@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   onClose: () => void
@@ -119,10 +120,10 @@ export default function TrafficReportPage({ onClose }: Props) {
   }
 
   const rows = [
-    { label: '觸及次數', value: stats.views },
-    { label: '按讚次數', value: stats.likes },
-    { label: '留言數', value: stats.comments },
-    { label: '新增粉絲數', value: stats.followers },
+    { label: uiText('觸及次數', 'Reach'), value: stats.views },
+    { label: uiText('按讚次數', 'Likes'), value: stats.likes },
+    { label: uiText('留言數', 'Comments'), value: stats.comments },
+    { label: uiText('新增粉絲數', 'New Followers'), value: stats.followers },
   ]
 
   return (
@@ -135,11 +136,11 @@ export default function TrafficReportPage({ onClose }: Props) {
             className="flex items-center gap-1 text-[16px] active:scale-95"
           >
             <ChevronLeft size={22} />
-            <span>流量報告</span>
+            <span>{uiText('流量報告', 'Traffic Report')}</span>
           </button>
 
           <span className="text-[14px] text-[var(--app-muted)]">
-            過去30天記錄
+            {uiText('過去30天記錄', 'Past 30 Days')}
           </span>
         </div>
 
@@ -153,14 +154,14 @@ export default function TrafficReportPage({ onClose }: Props) {
                 <span className="text-[17px] font-semibold">{row.label}</span>
 
                 <span className="text-[18px] font-semibold">
-                  {loading ? '—' : row.value}
+                  {loading ? '...' : row.value}
                 </span>
               </div>
             ))}
           </div>
 
           <p className="mt-4 text-center text-[12px] leading-5 text-[var(--app-muted)]">
-            目前數據來自 Supabase likes、comments、follows、post_views。
+            {uiText('目前數據來自 Supabase likes、comments、follows、post_views。', 'Current data comes from Supabase likes, comments, follows, and post_views.')}
           </p>
         </div>
       </div>

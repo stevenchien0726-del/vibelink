@@ -2,15 +2,22 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { Link, PlusCircle, Upload, Users } from 'lucide-react'
+import { uiText } from '@/lib/uiText'
 
 type ShareSheetProps = {
   open: boolean
   onClose: () => void
 }
 
-const mockUsers = ['(用戶名)', '(用戶名)', '(用戶名)', '(用戶名)', '(用戶名)']
-
 export default function ShareSheet({ open, onClose }: ShareSheetProps) {
+  const text = {
+    user: uiText('(用戶名)', '(Username)'),
+    copyLink: uiText('複製連結', 'Copy Link'),
+    addToStory: uiText('加到限時動態', 'Add to Story'),
+    shareToMessage: uiText('分享到訊息', 'Share to Message'),
+  }
+  const mockUsers = [text.user, text.user, text.user, text.user, text.user]
+
   return (
     <AnimatePresence>
       {open && (
@@ -70,21 +77,21 @@ export default function ShareSheet({ open, onClose }: ShareSheetProps) {
               <button className="flex flex-col items-center gap-2 active:scale-95">
                 <Link size={38} strokeWidth={2} />
                 <span className="text-center text-[14px] leading-tight text-[#111]">
-                  複製連結
+                  {text.copyLink}
                 </span>
               </button>
 
               <button className="flex flex-col items-center gap-2 active:scale-95">
                 <PlusCircle size={39} strokeWidth={2} />
                 <span className="text-center text-[14px] leading-tight text-[#111]">
-                  分享到限<br />時動態
+                  {text.addToStory}
                 </span>
               </button>
 
               <button className="flex flex-col items-center gap-2 active:scale-95">
                 <Upload size={39} strokeWidth={2} />
                 <span className="text-center text-[14px] leading-tight text-[#111]">
-                  分享至更<br />多地方
+                  {text.shareToMessage}
                 </span>
               </button>
             </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   isAuthModalOpen: boolean
@@ -11,6 +12,12 @@ export default function HomeAuthModal({
   isAuthModalOpen,
   handleGoogleLogin,
 }: Props) {
+  const text = {
+    title: uiText('登入 Vibelink', 'Log in to Vibelink'),
+    subtitle: uiText('登入後即可發文與使用完整功能', 'Log in to post and use all features'),
+    googleLogin: uiText('GOOGLE 登入', 'Continue with Google'),
+  }
+
   return (
 <AnimatePresence>
   {isAuthModalOpen && (
@@ -37,10 +44,10 @@ onTouchEnd={(e) => e.stopPropagation()}
             className="mx-auto mb-3 h-[48px]"
           />
           <h2 className="text-[22px] font-semibold text-[var(--app-text)]">
-            登入 Vibelink
+            {text.title}
           </h2>
           <p className="mt-2 text-[14px] text-[#777]">
-            登入後即可發文與使用完整功能
+            {text.subtitle}
           </p>
         </div>
 
@@ -49,7 +56,7 @@ onTouchEnd={(e) => e.stopPropagation()}
   onClick={handleGoogleLogin}
   className="mt-5 mb-5 flex h-[48px] w-full items-center justify-center gap-3 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] text-[15px] font-medium text-[var(--app-text)] shadow-sm active:scale-[0.97]"
 >
-  GOOGLE 登入
+  {text.googleLogin}
 </button>
       </motion.div>
     </motion.div>

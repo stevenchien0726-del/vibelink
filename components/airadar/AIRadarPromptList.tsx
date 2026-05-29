@@ -1,5 +1,7 @@
 'use client'
 
+import { uiText } from '@/lib/uiText'
+
 type Props = {
   prompts: string[]
   onSelectPrompt: (prompt: string) => void
@@ -25,8 +27,8 @@ export default function AIRadarPromptList({
         <span>
           {title ??
             (isRewrite
-              ? '你也可以試試這樣問'
-              : '更多提示詞')}
+              ? uiText('你也可以試試這樣問', 'You can also try asking')
+              : uiText('更多提示詞', 'More Prompts'))}
         </span>
       </div>
 
@@ -49,7 +51,7 @@ export default function AIRadarPromptList({
             <div className="flex items-start gap-2">
               {isRewrite && (
                 <div className="mt-[1px] text-[16px] text-[#8B5CF6]">
-                  ✦
+                  ↳
                 </div>
               )}
 

@@ -9,6 +9,7 @@ import {
   useTransform,
 } from 'framer-motion'
 import { Trash2 } from 'lucide-react'
+import { uiText } from '@/lib/uiText'
 
 export type FolderUser = {
   id: string
@@ -158,7 +159,7 @@ export default function PeopleFolderPage({
                 onClick={onClose}
                 className="text-[14px] font-medium text-[var(--app-text)] active:scale-95"
               >
-                CLOSE
+                {uiText('關閉', 'CLOSE')}
               </button>
             </div>
           </div>
@@ -191,7 +192,7 @@ export default function PeopleFolderPage({
               </div>
             ) : (
               <div className="rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 py-5 text-center text-[14px] text-[var(--app-muted)]">
-                目前沒有用戶
+                {uiText('目前沒有用戶', 'No users yet')}
               </div>
             )}
           </div>
