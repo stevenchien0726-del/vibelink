@@ -352,6 +352,32 @@ async function toggleShortVideoSave(post: PostItem) {
   })
 }
 
+useEffect(() => {
+  function handleOpenUpload() {
+    setIsTopMenuOpen(false)
+    setIsSearchOpen(false)
+    setIsFavoriteFeedOpen(false)
+    setIsFollowingFeedOpen(false)
+    setIsNotificationsOpen(false)
+    setIsPeopleLibraryOpen(false)
+    setIsSearchPageOpen(false)
+
+    setIsUploadOpen(true)
+  }
+
+  window.addEventListener(
+    'vibelink-open-upload',
+    handleOpenUpload
+  )
+
+  return () => {
+    window.removeEventListener(
+      'vibelink-open-upload',
+      handleOpenUpload
+    )
+  }
+}, [])
+
   useEffect(() => {
     function handleScroll() {
       const currentY = window.scrollY || window.pageYOffset

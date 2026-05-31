@@ -309,6 +309,26 @@ async function lazyLoadSavedPosts() {
   setDarkMode(next)
   document.documentElement.classList.toggle('dark', next)
 }, [])
+
+useEffect(() => {
+  function handleOpenUpload() {
+    setIsMenuOpen(false)
+    setActiveTab(0)
+    setIsUploadOpen(true)
+  }
+
+  window.addEventListener(
+    'vibelink-open-upload',
+    handleOpenUpload
+  )
+
+  return () => {
+    window.removeEventListener(
+      'vibelink-open-upload',
+      handleOpenUpload
+    )
+  }
+}, [])
   
   const [archivedPosts, setArchivedPosts] = useState<any[]>([])
   const [archivedShortVideos, setArchivedShortVideos] = useState<any[]>([])
@@ -1227,38 +1247,77 @@ useEffect(() => {
     damping: 34,
   }}
 >
-  <ProfilePostGridTabs
-    activeTab={activeTab}
-    text={text}
-    gridItems={gridItems}
-    myShortVideos={myShortVideos}
-    savedPosts={savedPosts}
-    archivedShortVideos={archivedShortVideos}
-    isFavoritesPublic={isFavoritesPublic}
-    onToggleFavoritesPublic={() =>
-      setIsFavoritesPublic((prev) => !prev)
-    }
-    onOpenPost={(post) =>
-      openSelectedPostHandler({
-        post,
-        savedPosts,
-        setSelectedPost,
-        setSelectedPostImageIndex,
-        setSelectedPostLiked,
-        setSelectedPostLikeCount,
-        setSelectedPostSaved,
-        setCommentText,
-        setComments,
-      })
-    }
-    onOpenShortVideo={(videoId) => {
-      setSelectedShortVideoId(videoId)
-      setIsShortVideoPageOpen(true)
-    }}
-    onTouchStart={handleTabTouchStart}
-    onTouchMove={handleTabTouchMove}
-    onTouchEnd={handleTabTouchEnd}
-  />
+  {activeTab === 0 &&
+  gridItems.length === 0 ? (
+
+    <div className="px-4 pt-8">
+      <button
+        type="button"
+        onClick={() => setIsUploadOpen(true)}
+        className="
+          flex
+          h-[220px]
+          w-full
+          flex-col
+          items-center
+          justify-center
+          rounded-[28px]
+          border
+          border-dashed
+          border-[#c86cff]
+          bg-[var(--app-surface)]
+          transition-all
+          active:scale-[0.98]
+        "
+      >
+        <div className="mb-4 text-[54px]">
+          ➕
+        </div>
+
+        <div className="text-[22px] font-semibold text-[#c86cff]">
+          上傳內容
+        </div>
+
+        <div className="mt-2 text-[14px] text-[var(--app-muted)]">
+          發佈你的第一篇貼文
+        </div>
+      </button>
+    </div>
+
+  ) : (
+    <ProfilePostGridTabs
+      activeTab={activeTab}
+      text={text}
+      gridItems={gridItems}
+      myShortVideos={myShortVideos}
+      savedPosts={savedPosts}
+      archivedShortVideos={archivedShortVideos}
+      isFavoritesPublic={isFavoritesPublic}
+      onToggleFavoritesPublic={() =>
+        setIsFavoritesPublic((prev) => !prev)
+      }
+      onOpenPost={(post) =>
+        openSelectedPostHandler({
+          post,
+          savedPosts,
+          setSelectedPost,
+          setSelectedPostImageIndex,
+          setSelectedPostLiked,
+          setSelectedPostLikeCount,
+          setSelectedPostSaved,
+          setCommentText,
+          setComments,
+        })
+      }
+      onOpenShortVideo={(videoId) => {
+        setSelectedShortVideoId(videoId)
+        setIsShortVideoPageOpen(true)
+      }}
+      onTouchStart={handleTabTouchStart}
+      onTouchMove={handleTabTouchMove}
+      onTouchEnd={handleTabTouchEnd}
+    />
+  )}
 </motion.div>
 
 {activeTab === 0 && (

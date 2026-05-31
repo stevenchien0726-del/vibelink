@@ -139,6 +139,7 @@ const [homeWarmImages, setHomeWarmImages] = useState<string[]>([])
 const [homeWarmVideos, setHomeWarmVideos] = useState<string[]>([])
 
 const [showTopBar, setShowTopBar] = useState(true)
+const [showNewUserUploadGuide, setShowNewUserUploadGuide] = useState(false)
 
   const loadingTexts =
   safeLocale === 'en'
@@ -391,6 +392,17 @@ void safeTask(
   () => ensureUserProfile(),
   'ai_radar_ensure_profile'
 )
+
+const { count, error } = await supabase
+  .from('posts')
+  .select('id', { count: 'exact', head: true })
+  .eq('user_id', user.id)
+
+if (!error && (count ?? 0) === 0) {
+  setShowNewUserUploadGuide(true)
+} else {
+  setShowNewUserUploadGuide(false)
+}
   }
 
   initAuth()
@@ -398,13 +410,27 @@ void safeTask(
   const { data: listener } = supabase.auth.onAuthStateChange(
     async (_event, session) => {
       if (session) {
-        setIsAuthModalOpen(false)
+  setIsAuthModalOpen(false)
 
-void safeTask(
-  () => ensureUserProfile(),
-  'ai_radar_auth_ensure_profile'
-)
-      } else {
+  void safeTask(
+    () => ensureUserProfile(),
+    'ai_radar_auth_ensure_profile'
+  )
+
+  const user = session.user
+
+  const { count, error } = await supabase
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+
+  if (!error && (count ?? 0) === 0) {
+    setShowNewUserUploadGuide(true)
+  } else {
+    setShowNewUserUploadGuide(false)
+  }
+}
+      else {
         setIsAuthModalOpen(true)
       }
     }
@@ -930,6 +956,101 @@ typeText(nextAiText)
   showTopBar={showTopBar}
   onClickVibePlus={() => openLink(MEMBERSHIP_URL)}
 />
+
+<AnimatePresence>
+  {showNewUserUploadGuide && !isAuthModalOpen && (
+    <motion.div
+      className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 px-6 backdrop-blur-[10px]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        initial={{
+          opacity: 0,
+          scale: 0.92,
+          y: 24,
+        }}
+        animate={{
+          opacity: 1,
+          scale: 1,
+          y: 0,
+        }}
+        exit={{
+          opacity: 0,
+          scale: 0.96,
+          y: 12,
+        }}
+        transition={{
+          duration: 0.28,
+        }}
+        className="
+          w-full
+          max-w-[360px]
+          rounded-[34px]
+          bg-[var(--app-card)]
+          px-7
+          py-8
+          text-center
+          shadow-[0_18px_60px_rgba(0,0,0,0.28)]
+        "
+      >
+        <div className="mb-5 text-[52px]">
+          ✨
+        </div>
+
+        <h2 className="text-[24px] font-semibold text-[var(--app-text)]">
+          歡迎來到 Vibelink
+        </h2>
+
+        <p className="mt-4 text-[15px] leading-[1.7] text-[var(--app-muted)]">
+          先上傳第一篇內容，讓 AI 雷達更容易理解你的 Vibe，
+          也讓其他人更容易找到你。
+        </p>
+
+        <button
+          type="button"
+          onClick={() => {
+            setShowNewUserUploadGuide(false)
+
+            window.dispatchEvent(
+              new CustomEvent('vibelink-open-upload')
+            )
+          }}
+          className="
+            mt-7
+            h-[54px]
+            w-full
+            rounded-full
+            bg-[#c86cff]
+            text-[16px]
+            font-semibold
+            text-white
+            shadow-[0_10px_26px_rgba(200,108,255,0.35)]
+            transition
+            active:scale-[0.98]
+          "
+        >
+          上傳內容
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setShowNewUserUploadGuide(false)
+          }
+          className="
+            mt-4
+            text-[14px]
+            text-[var(--app-muted)]
+          "
+        >
+          稍後再說
+        </button>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       {/* Main content */}
       <main
