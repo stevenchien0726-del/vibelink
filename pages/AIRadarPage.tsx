@@ -31,6 +31,8 @@ import type { Locale } from '@/i18n'
 
 import { getAIRadarText } from '@/lib/ai-radar/aiRadarI18n'
 
+import AIRadarVoiceInput from '@/components/airadar/AIRadarVoiceInput'
+
 type AIRadarPageProps = {
   locale: Locale
 }
@@ -108,6 +110,9 @@ function getRandomStarterPrompts() {
   const [refreshCount, setRefreshCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [loadingStep, setLoadingStep] = useState(0)
+
+  const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false)
+const [voiceTranscript, setVoiceTranscript] = useState('')
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 const [authLoading, setAuthLoading] = useState(false)
@@ -559,8 +564,9 @@ function handleVoiceInput() {
     const transcript = event.results?.[0]?.[0]?.transcript ?? ''
 
     if (transcript) {
-      setInputValue(transcript)
-    }
+  setVoiceTranscript(transcript)
+  setInputValue(transcript)
+}
   }
 
   recognition.onerror = () => {
@@ -568,10 +574,24 @@ function handleVoiceInput() {
   }
 
   recognition.onend = () => {
-    setIsListening(false)
-  }
+  setIsListening(false)
+}
 
   recognition.start()
+}
+
+function handleVoiceSubmit() {
+  const finalVoiceText = voiceTranscript.trim()
+
+  if (!finalVoiceText) return
+  if (loading || isLoading) return
+
+  setInputValue(finalVoiceText)
+  setIsVoicePanelOpen(false)
+
+  window.setTimeout(() => {
+    handleSubmit()
+  }, 120)
 }
 
 function getCandidateDescription(user: any) {
@@ -1004,7 +1024,7 @@ typeText(nextAiText)
         </h2>
 
         <p className="mt-4 text-[15px] leading-[1.7] text-[var(--app-muted)]">
-          先上傳第一篇內容，讓 AI 雷達更容易理解你的 Vibe，
+          請先上傳第一篇內容，讓 AI 雷達更容易理解你的 Vibe，
           也讓其他人更容易找到你。
         </p>
 
@@ -1218,7 +1238,7 @@ typeText(nextAiText)
     <button
       type="button"
       onClick={handleClearInput}
-      className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-white/18 border border-white/10 text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95"
+      className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/18 border border-white/10 text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95"
     >
       <BrushCleaning
   size={22}
@@ -1228,9 +1248,13 @@ typeText(nextAiText)
     </button>
 
     <button
-      type="button"
-      onClick={handleVoiceInput}
-      className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-white/18 border border-white/10 text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95 ${
+  type="button"
+  onClick={() => {
+    setVoiceTranscript('')
+    setIsVoicePanelOpen(true)
+    handleVoiceInput()
+  }}
+      className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/18 border border-white/10 text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95 ${
   isListening ? 'ring-2 ring-purple-400' : ''
 }`}
     >
@@ -1313,6 +1337,18 @@ typeText(nextAiText)
     </motion.div>
   )}
 </AnimatePresence>
+
+<AIRadarVoiceInput
+  open={isVoicePanelOpen}
+  transcript={voiceTranscript}
+  onClose={() => {
+    setIsVoicePanelOpen(false)
+  }}
+  onStart={() => {
+    handleVoiceInput()
+  }}
+  onSend={handleVoiceSubmit}
+/>
 
 <AnimatePresence>
   {selectedProfileUser && (
