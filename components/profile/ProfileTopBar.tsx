@@ -18,9 +18,8 @@ export default function ProfileTopBar({
   onUploadClick,
 }: Props) {
   const text = {
-    close: uiText('關閉', 'CLOSE'),
-    menu: uiText('選單', 'MENU'),
-  }
+  close: uiText('關閉', 'CLOSE'),
+}
 
   return (
     <div
@@ -55,7 +54,7 @@ export default function ProfileTopBar({
           "
         >
           <Menu size={18} />
-          <span>{isMenuOpen ? text.close : text.menu}</span>
+          <span>{isMenuOpen ? text.close : 'MENU'}</span>
         </motion.button>
 
         <button

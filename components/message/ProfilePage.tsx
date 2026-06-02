@@ -45,7 +45,7 @@ import ShareSheet from '@/components/ShareSheet'
 import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
 
 import LinkPortSheet from '@/components/profile/LinkPortSheet'
-import { mockPosts } from '@/lib/mockPosts'
+
 
 type ProfilePageProps = {
   onCloseMenu?: () => void
@@ -782,27 +782,11 @@ async function loadSavedPosts() {
       type: 'video',
     }))
 
-    const mockSavedIds =
-    typeof window !== 'undefined'
-      ? JSON.parse(localStorage.getItem('vibelink_mock_saved_posts') || '[]')
-      : []
-
-  const mockSavedPosts = mockPosts
-    .filter((post) => mockSavedIds.includes(post.id))
-    .map((post) => ({
-      id: post.id,
-      caption: post.text,
-      post_images: post.images.map((imageUrl) => ({
-        image_url: imageUrl,
-      })),
-      likes: post.likes ?? 0,
-      isLiked: !!post.isLiked,
-      isSaved: true,
-      isMock: true,
-      type: 'post',
-    }))
-
-  setSavedPosts([...mockSavedPosts, ...videoPosts, ...photoPosts])
+  
+  setSavedPosts([
+  ...videoPosts,
+  ...photoPosts,
+])
 }
 
 function archiveSelectedPost() {

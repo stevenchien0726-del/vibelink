@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { ensureUserProfile } from '@/lib/profile'
-import { mockPosts } from '@/lib/mockPosts'
+
 import type { PostItem } from '@/components/home/sections/feed/FeedGrid'
 
 type UseHomeFeedArgs = {
@@ -101,19 +101,20 @@ export function useHomeFeed({
   }, [])
 
   function withTimeout<T>(
-    promise: Promise<T>,
-    ms = 15000,
-    label = 'request'
-  ): Promise<T> {
-    return Promise.race([
-      promise,
-      new Promise<T>((_, reject) => {
-        window.setTimeout(() => {
-          reject(new Error(`${label} timeout`))
-        }, ms)
-      }),
-    ])
-  }
+  promise: Promise<T>,
+  ms = 15000,
+  label = 'request'
+): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) => {
+      window.setTimeout(() => {
+        console.warn(`${label} timeout`)
+        resolve(null)
+      }, ms)
+    }),
+  ])
+}
 
   async function safeTask<T>(
     task: () => PromiseLike<T>,
@@ -142,7 +143,11 @@ export function useHomeFeed({
         'feed'
       )
 
-      const data = await response.json()
+      if (!response) {
+  throw new Error('feed timeout')
+}
+
+const data = await response.json()
 
       if (!data?.ok) {
         throw new Error('feed failed')
@@ -197,7 +202,7 @@ export function useHomeFeed({
   retry = 0
 ) {
   try {
-    const { data: videosData, error: videosError } = await withTimeout(
+    const videosResult = await withTimeout(
       Promise.resolve(
         supabase
           .from('short_videos')
@@ -216,7 +221,17 @@ export function useHomeFeed({
       'short_videos'
     )
 
-    if (videosError) throw videosError
+    if (!videosResult) {
+  setRealVideos([])
+  return
+}
+
+const {
+  data: videosData,
+  error: videosError,
+} = videosResult
+
+if (videosError) throw videosError
 
     const userIds = Array.from(
       new Set(
@@ -229,30 +244,37 @@ export function useHomeFeed({
     let profilesMap = new Map<string, any>()
 
     if (userIds.length > 0) {
-      const { data: profilesData, error: profilesError } = await withTimeout(
-        Promise.resolve(
-          supabase
-            .from('profiles')
-            .select(`
-              id,
-              username,
-              display_name,
-              avatar_url
-            `)
-            .in('id', userIds)
-        ),
-        15000,
-        'short_video_profiles'
-      )
+      const profilesResult = await withTimeout(
+  Promise.resolve(
+    supabase
+      .from('profiles')
+      .select(`
+        id,
+        username,
+        display_name,
+        avatar_url
+      `)
+      .in('id', userIds)
+  ),
+  15000,
+  'short_video_profiles'
+)
 
-      if (!profilesError) {
-        profilesMap = new Map(
-          (profilesData ?? []).map((profile: any) => [
-            profile.id,
-            profile,
-          ])
-        )
-      }
+if (profilesResult) {
+  const {
+    data: profilesData,
+    error: profilesError,
+  } = profilesResult
+
+  if (!profilesError) {
+    profilesMap = new Map(
+      (profilesData ?? []).map((profile: any) => [
+        profile.id,
+        profile,
+      ])
+    )
+  }
+}
     }
 
     const mappedVideos: PostItem[] = (videosData ?? [])
@@ -488,13 +510,11 @@ export function useHomeFeed({
   }, [])
 
   const mergedPosts = useMemo(() => {
-    const naturalFeed = buildNaturalBalancedFeed(realPosts, realVideos)
-
-    return [
-      ...naturalFeed,
-      ...(realPosts.length < 18 ? mockPosts.slice(0, 6) : []),
-    ]
-  }, [realPosts, realVideos])
+  return buildNaturalBalancedFeed(
+    realPosts,
+    realVideos
+  )
+}, [realPosts, realVideos])
 
   const shortVideoPosts = useMemo(
     () => mergedPosts.filter((post) => isVideoPost(post)),

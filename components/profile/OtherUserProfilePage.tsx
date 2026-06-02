@@ -263,16 +263,59 @@ if (user) {
   })
 
   setPosts(
-    (user.images || []).map((image: string, index: number) => ({
-      id: `${fallbackId || 'ai-user'}-${index}`,
-      caption: user.bio || '',
-      user_id: fallbackId,
-      post_images: [{ image_url: image }],
-    }))
+    (user.images || [])
+      .slice(0, 12)
+      .map((image: string, index: number) => ({
+        id: `${fallbackId || 'ai-user'}-${index}`,
+        caption: user.bio || '',
+        user_id: fallbackId,
+        post_images: [{ image_url: image }],
+      }))
   )
 
   setLoading(false)
+
+if (isUuid(fallbackId)) {
+  void safeTask(
+    () => supabase.auth.getUser(),
+    'ai_profile_auth'
+  ).then(async (authResult) => {
+    const authUser = authResult?.data?.user
+    if (!authUser || !alive) return
+
+    const followResult = await safeTask(
+      () =>
+        supabase
+          .from('follows')
+          .select('id')
+          .eq('follower_id', authUser.id)
+          .eq('following_id', fallbackId)
+          .maybeSingle(),
+      'ai_profile_follow_state'
+    )
+
+    if (!alive) return
+
+    setIsFollowing(!!followResult?.data)
+
+    const followerResult = await safeTask(
+      () =>
+        supabase
+          .from('follows')
+          .select('*', { count: 'exact', head: true })
+          .eq('following_id', fallbackId),
+      'ai_profile_followers'
+    )
+
+    if (!alive) return
+
+    setFollowerCount(followerResult?.count ?? 0)
+  })
 }
+
+return
+}
+
     setLoading(true)
     setLoadError('')
 
@@ -438,7 +481,7 @@ void safeTask(
     return () => {
       alive = false
     }
-  }, [userId, text])
+  }, [userId, locale])
 
   const gridItems = posts.filter((post) => post.post_images?.length > 0)
 
@@ -544,10 +587,15 @@ async function toggleFavorite() {
     setIsFollowing(true)
     setFollowerCount((prev) => prev + 1)
 
-    const { error } = await supabase.from('follows').insert({
-  follower_id: user.id,
-  following_id: userId,
-})
+    const { error } = await supabase.from('follows').upsert(
+  {
+    follower_id: user.id,
+    following_id: userId,
+  },
+  {
+    onConflict: 'follower_id,following_id',
+  }
+)
 
 if (!error) {
   void supabase.from('notifications').insert({
