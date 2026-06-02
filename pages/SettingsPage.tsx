@@ -557,8 +557,9 @@ async function unblockUser(row: any) {
             <AnimatePresence>
   {myRadarOpen && (
     <MyAIRadarPage
-      onClose={() => setMyRadarOpen(false)}
-    />
+  locale={safeLocale}
+  onClose={() => setMyRadarOpen(false)}
+/>
   )}
 </AnimatePresence>
 
