@@ -10,8 +10,10 @@ Check,
   Heart,
   Ban,
   Globe,
-  MessageCircle,
+  Radar
 } from 'lucide-react'
+
+import MyAIRadarPage from '@/components/settings/MyAIRadarPage'
 
 import type { Locale } from '@/i18n'
 import { supabase } from '@/lib/supabase'
@@ -22,7 +24,7 @@ type SettingsPageProps = {
   initialShowCity?: boolean
 
   locale: Locale
-  onChangeLocale: (locale: Locale) => void
+onChangeLocale: (locale: Locale) => void
 
   onDarkModeChange?: (value: boolean) => void
   onShowCityChange?: (value: boolean) => void
@@ -31,12 +33,14 @@ type SettingsPageProps = {
   onFavoritesClick?: () => void
   onLanguageClick?: () => void
   onMessagesClick?: () => void
+  onMyRadarClick?: () => void
 }
 
 const settingsText = {
   'zh-TW': {
     title: '設定',
 
+    myRadar: '我的AI雷達',
     darkMode: '深色模式',
     darkOn: '開啟中',
     darkOff: '關閉中',
@@ -51,6 +55,7 @@ const settingsText = {
   en: {
     title: 'Settings',
 
+    myRadar: 'My AI Radar',
     darkMode: 'Dark Mode',
     darkOn: 'On',
     darkOff: 'Off',
@@ -78,6 +83,7 @@ export default function SettingsPage({
   onFavoritesClick,
   onLanguageClick,
   onMessagesClick,
+  onMyRadarClick,
 }: SettingsPageProps) {
   const safeLocale: Locale = locale ?? 'zh-TW'
   const text = settingsText[safeLocale]
@@ -86,6 +92,7 @@ export default function SettingsPage({
   const [showCity, setShowCity] = useState(initialShowCity)
 
   const [languageOpen, setLanguageOpen] = useState(false)
+  const [myRadarOpen, setMyRadarOpen] = useState(false)
 
   const [blockedOpen, setBlockedOpen] = useState(false)
 const [blockedUsers, setBlockedUsers] = useState<any[]>([])
@@ -385,6 +392,16 @@ async function unblockUser(row: any) {
       exit={{ x: -24, opacity: 0 }}
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
     >
+      <div className="mb-[24px] overflow-hidden rounded-[22px] bg-[var(--app-card)] py-[20px]">
+  <SettingsRow
+    icon={<Radar size={21} strokeWidth={2.1} />}
+    label={text.myRadar}
+    onClick={() => {
+  setMyRadarOpen(true)
+  onMyRadarClick?.()
+}}
+  />
+</div>
       <div className="rounded-[22px] bg-[var(--app-card)] px-4 py-4">
         <div className="flex items-center justify-between py-1">
           <div className="flex items-center gap-3">
@@ -536,6 +553,15 @@ async function unblockUser(row: any) {
           </motion.div>
         )}
             </AnimatePresence>
+
+            <AnimatePresence>
+  {myRadarOpen && (
+    <MyAIRadarPage
+      onClose={() => setMyRadarOpen(false)}
+    />
+  )}
+</AnimatePresence>
+
     </motion.div>
   )
 }
