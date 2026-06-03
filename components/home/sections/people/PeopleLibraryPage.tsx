@@ -71,7 +71,7 @@ export default function PeopleLibraryPage({
   onOpenProfile,
 }: PeopleLibraryPageProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
-  const [recentUser, setRecentUser] = useState<PickedUser | null>(null)
+  const [recentUsers, setRecentUsers] = useState<PickedUser[]>([])
   const [favoriteUsers, setFavoriteUsers] = useState<FolderUser[]>([])
   const [peopleLoading, setPeopleLoading] = useState(true)
   const [peopleError, setPeopleError] = useState('')
@@ -84,10 +84,10 @@ export default function PeopleLibraryPage({
 
   return {
     ...emptyFolders,
-    recent: recentUser ? [recentUser] : [],
-    favorite: favoriteUsers,
+    recent: recentUsers,
+favorite: favoriteUsers,
   }
-}, [favoriteUsers, folders, recentUser])
+}, [favoriteUsers, folders, recentUsers])
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const canDragCloseRef = useRef(true)
@@ -99,7 +99,7 @@ export default function PeopleLibraryPage({
   useEffect(() => {
     let cancelled = false
 
-    async function fetchRecentFollowedUser(retry = 0) {
+    async function fetchRecentFollowedUsers(retry = 0) {
       try {
         setPeopleLoading(true)
         setPeopleError('')
@@ -112,7 +112,7 @@ export default function PeopleLibraryPage({
         if (authError) throw authError
 
         if (!user) {
-          if (!cancelled) setRecentUser(null)
+          if (!cancelled) setRecentUsers([])
           return
         }
 
@@ -121,53 +121,78 @@ export default function PeopleLibraryPage({
           .select('following_id, created_at')
           .eq('follower_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(1)
+          .limit(50)
 
         if (followError) throw followError
 
-        const followingId = followRows?.[0]?.following_id
+        const allFollowingIds =
+  followRows
+    ?.map((row: any) => row.following_id)
+    .filter(Boolean) ?? []
 
-        if (!followingId) {
-          if (!cancelled) setRecentUser(null)
-          return
-        }
+const { data: favoriteRowsForRecent } = await supabase
+  .from('favorite_users')
+  .select('favorite_user_id')
+  .eq('user_id', user.id)
 
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, display_name, avatar_url')
-          .eq('id', followingId)
-          .maybeSingle()
+const favoriteIdSet = new Set(
+  (favoriteRowsForRecent ?? [])
+    .map((row: any) => row.favorite_user_id)
+    .filter(Boolean)
+)
 
-        if (profileError) throw profileError
+const followingIds = allFollowingIds
+  .filter((id: string) => !favoriteIdSet.has(id))
+  .slice(0, 50)
 
-        if (!profileData) {
-          if (!cancelled) setRecentUser(null)
-          return
-        }
+if (followingIds.length === 0) {
+  if (!cancelled) setRecentUsers([])
+  return
+}
 
-        if (!cancelled) {
-          setRecentUser({
-            id: profileData.id,
-            name:
-              profileData.display_name ||
-              profileData.username ||
-              'Vibelink User',
-            avatar: profileData.avatar_url || '',
-          })
-        }
+const { data: profiles, error: profileError } = await supabase
+  .from('profiles')
+  .select('id, username, display_name, avatar_url')
+  .in('id', followingIds)
+
+if (profileError) throw profileError
+
+const profileMap = new Map(
+  (profiles ?? []).map((profile: any) => [profile.id, profile])
+)
+
+const orderedUsers: FolderUser[] = followingIds
+  .map((id: string) => {
+    const profile: any = profileMap.get(id)
+    if (!profile) return null
+
+    return {
+      id: profile.id,
+      name:
+        profile.display_name ||
+        profile.username ||
+        'Vibelink User',
+      avatar: profile.avatar_url || '',
+    }
+  })
+  .filter(Boolean) as FolderUser[]
+
+if (!cancelled) {
+  setRecentUsers(orderedUsers)
+}
       } catch (error) {
         console.error('People Library 最近追蹤讀取失敗:', error)
 
         if (retry < 1) {
           window.setTimeout(() => {
-            fetchRecentFollowedUser(retry + 1)
+            fetchRecentFollowedUsers(retry + 1)
           }, 600)
           return
         }
 
         if (!cancelled) {
           setPeopleError(locale === 'en' ? 'People Library failed to load. Please try again.' : 'People Library 讀取失敗，請再試一次')
-          setRecentUser(null)
+          setRecentUsers([])
         }
       }
     }
@@ -254,7 +279,7 @@ export default function PeopleLibraryPage({
       setPeopleLoading(true)
       setPeopleError('')
 
-      await fetchRecentFollowedUser()
+      await fetchRecentFollowedUsers()
       if (cancelled) return
 
       await delay(600)
