@@ -67,9 +67,9 @@ export function useProfileBootstrap({
         bootstrappedUserIdRef.current = user.id
 
         void safeTask(
-          () => ensureMyProfile(),
-          'ensure_my_profile'
-        )
+  () => ensureMyProfile(),
+  'auth_ensure_profile'
+)
 
         if (alive) {
           setProfileLoading(false)

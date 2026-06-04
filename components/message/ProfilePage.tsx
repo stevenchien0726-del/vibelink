@@ -673,9 +673,12 @@ async function toggleSelectedPostSave() {
   {showTrafficReportPage && (
     <TrafficReportPage
       onClose={() => {
-        setShowTrafficReportPage(false)
-        setIsMenuOpen(true)
-      }}
+  setShowTrafficReportPage(false)
+
+  setTimeout(() => {
+    setIsMenuOpen(true)
+  }, 320)
+}}
     />
   )}
 </AnimatePresence>

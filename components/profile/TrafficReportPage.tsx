@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { ChevronLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { uiText } from '@/lib/uiText'
@@ -127,7 +128,16 @@ export default function TrafficReportPage({ onClose }: Props) {
   ]
 
   return (
-    <div className="fixed inset-0 z-[700] bg-[var(--app-bg)] text-[var(--app-text)]">
+  <motion.div
+    className="fixed inset-0 z-[700] bg-[var(--app-bg)] text-[var(--app-text)]"
+    initial={{ x: '100%' }}
+    animate={{ x: 0 }}
+    exit={{ x: '100%' }}
+    transition={{
+      duration: 0.34,
+      ease: [0.22, 1, 0.36, 1],
+    }}
+  >
       <div className="mx-auto min-h-screen w-full max-w-[430px]">
         <div className="sticky top-0 z-10 flex h-[44px] items-center justify-between border-b border-white/10 bg-[var(--app-bg)] px-4">
           <button
@@ -165,6 +175,6 @@ export default function TrafficReportPage({ onClose }: Props) {
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
