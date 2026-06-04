@@ -1350,9 +1350,10 @@ typeText(nextAiText)
   onSend={handleVoiceSubmit}
 />
 
-<AnimatePresence>
+<AnimatePresence mode="wait">
   {selectedProfileUser && (
     <motion.div
+      key={selectedProfileUser.id}
       className="fixed inset-0 z-[999] bg-[var(--app-bg)]"
       initial={{ x: '100%' }}
       animate={{ x: 0 }}

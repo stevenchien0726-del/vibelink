@@ -85,21 +85,22 @@ function VideoPreview({
 }) {
   const previewImage = getPreviewImage(post)
   const videoSrc = getVideoSrc(post)
+  const isVideoPreview = !!videoSrc && previewImage === videoSrc
 
-  const [displaySrc, setDisplaySrc] = useState(previewImage || '')
+  const [displaySrc, setDisplaySrc] = useState(isVideoPreview ? '' : previewImage || '')
   const [imageReady, setImageReady] = useState(false)
-  const [imageFailed, setImageFailed] = useState(!previewImage)
+  const [imageFailed, setImageFailed] = useState(!previewImage || isVideoPreview)
   const [videoReady, setVideoReady] = useState(false)
 
   const retryRef = useRef(0)
 
   useEffect(() => {
-    setDisplaySrc(previewImage || '')
+    setDisplaySrc(isVideoPreview ? '' : previewImage || '')
     setImageReady(false)
-    setImageFailed(!previewImage)
+    setImageFailed(!previewImage || isVideoPreview)
     setVideoReady(false)
     retryRef.current = 0
-  }, [previewImage, videoSrc])
+  }, [previewImage, videoSrc, isVideoPreview])
 
   function retryLoadImage() {
     if (!previewImage) {

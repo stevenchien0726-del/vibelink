@@ -21,7 +21,11 @@ const SHORT_VIDEO_SECOND_BATCH = 12
 const SHORT_VIDEO_FULL_BATCH = 24
 
 function isVideoPost(post: PostItem) {
-  return post.type === 'video' || !!post.videoUrl
+  return (
+    post.type === 'video' ||
+    !!post.videoUrl ||
+    !!(post as any).video_url
+  )
 }
 
 function getNaturalFeedScore(post: PostItem, index: number) {
@@ -37,13 +41,17 @@ function buildNaturalBalancedFeed(
   realPosts: PostItem[],
   realVideos: PostItem[]
 ) {
-  const allItems = [...realPosts, ...realVideos]
+  const scoredPosts = realPosts.map((post, index) => ({
+    post,
+    score: getNaturalFeedScore(post, index),
+  }))
 
-  const naturallySorted = allItems
-    .map((post, index) => ({
-      post,
-      score: getNaturalFeedScore(post, index),
-    }))
+  const scoredVideos = realVideos.map((post, index) => ({
+    post,
+    score: getNaturalFeedScore(post, index),
+  }))
+
+  const naturallySorted = [...scoredPosts, ...scoredVideos]
     .sort((a, b) => b.score - a.score)
     .map((item) => item.post)
 
@@ -121,7 +129,7 @@ export function useHomeFeed({
     label: string
   ): Promise<T | null> {
     try {
-      return await withTimeout(Promise.resolve(task()), 5000, label)
+      return await withTimeout(Promise.resolve(task()), 15000, label)
     } catch (error) {
       console.warn(`${label} failed:`, error)
       return null
@@ -296,7 +304,11 @@ if (profilesResult) {
           text: video.caption || '',
           likes: 0,
 
-          images: video.thumbnail_url ? [video.thumbnail_url] : [],
+          images: video.thumbnail_url
+            ? [video.thumbnail_url]
+            : video.video_url
+              ? [video.video_url]
+              : [],
 
           thumbnailUrl: video.thumbnail_url || '',
           thumbnail_url: video.thumbnail_url || '',

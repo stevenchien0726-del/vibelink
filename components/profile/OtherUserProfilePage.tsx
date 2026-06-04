@@ -134,7 +134,7 @@ export default function OtherUserProfilePage({
 
   function withTimeout<T>(
   promise: PromiseLike<T>,
-  ms = 10000,
+  ms = 18000,
   label = 'request'
 ): Promise<T | null> {
   return Promise.race([
@@ -153,7 +153,7 @@ async function safeTask<T>(
   label: string
 ): Promise<T | null> {
   try {
-    return await withTimeout(task(), 10000, label)
+    return await withTimeout(task(), 18000, label)
   } catch (error) {
     console.warn(`${label} failed:`, error)
     return null
@@ -222,6 +222,8 @@ const [followersLoading, setFollowersLoading] = useState(false)
   const [isFollowMenuOpen, setIsFollowMenuOpen] = useState(false)
   const [isUnfollowConfirmOpen, setIsUnfollowConfirmOpen] = useState(false)
   const [isFollowing, setIsFollowing] = useState(false)
+  const [followStateLoaded, setFollowStateLoaded] = useState(false)
+
   const [followerCount, setFollowerCount] = useState(0)
   const [isLinkPortOpen, setIsLinkPortOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
@@ -238,6 +240,9 @@ const [commentText, setCommentText] = useState('')
     async function loadProfile(retry = 0) {
   try {
     const fallbackId = userId ?? user?.id ?? ''
+
+    setFollowStateLoaded(false)
+    setIsFollowing(false)
 
 if (user) {
   setProfile({
@@ -277,40 +282,45 @@ if (user) {
 
 if (isUuid(fallbackId)) {
   void safeTask(
-    () => supabase.auth.getUser(),
-    'ai_profile_auth'
-  ).then(async (authResult) => {
-    const authUser = authResult?.data?.user
-    if (!authUser || !alive) return
+    () => supabase.auth.getSession(),
+    'ai_profile_session'
+  ).then(async (sessionResult) => {
+    const authUser = sessionResult?.data?.session?.user
 
-    const followResult = await safeTask(
-      () =>
-        supabase
-          .from('follows')
-          .select('id')
-          .eq('follower_id', authUser.id)
-          .eq('following_id', fallbackId)
-          .maybeSingle(),
-      'ai_profile_follow_state'
-    )
+    if (!authUser || !alive) {
+      setFollowStateLoaded(true)
+      return
+    }
+
+    const [followResult, followerResult] = await Promise.all([
+      safeTask(
+        () =>
+          supabase
+            .from('follows')
+            .select('id')
+            .eq('follower_id', authUser.id)
+            .eq('following_id', fallbackId)
+            .maybeSingle(),
+        'ai_profile_follow_state'
+      ),
+      safeTask(
+        () =>
+          supabase
+            .from('follows')
+            .select('*', { count: 'exact', head: true })
+            .eq('following_id', fallbackId),
+        'ai_profile_followers'
+      ),
+    ])
 
     if (!alive) return
 
-    setIsFollowing(!!followResult?.data)
-
-    const followerResult = await safeTask(
-      () =>
-        supabase
-          .from('follows')
-          .select('*', { count: 'exact', head: true })
-          .eq('following_id', fallbackId),
-      'ai_profile_followers'
-    )
-
-    if (!alive) return
-
+        setIsFollowing(!!followResult?.data)
     setFollowerCount(followerResult?.count ?? 0)
+    setFollowStateLoaded(true)
   })
+} else {
+  setFollowStateLoaded(true)
 }
 
 return
@@ -375,7 +385,7 @@ const { data: profileData, error: profileError } = profileResult
       setLoading(false)
 
       setPostsLoading(true)
-setFollowersLoading(true)
+setFollowersLoading(false)
 setVideosLoading(false)
 
 // 第二批：先讀貼文，讓 Profile 內容最快出現
@@ -412,7 +422,7 @@ void safeTask(
 })
 
 // 第三批：再讀粉絲數與追蹤狀態
-await delay(700)
+
 
 if (!alive) return
 
@@ -436,22 +446,26 @@ void safeTask(
   setFollowerCount(followerResult?.count ?? 0)
   setFollowersLoading(false)
 
-  if (!authUser) return
+  if (!authUser) {
+  setFollowStateLoaded(true)
+  return
+}
 
   const followResult = await safeTask(
-    () =>
-      supabase
-        .from('follows')
-        .select('id')
-        .eq('follower_id', authUser.id)
-        .eq('following_id', resolvedUserId)
-        .maybeSingle(),
-    'other_profile_follow_state'
-  )
+  () =>
+    supabase
+      .from('follows')
+      .select('id')
+      .eq('follower_id', authUser.id)
+      .eq('following_id', resolvedUserId)
+      .maybeSingle(),
+  'other_profile_follow_state'
+)
 
-  if (!alive) return
+if (!alive) return
 
-  setIsFollowing(!!followResult?.data)
+setIsFollowing(!!followResult?.data)
+setFollowStateLoaded(true)
 })
 
 // 短影片不要初始化就讀，等用戶點第二個 tab 再讀
@@ -748,8 +762,9 @@ if (!error) {
 
             <div className="mb-4 flex w-full items-center gap-3">
               <button
-                type="button"
-                onClick={() => {
+  type="button"
+  disabled={!followStateLoaded && isUuid(resolvedUserId) && !!userId}
+  onClick={() => {
                   if (isFollowing) {
                     setIsFollowMenuOpen(true)
                     return
@@ -763,7 +778,13 @@ if (!error) {
                   color: isFollowing ? '#111' : '#fff',
                 }}
               >
-                <span>{isFollowing ? text.following : text.follow}</span>
+                <span>
+  {!followStateLoaded && isUuid(resolvedUserId) && !!userId
+  ? '讀取中'
+  : isFollowing
+    ? text.following
+    : text.follow}
+</span>
 
                 {isFollowing && <ChevronDown size={20} strokeWidth={3} />}
               </button>
