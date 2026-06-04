@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import ProfileHeader from '@/components/profile/ProfileHeader'
@@ -21,15 +23,10 @@ import type { Locale } from '@/i18n'
 import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import SettingsPage from '@/pages/SettingsPage'
-import AnalyticsPage from '@/components/profile/AnalyticsPage'
 import ArchivedContentPage from '@/components/profile/ArchivedContentPage'
 import NotificationsPage from '@/components/profile/NotificationsPage'
 import ShareProfilePage from '@/components/profile/ShareProfilePage'
 import PostInsightsPage from '@/components/profile/PostInsightsPage'
-
-import {
-  loadMyFollowerCount as fetchMyFollowerCount,
-} from '@/lib/profile/profileApi'
 
 import {
   openSelectedPostHandler,
@@ -39,12 +36,20 @@ import {
 
 import { supabase } from '@/lib/supabase'
 
-
 import WideMenuSheet from '@/components/WideMenuSheet'
 import ShareSheet from '@/components/ShareSheet'
 import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
 
 import LinkPortSheet from '@/components/profile/LinkPortSheet'
+import { useArchivedContent } from '@/src/hooks/profile/useArchivedContent'
+import { useMyPosts } from '@/src/hooks/profile/useMyPosts'
+import { useMyProfileData } from '@/src/hooks/profile/useMyProfileData'
+import { useMyShortVideos } from '@/src/hooks/profile/useMyShortVideos'
+import { useProfileBootstrap } from '@/src/hooks/profile/useProfileBootstrap'
+import { safeTask } from '@/src/hooks/profile/useProfileTasks'
+import { useProfileGestures } from '@/src/hooks/profile/useProfileGestures'
+import { useProfileUIState } from '@/src/hooks/profile/useProfileUIState'
+import { useSavedPosts } from '@/src/hooks/profile/useSavedPosts'
 
 
 type ProfilePageProps = {
@@ -63,302 +68,51 @@ export default function ProfilePage({
     const safeLocale: Locale = locale ?? 'zh-TW'
   const text = profileText[safeLocale]
 
-  function withTimeout<T>(
-  promise: PromiseLike<T>,
-  ms = 10000,
-  label = 'request'
-): Promise<T> {
-  return Promise.race([
-    Promise.resolve(promise),
-    new Promise<T>((_, reject) => {
-      window.setTimeout(() => {
-        reject(new Error(`${label} timeout`))
-      }, ms)
-    }),
-  ])
-}
-async function safeTask<T>(
-  task: () => PromiseLike<T>,
-  label: string
-): Promise<T | null> {
-  try {
-    return await withTimeout(task(), 10000, label)
-  } catch (error) {
-    console.warn(`${label} failed:`, error)
-    return null
-  }
-}
-  
-  useEffect(() => {
-  let alive = true
-
- async function init(retry = 0) {
-  try {
-    setProfileLoading(true)
-    setProfileError('')
-
-    const {
-  data: { session },
-} = await supabase.auth.getSession()
-
-    const user = session?.user
-
-    if (!alive) return
-
-    if (!user) {
-      setCurrentUserId(null)
-      setProfileLoading(false)
-      return
-    }
-
-    setCurrentUserId(user.id)
-
-await withTimeout(ensureMyProfile(), 10000, 'ensure_my_profile')
-
-if (!alive) return
-
-setProfileLoading(false)
-
-window.setTimeout(async () => {
-  try {
-    await loadMyShortVideos()
-
-    const topVideos =
-      (myShortVideos ?? [])
-        .map((video: any) => video.video_url)
-        .filter(Boolean)
-        .slice(0, 4)
-
-    setProfileWarmVideoUrls(topVideos)
-  } catch (err) {
-    console.warn('profile short video warmup failed', err)
-  }
-}, 1200)
-
-window.setTimeout(async () => {
-  try {
-    await lazyLoadSavedPosts()
-
-    const images =
-      (savedPosts ?? [])
-        .flatMap((post: any) =>
-          post.post_images?.map((img: any) => img.image_url) ?? []
-        )
-        .filter(Boolean)
-        .slice(0, 12)
-
-    setProfileWarmSavedImages(images)
-  } catch (err) {
-    console.warn('profile saved warmup failed', err)
-  }
-}, 2000)
-
-// 第二批：先讀貼文
-await delay(500)
-
-if (!alive) return
-
-void safeTask(() => loadMyPosts(), 'my_posts')
-
-// 第三批：再讀 followers
-await delay(700)
-
-if (!alive) return
-
-void safeTask(
-  () => loadMyFollowerCount(),
-  'followers'
-)
-  } catch (error) {
-    console.error('自己 Profile 初始化失敗:', error)
-
-    if (retry < 1) {
-      window.setTimeout(() => {
-        init(retry + 1)
-      }, 600)
-
-      return
-    }
-
-    if (!alive) return
-
-    setProfileError('Profile 讀取失敗')
-    setProfileLoading(false)
-  }
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms))
-}
-
-  init()
+  const {
+    isMenuOpen,
+    setIsMenuOpen,
+    isUploadOpen,
+    setIsUploadOpen,
+    isLinkPortOpen,
+    setIsLinkPortOpen,
+    activeTab,
+    setActiveTab,
+    showSettingsPage,
+    setShowSettingsPage,
+    showTrafficReportPage,
+    setShowTrafficReportPage,
+    showArchivedPage,
+    setShowArchivedPage,
+    showNotificationsPage,
+    setShowNotificationsPage,
+    showShareProfilePage,
+    setShowShareProfilePage,
+    showPostInsightsPage,
+    setShowPostInsightsPage,
+    showAccountManagePage,
+    setShowAccountManagePage,
+    isFavoritesPublic,
+    setIsFavoritesPublic,
+    darkMode,
+    setDarkMode,
+    isEditProfileOpen,
+    setIsEditProfileOpen,
+    avatarUploading,
+    setAvatarUploading,
+  } = useProfileUIState()
 
   const {
-    data: { subscription },
-  } = supabase.auth.onAuthStateChange((_event, session) => {
-    const user = session?.user
-
-    if (!user) {
-      setCurrentUserId(null)
-      return
-    }
-
-    setCurrentUserId(user.id)
-
-    window.setTimeout(async () => {
-  if (!alive) return
-
-  await safeTask(
-    () => ensureMyProfile(),
-    'auth_ensure_profile'
-  )
-
-  await delay(500)
-
-  if (!alive) return
-
-  void safeTask(
-    () => loadMyPosts(),
-    'auth_my_posts'
-  )
-
-  await delay(700)
-
-  if (!alive) return
-
-  void safeTask(
-    () => loadMyFollowerCount(),
-    'auth_followers'
-  )
-}, 300)
+    profile,
+    setProfile,
+    followerCount,
+    ensureMyProfile,
+    loadMyFollowerCount,
+    uploadAvatar,
+    updateProfile,
+  } = useMyProfileData({
+    setAvatarUploading,
+    setIsEditProfileOpen,
   })
-
-  return () => {
-    alive = false
-    subscription.unsubscribe()
-  }
-}, [])
-
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isUploadOpen, setIsUploadOpen] = useState(false)
-  const [isLinkPortOpen, setIsLinkPortOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState(0)
-
-  const [tabDragX, setTabDragX] = useState(0)
-
-  const [showSettingsPage, setShowSettingsPage] = useState(false)
-  const [showAnalyticsPage, setShowAnalyticsPage] = useState(false)
-  const [showTrafficReportPage, setShowTrafficReportPage] = useState(false)
-
-  const [showArchivedPage, setShowArchivedPage] = useState(false)
-  const [showNotificationsPage, setShowNotificationsPage] = useState(false)
-  const [showShareProfilePage, setShowShareProfilePage] = useState(false)
-  const [showPostInsightsPage, setShowPostInsightsPage] = useState(false)
-
-  const [showAccountManagePage, setShowAccountManagePage] = useState(false)
-  const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
-  const [darkMode, setDarkMode] = useState(false)
-
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
-  const [avatarUploading, setAvatarUploading] = useState(false)
-
-  const [profile, setProfile] = useState<any>(null)
-const [followerCount, setFollowerCount] = useState(0)
-
-const [profileLoading, setProfileLoading] = useState(true)
-const [profileError, setProfileError] = useState('')
-
-  const tabTouchStartX = useRef<number | null>(null)
-  const tabTouchDeltaX = useRef(0)
-
-  const [myPosts, setMyPosts] = useState<any[]>([])
-
-  const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false)
-const [hasMorePosts, setHasMorePosts] = useState(true)
-const loadMorePostsRef = useRef<HTMLDivElement | null>(null)
-
-  const [myShortVideos, setMyShortVideos] = useState<any[]>([])
-  const [selectedShortVideoId, setSelectedShortVideoId] = useState<string | undefined>()
-const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
-
-  const [savedPosts, setSavedPosts] = useState<any[]>([])
-
-  const [profileWarmVideoUrls, setProfileWarmVideoUrls] = useState<string[]>([])
-const [profileWarmSavedImages, setProfileWarmSavedImages] = useState<string[]>([])
-
-  const [hasLoadedSavedPosts, setHasLoadedSavedPosts] = useState(false)
-const [isLoadingSavedPosts, setIsLoadingSavedPosts] = useState(false)
-
-async function lazyLoadSavedPosts() {
-  if (hasLoadedSavedPosts || isLoadingSavedPosts) return
-
-  setIsLoadingSavedPosts(true)
-
-  try {
-    await safeTask(() => loadSavedPosts(), 'lazy_saved_posts')
-    setHasLoadedSavedPosts(true)
-  } finally {
-    setIsLoadingSavedPosts(false)
-  }
-}
-
-  useEffect(() => {
-  const saved = localStorage.getItem('vibelink-dark-mode')
-  const next = saved === 'dark'
-
-  setDarkMode(next)
-  document.documentElement.classList.toggle('dark', next)
-}, [])
-
-useEffect(() => {
-  function handleOpenUpload() {
-    setIsMenuOpen(false)
-    setActiveTab(0)
-    setIsUploadOpen(true)
-  }
-
-  window.addEventListener(
-    'vibelink-open-upload',
-    handleOpenUpload
-  )
-
-  return () => {
-    window.removeEventListener(
-      'vibelink-open-upload',
-      handleOpenUpload
-    )
-  }
-}, [])
-  
-  const [archivedPosts, setArchivedPosts] = useState<any[]>([])
-  const [archivedShortVideos, setArchivedShortVideos] = useState<any[]>([])
-
-  useEffect(() => {
-  const savedPosts = localStorage.getItem(
-    'vibelink_archived_posts'
-  )
-
-  if (savedPosts) {
-    try {
-      setArchivedPosts(JSON.parse(savedPosts))
-    } catch (error) {
-      console.error('讀取典藏貼文失敗:', error)
-    }
-  }
-
-  const savedVideos = localStorage.getItem(
-    'vibelink_archived_short_videos'
-  )
-
-  if (savedVideos) {
-    try {
-      setArchivedShortVideos(JSON.parse(savedVideos))
-    } catch (error) {
-      console.error('讀取典藏短影片失敗:', error)
-    }
-  }
-}, [])
-
 
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
@@ -373,454 +127,70 @@ const [selectedPostLikeCount, setSelectedPostLikeCount] = useState(0)
 const [commentText, setCommentText] = useState('')
 const [commentLoading, setCommentLoading] = useState(false)
 
-const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 const [selectedComment, setSelectedComment] = useState<any>(null)
 const [isCommentMenuOpen, setIsCommentMenuOpen] = useState(false)
 const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
 
-  const postImageTouchStartX = useRef<number | null>(null)
-  const postImageTouchDeltaX = useRef(0)
-  const postImageLastTapTimeRef = useRef(0)
-
-  const postDetailTouchStartX = useRef<number | null>(null)
-const postDetailTouchStartY = useRef<number | null>(null)
-
-  const gridItems = [...myPosts]
-  .filter(
-    (post) =>
-      post.post_images?.length > 0 &&
-      !archivedPosts.some((archived) => archived.id === post.id)
-  )
-  .sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1
-    if (!a.isPinned && b.isPinned) return 1
-
-    const aTime = new Date(
-      a.pinned_at || a.created_at || 0
-    ).getTime()
-
-    const bTime = new Date(
-      b.pinned_at || b.created_at || 0
-    ).getTime()
-
-    return bTime - aTime
-  })
-
-  async function ensureMyProfile() {
   const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    console.error('尚未登入')
-    return
-  }
-
-  const { data: existingProfile, error: selectError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (selectError) {
-  console.error('讀取 profile 失敗:', selectError)
-  throw selectError
-}
-
-  if (existingProfile) {
-    setProfile(existingProfile)
-    return
-  }
-
-  const fallbackName =
-    user.user_metadata?.full_name ||
-    user.user_metadata?.name ||
-    user.email?.split('@')[0] ||
-    'Vibelink User'
-
-  const newProfile = {
-    id: user.id,
-    username: `user_${user.id.slice(0, 5)}`,
-    display_name: fallbackName,
-    avatar_url: user.user_metadata?.avatar_url || null,
-    bio: '',
-  }
-
-  const { error: insertError } = await supabase
-  .from('profiles')
-  .insert(newProfile)
-
-if (insertError) {
-  console.error('建立 profile 失敗:', insertError)
-
-  setProfile(newProfile)
-
-  return
-}
-
-setProfile(newProfile)
-}
-
-async function loadMyFollowerCount() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) return
-
-  const count = await fetchMyFollowerCount(user.id)
-
-  setFollowerCount(count)
-}
-
-async function uploadAvatar(file: File) {
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    alert('請先登入')
-    return
-  }
-
-  setAvatarUploading(true)
-
-  const fileExt = file.name.split('.').pop()
-  const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`
-
-  const { error: uploadError } = await supabase.storage
-    .from('avatars')
-    .upload(filePath, file, {
-      upsert: true,
-    })
-
-  if (uploadError) {
-    console.error('上傳頭像失敗:', uploadError)
-    alert('上傳頭像失敗')
-    setAvatarUploading(false)
-    return
-  }
-
-  const { data } = supabase.storage
-    .from('avatars')
-    .getPublicUrl(filePath)
-
-  setProfile((prev: any) => ({
-    ...prev,
-    avatar_url: data.publicUrl,
-  }))
-
-  setAvatarUploading(false)
-}
-
-async function updateProfile() {
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    alert('請先登入')
-    return
-  }
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-  display_name: profile?.display_name || '',
-  username: profile?.username || '',
-  bio: profile?.bio || '',
-  avatar_url: profile?.avatar_url || null,
-})
-    .eq('id', user.id)
-
-  if (error) {
-    console.error('更新 profile 失敗:', error)
-    alert('更新失敗')
-    return
-  }
-
-  alert('更新成功')
-  setIsEditProfileOpen(false)
-}
-
-async function loadMyPosts(start = 0, end = 11, append = false) {
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    console.error('尚未登入')
-    return
-  }
-
-  const { data, error } = await supabase
-  .from('posts')
-  .select(`
-  id,
-  caption,
-  created_at,
-  user_id,
-  is_pinned,
-  pinned_at,
-  reply_permission,
-  post_images (
-    image_url
-  )
-`)
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-.range(start, end)
-
-  if (error) {
-  console.error('讀取我的貼文失敗:', error)
-  throw error
-}
-
-  const postIds = (data ?? []).map((post: any) => post.id)
-
-  if (postIds.length === 0) {
-  setMyPosts([])
-  setHasMorePosts(false)
-  return
-}
-  const { data: likeRows } =
-    postIds.length > 0
-      ? await supabase
-          .from('likes')
-          .select('post_id, user_id')
-          .in('post_id', postIds)
-      : { data: [] }
-
-  const likeCountMap = new Map<string, number>()
-  const likedSet = new Set<string>()
-
-  ;(likeRows ?? []).forEach((like: any) => {
-    likeCountMap.set(
-      like.post_id,
-      (likeCountMap.get(like.post_id) ?? 0) + 1
-    )
-
-    if (like.user_id === user.id) {
-      likedSet.add(like.post_id)
-    }
-  })
-
-  const postsWithLikes = (data ?? []).map((post: any) => ({
-  ...post,
-  likes: likeCountMap.get(post.id) ?? 0,
-  isLiked: likedSet.has(post.id),
-  isPinned: post.is_pinned,
-  pinned_at: post.pinned_at,
-  reply_permission:
-    post.reply_permission || 'everyone',
-}))
-
-  setMyPosts((prev) =>
-  append ? [...prev, ...postsWithLikes] : postsWithLikes
-)
-
-setHasMorePosts((data ?? []).length === end - start + 1)
-}
-
-async function loadMoreMyPosts() {
-  if (isLoadingMorePosts || !hasMorePosts) return
-
-  setIsLoadingMorePosts(true)
-
-  try {
-    const start = myPosts.length
-    const end = start + 11
-
-    await safeTask(
-      () => loadMyPosts(start, end, true),
-      'load_more_my_posts'
-    )
-  } finally {
-    setIsLoadingMorePosts(false)
-  }
-}
-
-async function loadMyShortVideos() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) return
-
-  const { data, error } = await supabase
-    .from('short_videos')
-    .select(`
-      id,
-      caption,
-      video_url,
-      created_at,
-      user_id
-    `)
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-  console.error('讀取我的短影片失敗:', error)
-  throw error
-}
-
-  const videoIds = (data ?? []).map((video: any) => video.id)
-
-const { data: likeRows } =
-  videoIds.length > 0
-    ? await supabase
-        .from('short_video_likes')
-        .select('short_video_id, user_id')
-        .in('short_video_id', videoIds)
-    : { data: [] }
-
-const { data: savedRows } =
-  videoIds.length > 0
-    ? await supabase
-        .from('saved_short_videos')
-        .select('short_video_id, user_id')
-        .in('short_video_id', videoIds)
-    : { data: [] }
-
-const likeCountMap = new Map<string, number>()
-const likedSet = new Set<string>()
-const savedSet = new Set<string>()
-
-;(likeRows ?? []).forEach((like: any) => {
-  likeCountMap.set(
-    like.short_video_id,
-    (likeCountMap.get(like.short_video_id) ?? 0) + 1
-  )
-
-  if (like.user_id === user.id) {
-    likedSet.add(like.short_video_id)
-  }
-})
-
-;(savedRows ?? []).forEach((saved: any) => {
-  if (saved.user_id === user.id) {
-    savedSet.add(saved.short_video_id)
-  }
-})
-
-setMyShortVideos(
-  (data ?? []).map((video: any) => ({
-    ...video,
-    likes: likeCountMap.get(video.id) ?? 0,
-    isLiked: likedSet.has(video.id),
-    isSaved: savedSet.has(video.id),
-  }))
-)
-}
-
-async function loadSavedPosts() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) return
-
-  const { data: photoSavedRows, error: photoError } = await supabase
-    .from('saved_posts')
-    .select(`
-      post_id,
-      posts (
-        id,
-        caption,
-        post_images (
-          image_url
-        )
-      )
-    `)
-    .eq('user_id', user.id)
-
-  if (photoError) {
-  console.error('讀取照片收藏失敗:', photoError)
-  throw photoError
-}
-
-  const { data: videoSavedRows, error: videoError } = await supabase
-    .from('saved_short_videos')
-    .select(`
-      short_video_id,
-      short_videos (
-        id,
-        caption,
-        video_url,
-        created_at,
-        user_id
-      )
-    `)
-    .eq('user_id', user.id)
-
-  if (videoError) {
-  console.error('讀取短影片收藏失敗:', videoError)
-  throw videoError
-}
-
-  const photoPosts = (photoSavedRows ?? [])
-    .map((item: any) => item.posts)
-    .filter(Boolean)
-    .map((post: any) => ({
-      ...post,
-      type: 'post',
-    }))
-
-  const videoPosts = (videoSavedRows ?? [])
-    .map((item: any) => item.short_videos)
-    .filter(Boolean)
-    .map((video: any) => ({
-      id: video.id,
-      caption: video.caption,
-      video_url: video.video_url,
-      created_at: video.created_at,
-      user_id: video.user_id,
-      type: 'video',
-    }))
-
-  
-  setSavedPosts([
-  ...videoPosts,
-  ...photoPosts,
-])
-}
-
-function archiveSelectedPost() {
-  if (!selectedPost?.id) return
-
-  const nextArchivedPosts = [
+    archivedPosts,
+    archivedShortVideos,
+    setArchivedShortVideos,
+    archiveSelectedPost,
+    unarchivePost,
+  } = useArchivedContent({
     selectedPost,
-    ...archivedPosts.filter((post) => post.id !== selectedPost.id),
-  ]
+    setSelectedPost,
+    setIsPostMenuOpen,
+  })
 
-  setArchivedPosts(nextArchivedPosts)
+  const {
+    savedPosts,
+    setSavedPosts,
+    profileWarmSavedImages,
+    setProfileWarmSavedImages,
+    lazyLoadSavedPosts,
+  } = useSavedPosts({ safeTask })
 
-  localStorage.setItem(
-    'vibelink_archived_posts',
-    JSON.stringify(nextArchivedPosts)
-  )
+  const {
+    myShortVideos,
+    selectedShortVideoId,
+    setSelectedShortVideoId,
+    isShortVideoPageOpen,
+    setIsShortVideoPageOpen,
+    profileWarmVideoUrls,
+    setProfileWarmVideoUrls,
+    loadMyShortVideos,
+  } = useMyShortVideos()
 
-  setIsPostMenuOpen(false)
+  const {
+    myPosts,
+    setMyPosts,
+    gridItems,
+    isLoadingMorePosts,
+    loadMorePostsRef,
+    loadMyPosts,
+  } = useMyPosts({
+    activeTab,
+    archivedPosts,
+    safeTask,
+  })
 
-setTimeout(() => {
-  setSelectedPost(null)
-}, 180)
-}
-
-function unarchivePost(postId: string) {
-  const nextArchivedPosts = archivedPosts.filter((post) => post.id !== postId)
-
-  setArchivedPosts(nextArchivedPosts)
-
-  localStorage.setItem(
-    'vibelink_archived_posts',
-    JSON.stringify(nextArchivedPosts)
-  )
-}
+  const {
+    profileLoading,
+    profileError,
+    currentUserId,
+  } = useProfileBootstrap({
+    ensureMyProfile,
+    loadMyShortVideos,
+    myShortVideos,
+    setProfileWarmVideoUrls,
+    lazyLoadSavedPosts,
+    savedPosts,
+    setProfileWarmSavedImages,
+    loadMyPosts,
+    loadMyFollowerCount,
+    safeTask,
+  })
 
 async function deleteSelectedPost() {
   if (!selectedPost?.id) return
@@ -831,19 +201,19 @@ async function deleteSelectedPost() {
   } = await supabase.auth.getUser()
 
   if (userError || !user) {
-    alert('請先登入')
+    alert('??????')
     return
   }
 
-  const { data: deletedImages, error: imageDeleteError } = await supabase
+  const { error: imageDeleteError } = await supabase
     .from('post_images')
     .delete()
     .eq('post_id', selectedPost.id)
     .select()
 
   if (imageDeleteError) {
-    console.error('刪除圖片資料失敗:', imageDeleteError)
-    alert('刪除圖片資料失敗')
+    console.error('????????????:', imageDeleteError)
+    alert('????????????')
     return
   }
 
@@ -855,13 +225,13 @@ async function deleteSelectedPost() {
     .select()
 
   if (postDeleteError) {
-    console.error('刪除貼文失敗:', postDeleteError)
-    alert('刪除貼文失敗')
+    console.error('?????????:', postDeleteError)
+    alert('?????????')
     return
   }
 
   if (!deletedPosts || deletedPosts.length === 0) {
-    alert('資料庫沒有刪到貼文，請檢查 Supabase RLS DELETE policy')
+    alert('????????????????????Supabase RLS DELETE policy')
     return
   }
 
@@ -961,178 +331,30 @@ async function toggleSelectedPostSave() {
   })
 }
 
-function handlePostDetailTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-  e.stopPropagation()
-
-  const target = e.target as HTMLElement
-
-  if (target.closest('[data-post-image-area="true"]')) {
-    postDetailTouchStartX.current = null
-    postDetailTouchStartY.current = null
-    return
-  }
-
-  const touch = e.touches[0]
-  postDetailTouchStartX.current = touch.clientX
-  postDetailTouchStartY.current = touch.clientY
-}
-
-function handlePostDetailTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-  e.stopPropagation()
-}
-
-function handlePostDetailTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
-  e.stopPropagation()
-
-  const startX = postDetailTouchStartX.current
-  const startY = postDetailTouchStartY.current
-
-  if (startX == null || startY == null) return
-
-  const touch = e.changedTouches[0]
-  const deltaX = touch.clientX - startX
-  const deltaY = touch.clientY - startY
-
-  if (Math.abs(deltaX) > 70 && Math.abs(deltaX) > Math.abs(deltaY)) {
-    setIsPostMenuOpen(false)
-    setSelectedPost(null)
-  }
-
-  postDetailTouchStartX.current = null
-  postDetailTouchStartY.current = null
-}
-
-function handlePostImageTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-  e.stopPropagation()
-
-  const touch = e.touches[0]
-  postImageTouchStartX.current = touch.clientX
-  postImageTouchDeltaX.current = 0
-}
-
-function handlePostImageTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-  e.stopPropagation()
-
-  if (postImageTouchStartX.current == null) return
-
-  const touch = e.touches[0]
-  postImageTouchDeltaX.current = touch.clientX - postImageTouchStartX.current
-}
-
-function handlePostImageTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
-  e.stopPropagation()
-
-  const deltaX = postImageTouchDeltaX.current
-  const total = selectedPost?.post_images?.length || 0
-
-  const absX = Math.abs(deltaX)
-  const now = Date.now()
-
-  if (absX < 12) {
-    if (now - postImageLastTapTimeRef.current < 280) {
-  toggleSelectedPostLike()
-  postImageLastTapTimeRef.current = 0
-} else {
-  postImageLastTapTimeRef.current = now
-}
-  }
-
-  if (absX > 50 && total > 1) {
-    if (deltaX < 0) {
-      setSelectedPostImageIndex((prev) => Math.min(prev + 1, total - 1))
-    } else {
-      setSelectedPostImageIndex((prev) => Math.max(prev - 1, 0))
-    }
-  }
-
-  postImageTouchStartX.current = null
-  postImageTouchDeltaX.current = 0
-}
-
-  function goToTab(index: number) {
-  if (index < 0 || index > 2) return
-
-  setActiveTab(index)
-
-  if (index === 1) {
-    void safeTask(() => loadMyShortVideos(), 'lazy_my_short_videos')
-  }
-
-  if (index === 2) {
-    void lazyLoadSavedPosts()
-  }
-}
-
-  function handleTabTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-    const touch = e.touches[0]
-    tabTouchStartX.current = touch.clientX
-    tabTouchDeltaX.current = 0
-  }
-
-  function handleTabTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-  if (tabTouchStartX.current == null) return
-
-  const touch = e.touches[0]
-  const deltaX = touch.clientX - tabTouchStartX.current
-
-  tabTouchDeltaX.current = deltaX
-
-  if (
-    (activeTab === 0 && deltaX > 0) ||
-    (activeTab === 2 && deltaX < 0)
-  ) {
-    setTabDragX(deltaX * 0.25)
-  } else {
-    setTabDragX(deltaX)
-  }
-
-  if (Math.abs(deltaX) > 8) {
-    e.stopPropagation()
-  }
-}
-
-  function handleTabTouchEnd() {
-  const deltaX = tabTouchDeltaX.current
-
-  if (Math.abs(deltaX) > 50) {
-    if (deltaX < 0) {
-      goToTab(activeTab + 1)
-    } else {
-      goToTab(activeTab - 1)
-    }
-  }
-
-  setTabDragX(0)
-
-  tabTouchStartX.current = null
-  tabTouchDeltaX.current = 0
-}
-
-useEffect(() => {
-  if (activeTab !== 0) return
-
-  const node = loadMorePostsRef.current
-  if (!node) return
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      const entry = entries[0]
-
-      if (entry.isIntersecting) {
-        void loadMoreMyPosts()
-      }
-    },
-    {
-      root: null,
-      rootMargin: '300px',
-      threshold: 0.1,
-    }
-  )
-
-  observer.observe(node)
-
-  return () => observer.disconnect()
-}, [activeTab, myPosts.length, hasMorePosts, isLoadingMorePosts])
+  const {
+    tabDragX,
+    goToTab,
+    handleTabTouchStart,
+    handleTabTouchMove,
+    handleTabTouchEnd,
+    handlePostImageTouchStart,
+    handlePostImageTouchMove,
+    handlePostImageTouchEnd,
+    handlePostDetailTouchStart,
+    handlePostDetailTouchMove,
+    handlePostDetailTouchEnd,
+  } = useProfileGestures({
+    activeTab,
+    setActiveTab,
+    selectedPost,
+    setSelectedPost,
+    setIsPostMenuOpen,
+    setSelectedPostImageIndex,
+    toggleSelectedPostLike,
+    loadMyShortVideos,
+    lazyLoadSavedPosts,
+    safeTask,
+  })
 
   return (
   <>
@@ -1721,14 +943,14 @@ useEffect(() => {
   }))}
   initialVideoId={selectedShortVideoId}
   onClose={() => setIsShortVideoPageOpen(false)}
-  onLike={async (video) => {
+  onLike={async () => {
   await loadMyShortVideos()
 }}
   onComment={(video) => {
     console.log('comment my short video:', video.id)
   }}
   onShare={() => setIsShareSheetOpen(true)}
-  onSave={async (video) => {
+  onSave={async () => {
   await loadMyShortVideos()
 }}
 
