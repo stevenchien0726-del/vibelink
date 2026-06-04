@@ -230,7 +230,12 @@ const data = await response.json()
     )
 
     if (!videosResult) {
-  setRealVideos([])
+  if (retry < 2) {
+    window.setTimeout(() => {
+      loadShortVideos(user, limit, retry + 1)
+    }, 900)
+  }
+
   return
 }
 
