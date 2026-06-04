@@ -22,6 +22,7 @@ type Props = {
   onSettings: () => void
   onAccount: () => void
   onMembership: () => void
+  onVibeCity: () => void
 }
 
 function MenuItem({
@@ -70,6 +71,7 @@ export default function ProfileMenuSheet({
   onSettings,
   onAccount,
   onMembership,
+  onVibeCity,
 }: Props) {
   if (!open) return null
 
@@ -115,7 +117,11 @@ export default function ProfileMenuSheet({
           <MenuItem icon={<Settings size={22} />} label={text.settings} onClick={onSettings} />
           <MenuItem icon={<UserCircle2 size={22} />} label={text.account} onClick={onAccount} />
           <MenuItem icon={<Ticket size={22} />} label={text.membership} onClick={onMembership} />
-          <MenuItem icon={<Grid3x3 size={22} />} label="Vibe Hub" />
+          <MenuItem
+  icon={<Grid3x3 size={22} />}
+  label="Vibe City"
+  onClick={onVibeCity}
+/>
           <MenuItem icon={<Megaphone size={22} />} label={text.ads} />
         </div>
       </motion.div>

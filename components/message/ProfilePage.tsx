@@ -1436,6 +1436,14 @@ useEffect(() => {
         'noopener,noreferrer'
       )
     }}
+    onVibeCity={() => {
+  setIsMenuOpen(false)
+  window.open(
+    'https://vibelink-web-puce.vercel.app',
+    '_blank',
+    'noopener,noreferrer'
+  )
+}}
   />
 </AnimatePresence>
 
