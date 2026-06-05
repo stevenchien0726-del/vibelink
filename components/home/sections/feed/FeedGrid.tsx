@@ -22,8 +22,8 @@ export type PostItem = {
   type?: 'post' | 'video'
   isMock?: boolean
   isPinned?: boolean
-pinned_at?: string | null
-reply_permission?: 'everyone' | 'following' | 'off'
+  pinned_at?: string | null
+  reply_permission?: 'everyone' | 'following' | 'off'
 }
 
 type FeedGridProps = {
@@ -39,6 +39,12 @@ const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'
 
 const MOBILE_SAFE_INITIAL_LIMIT = 24
+const INITIAL_RENDER_COUNT = 8
+const BATCH_RENDER_COUNT = 4
+const BATCH_RENDER_DELAY = 220
+
+const THUMBNAIL_TIMEOUT = 7000
+const MAX_THUMBNAIL_RETRY = 3
 
 function getVideoSrc(post: PostItem) {
   return post.videoUrl || (post as any).video_url || ''
@@ -56,6 +62,7 @@ function getPreviewImage(post: PostItem) {
 
   if (
     preview.endsWith('.mp4') ||
+    preview.endsWith('.mov') ||
     preview.includes('/short-videos/')
   ) {
     return ''
@@ -64,18 +71,18 @@ function getPreviewImage(post: PostItem) {
   return preview
 }
 
-function NormalImage({
-  src,
-  alt,
-}: {
-  src: string
-  alt: string
-}) {
+function NormalImage({ src, alt }: { src: string; alt: string }) {
+  const [displaySrc, setDisplaySrc] = useState(src || FALLBACK_IMAGE)
   const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    setDisplaySrc(src || FALLBACK_IMAGE)
+    setFailed(false)
+  }, [src])
 
   return (
     <img
-      src={failed ? FALLBACK_IMAGE : src}
+      src={failed ? FALLBACK_IMAGE : displaySrc}
       alt={alt}
       loading="lazy"
       decoding="async"
@@ -86,29 +93,24 @@ function NormalImage({
   )
 }
 
-function VideoPreview({
-  post,
-}: {
-  post: PostItem
-}) {
+function VideoPreview({ post }: { post: PostItem }) {
   const previewImage = getPreviewImage(post)
   const videoSrc = getVideoSrc(post)
-  const isVideoPreview = false
 
-  const [displaySrc, setDisplaySrc] = useState(isVideoPreview ? '' : previewImage || '')
+  const [displaySrc, setDisplaySrc] = useState(previewImage || '')
   const [imageReady, setImageReady] = useState(false)
-  const [imageFailed, setImageFailed] = useState(!previewImage || isVideoPreview)
+  const [imageFailed, setImageFailed] = useState(!previewImage)
   const [videoReady, setVideoReady] = useState(false)
 
   const retryRef = useRef(0)
+  const timeoutRef = useRef<number | null>(null)
 
-  useEffect(() => {
-    setDisplaySrc(isVideoPreview ? '' : previewImage || '')
-    setImageReady(false)
-    setImageFailed(!previewImage || isVideoPreview)
-    setVideoReady(false)
-    retryRef.current = 0
-  }, [previewImage, videoSrc, isVideoPreview])
+  function clearThumbnailTimer() {
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+  }
 
   function retryLoadImage() {
     if (!previewImage) {
@@ -116,7 +118,7 @@ function VideoPreview({
       return
     }
 
-    if (retryRef.current >= 3) {
+    if (retryRef.current >= MAX_THUMBNAIL_RETRY) {
       setImageFailed(true)
       return
     }
@@ -130,20 +132,46 @@ function VideoPreview({
     const img = new Image()
 
     img.onload = () => {
+      clearThumbnailTimer()
       setDisplaySrc(nextSrc)
       setImageReady(true)
       setImageFailed(false)
     }
 
     img.onerror = () => {
-      window.setTimeout(retryLoadImage, 700 * retryRef.current)
+      if (retryRef.current >= MAX_THUMBNAIL_RETRY) {
+        setImageFailed(true)
+        return
+      }
+
+      window.setTimeout(retryLoadImage, 900 * retryRef.current)
     }
 
     img.src = nextSrc
   }
 
-  const showImage = displaySrc && !imageFailed
-  const showVideo = imageFailed && videoSrc
+  useEffect(() => {
+    clearThumbnailTimer()
+
+    setDisplaySrc(previewImage || '')
+    setImageReady(false)
+    setImageFailed(!previewImage)
+    setVideoReady(false)
+    retryRef.current = 0
+
+    if (previewImage) {
+      timeoutRef.current = window.setTimeout(() => {
+        retryLoadImage()
+      }, THUMBNAIL_TIMEOUT)
+    }
+
+    return () => {
+      clearThumbnailTimer()
+    }
+  }, [previewImage, videoSrc])
+
+  const showImage = Boolean(displaySrc && !imageFailed)
+  const showVideo = Boolean(imageFailed && videoSrc)
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#15151a]">
@@ -157,7 +185,10 @@ function VideoPreview({
           className={`h-full w-full object-cover transition-opacity duration-300 ${
             imageReady ? 'opacity-100' : 'opacity-0'
           }`}
-          onLoad={() => setImageReady(true)}
+          onLoad={() => {
+            clearThumbnailTimer()
+            setImageReady(true)
+          }}
           onError={retryLoadImage}
         />
       )}
@@ -181,65 +212,81 @@ function VideoPreview({
           <div className="h-full w-full animate-pulse bg-white/[0.035]" />
         </div>
       )}
-
     </div>
   )
 }
 
 function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
-  const visiblePosts = useMemo(() => {
-    return posts.slice(0, MOBILE_SAFE_INITIAL_LIMIT)
+  const [renderCount, setRenderCount] = useState(INITIAL_RENDER_COUNT)
+
+  useEffect(() => {
+    setRenderCount(INITIAL_RENDER_COUNT)
+
+    let cancelled = false
+    let current = INITIAL_RENDER_COUNT
+    const maxCount = Math.min(MOBILE_SAFE_INITIAL_LIMIT, posts.length)
+
+    function loadNextBatch() {
+      if (cancelled) return
+
+      current = Math.min(current + BATCH_RENDER_COUNT, maxCount)
+      setRenderCount(current)
+
+      if (current < maxCount) {
+        window.setTimeout(loadNextBatch, BATCH_RENDER_DELAY)
+      }
+    }
+
+    const timer = window.setTimeout(loadNextBatch, BATCH_RENDER_DELAY)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
   }, [posts])
+
+  const visiblePosts = useMemo(() => {
+    return posts.slice(0, renderCount)
+  }, [posts, renderCount])
 
   if (visiblePosts.length === 0) return null
 
-  const preloadVideos = visiblePosts
-  .filter(
-    (post) =>
-      Boolean(getVideoSrc(post) || post.type === 'video')
-  )
-  .slice(0, 4)
+  const preloadVideoThumbnails = visiblePosts
+    .filter((post) => Boolean(getVideoSrc(post) || post.type === 'video'))
+    .map((post) => getPreviewImage(post))
+    .filter(Boolean)
+    .slice(0, 8)
 
   const preloadImages = visiblePosts
-  .filter(
-    (post) =>
-      !Boolean(getVideoSrc(post) || post.type === 'video')
-  )
-  .flatMap((post) => post.images?.slice(0, 2) ?? [])
-  .filter(Boolean)
-  .slice(0, 10)
+    .filter((post) => !Boolean(getVideoSrc(post) || post.type === 'video'))
+    .flatMap((post) => post.images?.slice(0, 2) ?? [])
+    .filter(Boolean)
+    .slice(0, 10)
 
   return (
     <AnimatePresence mode="wait">
-
       <div className="hidden">
-  {preloadVideos.map((post) => {
-    const videoSrc = getVideoSrc(post)
+        {preloadVideoThumbnails.map((src, index) => (
+          <img
+            key={`feed-preload-video-thumbnail-${index}-${src}`}
+            src={src}
+            alt=""
+            loading="eager"
+            decoding="async"
+          />
+        ))}
 
-    if (!videoSrc) return null
+        {preloadImages.map((src, index) => (
+          <img
+            key={`feed-preload-image-${index}-${src}`}
+            src={src}
+            alt=""
+            loading="eager"
+            decoding="async"
+          />
+        ))}
+      </div>
 
-    return (
-      <video
-        key={`feed-preload-video-${post.id}`}
-        src={videoSrc}
-        muted
-        playsInline
-        preload="metadata"
-      />
-    )
-  })}
-
-  {preloadImages.map((src, index) => (
-    <img
-      key={`feed-preload-image-${index}-${src}`}
-      src={src}
-      alt=""
-      loading="eager"
-      decoding="async"
-    />
-  ))}
-</div>
-       
       <motion.div
         key="feed-2x2"
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
@@ -275,7 +322,6 @@ function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
                     >
                       <path d="M8 5.14v14l11-7-11-7z" />
                     </svg>
-
                   </div>
                 </>
               ) : (
