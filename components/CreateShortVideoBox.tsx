@@ -32,13 +32,16 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
     const [uploading, setUploading] = useState(false)
     const [aiAnalyzing, setAiAnalyzing] = useState(false)
     const [videoReloadKey, setVideoReloadKey] = useState(0)
+
     const text = {
       selectVideoFile: uiText('請選擇影片檔', 'Please select a video file'),
       maxDuration: uiText('短影片不能超過 3 分鐘', 'Short videos cannot be longer than 3 minutes'),
       loginFirst: uiText('請先登入', 'Please log in first'),
-      uploadFailed: (message: string) => uiText(`短影片上傳失敗：${message}`, `Short video upload failed: ${message}`),
+      uploadFailed: (message: string) =>
+        uiText(`短影片上傳失敗：${message}`, `Short video upload failed: ${message}`),
       thumbnailFailed: uiText('縮圖產生失敗', 'Failed to generate thumbnail'),
-      databaseFailed: (message: string) => uiText(`資料庫寫入失敗：${message}`, `Database write failed: ${message}`),
+      databaseFailed: (message: string) =>
+        uiText(`資料庫寫入失敗：${message}`, `Database write failed: ${message}`),
       noVideo: uiText('尚未選擇短影片', 'No short video selected'),
       selectVideo: uiText('選擇短影片', 'Select Short Video'),
       captionPlaceholder: uiText('寫點內容...', 'Write something...'),
@@ -50,6 +53,12 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
       onReadyChange?.(!!file && !uploading)
     }, [file, uploading, onReadyChange])
 
+    useEffect(() => {
+      return () => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl)
+      }
+    }, [previewUrl])
+
     function handleSelectFile(e: React.ChangeEvent<HTMLInputElement>) {
       const selected = e.target.files?.[0]
       if (!selected) return
@@ -60,65 +69,132 @@ const CreateShortVideoBox = forwardRef<CreateShortVideoBoxRef, Props>(
       }
 
       const url = URL.createObjectURL(selected)
-
       const video = document.createElement('video')
+
       video.preload = 'metadata'
+      video.muted = true
+      video.playsInline = true
       video.src = url
 
       video.onloadedmetadata = () => {
-
         if (video.duration > MAX_DURATION) {
           alert(text.maxDuration)
+          URL.revokeObjectURL(url)
           setFile(null)
           setPreviewUrl('')
           onReadyChange?.(false)
           return
         }
 
+        if (previewUrl) URL.revokeObjectURL(previewUrl)
+
         setFile(selected)
         setPreviewUrl(url)
         onReadyChange?.(true)
       }
+
+      video.onerror = () => {
+        URL.revokeObjectURL(url)
+        alert(text.selectVideoFile)
+      }
     }
 
-async function extractFramesFromVideo(file: File) {
-  const video = document.createElement('video')
-  video.src = URL.createObjectURL(file)
-  video.crossOrigin = 'anonymous'
-  video.muted = true
-  video.playsInline = true
+    async function createVideoThumbnail(file: File): Promise<Blob> {
+      return new Promise((resolve, reject) => {
+        const video = document.createElement('video')
+        const canvas = document.createElement('canvas')
+        const url = URL.createObjectURL(file)
 
-  await new Promise<void>((resolve) => {
-    video.onloadedmetadata = () => resolve()
-  })
+        video.src = url
+        video.muted = true
+        video.playsInline = true
+        video.preload = 'metadata'
 
-  const duration = video.duration || 1
-  const times = [duration * 0.2, duration * 0.5, duration * 0.8]
+        video.onloadedmetadata = () => {
+          video.currentTime = Math.min(1, video.duration || 1)
+        }
 
-  const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return []
+        video.onseeked = () => {
+          canvas.width = video.videoWidth || 720
+          canvas.height = video.videoHeight || 1280
 
-  const results: string[] = []
+          const ctx = canvas.getContext('2d')
 
-  for (const time of times) {
-    video.currentTime = time
+          if (!ctx) {
+            URL.revokeObjectURL(url)
+            reject(new Error('Canvas context not available'))
+            return
+          }
 
-    await new Promise<void>((resolve) => {
-      video.onseeked = () => resolve()
-    })
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          canvas.toBlob(
+            (blob) => {
+              URL.revokeObjectURL(url)
 
-    results.push(canvas.toDataURL('image/jpeg', 0.82))
-  }
+              if (!blob) {
+                reject(new Error('Failed to create thumbnail'))
+                return
+              }
 
-  URL.revokeObjectURL(video.src)
+              resolve(blob)
+            },
+            'image/jpeg',
+            0.82
+          )
+        }
 
-  return results
-}
+        video.onerror = () => {
+          URL.revokeObjectURL(url)
+          reject(new Error('Failed to load video for thumbnail'))
+        }
+      })
+    }
+
+    async function extractFramesFromVideo(file: File) {
+      const video = document.createElement('video')
+      const url = URL.createObjectURL(file)
+
+      video.src = url
+      video.muted = true
+      video.playsInline = true
+      video.preload = 'metadata'
+
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve()
+        video.onerror = () => reject(new Error('Failed to load video metadata'))
+      })
+
+      const duration = video.duration || 1
+      const times = [duration * 0.2, duration * 0.5, duration * 0.8]
+
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        URL.revokeObjectURL(url)
+        return []
+      }
+
+      const results: string[] = []
+
+      for (const time of times) {
+        video.currentTime = time
+
+        await new Promise<void>((resolve) => {
+          video.onseeked = () => resolve()
+        })
+
+        canvas.width = video.videoWidth || 720
+        canvas.height = video.videoHeight || 1280
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+        results.push(canvas.toDataURL('image/jpeg', 0.82))
+      }
+
+      URL.revokeObjectURL(url)
+
+      return results
+    }
 
     async function submitVideo() {
       if (!file || uploading) return
@@ -139,147 +215,92 @@ async function extractFramesFromVideo(file: File) {
         return
       }
 
-      const ext = file.name.split('.').pop() || 'mp4'
-      const fileName = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`
+      try {
+        const ext = file.name.split('.').pop() || 'mp4'
+        const videoFileName = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('short-videos')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type,
-        })
+        const thumbnailBlob = await createVideoThumbnail(file)
+        const thumbnailFileName = `${user.id}/${Date.now()}-${crypto.randomUUID()}-thumbnail.jpg`
 
-      if (uploadError) {
-        console.error('短影片上傳 Storage 失敗:', uploadError)
-        alert(text.uploadFailed(uploadError.message))
+        const { error: thumbnailUploadError } = await supabase.storage
+          .from('short-video-thumbnails')
+          .upload(thumbnailFileName, thumbnailBlob, {
+            contentType: 'image/jpeg',
+            cacheControl: '3600',
+            upsert: false,
+          })
+
+        if (thumbnailUploadError) throw thumbnailUploadError
+
+        const { data: thumbnailPublicUrlData } = supabase.storage
+          .from('short-video-thumbnails')
+          .getPublicUrl(thumbnailFileName)
+
+        const thumbnailUrl = thumbnailPublicUrlData.publicUrl
+
+        const { error: uploadError } = await supabase.storage
+          .from('short-videos')
+          .upload(videoFileName, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type,
+          })
+
+        if (uploadError) throw uploadError
+
+        const { data: publicUrlData } = supabase.storage
+          .from('short-videos')
+          .getPublicUrl(videoFileName)
+
+        const videoUrl = publicUrlData.publicUrl
+
+        const { data: newVideo, error: insertError } = await supabase
+          .from('short_videos')
+          .insert({
+            user_id: user.id,
+            caption: caption.trim(),
+            video_url: videoUrl,
+            thumbnail_url: thumbnailUrl,
+          })
+          .select('id')
+          .single()
+
+        if (insertError) throw insertError
+
+        setUploading(false)
+        onReadyChange?.(false)
+        onSuccess?.()
+
+        if (newVideo?.id) {
+          window.setTimeout(async () => {
+            try {
+              setAiAnalyzing(true)
+
+              const frames = await extractFramesFromVideo(file)
+
+              await fetch('/api/short-video-ai-tags', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  frames,
+                  videoId: newVideo.id,
+                }),
+              })
+            } catch (error) {
+              console.error('短影片 AI tags 分析失敗:', error)
+            } finally {
+              setAiAnalyzing(false)
+            }
+          }, 1500)
+        }
+      } catch (error: any) {
+        console.error('短影片上傳流程失敗:', error)
+        alert(text.uploadFailed(error?.message || 'Unknown error'))
         setUploading(false)
         onReadyChange?.(true)
-        return
       }
-
-      const { data: publicUrlData } = supabase.storage
-        .from('short-videos')
-        .getPublicUrl(fileName)
-
-      const videoUrl = publicUrlData.publicUrl
-
-      // ✅ 自動產生影片縮圖
-const thumbnailCanvas = document.createElement('canvas')
-const thumbnailVideo = document.createElement('video')
-
-thumbnailVideo.src = videoUrl
-thumbnailVideo.crossOrigin = 'anonymous'
-thumbnailVideo.muted = true
-thumbnailVideo.playsInline = true
-
-await new Promise<void>((resolve) => {
-  thumbnailVideo.onloadeddata = () => resolve()
-})
-
-thumbnailVideo.currentTime = 0.1
-
-await new Promise<void>((resolve) => {
-  thumbnailVideo.onseeked = () => resolve()
-})
-
-thumbnailCanvas.width = thumbnailVideo.videoWidth
-thumbnailCanvas.height = thumbnailVideo.videoHeight
-
-const ctx = thumbnailCanvas.getContext('2d')
-
-if (!ctx) {
-  alert(text.thumbnailFailed)
-  setUploading(false)
-  return
-}
-
-ctx.drawImage(
-  thumbnailVideo,
-  0,
-  0,
-  thumbnailCanvas.width,
-  thumbnailCanvas.height
-)
-
-const thumbnailBlob: Blob = await new Promise((resolve) => {
-  thumbnailCanvas.toBlob(
-    (blob) => resolve(blob as Blob),
-    'image/jpeg',
-    0.82
-  )
-})
-
-const thumbnailFileName = `${user.id}/${Date.now()}-thumbnail.jpg`
-
-const { error: thumbnailUploadError } = await supabase.storage
-  .from('short-video-thumbnails')
-  .upload(thumbnailFileName, thumbnailBlob, {
-    contentType: 'image/jpeg',
-    upsert: false,
-  })
-
-if (thumbnailUploadError) {
-  console.error('縮圖上傳失敗:', thumbnailUploadError)
-}
-
-const { data: thumbnailPublicUrlData } = supabase.storage
-  .from('short-video-thumbnails')
-  .getPublicUrl(thumbnailFileName)
-
-const thumbnailUrl =
-  thumbnailPublicUrlData.publicUrl
-
-      const { data: newVideo, error: insertError } = await supabase
-  .from('short_videos')
-  .insert({
-  user_id: user.id,
-  caption: caption.trim(),
-  video_url: videoUrl,
-  thumbnail_url: thumbnailUrl,
-})
-  .select('id')
-  .single()
-
-      if (insertError) {
-        console.error('寫入 short_videos 失敗:', insertError)
-        alert(text.databaseFailed(insertError.message))
-        setUploading(false)
-        onReadyChange?.(true)
-        return
-      }
-
-      
-
-      setUploading(false)
-onReadyChange?.(false)
-onSuccess?.()
-
-if (newVideo?.id) {
-  window.setTimeout(async () => {
-    try {
-      setAiAnalyzing(true)
-
-      const frames = await extractFramesFromVideo(file)
-
-      await fetch('/api/short-video-ai-tags', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          frames,
-          videoId: newVideo.id,
-        }),
-      })
-    } catch (error) {
-      console.error('短影片 AI tags 分析失敗:', error)
-    } finally {
-      setAiAnalyzing(false)
-    }
-  }, 1500)
-}
-
     }
 
     useImperativeHandle(ref, () => ({
@@ -298,24 +319,24 @@ if (newVideo?.id) {
 
         {previewUrl ? (
           <video
-  key={videoReloadKey}
-  ref={videoRef}
-  src={previewUrl}
-  controls
-  playsInline
-  preload="metadata"
-  onLoadStart={() => {
-    window.setTimeout(() => {
-      const video = videoRef.current
+            key={videoReloadKey}
+            ref={videoRef}
+            src={previewUrl}
+            controls
+            playsInline
+            preload="metadata"
+            onLoadStart={() => {
+              window.setTimeout(() => {
+                const video = videoRef.current
 
-      if (!video) return
+                if (!video) return
 
-      if (video.readyState < 2) {
-        console.warn('手機短影片載入超時，自動重讀')
-        setVideoReloadKey((prev) => prev + 1)
-      }
-    }, 10000)
-  }}
+                if (video.readyState < 2) {
+                  console.warn('手機短影片載入超時，自動重讀')
+                  setVideoReloadKey((prev) => prev + 1)
+                }
+              }, 10000)
+            }}
             className="h-[360px] w-full max-w-[280px] rounded-[20px] bg-black object-cover"
           />
         ) : (
@@ -340,10 +361,10 @@ if (newVideo?.id) {
         />
 
         {(uploading || aiAnalyzing) && (
-  <div className="text-[14px] text-[#777]">
-    {aiAnalyzing ? text.aiAnalyzing : text.uploading}
-  </div>
-)}
+          <div className="text-[14px] text-[#777]">
+            {aiAnalyzing ? text.aiAnalyzing : text.uploading}
+          </div>
+        )}
       </div>
     )
   }

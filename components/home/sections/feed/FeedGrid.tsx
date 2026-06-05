@@ -45,7 +45,7 @@ function getVideoSrc(post: PostItem) {
 }
 
 function getPreviewImage(post: PostItem) {
-  return (
+  const preview =
     post.thumbnailUrl ||
     post.thumbnail_url ||
     (post as any).thumbnail ||
@@ -53,7 +53,15 @@ function getPreviewImage(post: PostItem) {
     (post as any).cover_url ||
     post.images?.[0] ||
     ''
-  )
+
+  if (
+    preview.endsWith('.mp4') ||
+    preview.includes('/short-videos/')
+  ) {
+    return ''
+  }
+
+  return preview
 }
 
 function NormalImage({
@@ -85,7 +93,7 @@ function VideoPreview({
 }) {
   const previewImage = getPreviewImage(post)
   const videoSrc = getVideoSrc(post)
-  const isVideoPreview = !!videoSrc && previewImage === videoSrc
+  const isVideoPreview = false
 
   const [displaySrc, setDisplaySrc] = useState(isVideoPreview ? '' : previewImage || '')
   const [imageReady, setImageReady] = useState(false)
@@ -184,6 +192,7 @@ function VideoPreview({
         <div>imgReady: {String(imageReady)}</div>
         <div>imgFailed: {String(imageFailed)}</div>
         <div>videoReady: {String(videoReady)}</div>
+        <div>isVideoPreview: {String(isVideoPreview)}</div>
       </div>
     </div>
   )
