@@ -182,18 +182,6 @@ function VideoPreview({
         </div>
       )}
 
-      {/* 暫時 Debug 面板：測完記得刪 */}
-      <div className="pointer-events-none absolute bottom-2 left-2 z-50 max-w-[92%] rounded bg-black/75 p-2 text-left text-[9px] leading-[1.25] text-white">
-        <div>id: {post.id}</div>
-        <div>type: {post.type || 'EMPTY'}</div>
-        <div>video: {videoSrc ? 'YES' : 'NO'}</div>
-        <div>preview: {previewImage || 'EMPTY'}</div>
-        <div>display: {displaySrc || 'EMPTY'}</div>
-        <div>imgReady: {String(imageReady)}</div>
-        <div>imgFailed: {String(imageFailed)}</div>
-        <div>videoReady: {String(videoReady)}</div>
-        <div>isVideoPreview: {String(isVideoPreview)}</div>
-      </div>
     </div>
   )
 }
