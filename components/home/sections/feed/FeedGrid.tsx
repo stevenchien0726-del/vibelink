@@ -41,10 +41,10 @@ const FALLBACK_IMAGE =
 const MOBILE_SAFE_INITIAL_LIMIT = 24
 const INITIAL_RENDER_COUNT = 8
 const BATCH_RENDER_COUNT = 4
-const BATCH_RENDER_DELAY = 220
+const BATCH_RENDER_DELAY = 260
 
-const THUMBNAIL_TIMEOUT = 7000
-const MAX_THUMBNAIL_RETRY = 3
+const THUMBNAIL_TIMEOUT = 9000
+const MAX_THUMBNAIL_RETRY = 2
 
 function getVideoSrc(post: PostItem) {
   return post.videoUrl || (post as any).video_url || ''
@@ -72,17 +72,15 @@ function getPreviewImage(post: PostItem) {
 }
 
 function NormalImage({ src, alt }: { src: string; alt: string }) {
-  const [displaySrc, setDisplaySrc] = useState(src || FALLBACK_IMAGE)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    setDisplaySrc(src || FALLBACK_IMAGE)
     setFailed(false)
   }, [src])
 
   return (
     <img
-      src={failed ? FALLBACK_IMAGE : displaySrc}
+      src={failed ? FALLBACK_IMAGE : src || FALLBACK_IMAGE}
       alt={alt}
       loading="lazy"
       decoding="async"
@@ -95,31 +93,31 @@ function NormalImage({ src, alt }: { src: string; alt: string }) {
 
 function VideoPreview({ post }: { post: PostItem }) {
   const previewImage = getPreviewImage(post)
-  const videoSrc = getVideoSrc(post)
 
-  const [displaySrc, setDisplaySrc] = useState(previewImage || '')
+  const [displaySrc, setDisplaySrc] = useState(previewImage || FALLBACK_IMAGE)
   const [imageReady, setImageReady] = useState(false)
   const [imageFailed, setImageFailed] = useState(!previewImage)
-  const [videoReady, setVideoReady] = useState(false)
 
   const retryRef = useRef(0)
   const timeoutRef = useRef<number | null>(null)
 
-  function clearThumbnailTimer() {
+  function clearTimer() {
     if (timeoutRef.current) {
       window.clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
   }
 
-  function retryLoadImage() {
+  function retryThumbnail() {
     if (!previewImage) {
       setImageFailed(true)
+      setDisplaySrc(FALLBACK_IMAGE)
       return
     }
 
     if (retryRef.current >= MAX_THUMBNAIL_RETRY) {
       setImageFailed(true)
+      setDisplaySrc(FALLBACK_IMAGE)
       return
     }
 
@@ -132,82 +130,57 @@ function VideoPreview({ post }: { post: PostItem }) {
     const img = new Image()
 
     img.onload = () => {
-      clearThumbnailTimer()
+      clearTimer()
       setDisplaySrc(nextSrc)
       setImageReady(true)
       setImageFailed(false)
     }
 
     img.onerror = () => {
-      if (retryRef.current >= MAX_THUMBNAIL_RETRY) {
-        setImageFailed(true)
-        return
-      }
-
-      window.setTimeout(retryLoadImage, 900 * retryRef.current)
+      window.setTimeout(retryThumbnail, 1200 * retryRef.current)
     }
 
     img.src = nextSrc
   }
 
   useEffect(() => {
-    clearThumbnailTimer()
+    clearTimer()
 
-    setDisplaySrc(previewImage || '')
+    retryRef.current = 0
     setImageReady(false)
     setImageFailed(!previewImage)
-    setVideoReady(false)
-    retryRef.current = 0
+    setDisplaySrc(previewImage || FALLBACK_IMAGE)
 
     if (previewImage) {
       timeoutRef.current = window.setTimeout(() => {
-        retryLoadImage()
+        retryThumbnail()
       }, THUMBNAIL_TIMEOUT)
     }
 
     return () => {
-      clearThumbnailTimer()
+      clearTimer()
     }
-  }, [previewImage, videoSrc])
-
-  const showImage = Boolean(displaySrc && !imageFailed)
-  const showVideo = Boolean(imageFailed && videoSrc)
+  }, [previewImage])
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#15151a]">
-      {showImage && (
-        <img
-          src={displaySrc}
-          alt=""
-          loading="eager"
-          decoding="async"
-          draggable={false}
-          className={`h-full w-full object-cover transition-opacity duration-300 ${
-            imageReady ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoad={() => {
-            clearThumbnailTimer()
-            setImageReady(true)
-          }}
-          onError={retryLoadImage}
-        />
-      )}
+      <img
+        src={imageFailed ? FALLBACK_IMAGE : displaySrc}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+        className={`h-full w-full object-cover transition-opacity duration-300 ${
+          imageReady ? 'opacity-100' : 'opacity-0'
+        }`}
+        onLoad={() => {
+          clearTimer()
+          setImageReady(true)
+        }}
+        onError={retryThumbnail}
+      />
 
-      {showVideo && (
-        <video
-          src={videoSrc}
-          muted
-          playsInline
-          preload="metadata"
-          className={`h-full w-full object-cover transition-opacity duration-300 ${
-            videoReady ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoadedData={() => setVideoReady(true)}
-          onCanPlay={() => setVideoReady(true)}
-        />
-      )}
-
-      {!imageReady && !videoReady && (
+      {!imageReady && (
         <div className="absolute inset-0 bg-[#17171d]">
           <div className="h-full w-full animate-pulse bg-white/[0.035]" />
         </div>
@@ -215,6 +188,87 @@ function VideoPreview({ post }: { post: PostItem }) {
     </div>
   )
 }
+
+const FeedCard = memo(function FeedCard({
+  post,
+  index,
+  onOpenPost,
+}: {
+  post: PostItem
+  index: number
+  onOpenPost?: (post: PostItem) => void
+}) {
+  const isVideo = Boolean(getVideoSrc(post) || post.type === 'video')
+  const previewImage = getPreviewImage(post)
+
+  return (
+    <motion.button
+      type="button"
+      key={`${post.type || 'post'}-${post.id}-${index}`}
+      onClick={() => onOpenPost?.(post)}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18 }}
+      className="relative h-[280px] w-full overflow-hidden rounded-[6px] border border-[var(--app-card-border)] bg-black"
+    >
+      {isVideo ? (
+        <>
+          <VideoPreview post={post} />
+
+          <div className="pointer-events-none absolute inset-0 bg-black/10" />
+
+          <div className="pointer-events-none absolute right-[10px] top-[10px] z-10">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="white"
+              className="h-[20px] w-[20px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]"
+            >
+              <path d="M8 5.14v14l11-7-11-7z" />
+            </svg>
+          </div>
+        </>
+      ) : (
+        <>
+          {post.images?.length > 1 && (
+            <div className="pointer-events-none absolute right-[10px] top-[10px] z-10">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-[20px] w-[20px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]"
+              >
+                <rect
+                  x="7"
+                  y="5"
+                  width="11"
+                  height="11"
+                  rx="2"
+                  stroke="white"
+                  strokeWidth="2"
+                />
+                <rect
+                  x="4"
+                  y="8"
+                  width="11"
+                  height="11"
+                  rx="2"
+                  stroke="white"
+                  strokeWidth="2"
+                />
+              </svg>
+            </div>
+          )}
+
+          <NormalImage
+            src={previewImage || FALLBACK_IMAGE}
+            alt={post.author || 'Vibelink post'}
+          />
+        </>
+      )}
+    </motion.button>
+  )
+})
 
 function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
   const [renderCount, setRenderCount] = useState(INITIAL_RENDER_COUNT)
@@ -251,120 +305,24 @@ function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
 
   if (visiblePosts.length === 0) return null
 
-  const preloadVideoThumbnails = visiblePosts
-    .filter((post) => Boolean(getVideoSrc(post) || post.type === 'video'))
-    .map((post) => getPreviewImage(post))
-    .filter(Boolean)
-    .slice(0, 8)
-
-  const preloadImages = visiblePosts
-    .filter((post) => !Boolean(getVideoSrc(post) || post.type === 'video'))
-    .flatMap((post) => post.images?.slice(0, 2) ?? [])
-    .filter(Boolean)
-    .slice(0, 10)
-
   return (
     <AnimatePresence mode="wait">
-      <div className="hidden">
-        {preloadVideoThumbnails.map((src, index) => (
-          <img
-            key={`feed-preload-video-thumbnail-${index}-${src}`}
-            src={src}
-            alt=""
-            loading="eager"
-            decoding="async"
-          />
-        ))}
-
-        {preloadImages.map((src, index) => (
-          <img
-            key={`feed-preload-image-${index}-${src}`}
-            src={src}
-            alt=""
-            loading="eager"
-            decoding="async"
-          />
-        ))}
-      </div>
-
       <motion.div
         key="feed-2x2"
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -14, scale: 0.98 }}
-        transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         className="grid grid-cols-2 gap-[3px]"
       >
-        {visiblePosts.map((post, index) => {
-          const isVideo = Boolean(getVideoSrc(post) || post.type === 'video')
-          const previewImage = getPreviewImage(post)
-
-          return (
-            <motion.button
-              type="button"
-              layout
-              key={`${post.type || 'post'}-${post.id}-${index}`}
-              onClick={() => onOpenPost?.(post)}
-              className="relative h-[280px] w-full overflow-hidden rounded-[6px] border border-[var(--app-card-border)] bg-black"
-            >
-              {isVideo ? (
-                <>
-                  <VideoPreview post={post} />
-
-                  <div className="pointer-events-none absolute inset-0 bg-black/10" />
-
-                  <div className="pointer-events-none absolute right-[10px] top-[10px] z-10">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="white"
-                      className="h-[20px] w-[20px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]"
-                    >
-                      <path d="M8 5.14v14l11-7-11-7z" />
-                    </svg>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {post.images?.length > 1 && (
-                    <div className="pointer-events-none absolute right-[10px] top-[10px] z-10">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        className="h-[20px] w-[20px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]"
-                      >
-                        <rect
-                          x="7"
-                          y="5"
-                          width="11"
-                          height="11"
-                          rx="2"
-                          stroke="white"
-                          strokeWidth="2"
-                        />
-                        <rect
-                          x="4"
-                          y="8"
-                          width="11"
-                          height="11"
-                          rx="2"
-                          stroke="white"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </div>
-                  )}
-
-                  <NormalImage
-                    src={previewImage || FALLBACK_IMAGE}
-                    alt={post.author || 'Vibelink post'}
-                  />
-                </>
-              )}
-            </motion.button>
-          )
-        })}
+        {visiblePosts.map((post, index) => (
+          <FeedCard
+            key={`${post.type || 'post'}-${post.id}-${index}`}
+            post={post}
+            index={index}
+            onOpenPost={onOpenPost}
+          />
+        ))}
       </motion.div>
     </AnimatePresence>
   )

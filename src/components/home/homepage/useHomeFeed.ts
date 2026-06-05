@@ -110,7 +110,7 @@ export function useHomeFeed({
 
   function withTimeout<T>(
   promise: Promise<T>,
-  ms = 15000,
+  ms = 30000,
   label = 'request'
 ): Promise<T | null> {
   return Promise.race([
@@ -225,8 +225,8 @@ const data = await response.json()
           .order('created_at', { ascending: false })
           .limit(limit)
       ),
-      15000,
-      'short_videos'
+      30000,
+'short_videos'
     )
 
     if (!videosResult) {
@@ -269,8 +269,8 @@ if (videosError) throw videosError
       `)
       .in('id', userIds)
   ),
-  15000,
-  'short_video_profiles'
+  30000,
+'short_video_profiles'
 )
 
 if (profilesResult) {
@@ -309,11 +309,7 @@ if (profilesResult) {
           text: video.caption || '',
           likes: 0,
 
-          images: video.thumbnail_url
-            ? [video.thumbnail_url]
-            : video.video_url
-              ? [video.video_url]
-              : [],
+          images: video.thumbnail_url ? [video.thumbnail_url] : [],
 
           thumbnailUrl: video.thumbnail_url || '',
           thumbnail_url: video.thumbnail_url || '',
@@ -431,10 +427,7 @@ if (profilesResult) {
         console.log('目前登入者 Profile:', profile)
       })
 
-      void safeTask(
-        () => loadShortVideos(user, SHORT_VIDEO_FIRST_BATCH),
-        'home_load_short_videos_first'
-      )
+      void loadShortVideos(user, SHORT_VIDEO_FIRST_BATCH)
 
       void safeTask(
         () => loadPosts(user, FEED_FIRST_BATCH),
@@ -483,10 +476,7 @@ if (profilesResult) {
             console.log('目前登入者 Profile:', profile)
           })
 
-          void safeTask(
-            () => loadShortVideos(session.user, SHORT_VIDEO_FIRST_BATCH),
-            'home_auth_load_short_videos_first'
-          )
+          void loadShortVideos(session.user, SHORT_VIDEO_FIRST_BATCH)
 
           void safeTask(
             () => loadPosts(session.user, FEED_FIRST_BATCH),
