@@ -173,6 +173,18 @@ function VideoPreview({
           <div className="h-full w-full animate-pulse bg-white/[0.035]" />
         </div>
       )}
+
+      {/* 暫時 Debug 面板：測完記得刪 */}
+      <div className="pointer-events-none absolute bottom-2 left-2 z-50 max-w-[92%] rounded bg-black/75 p-2 text-left text-[9px] leading-[1.25] text-white">
+        <div>id: {post.id}</div>
+        <div>type: {post.type || 'EMPTY'}</div>
+        <div>video: {videoSrc ? 'YES' : 'NO'}</div>
+        <div>preview: {previewImage || 'EMPTY'}</div>
+        <div>display: {displaySrc || 'EMPTY'}</div>
+        <div>imgReady: {String(imageReady)}</div>
+        <div>imgFailed: {String(imageFailed)}</div>
+        <div>videoReady: {String(videoReady)}</div>
+      </div>
     </div>
   )
 }
@@ -266,6 +278,7 @@ function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
                     >
                       <path d="M8 5.14v14l11-7-11-7z" />
                     </svg>
+
                   </div>
                 </>
               ) : (
