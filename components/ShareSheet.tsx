@@ -11,12 +11,11 @@ type ShareSheetProps = {
 
 export default function ShareSheet({ open, onClose }: ShareSheetProps) {
   const text = {
-    user: uiText('(用戶名)', '(Username)'),
     copyLink: uiText('複製連結', 'Copy Link'),
     addToStory: uiText('加到限時動態', 'Add to Story'),
     shareToMessage: uiText('分享到訊息', 'Share to Message'),
+    noTargets: uiText('暫無可分享對象', 'No sharing targets yet'),
   }
-  const mockUsers = [text.user, text.user, text.user, text.user, text.user]
 
   return (
     <AnimatePresence>
@@ -59,16 +58,9 @@ export default function ShareSheet({ open, onClose }: ShareSheetProps) {
               className="mb-4 flex gap-6 overflow-x-auto pb-1"
               style={{ scrollbarWidth: 'none' }}
             >
-              {mockUsers.map((name, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  className="flex shrink-0 flex-col items-center gap-2 active:scale-95"
-                >
-                  <div className="h-[68px] w-[68px] rounded-full bg-[#c98ad0]" />
-                  <div className="text-[14px] text-[#111]">{name}</div>
-                </button>
-              ))}
+              <div className="w-full rounded-[18px] bg-[#f3f3f3] px-4 py-5 text-center text-[14px] text-[#666]">
+                {text.noTargets}
+              </div>
             </div>
 
             <div className="mx-4 mb-4 h-[2px] bg-[#b7b7b7]" />

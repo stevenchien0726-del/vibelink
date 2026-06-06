@@ -27,6 +27,8 @@ export default function AIRadarMoreWall({
   onPointerMove,
   onWheel,
 }: Props) {
+  const imagePool = isSkySeedSearch ? skyImages.filter(Boolean) : []
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -56,7 +58,8 @@ export default function AIRadarMoreWall({
 </button>
       </div>
 
-      <div
+      {imagePool.length > 0 ? (
+        <div
         data-horizontal-scroll="true"
         className="-mx-1 overflow-x-auto pb-1 no-scrollbar touch-pan-x"
         onTouchStart={onTouchStart}
@@ -68,17 +71,6 @@ export default function AIRadarMoreWall({
         <div className="flex gap-3 px-1 select-none">
           {Array.from({ length: 8 }).map((_, photoIndex) => {
             const shiftedIndex = photoIndex + refreshKey
-
-            const imagePool = isSkySeedSearch
-              ? skyImages
-              : [
-                  'https://media.gettyimages.com/id/598221526/...',
-                  'https://media.istockphoto.com/id/2190079061/...',
-                  'https://www.apetogentleman.com/...',
-                  'https://i.pinimg.com/...',
-                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKP91...',
-                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpGf42...',
-                ]
 
             const imgSrc = imagePool[shiftedIndex % imagePool.length]
 
@@ -100,6 +92,11 @@ export default function AIRadarMoreWall({
           })}
         </div>
       </div>
+      ) : (
+        <div className="rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 py-5 text-[13px] text-[var(--app-muted)]">
+          {uiText('暫時沒有更多真實圖片可顯示。', 'No more real photos to show yet.')}
+        </div>
+      )}
     </div>
   )
 }

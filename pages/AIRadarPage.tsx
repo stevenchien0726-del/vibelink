@@ -94,17 +94,6 @@ function getRandomStarterPrompts() {
 
   return shuffled.slice(0, 3)
 }
-  safeLocale === 'en'
-    ? [
-        'Find people in Taipei who love fitness and the beach',
-        'Find someone with a chill cafe and travel vibe',
-        'Find people who like nightlife, music, and social events',
-      ]
-    : [
-        '幫我找台北喜歡健身、海邊旅行的人',
-        '幫我找有咖啡廳、旅行、生活感 vibe 的人',
-        '幫我找喜歡夜生活、音樂、社交活動的人',
-      ]
 
   const [refreshKey, setRefreshKey] = useState(0)
   const [refreshCount, setRefreshCount] = useState(0)
@@ -638,8 +627,14 @@ function getCandidateDescription(user: any) {
 
   if (isEnglish) {
     if (reasons.length > 0) {
-      return `${name}'s content is close to your search direction, with a natural lifestyle vibe and an energy that feels easy to connect with.`
-    }
+  const topTags = tags.slice(0, 3).join(', ')
+
+  if (topTags) {
+    return `${name}'s content connects with ${topTags}. Their posts feel close to your search direction, with lifestyle signals that make the recommendation feel more specific than a simple profile match.`
+  }
+
+  return `${name}'s posts overlap with your search direction, with a natural lifestyle vibe that could be easy to start a conversation with.`
+}
 
     if (
       tags.includes('nightlife') ||
@@ -692,7 +687,13 @@ function getCandidateDescription(user: any) {
   }
 
   if (reasons.length > 0) {
-    return `${name} 的內容和你的搜尋方向很接近，整體氛圍看起來自然、有生活感，也比較容易產生共鳴。`
+    const topTags = tags.slice(0, 3).join(' / ')
+
+    if (topTags) {
+      return `${name} 的內容和 ${topTags} 有關，整體貼文方向和你的搜尋比較接近。`
+    }
+
+    return `${name} 的貼文和你的搜尋方向有部分重疊，整體 vibe 自然舒服。`
   }
 
   if (
@@ -701,7 +702,7 @@ function getCandidateDescription(user: any) {
     tags.includes('rave') ||
     tags.includes('dj')
   ) {
-    return `${name} 偏音樂派對與夜生活 vibe，照片裡有不少活動感與社交氛圍，整體能量感比較強。`
+    return `${name} 偏音樂派對與夜生活 vibe，照片裡有不少活動感與社交氛圍。`
   }
 
   if (
@@ -709,7 +710,7 @@ function getCandidateDescription(user: any) {
     tags.includes('fitness') ||
     tags.includes('workout')
   ) {
-    return `${name} 的內容偏運動與戶外生活感，整體給人比較自律、有活力，也帶一點陽光系氛圍。`
+    return `${name} 的內容偏運動與戶外生活感，整體給人比較自律、有活力。`
   }
 
   if (
@@ -717,14 +718,14 @@ function getCandidateDescription(user: any) {
     tags.includes('cafe') ||
     tags.includes('book')
   ) {
-    return `${name} 的照片有不少咖啡廳與生活日常感，整體氛圍偏安靜、慢節奏，帶一點文青氣質。`
+    return `${name} 的照片有咖啡廳與生活日常感，整體氛圍偏安靜、慢節奏。`
   }
 
   if (
     tags.includes('dance') ||
     tags.includes('kpop')
   ) {
-    return `${name} 偏舞蹈與韓系 vibe，內容看起來比較活潑，也有一點小網紅感。`
+    return `${name} 偏舞蹈與韓系 vibe，內容看起來比較活潑。`
   }
 
   if (
@@ -732,17 +733,17 @@ function getCandidateDescription(user: any) {
     tags.includes('dog') ||
     tags.includes('pet')
   ) {
-    return `${name} 的內容有不少寵物與日常生活感，整體氛圍比較柔和、安靜，也帶有一點療癒感。`
+    return `${name} 的內容有寵物與日常生活感，整體氛圍比較柔和。`
   }
 
   if (
     tags.includes('beach') ||
     tags.includes('travel')
   ) {
-    return `${name} 的照片偏旅行與戶外探索感，整體像是喜歡自由生活與體驗新事物的人。`
+    return `${name} 的照片偏旅行與戶外探索感，像是喜歡自由生活與新體驗的人。`
   }
 
-  return `${name} 的內容和你的搜尋方向有部分重疊，整體 vibe 看起來自然舒服，也有一定程度的生活感。`
+  return `${name} 的內容和你的搜尋方向有部分重疊，整體 vibe 看起來自然舒服。`
 }
 
     const handleSubmit = async (queryOverride?: string) => {
@@ -775,6 +776,20 @@ function getCandidateDescription(user: any) {
 
   const controller = new AbortController()
   activeAbortControllerRef.current = controller
+
+  const finishRequest = () => {
+  window.clearTimeout(loadingTimer1)
+  window.clearTimeout(loadingTimer2)
+
+  setLoading(false)
+  setIsLoading(false)
+
+  inFlightRef.current = false
+
+  if (activeAbortControllerRef.current === controller) {
+    activeAbortControllerRef.current = null
+  }
+}
 
     setIsLoading(true)
 
@@ -815,7 +830,14 @@ try {
     data: { session: radarSession },
   } = await supabase.auth.getSession()
 
-  if (requestSequenceRef.current !== requestId) return
+  if (requestSequenceRef.current !== requestId) {
+  setLoading(false)
+  setIsLoading(false)
+
+  inFlightRef.current = false
+
+  return
+}
 
   if (!radarSession?.access_token) {
     clearTimeout(timeoutId)
@@ -852,23 +874,37 @@ const response = await fetch('/api/ai-radar', {
 
   clearTimeout(timeoutId)
 
-  if (requestSequenceRef.current !== requestId) return
+  if (requestSequenceRef.current !== requestId) {
+  setLoading(false)
+  setIsLoading(false)
 
-  console.log('🟣 [AI Radar Frontend] response status:', response.status)
+  inFlightRef.current = false
+
+  return
+}
+
+  console.log('[AI Radar Frontend] response status:', response.status)
 
 const rawText = await response.text()
 
-if (requestSequenceRef.current !== requestId) return
+if (requestSequenceRef.current !== requestId) {
+  setLoading(false)
+  setIsLoading(false)
 
-console.log('🟣 [AI Radar Frontend] raw response:', rawText)
+  inFlightRef.current = false
+
+  return
+}
+
+console.log('[AI Radar Frontend] raw response:', rawText)
 
 try {
   data = JSON.parse(rawText)
 
-  console.log('🟢 [AI Radar Frontend] parsed data:', data)
+  console.log('[AI Radar Frontend] parsed data:', data)
 } catch (jsonError) {
   console.error(
-    '🔴 [AI Radar Frontend] JSON parse failed:',
+    '[AI Radar Frontend] JSON parse failed:',
     jsonError
   )
 
@@ -882,9 +918,16 @@ data = {
 }
 }
 } catch (error: any) {
-  if (requestSequenceRef.current !== requestId) return
+  if (requestSequenceRef.current !== requestId) {
+  setLoading(false)
+  setIsLoading(false)
 
-  console.error('🔴 [AI Radar Frontend] API failed:', error)
+  inFlightRef.current = false
+
+  return
+}
+
+  console.error('[AI Radar Frontend] API failed:', error)
 
   if (error?.name === 'AbortError') {
     setErrorType('TIMEOUT')
@@ -897,13 +940,20 @@ data = {
     matchedUsers: [],
     aiReply:
       error?.name === 'AbortError'
-        ? 'AI 雷達這次回應太久，請再試一次。'
-        : 'AI 雷達目前連線不穩，請再試一次。',
+        ? 'AI 雷達處理時間較久，請再試一次。'
+        : 'AI 雷達暫時無法連線，請再試一次。',
   }
 }
 
 scheduleRequestTimer(() => {
-  if (requestSequenceRef.current !== requestId) return
+  if (requestSequenceRef.current !== requestId) {
+  setLoading(false)
+  setIsLoading(false)
+
+  inFlightRef.current = false
+
+  return
+}
 
   try {
   const matchedUsers = data?.matchedUsers ?? []
@@ -931,7 +981,7 @@ if (matchedUsers.length > 0) {
 } else {
   nextAiText =
     aiReplyText ||
-    `目前沒有找到完全符合「${finalQuery}」的用戶，你可以換更簡短的描述再試一次。`
+    `目前沒有找到和「${finalQuery}」相關的真實用戶，請換個描述再試一次。`
 }
 
     setAiText(nextAiText)
@@ -962,7 +1012,10 @@ typeText(nextAiText, requestId)
     inFlightRef.current = false
     activeAbortControllerRef.current = null
     } catch (renderError) {
-    if (requestSequenceRef.current !== requestId) return
+    if (requestSequenceRef.current !== requestId) {
+  finishRequest()
+  return
+}
 
     console.error('AI Radar render failed:', renderError)
     setLoading(false)
@@ -1228,7 +1281,11 @@ typeText(nextAiText, requestId)
 
 {errorType && (
   <div className="rounded-[14px] bg-red-50 px-4 py-3 text-[12px] text-red-500">
-    <div>Debug：{errorType}</div>
+    <div>
+      {safeLocale === 'en'
+        ? 'AI Radar could not complete this search. Please try again.'
+        : 'AI 雷達暫時無法完成這次搜尋，請再試一次。'}
+    </div>
 
     <button
       type="button"
@@ -1239,6 +1296,7 @@ typeText(nextAiText, requestId)
     </button>
   </div>
 )}
+
 
   {showCandidates && results.length > 0 && (
   <div className="space-y-4">
