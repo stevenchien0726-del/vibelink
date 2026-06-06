@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Bell, ChevronLeft, Heart, MessageCircle, UserPlus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
@@ -26,6 +26,8 @@ type NotificationItem = {
   actor_display_name?: string | null
   actor_avatar_url?: string | null
 }
+
+const NOTIFICATIONS_TIMEOUT_MS = 4500
 
 function getNotificationIcon(type: NotificationItem['type']) {
   if (type === 'like') return <Heart size={22} strokeWidth={2.2} />
@@ -64,21 +66,50 @@ onOpenShortVideo,
 }: Props) {
   const [items, setItems] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const requestIdRef = useRef(0)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
-    loadNotifications()
+    let cancelled = false
+    mountedRef.current = true
+
+    loadNotifications(() => cancelled)
+
+    return () => {
+      cancelled = true
+      mountedRef.current = false
+      requestIdRef.current += 1
+    }
   }, [])
 
-  async function loadNotifications() {
-    setLoading(true)
+  async function loadNotifications(isCancelled = () => !mountedRef.current) {
+    const requestId = requestIdRef.current + 1
+    requestIdRef.current = requestId
+    const isStale = () => isCancelled() || requestId !== requestIdRef.current
+
+    const timeoutId = window.setTimeout(() => {
+      if (isStale()) return
+
+      setItems([])
+      setLoadError(true)
+      setLoading(false)
+      requestIdRef.current += 1
+    }, NOTIFICATIONS_TIMEOUT_MS)
+
+    try {
+      if (isStale()) return
+      setLoadError(false)
+      setLoading(true)
 
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
+    if (isStale()) return
+
     if (!user) {
       setItems([])
-      setLoading(false)
       return
     }
 
@@ -102,15 +133,13 @@ onOpenShortVideo,
       .order('created_at', { ascending: false })
       .limit(50)
 
+    if (isStale()) return
+
     if (error) {
-      console.error('讀取通知失敗:', error)
-      setItems([])
-      setLoading(false)
-      return
+      throw error
     }
 
     setItems((data ?? []) as NotificationItem[])
-    setLoading(false)
 
     const unreadIds = (data ?? [])
       .filter((item: NotificationItem) => !item.is_read)
@@ -121,6 +150,19 @@ onOpenShortVideo,
         .from('notifications')
         .update({ is_read: true })
         .in('id', unreadIds)
+    }
+    } catch (error) {
+      if (!isStale()) {
+        console.warn('load notifications failed:', error)
+        setItems([])
+        setLoadError(true)
+      }
+    } finally {
+      window.clearTimeout(timeoutId)
+
+      if (!isStale()) {
+        setLoading(false)
+      }
     }
   }
 
@@ -199,6 +241,22 @@ onOpenShortVideo,
               <div className="mt-2 max-w-[260px] text-[14px] leading-relaxed text-[var(--app-muted)]">
                 新的追蹤、按讚、留言與互動通知之後會顯示在這裡。
               </div>
+
+              {loadError && (
+                <>
+                  <div className="mt-2 max-w-[260px] text-[14px] leading-relaxed text-[var(--app-muted)]">
+                    通知載入逾時或暫時失敗，請稍後再試。
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => loadNotifications()}
+                    className="mt-5 rounded-full bg-[var(--app-surface)] px-5 py-2 text-[14px] font-medium text-[var(--app-text)] active:scale-95"
+                  >
+                    重新載入
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <div className="flex flex-col gap-2">

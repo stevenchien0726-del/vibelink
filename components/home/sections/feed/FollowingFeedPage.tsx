@@ -150,13 +150,13 @@ export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-[900] bg-[#f3f3f3]">
-      <div className="mx-auto h-full w-full max-w-[430px] overflow-y-auto bg-white px-3 pb-[120px] pt-3">
+    <div className="fixed inset-0 z-[900] bg-[var(--app-bg)]">
+      <div className="mx-auto h-full w-full max-w-[430px] overflow-y-auto bg-[var(--app-surface)] px-3 pb-[120px] pt-3">
         <div className="mb-4 flex h-[36px] items-center">
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1 text-[13px] text-[#111] active:scale-95"
+            className="flex items-center gap-1 text-[13px] text-[var(--app-text)] active:scale-95"
           >
             <ChevronLeft size={16} />
             <span>{text.title}</span>
@@ -164,11 +164,11 @@ export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
         </div>
 
         {loading ? (
-          <div className="flex min-h-[300px] items-center justify-center text-[14px] text-[#999]">
+          <div className="flex min-h-[300px] items-center justify-center text-[14px] text-[var(--app-muted)]">
             {text.loading}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex min-h-[300px] items-center justify-center text-[14px] text-[#999]">
+          <div className="flex min-h-[300px] items-center justify-center text-[14px] text-[var(--app-muted)]">
             {text.empty}
           </div>
         ) : (
@@ -182,7 +182,7 @@ export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
                   key={post.id}
                   type="button"
                   onClick={() => onOpenPost(post)}
-                  className="relative h-[280px] w-full overflow-hidden rounded-[20px] bg-[#d9d9d9] active:scale-[0.98]"
+                  className="relative h-[280px] w-full overflow-hidden rounded-[20px] bg-[var(--app-card)] active:scale-[0.98]"
                 >
                   {isVideo ? (
                     <>
@@ -194,7 +194,7 @@ export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
                           playsInline
                         />
                       ) : (
-                        <div className="h-full w-full bg-[#d9d9d9]" />
+                        <div className="h-full w-full bg-[var(--app-card)]" />
                       )}
 
                       <div className="absolute inset-0 flex items-center justify-center bg-black/10">

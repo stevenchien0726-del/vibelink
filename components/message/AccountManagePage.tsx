@@ -27,6 +27,9 @@ type VibelinkProfile = {
   created_at: string | null
 }
 
+const LOAD_PROFILES_TIMEOUT_MS = 4500
+const CREATE_PROFILE_TIMEOUT_MS = 6000
+
 export default function AccountManagePage({
   onClose,
 }: AccountManagePageProps) {
@@ -35,10 +38,16 @@ export default function AccountManagePage({
   const [profiles, setProfiles] = useState<VibelinkProfile[]>([])
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null)
   const [loadingProfiles, setLoadingProfiles] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [switchingProfileId, setSwitchingProfileId] = useState<string | null>(null)
 
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
   const draggingEnabled = useRef(false)
+  const mountedRef = useRef(true)
+  const loadProfilesRequestIdRef = useRef(0)
+  const createProfileRequestIdRef = useRef(0)
+  const switchingProfileIdRef = useRef<string | null>(null)
 
   const canAddAccount = profiles.length < 2
 
@@ -47,18 +56,47 @@ export default function AccountManagePage({
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   useEffect(() => {
-    loadProfiles()
+    let cancelled = false
+    mountedRef.current = true
+
+    loadProfiles(() => cancelled)
+
+    return () => {
+      cancelled = true
+      mountedRef.current = false
+      loadProfilesRequestIdRef.current += 1
+      createProfileRequestIdRef.current += 1
+    }
   }, [])
 
-  async function loadProfiles() {
-    setLoadingProfiles(true)
+  async function loadProfiles(isCancelled = () => !mountedRef.current) {
+    const requestId = loadProfilesRequestIdRef.current + 1
+    loadProfilesRequestIdRef.current = requestId
+    const isStale = () =>
+      isCancelled() || requestId !== loadProfilesRequestIdRef.current
+
+    const timeoutId = window.setTimeout(() => {
+      if (isStale()) return
+
+      setLoadError(true)
+      setLoadingProfiles(false)
+      loadProfilesRequestIdRef.current += 1
+    }, LOAD_PROFILES_TIMEOUT_MS)
+
+    try {
+      if (isStale()) return
+      setLoadError(false)
+      setLoadingProfiles(true)
 
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
+    if (isStale()) return
+
     if (!user) {
-      setLoadingProfiles(false)
+      setProfiles([])
+      setActiveProfileId(null)
       return
     }
 
@@ -68,10 +106,10 @@ export default function AccountManagePage({
       .eq('auth_user_id', user.id)
       .order('created_at', { ascending: true })
 
+    if (isStale()) return
+
     if (error) {
-      console.error('讀取 Vibelink 帳號失敗:', error)
-      setLoadingProfiles(false)
-      return
+      throw error
     }
 
     const safeProfiles = data ?? []
@@ -83,14 +121,32 @@ export default function AccountManagePage({
     if (active?.id) {
       localStorage.setItem('vibelink-active-profile-id', active.id)
     }
+    } catch (error) {
+      if (!isStale()) {
+        console.warn('load profiles failed:', error)
+        setLoadError(true)
+      }
+    } finally {
+      window.clearTimeout(timeoutId)
 
-    setLoadingProfiles(false)
+      if (!isStale()) {
+        setLoadingProfiles(false)
+      }
+    }
   }
 
   async function switchProfile(profileId: string) {
+    if (switchingProfileIdRef.current) return
+
+    switchingProfileIdRef.current = profileId
+    setSwitchingProfileId(profileId)
+
+    try {
     const {
       data: { user },
     } = await supabase.auth.getUser()
+
+    if (!mountedRef.current) return
 
     if (!user) return
 
@@ -100,9 +156,10 @@ export default function AccountManagePage({
       .eq('auth_user_id', user.id)
 
     if (resetError) {
-      console.error('重設帳號狀態失敗:', resetError)
-      return
+      throw resetError
     }
+
+    if (!mountedRef.current) return
 
     const { error } = await supabase
       .from('profiles')
@@ -111,9 +168,10 @@ export default function AccountManagePage({
       .eq('auth_user_id', user.id)
 
     if (error) {
-      console.error('切換帳號失敗:', error)
-      return
+      throw error
     }
+
+    if (!mountedRef.current) return
 
     setActiveProfileId(profileId)
     localStorage.setItem('vibelink-active-profile-id', profileId)
@@ -124,19 +182,42 @@ export default function AccountManagePage({
         is_active: profile.id === profileId,
       }))
     )
+    } catch (error) {
+      console.warn('switch profile failed:', error)
+    } finally {
+      switchingProfileIdRef.current = null
+      if (mountedRef.current) {
+        setSwitchingProfileId(null)
+      }
+    }
   }
 
   async function createNewProfile() {
   if (!canAddAccount || creatingAccount) return
 
-  setCreatingAccount(true)
+  const requestId = createProfileRequestIdRef.current + 1
+  createProfileRequestIdRef.current = requestId
+  const isStale = () =>
+    !mountedRef.current || requestId !== createProfileRequestIdRef.current
+
+  const timeoutId = window.setTimeout(() => {
+    if (isStale()) return
+
+    setCreatingAccount(false)
+    createProfileRequestIdRef.current += 1
+    alert('建立帳號逾時，請稍後再試。')
+  }, CREATE_PROFILE_TIMEOUT_MS)
+
+  try {
+    setCreatingAccount(true)
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
+  if (isStale()) return
+
   if (!user) {
-    setCreatingAccount(false)
     return
   }
 
@@ -155,13 +236,13 @@ export default function AccountManagePage({
     .select('id, username, display_name, avatar_url, is_active, created_at')
     .single()
 
-  setCreatingAccount(false)
+  if (isStale()) return
 
   if (error) {
-    console.error('新增 Vibelink 帳號失敗:', error)
-    alert('新增帳號失敗')
-    return
+    throw error
   }
+
+  setCreatingAccount(false)
 
 await supabase
   .from('profiles')
@@ -170,12 +251,16 @@ await supabase
   })
   .eq('auth_user_id', user.id)
 
+if (isStale()) return
+
 await supabase
   .from('profiles')
   .update({
     is_active: true,
   })
   .eq('id', data.id)
+
+if (isStale()) return
 
   setProfiles((prev) => [
   ...prev.map((profile) => ({
@@ -194,12 +279,28 @@ localStorage.setItem(
   'vibelink-active-profile-id',
   data.id
 )
+  } catch (error) {
+    if (!isStale()) {
+      console.warn('create profile failed:', error)
+      alert('建立帳號失敗，請稍後再試。')
+    }
+  } finally {
+    window.clearTimeout(timeoutId)
+
+    if (!isStale()) {
+      setCreatingAccount(false)
+    }
+  }
 }
 
   async function handleLogout() {
-    await supabase.auth.signOut()
-    localStorage.removeItem('vibelink-active-profile-id')
-    window.location.reload()
+    try {
+      await supabase.auth.signOut()
+      localStorage.removeItem('vibelink-active-profile-id')
+      window.location.reload()
+    } catch (error) {
+      console.warn('logout failed:', error)
+    }
   }
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -307,6 +408,17 @@ localStorage.setItem(
               <div className="py-8 text-center text-[14px] text-[var(--app-muted)]">
                 帳號讀取中...
               </div>
+            ) : loadError ? (
+              <div className="flex flex-col items-center py-8 text-center text-[14px] text-[var(--app-muted)]">
+                <div>帳號讀取失敗，請重新載入</div>
+                <button
+                  type="button"
+                  onClick={() => loadProfiles()}
+                  className="mt-4 rounded-full bg-[var(--app-surface)] px-5 py-2 text-[14px] font-medium text-[var(--app-text)] active:scale-95"
+                >
+                  重新載入
+                </button>
+              </div>
             ) : (
               <>
                 {profiles.map((profile, index) => (
@@ -314,7 +426,10 @@ localStorage.setItem(
                     {index > 0 && <GroupDivider />}
 
                     <AccountMainRow
-                      onClick={() => switchProfile(profile.id)}
+                      onClick={() => {
+                        if (switchingProfileId) return
+                        switchProfile(profile.id)
+                      }}
                       icon={
                         <div className="flex h-[40px] w-[40px] items-center justify-center overflow-hidden rounded-full bg-[var(--app-surface)] text-[var(--app-text)]">
                           {profile.avatar_url ? (
