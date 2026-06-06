@@ -122,7 +122,7 @@ export default function ProfileMenuSheet({
   label="Vibe City"
   onClick={onVibeCity}
 />
-          <MenuItem icon={<Megaphone size={22} />} label={text.ads} />
+          
         </div>
       </motion.div>
     </>
