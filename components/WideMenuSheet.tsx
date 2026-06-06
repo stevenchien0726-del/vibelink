@@ -192,20 +192,7 @@ const handleClose = () => {
             </div>
           ) : (
             <>
-              <div className="mb-8">
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-1 rounded-[18px] bg-[var(--app-card)] px-5 py-8 shadow-sm"
-                >
-                  <span className="flex h-[30px] w-[63px] items-center justify-center">
-                    <UserPlus size={18} />
-                  </span>
-
-                  <span className="text-[16px] leading-none text-[var(--app-text)]">
-                    追蹤
-                  </span>
-                </button>
-              </div>
+              
 
               <div className="rounded-[18px] bg-[var(--app-card)] px-5 py-6 shadow-sm">
                 <div className="flex flex-col gap-6">

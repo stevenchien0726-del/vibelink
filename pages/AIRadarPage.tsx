@@ -18,14 +18,12 @@ import AIRadarLoadingOverlay from '@/components/airadar/AIRadarLoadingOverlay'
 import AIRadarMoreWall from '@/components/airadar/AIRadarMoreWall'
 
 import AIRadarResultCard from '@/components/airadar/AIRadarResultCard'
-import AIRadarPromptList from '@/components/airadar/AIRadarPromptList'
 
 import AIRadarTopBar from '@/components/airadar/AIRadarTopBar'
 import AIRadarInputBar from '@/components/airadar/AIRadarInputBar'
 
 import EmailOtpLogin from '@/components/auth/EmailOtpLogin'
 
-import { generateAIRadarRewriteQueries } from '@/lib/ai-radar/generateAIRadarRewriteQueries'
 import OtherUserProfilePage from '../components/profile/OtherUserProfilePage'
 import type { Locale } from '@/i18n'
 
@@ -121,8 +119,6 @@ const [selectedProfileUser, setSelectedProfileUser] =
 const [displayedAiText, setDisplayedAiText] = useState('')
 const [showCandidates, setShowCandidates] = useState(false)
 const [showWalls, setShowWalls] = useState(false)
-const [showMorePrompts, setShowMorePrompts] = useState(false)
-const [rewritePrompts, setRewritePrompts] = useState<string[]>([])
 
 const [starterPrompts, setStarterPrompts] = useState<string[]>([])
 const [isGeneratingPrompts, setIsGeneratingPrompts] = useState(true)
@@ -821,8 +817,6 @@ const loadingTimer2 = scheduleRequestTimer(() => {
 
   setShowCandidates(false)
   setShowWalls(false)
-  setShowMorePrompts(false)
-  setRewritePrompts([])
 
   setLastQuery(finalQuery)
 
@@ -968,20 +962,6 @@ scheduleRequestTimer(() => {
   const matchedUsers = data?.matchedUsers ?? []
 
   const aiReplyText = data?.aiReply ?? ''
-  const nextRewritePrompts =
-  data?.rewritePrompts?.length > 0
-    ? data.rewritePrompts
-    : generateAIRadarRewriteQueries(
-        data?.parsedQuery ?? {
-          raw: finalQuery,
-          tags: [],
-          vibes: [],
-          keywords: [],
-        },
-        matchedUsers.length
-      )
-
-setRewritePrompts(nextRewritePrompts)
 
     let nextAiText = ''
 
@@ -1010,11 +990,9 @@ window.clearTimeout(loadingTimer2)
     setShowWalls(true)
   }, 260, requestId)
 
-  scheduleRequestTimer(() => {
-    setShowMorePrompts(true)
-  }, 420, requestId)
+  
 } else {
-  setShowMorePrompts(true)
+  
 }
 
 typeText(nextAiText, requestId)
@@ -1355,17 +1333,6 @@ typeText(nextAiText, requestId)
   onWheel={stopWheelPropagation}
 />
     
-{showMorePrompts && (
-  <AIRadarPromptList
-  title={text.rewriteTitle}
-  variant="rewrite"
-  prompts={rewritePrompts}
-    onSelectPrompt={(prompt) => {
-      setInputValue(prompt)
-      void handleSubmit(prompt)
-    }}
-  />
-)}
         </div>
   )}
 </div>
