@@ -11,6 +11,7 @@ type Params = {
   aiStyleTags?: string[]
   aiCaption?: string
   captions?: string[]
+  signal?: AbortSignal
 }
 
 export async function generateHumanFeeling({
@@ -20,6 +21,7 @@ export async function generateHumanFeeling({
   aiStyleTags = [],
   aiCaption = '',
   captions = [],
+  signal,
 }: Params) {
   const safeCaptions = captions
     .filter(Boolean)
@@ -158,19 +160,20 @@ Return ONLY the final text.
 `.trim()
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 1.15,
-      presence_penalty: 0.8,
-      frequency_penalty: 0.5,
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        {
-          role: 'user',
-          content: `
+    const response = await openai.chat.completions.create(
+      {
+        model: 'gpt-4o-mini',
+        temperature: 1.15,
+        presence_penalty: 0.8,
+        frequency_penalty: 0.5,
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: `
 username:
 ${username ?? ''}
 
@@ -186,9 +189,11 @@ ${aiCaption}
 recent_captions:
 ${safeCaptions}
 `.trim(),
-        },
-      ],
-    })
+          },
+        ],
+      },
+      { signal }
+    )
 
     const text =
       response.choices[0]?.message?.content?.trim() ?? ''

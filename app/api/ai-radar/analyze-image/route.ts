@@ -1,23 +1,136 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
+import { getAuthenticatedSupabaseUser } from '@/lib/api/authenticatedSupabaseUser'
+import {
+  checkRateLimits,
+  getRequestIp,
+  type RateLimitRule,
+} from '@/lib/api/rateLimit'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+const MINUTE = 60 * 1000
+const DAY = 24 * 60 * 60 * 1000
+
+const ANALYZE_IMAGE_IP_RULES: RateLimitRule[] = [
+  {
+    name: 'analyze-image-ip-minute',
+    limit: 15,
+    windowMs: MINUTE,
+  },
+]
+
+const ANALYZE_IMAGE_USER_RULES: RateLimitRule[] = [
+  {
+    name: 'analyze-image-user-minute',
+    limit: 3,
+    windowMs: MINUTE,
+  },
+  {
+    name: 'analyze-image-user-day',
+    limit: 20,
+    windowMs: DAY,
+  },
+]
+
+function rateLimitResponse(retryAfterSeconds: number) {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: 'RATE_LIMITED',
+    },
+    {
+      status: 429,
+      headers: {
+        'Retry-After': String(retryAfterSeconds),
+      },
+    }
+  )
+}
+
 export async function POST(req: Request) {
   try {
+    const ipLimit = checkRateLimits(
+      getRequestIp(req),
+      ANALYZE_IMAGE_IP_RULES
+    )
+
+    if (!ipLimit.allowed) {
+      return rateLimitResponse(ipLimit.retryAfterSeconds)
+    }
+
+    const auth = await getAuthenticatedSupabaseUser(req)
+
+    if (!auth.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'UNAUTHORIZED',
+        },
+        { status: 401 }
+      )
+    }
+
+    const userLimit = checkRateLimits(
+      auth.user.id,
+      ANALYZE_IMAGE_USER_RULES
+    )
+
+    if (!userLimit.allowed) {
+      return rateLimitResponse(userLimit.retryAfterSeconds)
+    }
+
     const body = await req.json()
     const imageUrl = body?.imageUrl
     const postId = body?.postId
 
-    if (!imageUrl) {
+    if (!imageUrl || !postId) {
       return NextResponse.json({
         ok: false,
-        error: 'NO_IMAGE_URL',
+        error: !imageUrl ? 'NO_IMAGE_URL' : 'NO_POST_ID',
       })
+    }
+
+    const { data: post, error: postError } = await supabaseAdmin
+      .from('posts')
+      .select('id, user_id')
+      .eq('id', postId)
+      .maybeSingle()
+
+    if (postError) {
+      console.error('Load post ownership failed:', postError)
+
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'POST_LOOKUP_FAILED',
+        },
+        { status: 500 }
+      )
+    }
+
+    if (!post) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'POST_NOT_FOUND',
+        },
+        { status: 404 }
+      )
+    }
+
+    if (post.user_id !== auth.user.id) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'FORBIDDEN',
+        },
+        { status: 403 }
+      )
     }
 
     const response = await openai.responses.create({
@@ -75,34 +188,33 @@ export async function POST(req: Request) {
       })
     }
 
-    if (postId) {
-  const { error } = await supabaseAdmin
-    .from('posts')
-    .update({
-      ai_tags: parsed.ai_tags ?? [],
-      ai_style_tags: parsed.ai_style_tags ?? [],
-      ai_caption: parsed.ai_caption ?? '',
-      ai_analyzed: true,
-      ai_analyzed_at: new Date().toISOString(),
-    })
-    .eq('id', postId)
+    const { error } = await supabaseAdmin
+      .from('posts')
+      .update({
+        ai_tags: parsed.ai_tags ?? [],
+        ai_style_tags: parsed.ai_style_tags ?? [],
+        ai_caption: parsed.ai_caption ?? '',
+        ai_analyzed: true,
+        ai_analyzed_at: new Date().toISOString(),
+      })
+      .eq('id', postId)
+      .eq('user_id', auth.user.id)
 
-  if (error) {
-    console.error('Update post AI analysis failed:', error)
+    if (error) {
+      console.error('Update post AI analysis failed:', error)
+
+      return NextResponse.json({
+        ok: false,
+        error: 'UPDATE_POST_AI_ANALYSIS_FAILED',
+        result: parsed,
+      })
+    }
 
     return NextResponse.json({
-      ok: false,
-      error: 'UPDATE_POST_AI_ANALYSIS_FAILED',
+      ok: true,
       result: parsed,
+      updatedPostId: postId,
     })
-  }
-}
-
-return NextResponse.json({
-  ok: true,
-  result: parsed,
-  updatedPostId: postId ?? null,
-})
   } catch (error) {
     console.error('Analyze image failed:', error)
 

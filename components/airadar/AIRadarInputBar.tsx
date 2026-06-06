@@ -107,7 +107,7 @@ export default function AIRadarInputBar({
         <button
           type="button"
           aria-label={inputText[locale].send}
-          onClick={onSubmit}
+          onClick={() => onSubmit()}
           className="ml-2 grid h-[36px] w-[36px] shrink-0 place-items-center rounded-full bg-transparent transition active:scale-95"
         >
           <EnterArrowIcon active={hasInput || !!selectedLibraryUser} />

@@ -10,11 +10,13 @@ export async function generateAIRadarRewritePrompts({
   parsedQuery,
   matchedUsers,
   locale = 'zh-TW',
+  signal,
 }: {
   query: string
   parsedQuery: any
   matchedUsers: any[]
   locale?: Locale
+  signal?: AbortSignal
 }) {
   try {
     const systemPrompt =
@@ -45,25 +47,28 @@ Rules:
 - 只回傳 JSON array
 `
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.8,
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            locale,
-            originalQuery: query,
-            parsedQuery,
-            matchedUsers: matchedUsers.slice(0, 5),
-          }),
-        },
-      ],
-    })
+    const response = await openai.chat.completions.create(
+      {
+        model: 'gpt-4o-mini',
+        temperature: 0.8,
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              locale,
+              originalQuery: query,
+              parsedQuery,
+              matchedUsers: matchedUsers.slice(0, 5),
+            }),
+          },
+        ],
+      },
+      { signal }
+    )
 
     const text = response.choices[0]?.message?.content ?? '[]'
 

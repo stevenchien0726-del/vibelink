@@ -1,4 +1,7 @@
-export async function generateEmbedding(text: string): Promise<number[]> {
+export async function generateEmbedding(
+  text: string,
+  signal?: AbortSignal
+): Promise<number[]> {
   const input = text.trim()
 
   if (!input) {
@@ -22,6 +25,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       input,
       encoding_format: 'float',
     }),
+    signal,
   })
 
   if (!response.ok) {

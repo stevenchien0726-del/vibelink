@@ -7,6 +7,16 @@ import { buildMockUserEmbeddingText } from '@/lib/ai-radar/buildMockUserEmbeddin
 import { vectorSearchAIRadarUsers } from '@/lib/ai-radar/vectorSearchAIRadarUsers'
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Not found',
+      },
+      { status: 404 }
+    )
+  }
+
   try {
     const body = await request.json()
     const query = body.query

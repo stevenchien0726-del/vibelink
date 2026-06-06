@@ -80,11 +80,13 @@ export async function generateAIRadarReply({
   parsedQuery,
   users,
   locale = 'zh-TW',
+  signal,
 }: {
   query: string
   parsedQuery: AIRadarParsedQuery
   users: AIRadarReplyUser[]
   locale?: Locale
+  signal?: AbortSignal
 }): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY
 
@@ -146,6 +148,7 @@ Goal:
         temperature: 0.7,
         messages,
       }),
+      signal,
     })
 
     if (!response.ok) {

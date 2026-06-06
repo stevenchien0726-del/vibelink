@@ -185,6 +185,39 @@ const [flyingUser, setFlyingUser] = useState<{
 const targetRef = useRef<HTMLDivElement | null>(null)
 
 const mainScrollRef = useRef<HTMLElement | null>(null)
+const inFlightRef = useRef(false)
+const activeQueryRef = useRef('')
+const activeAbortControllerRef = useRef<AbortController | null>(null)
+const requestSequenceRef = useRef(0)
+const requestTimersRef = useRef<number[]>([])
+const typingTimerRef = useRef<number | null>(null)
+
+function clearRequestTimers() {
+  requestTimersRef.current.forEach((timer) => {
+    window.clearTimeout(timer)
+  })
+  requestTimersRef.current = []
+
+  if (typingTimerRef.current !== null) {
+    window.clearInterval(typingTimerRef.current)
+    typingTimerRef.current = null
+  }
+}
+
+function scheduleRequestTimer(
+  callback: () => void,
+  delay: number,
+  requestId: number
+) {
+  const timer = window.setTimeout(() => {
+    if (requestSequenceRef.current === requestId) {
+      callback()
+    }
+  }, delay)
+
+  requestTimersRef.current.push(timer)
+  return timer
+}
 
 function withTimeout<T>(
   promise: PromiseLike<T>,
@@ -213,6 +246,16 @@ async function safeTask<T>(
     return null
   }
 }
+
+useEffect(() => {
+  return () => {
+    requestSequenceRef.current += 1
+    activeAbortControllerRef.current?.abort()
+    activeAbortControllerRef.current = null
+    inFlightRef.current = false
+    clearRequestTimers()
+  }
+}, [])
 
 useEffect(() => {
   const timer = window.setTimeout(async () => {
@@ -301,82 +344,49 @@ useEffect(() => {
 useEffect(() => {
   let cancelled = false
 
-  async function fetchStarterPromptsOnce(
-    attempt: number
-  ): Promise<string[] | null> {
-    try {
-      const response = await withTimeout(
-        fetch(
-          `/api/ai-radar/starter-prompts?locale=${safeLocale}&attempt=${attempt}&t=${Date.now()}`,
-          {
-            cache: 'no-store',
-          }
-        ),
-        5000,
-        `ai_radar_starter_prompts_attempt_${attempt}`
-      )
-
-      if (!response) return null
-      if (!response.ok) return null
-
-      const data = await response.json()
-
-      if (
-        Array.isArray(data?.prompts) &&
-        data.prompts.length > 0
-      ) {
-        return data.prompts.slice(0, 3)
-      }
-
-      return null
-    } catch (error) {
-      console.warn(
-        `starter prompts attempt ${attempt} failed:`,
-        error
-      )
-
-      return null
-    }
-  }
-
   async function loadStarterPrompts() {
     setIsGeneratingPrompts(true)
 
-    const firstPrompts = await fetchStarterPromptsOnce(1)
+    try {
+      const response = await withTimeout(
+        fetch(`/api/ai-radar/starter-prompts?locale=${safeLocale}`),
+        5000,
+        'ai_radar_starter_prompts'
+      )
 
-    if (cancelled) return
+      if (cancelled) return
 
-    if (firstPrompts) {
-      setStarterPrompts(firstPrompts)
-      setIsGeneratingPrompts(false)
-      return
-    }
+      if (!response?.ok) {
+        setStarterPrompts(getRandomStarterPrompts())
+        return
+      }
 
-    await new Promise((resolve) =>
-      window.setTimeout(resolve, 800)
-    )
+      const data = await response.json()
 
-    if (cancelled) return
+      setStarterPrompts(
+        Array.isArray(data?.prompts) && data.prompts.length > 0
+          ? data.prompts.slice(0, 3)
+          : getRandomStarterPrompts()
+      )
+    } catch (error) {
+      console.warn('starter prompts failed:', error)
 
-    const secondPrompts = await fetchStarterPromptsOnce(2)
-
-    if (cancelled) return
-
-    if (secondPrompts) {
-      setStarterPrompts(secondPrompts)
-    } else {
+      if (!cancelled) {
       setStarterPrompts(getRandomStarterPrompts())
+      }
+    } finally {
+      if (!cancelled) {
+        setIsGeneratingPrompts(false)
+      }
     }
-
-    setIsGeneratingPrompts(false)
   }
 
-  loadStarterPrompts()
+  void loadStarterPrompts()
 
   return () => {
     cancelled = true
   }
-}, [])
+}, [safeLocale])
 
 useEffect(() => {
   async function initAuth() {
@@ -464,16 +474,35 @@ async function handleGoogleLogin() {
 
 const hasInput = inputValue.trim().length > 0 || !!selectedLibraryUser
 
-  function typeText(text: string, onDone?: () => void) {
+  function typeText(
+    value: string,
+    requestId: number,
+    onDone?: () => void
+  ) {
+  if (typingTimerRef.current !== null) {
+    window.clearInterval(typingTimerRef.current)
+  }
+
   setDisplayedAiText('')
   let index = 0
 
-  const timer = setInterval(() => {
-    index += 1
-    setDisplayedAiText(text.slice(0, index))
+  typingTimerRef.current = window.setInterval(() => {
+    if (requestSequenceRef.current !== requestId) {
+      if (typingTimerRef.current !== null) {
+        window.clearInterval(typingTimerRef.current)
+        typingTimerRef.current = null
+      }
+      return
+    }
 
-    if (index >= text.length) {
-      clearInterval(timer)
+    index += 1
+    setDisplayedAiText(value.slice(0, index))
+
+    if (index >= value.length) {
+      if (typingTimerRef.current !== null) {
+        window.clearInterval(typingTimerRef.current)
+        typingTimerRef.current = null
+      }
       onDone?.()
     }
   }, 22)
@@ -530,14 +559,10 @@ function handleClearInput() {
 }
 
 function handleRetry() {
-  if (loading || isLoading) return
   if (!lastQuery) return
 
   setInputValue(lastQuery)
-
-  setTimeout(() => {
-    handleSubmit()
-  }, 100)
+  void handleSubmit(lastQuery)
 }
 
 function handleVoiceInput() {
@@ -584,14 +609,10 @@ function handleVoiceSubmit() {
   const finalVoiceText = voiceTranscript.trim()
 
   if (!finalVoiceText) return
-  if (loading || isLoading) return
 
   setInputValue(finalVoiceText)
   setIsVoicePanelOpen(false)
-
-  window.setTimeout(() => {
-    handleSubmit()
-  }, 120)
+  void handleSubmit(finalVoiceText)
 }
 
 function getCandidateDescription(user: any) {
@@ -724,21 +745,48 @@ function getCandidateDescription(user: any) {
   return `${name} 的內容和你的搜尋方向有部分重疊，整體 vibe 看起來自然舒服，也有一定程度的生活感。`
 }
 
-    const handleSubmit = async () => {
-  if (loading || isLoading) return
-  if (!hasInput && !selectedLibraryUser) return
+    const handleSubmit = async (queryOverride?: string) => {
+  const currentInput =
+    typeof queryOverride === 'string'
+      ? queryOverride.trim()
+      : inputValue.trim()
+  const finalQuery =
+    currentInput ||
+    (selectedLibraryUser
+      ? text.similarToUserPrompt(selectedLibraryUser.name)
+      : '')
+
+  if (!finalQuery) return
+
+  if (
+    inFlightRef.current &&
+    activeQueryRef.current === finalQuery
+  ) {
+    return
+  }
+
+  activeAbortControllerRef.current?.abort()
+  clearRequestTimers()
+
+  const requestId = requestSequenceRef.current + 1
+  requestSequenceRef.current = requestId
+  inFlightRef.current = true
+  activeQueryRef.current = finalQuery
+
+  const controller = new AbortController()
+  activeAbortControllerRef.current = controller
 
     setIsLoading(true)
 
     setLoadingStep(0)
 
-const loadingTimer1 = window.setTimeout(() => {
+const loadingTimer1 = scheduleRequestTimer(() => {
   setLoadingStep(1)
-}, 1200)
+}, 1200, requestId)
 
-const loadingTimer2 = window.setTimeout(() => {
+const loadingTimer2 = scheduleRequestTimer(() => {
   setLoadingStep(2)
-}, 2600)
+}, 2600, requestId)
 
   setShowTopBar(true)
 
@@ -754,23 +802,34 @@ const loadingTimer2 = window.setTimeout(() => {
   setShowMorePrompts(false)
   setRewritePrompts([])
 
-  const currentInput = inputValue.trim()
-const finalQuery =
-  currentInput ||
-  (selectedLibraryUser
-    ? text.similarToUserPrompt(selectedLibraryUser.name)
-    : '')
   setLastQuery(finalQuery)
 
     let data: any = null
 
 try {
-  const controller = new AbortController()
-
-  const timeoutId = setTimeout(() => {
+  const timeoutId = scheduleRequestTimer(() => {
     controller.abort()
-  }, 20000)
+  }, 20000, requestId)
 
+  const {
+    data: { session: radarSession },
+  } = await supabase.auth.getSession()
+
+  if (requestSequenceRef.current !== requestId) return
+
+  if (!radarSession?.access_token) {
+    clearTimeout(timeoutId)
+    setErrorType('UNAUTHORIZED')
+
+    data = {
+      ok: false,
+      matchedUsers: [],
+      aiReply:
+        safeLocale === 'en'
+          ? 'Please log in before using AI Radar.'
+          : '請先登入後再使用 AI 雷達。',
+    }
+  } else {
   const queryLocale =
   /[a-zA-Z]/.test(finalQuery) && !/[一-龥]/.test(finalQuery)
     ? 'en'
@@ -780,6 +839,7 @@ const response = await fetch('/api/ai-radar', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
+    Authorization: `Bearer ${radarSession.access_token}`,
   },
   body: JSON.stringify({
     query: finalQuery,
@@ -792,9 +852,13 @@ const response = await fetch('/api/ai-radar', {
 
   clearTimeout(timeoutId)
 
+  if (requestSequenceRef.current !== requestId) return
+
   console.log('🟣 [AI Radar Frontend] response status:', response.status)
 
 const rawText = await response.text()
+
+if (requestSequenceRef.current !== requestId) return
 
 console.log('🟣 [AI Radar Frontend] raw response:', rawText)
 
@@ -816,7 +880,10 @@ data = {
   aiReply: 'AI 雷達目前回傳格式異常，請再試一次。',
 }
 }
+}
 } catch (error: any) {
+  if (requestSequenceRef.current !== requestId) return
+
   console.error('🔴 [AI Radar Frontend] API failed:', error)
 
   if (error?.name === 'AbortError') {
@@ -835,7 +902,9 @@ data = {
   }
 }
 
-setTimeout(async () => {
+scheduleRequestTimer(() => {
+  if (requestSequenceRef.current !== requestId) return
+
   try {
   const matchedUsers = data?.matchedUsers ?? []
 
@@ -874,31 +943,37 @@ window.clearTimeout(loadingTimer2)
     if (matchedUsers.length > 0) {
   setResults(matchedUsers as any)
 
-  setTimeout(() => {
+  scheduleRequestTimer(() => {
     setShowCandidates(true)
-  }, 120)
+  }, 120, requestId)
 
-  setTimeout(() => {
+  scheduleRequestTimer(() => {
     setShowWalls(true)
-  }, 260)
+  }, 260, requestId)
 
-  setTimeout(() => {
+  scheduleRequestTimer(() => {
     setShowMorePrompts(true)
-  }, 420)
+  }, 420, requestId)
 } else {
   setShowMorePrompts(true)
 }
 
-typeText(nextAiText)
+typeText(nextAiText, requestId)
+    inFlightRef.current = false
+    activeAbortControllerRef.current = null
     } catch (renderError) {
+    if (requestSequenceRef.current !== requestId) return
+
     console.error('AI Radar render failed:', renderError)
     setLoading(false)
     setIsLoading(false)
     setErrorType('RENDER_FAILED')
     setAiText('AI 雷達顯示結果時發生問題，請再試一次。')
     setDisplayedAiText('AI 雷達顯示結果時發生問題，請再試一次。')
+    inFlightRef.current = false
+    activeAbortControllerRef.current = null
   }
-}, 320)
+}, 320, requestId)
 }
 
   return (
@@ -1220,10 +1295,7 @@ typeText(nextAiText)
   prompts={rewritePrompts}
     onSelectPrompt={(prompt) => {
       setInputValue(prompt)
-
-      setTimeout(() => {
-        handleSubmit()
-      }, 100)
+      void handleSubmit(prompt)
     }}
   />
 )}

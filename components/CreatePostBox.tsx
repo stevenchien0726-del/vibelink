@@ -284,30 +284,41 @@ console.log(
   uploadedImageUrls
 )
 
-        fetch('/api/ai-radar/analyze-image', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    postId: postData.id,
-    imageUrl: uploadedImageUrls[0],
-  }),
-})
-  .then(async (res) => {
-    const data = await res.json()
+        const {
+          data: { session: analyzeSession },
+        } = await supabase.auth.getSession()
 
-    console.log(
-      '🟢 AI image analyze success:',
-      data
-    )
-  })
-  .catch((error) => {
-    console.error(
-      '🔴 AI image analyze failed:',
-      error
-    )
-  })
+        if (analyzeSession?.access_token) {
+          fetch('/api/ai-radar/analyze-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${analyzeSession.access_token}`,
+            },
+            body: JSON.stringify({
+              postId: postData.id,
+              imageUrl: uploadedImageUrls[0],
+            }),
+          })
+            .then(async (res) => {
+              const data = await res.json()
+
+              console.log(
+                '🟢 AI image analyze success:',
+                data
+              )
+            })
+            .catch((error) => {
+              console.error(
+                '🔴 AI image analyze failed:',
+                error
+              )
+            })
+        } else {
+          console.error(
+            '🔴 AI image analyze skipped: missing authenticated session'
+          )
+        }
 
                 setCaption('')
         setFiles([])

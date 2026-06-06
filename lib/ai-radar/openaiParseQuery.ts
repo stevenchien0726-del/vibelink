@@ -125,7 +125,8 @@ function normalizeParsedQuery(
 }
 
 export async function openaiParseQuery(
-  query: string
+  query: string,
+  signal?: AbortSignal
 ): Promise<AIRadarParsedQuery> {
   const apiKey = process.env.OPENAI_API_KEY
 
@@ -269,6 +270,7 @@ Output:
         temperature: 0.1,
         messages,
       }),
+      signal,
     })
 
     if (!response.ok) {
