@@ -16,11 +16,24 @@ const pageOrder: AppPage[] = ['home', 'ai', 'message', 'profile', 'tv']
 
 export default function Page() {
   const [page, setPage] = useState<AppPage>('ai')
+  const [visitedPages, setVisitedPages] = useState<Set<AppPage>>(
+    () => new Set<AppPage>(['ai'])
+  )
   const [mounted, setMounted] = useState(false)
 
 useEffect(() => {
   setMounted(true)
 }, [])
+
+useEffect(() => {
+  setVisitedPages((prev) => {
+    if (prev.has(page)) return prev
+
+    const next = new Set(prev)
+    next.add(page)
+    return next
+  })
+}, [page])
 
   const [locale, setLocale] = useState<Locale>(() => {
   if (typeof window === 'undefined') return 'zh-TW'
@@ -332,32 +345,41 @@ useEffect(() => {
         }`}
         style={pageTranslateStyle}
       >
-        <div className={page === 'home' ? 'block' : 'hidden'}>
-  <HomePage locale={locale} />
-</div>
+        {visitedPages.has('home') && (
+          <div className={page === 'home' ? 'block' : 'hidden'}>
+            <HomePage locale={locale} />
+          </div>
+        )}
 
-<div className={page === 'ai' ? 'block' : 'hidden'}>
-  <AIHelperPage locale={locale} />
-</div>
+        {visitedPages.has('ai') && (
+          <div className={page === 'ai' ? 'block' : 'hidden'}>
+            <AIHelperPage locale={locale} />
+          </div>
+        )}
 
-<div className={page === 'message' ? 'block' : 'hidden'}>
-  <MessagePage locale={locale} />
-</div>
+        {visitedPages.has('message') && (
+          <div className={page === 'message' ? 'block' : 'hidden'}>
+            <MessagePage locale={locale} />
+          </div>
+        )}
 
-<div className={page === 'profile' ? 'block' : 'hidden'}>
-  <ProfilePage
-  locale={locale}
-  onChangeLocale={setLocale}
-/>
-</div>
+        {visitedPages.has('profile') && (
+          <div className={page === 'profile' ? 'block' : 'hidden'}>
+            <ProfilePage
+              locale={locale}
+              onChangeLocale={setLocale}
+            />
+          </div>
+        )}
 
-<div className={page === 'tv' ? 'block' : 'hidden'}>
-  <VibeTvPage />
-</div>
+        {visitedPages.has('tv') && (
+          <div className={page === 'tv' ? 'block' : 'hidden'}>
+            <VibeTvPage />
+          </div>
+        )}
       </div>
 
       <BottomNav current={page} setPage={setPageDirect} />
     </main>
   )
 }
-
