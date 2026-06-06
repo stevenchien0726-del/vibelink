@@ -271,35 +271,73 @@ if (!cancelled) {
   }
 }
 
-    function delay(ms: number) {
-      return new Promise((resolve) => window.setTimeout(resolve, ms))
-    }
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string
+): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) => {
+      window.setTimeout(() => {
+        console.warn(`${label} timeout`)
+        resolve(null)
+      }, ms)
+    }),
+  ])
+}
 
     async function reloadPeopleLibrary() {
-      setPeopleLoading(true)
-      setPeopleError('')
+  setPeopleLoading(true)
+  setPeopleError('')
 
-      await fetchRecentFollowedUsers()
-      if (cancelled) return
+  try {
+    await Promise.all([
+  withTimeout(
+    fetchRecentFollowedUsers(),
+    8000,
+    'people_library_recent'
+  ),
+  withTimeout(
+    fetchFavoriteUser(),
+    8000,
+    'people_library_favorite'
+  ),
+])
+  } catch (error) {
+    console.warn('People Library reload failed:', error)
 
-      await delay(600)
-      if (cancelled) return
-
-      await fetchFavoriteUser()
-
-      if (!cancelled) {
-        setPeopleLoading(false)
-      }
+    if (!cancelled) {
+      setPeopleError(
+        locale === 'en'
+          ? 'People Library failed to load. Please try again.'
+          : 'People Library 讀取失敗，請再試一次'
+      )
+      setRecentUsers([])
+      setFavoriteUsers([])
     }
+  } finally {
+    if (!cancelled) {
+      setPeopleLoading(false)
+    }
+  }
+}
 
     reloadPeopleLibrary()
 
     const timeoutId = window.setTimeout(() => {
-      if (!cancelled) {
-        console.warn('People Library 讀取超時，自動重新讀取')
-        reloadPeopleLibrary()
-      }
-    }, 18000)
+  if (!cancelled && peopleLoading) {
+    console.warn('People Library timeout')
+
+    setPeopleLoading(false)
+
+    setPeopleError(
+      locale === 'en'
+        ? 'People Library took too long to load. Please try again.'
+        : 'People Library 讀取時間過久，請再試一次'
+    )
+  }
+}, 10000)
 
     return () => {
       cancelled = true
