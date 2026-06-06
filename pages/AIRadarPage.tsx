@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 
@@ -777,7 +777,14 @@ function getCandidateDescription(user: any) {
   const controller = new AbortController()
   activeAbortControllerRef.current = controller
 
-  const finishRequest = () => {
+  let timeoutId: number | null = null
+
+const finishRequest = () => {
+  if (timeoutId !== null) {
+    window.clearTimeout(timeoutId)
+    timeoutId = null
+  }
+
   window.clearTimeout(loadingTimer1)
   window.clearTimeout(loadingTimer2)
 
@@ -822,9 +829,10 @@ const loadingTimer2 = scheduleRequestTimer(() => {
     let data: any = null
 
 try {
-  const timeoutId = scheduleRequestTimer(() => {
-    controller.abort()
-  }, 20000, requestId)
+  timeoutId = scheduleRequestTimer(() => {
+  controller.abort()
+  finishRequest()
+}, 25000, requestId)
 
   const {
     data: { session: radarSession },
@@ -887,13 +895,14 @@ const response = await fetch('/api/ai-radar', {
 
 const rawText = await response.text()
 
+if (timeoutId !== null) {
+  window.clearTimeout(timeoutId)
+  timeoutId = null
+}
+
 if (requestSequenceRef.current !== requestId) {
-  setLoading(false)
-  setIsLoading(false)
-
-  inFlightRef.current = false
-
-  return
+  finishRequest()
+return
 }
 
 console.log('[AI Radar Frontend] raw response:', rawText)
