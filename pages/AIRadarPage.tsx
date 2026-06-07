@@ -571,18 +571,31 @@ function handleVoiceInput() {
   safeLocale === 'en'
     ? 'en-US'
     : 'zh-TW'
-  recognition.interimResults = false
+  recognition.interimResults = true
   recognition.maxAlternatives = 1
 
   setIsListening(true)
 
   recognition.onresult = (event: any) => {
-    const transcript = event.results?.[0]?.[0]?.transcript ?? ''
+    let nextTranscript = ''
 
-    if (transcript) {
-  setVoiceTranscript(transcript)
-  setInputValue(transcript)
-  }
+    for (let i = 0; i < event.results.length; i += 1) {
+      const result = event.results[i]
+      const transcriptPart = result?.[0]?.transcript ?? ''
+
+      if (transcriptPart) {
+        nextTranscript += transcriptPart
+      }
+    }
+
+    nextTranscript = nextTranscript.trim()
+
+    console.log('voice transcript:', nextTranscript)
+
+    if (!nextTranscript) return
+
+    setVoiceTranscript(nextTranscript)
+    setInputValue(nextTranscript)
   }
 
   recognition.onerror = (event: any) => {
@@ -605,7 +618,7 @@ function handleVoiceInput() {
 }
 
 function handleVoiceSubmit() {
-  const finalVoiceText = voiceTranscript.trim()
+  const finalVoiceText = voiceTranscript.trim() || inputValue.trim()
 
   if (!finalVoiceText) return
 
