@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { ChevronLeft, Play } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { PostItem } from '@/components/home/sections/feed/FeedGrid'
@@ -165,7 +166,15 @@ const videoLikeCountMap = new Map<string, number>()
   }, [])
 
   return (
-    <div className="fixed inset-0 z-[900] bg-[var(--app-bg)]">
+    <motion.div
+      data-block-page-swipe="true"
+      data-no-page-swipe="true"
+      className="fixed inset-0 z-[900] bg-[var(--app-bg)]"
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ type: 'tween', duration: 0.22, ease: 'easeOut' }}
+    >
       <div className="mx-auto h-full w-full max-w-[430px] overflow-y-auto bg-[var(--app-surface)] px-3 pb-[120px] pt-3">
         <div className="mb-4 flex h-[36px] items-center">
           <button
@@ -230,6 +239,6 @@ const videoLikeCountMap = new Map<string, number>()
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
