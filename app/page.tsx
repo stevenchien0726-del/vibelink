@@ -192,7 +192,7 @@ useEffect(() => {
     const isAtLastPage = currentIndex === pageOrder.length - 1
 
     if (deltaX > 0) {
-      if (!isAtFirstPage) {
+      if (page !== 'ai' && !isAtFirstPage) {
         goToPrevPage()
       }
     } else {
@@ -296,7 +296,7 @@ useEffect(() => {
     const isAtLastPage = currentIndex === pageOrder.length - 1
 
     if (deltaX > 0) {
-      if (!isAtFirstPage) {
+      if (page !== 'ai' && !isAtFirstPage) {
         goToPrevPage()
       }
     } else {

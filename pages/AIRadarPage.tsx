@@ -1481,10 +1481,6 @@ typeText(nextAiText, requestId)
       style={{
         touchAction: 'pan-y',
       }}
-      onTouchStart={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerMove={(e) => e.stopPropagation()}
       onDragEnd={(_, info) => {
         const shouldClose =
           info.offset.x > 110 ||
