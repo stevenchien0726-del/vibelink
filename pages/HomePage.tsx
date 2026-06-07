@@ -104,6 +104,10 @@ export default function HomePage({
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null)
+
+  const [reportedPostIds, setReportedPostIds] = useState<string[]>([])
+  const [reportedVideoIds, setReportedVideoIds] = useState<string[]>([])
+
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null)
 
   const [commentSheetPost, setCommentSheetPost] = useState<PostItem | null>(null)
@@ -1167,6 +1171,8 @@ if (realVideos.length > 0) {
 
       <HomeFeedSection
   mergedPosts={mergedPosts}
+  reportedPostIds={reportedPostIds}
+  reportedVideoIds={reportedVideoIds}
         handleOpenFeedPost={handleOpenFeedPost}
         openCommentSheet={openCommentSheet}
         setIsShareSheetOpen={setIsShareSheetOpen}
@@ -1183,6 +1189,8 @@ if (realVideos.length > 0) {
 
 <HomeDetailPostModal
   selectedPost={selectedPost}
+  reportedPostIds={reportedPostIds}
+  setReportedPostIds={setReportedPostIds}
   setSelectedPost={setSelectedPost}
   setSelectedProfileUserId={setSelectedProfileUserId}
   isDetailMenuOpen={isDetailMenuOpen}
@@ -1380,6 +1388,8 @@ if (realVideos.length > 0) {
   open={isShortVideoPageOpen}
   videos={shortVideoPosts}
   initialVideoId={shortVideoStartId}
+  reportedVideoIds={reportedVideoIds}
+  setReportedVideoIds={setReportedVideoIds}
   onClose={() => setIsShortVideoPageOpen(false)}
   onLike={toggleShortVideoLike}
   onComment={openCommentSheet}

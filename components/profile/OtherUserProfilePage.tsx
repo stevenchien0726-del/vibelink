@@ -173,6 +173,10 @@ const [selectedShortVideoId, setSelectedShortVideoId] = useState<string | undefi
 const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 
 const [selectedPost, setSelectedPost] = useState<any>(null)
+
+const [reportedPostIds, setReportedPostIds] = useState<string[]>([])
+const [reportedVideoIds, setReportedVideoIds] = useState<string[]>([])
+
 const [activeTab, setActiveTab] = useState(0)
   function goToTab(index: number) {
   if (index < 0 || index > 2) return
@@ -565,6 +569,14 @@ async function toggleFavorite() {
   }
 }
 
+function isPostReported(postId: string) {
+  return reportedPostIds.includes(postId)
+}
+
+function isVideoReported(videoId: string) {
+  return reportedVideoIds.includes(videoId)
+}
+
   async function toggleFollow() {
     if (!userId || !isUuid(userId)) return
 
@@ -883,11 +895,21 @@ if (!error) {
   className="relative h-[190px] overflow-hidden bg-[var(--app-card)]"
 >
                             {image && (
-                              <img
-                                src={image}
-                                className="h-full w-full object-cover"
-                              />
-                            )}
+  <img
+    src={image}
+    className={`h-full w-full object-cover ${
+      isPostReported(post.id)
+        ? 'blur-xl scale-105 opacity-60'
+        : ''
+    }`}
+  />
+)}
+
+{isPostReported(post.id) && (
+  <div className="absolute inset-0 flex items-center justify-center bg-black/40 px-3 text-center text-[13px] font-medium text-white">
+    已檢舉，內容已隱藏
+  </div>
+)}
 
                             {post.post_images?.length > 1 && (
                               <div className="absolute right-2 top-2 flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/45 text-white">
@@ -1239,13 +1261,27 @@ if (!error) {
 </button>
 
         <div className="relative aspect-square overflow-hidden rounded-[18px] bg-[var(--app-card)]">
+  
   {selectedPost.post_images?.[0]?.image_url && (
-    <img
-      src={selectedPost.post_images[0].image_url}
-      className="h-full w-full object-cover"
-    />
+    <>
+      <img
+        src={selectedPost.post_images[0].image_url}
+        className={`h-full w-full object-cover ${
+          isPostReported(selectedPost.id)
+            ? 'blur-xl scale-105 opacity-60'
+            : ''
+        }`}
+      />
+
+      {isPostReported(selectedPost.id) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/45 px-6 text-center text-[15px] font-medium text-white">
+          你已檢舉這篇貼文，內容已暫時隱藏
+        </div>
+      )}
+    </>
   )}
 </div>
+  
 
         <div className="flex items-center justify-between px-1 pt-4">
           <div className="flex items-center gap-5">
@@ -1310,7 +1346,25 @@ if (!error) {
   {isPostMenuOpen && (
     <WideMenuSheet
   variant="other"
+
+  isReported={
+    !!selectedPost?.id &&
+    reportedPostIds.includes(selectedPost.id)
+  }
+
   onClose={() => setIsPostMenuOpen(false)}
+
+  onReport={() => {
+  if (selectedPost?.id) {
+    setReportedPostIds((prev) =>
+      prev.includes(selectedPost.id)
+        ? prev.filter((id) => id !== selectedPost.id)
+        : [...prev, selectedPost.id]
+    )
+  }
+
+  setIsPostMenuOpen(false)
+}}
 
   onBlock={async () => {
     const {

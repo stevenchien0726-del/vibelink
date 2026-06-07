@@ -1,7 +1,7 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   Check,
   PencilLine,
@@ -24,8 +24,12 @@ type ConversationItem = {
   name: string
   avatarUrl?: string
   lastMessage?: string
+  isPinned?: boolean
+  isHidden?: boolean
+  pinnedAt?: string | null
+  hiddenAt?: string | null
+  latestMessageAt?: string | null
 }
-
 type SearchAccountItem = {
   id: string
   name: string
@@ -50,7 +54,7 @@ const messageText = {
     noAccount: '找不到符合的帳戶',
 
     editMessage: '編輯訊息',
-    editMessageSub: '釘選 / 隱藏 / 訊息排序',
+    editMessageSub: '釘選 / 隱藏',
 
     pinChat: '釘選重要聊天',
     hideLowInteraction: '隱藏低互動聊天',
@@ -69,7 +73,7 @@ const messageText = {
 
     editMessage: 'Edit Messages',
     editMessageSub:
-      'Manage pinned / hidden / sorted chats',
+      'Manage pinned / hidden',
 
     pinChat: 'Pin important chats',
     hideLowInteraction: 'Hide low interaction chats',
@@ -88,6 +92,7 @@ export default function MessagePage({
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false)
 const [isEditPanelOpen, setIsEditPanelOpen] = useState(false)
 const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
+const [isPinEditMode, setIsPinEditMode] = useState(false)
 
   const [searchText, setSearchText] = useState('')
     const [searchAccounts, setSearchAccounts] = useState<SearchAccountItem[]>([])
@@ -170,24 +175,55 @@ function withTimeout<T>(
   ms = 6000,
   label = 'request'
 ): Promise<T | null> {
+  let timeoutId: number
+
   return Promise.race([
     Promise.resolve(promise),
     new Promise<null>((resolve) => {
-      window.setTimeout(() => {
+      timeoutId = window.setTimeout(() => {
         console.warn(`${label} timeout`)
         resolve(null)
       }, ms)
     }),
-  ])
+  ]).finally(() => {
+    window.clearTimeout(timeoutId)
+  })
+}
+
+function sortMessageConversations(items: ConversationItem[]) {
+  return [...items].sort((a, b) => {
+    if (a.isPinned !== b.isPinned) {
+      return a.isPinned ? -1 : 1
+    }
+
+    if (a.isPinned && b.isPinned) {
+      return (
+        new Date(b.pinnedAt ?? 0).getTime() -
+        new Date(a.pinnedAt ?? 0).getTime()
+      )
+    }
+
+    return (
+      new Date(b.latestMessageAt ?? 0).getTime() -
+      new Date(a.latestMessageAt ?? 0).getTime()
+    )
+  })
 }
 
   useEffect(() => {
   async function loadConversations(retry = 0) {
+    let keepLoadingForRetry = false
+
+    try {
     setMessageLoading(true)
 setMessageError('')
-    const {
-  data: { session },
-} = await supabase.auth.getSession()
+    const sessionResult = await withTimeout(
+      supabase.auth.getSession(),
+      6000,
+      'message_session'
+    )
+
+const session = sessionResult?.data.session
 
 const user = session?.user
 
@@ -196,25 +232,28 @@ if (!user) {
   return
 }
 
-    const { data, error } = await supabase
-      .from('conversations')
-      .select(`
-        id,
-        user_a,
-        user_b,
-        chat_messages (
-          id,
-          text,
-          created_at,
-          recalled
-        )
-      `)
-      .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+    const conversationsResult = await withTimeout(
+      supabase
+        .from('conversations')
+        .select(`
+  id,
+  user_a,
+  user_b
+`)
+        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`),
+      6000,
+      'message_conversations'
+    )
 
-    if (error) {
+    const data = conversationsResult?.data
+    const error = conversationsResult?.error
+
+    if (!conversationsResult || error) {
   console.error('讀取 conversations 失敗:', error)
 
   if (retry < 1) {
+    keepLoadingForRetry = true
+
     window.setTimeout(() => {
       loadConversations(retry + 1)
     }, 600)
@@ -222,7 +261,7 @@ if (!user) {
     return
   }
 
-  setMessageError('訊息讀取失敗')
+  setMessageError('訊息讀取失敗，請重新載入')
   setMessageLoading(false)
   return
 }
@@ -231,10 +270,34 @@ const validConversations = (data ?? []).filter((conversation: any) => {
   return conversation.user_a !== user.id || conversation.user_b !== user.id
 })
 
+const conversationIds = validConversations.map((conversation: any) => conversation.id)
+
     const otherUserIds = validConversations.map((conversation: any) =>
   conversation.user_a === user.id
     ? conversation.user_b
     : conversation.user_a
+)
+
+const settingsResult =
+  conversationIds.length > 0
+    ? await withTimeout(
+        supabase
+          .from('message_conversation_settings')
+          .select(
+            'conversation_id, is_pinned, is_hidden, pinned_at, hidden_at'
+          )
+          .eq('user_id', user.id)
+          .in('conversation_id', conversationIds),
+        6000,
+        'message_conversation_settings'
+      )
+    : null
+
+const settingsMap = new Map(
+  (settingsResult?.data ?? []).map((setting: any) => [
+    setting.conversation_id,
+    setting,
+  ])
 )
 
 const profilesResult =
@@ -261,15 +324,11 @@ const mapped = validConversations.map((conversation: any) => {
       ? conversation.user_b
       : conversation.user_a
 
-  const latestMessage = [...(conversation.chat_messages ?? [])]
-    .filter((msg: any) => !msg.recalled)
-    .sort(
-      (a: any, b: any) =>
-        new Date(b.created_at).getTime() -
-        new Date(a.created_at).getTime()
-    )[0]
+  const latestMessage =
+    null as { text?: string; created_at?: string } | null
 
   const profile = profileMap.get(otherUserId) as any
+  const setting = settingsMap.get(conversation.id) as any
 
   return {
     id: conversation.id,
@@ -280,6 +339,11 @@ const mapped = validConversations.map((conversation: any) => {
       'Vibelink User',
     avatarUrl: profile?.avatar_url || '',
     lastMessage: latestMessage?.text ?? '',
+    latestMessageAt: latestMessage?.created_at ?? null,
+    isPinned: Boolean(setting?.is_pinned),
+    isHidden: Boolean(setting?.is_hidden),
+    pinnedAt: setting?.pinned_at ?? null,
+    hiddenAt: setting?.hidden_at ?? null,
   }
 })
 
@@ -293,7 +357,13 @@ mapped.forEach((conversation) => {
   }
 })
 
-setConversations(Array.from(conversationMap.values()))
+setConversations(
+  sortMessageConversations(
+    Array.from(conversationMap.values()).filter(
+      (conversation) => !conversation.isHidden
+    )
+  )
+)
 const preloadChats = Array.from(conversationMap.values()).slice(0, 3)
 
 window.setTimeout(() => {
@@ -310,7 +380,14 @@ window.setTimeout(() => {
   })
 }, 900)
 
-    setMessageLoading(false)
+    } catch (err) {
+      console.warn('load conversations failed:', err)
+      setMessageError('訊息讀取失敗，請重新載入')
+    } finally {
+      if (!keepLoadingForRetry) {
+        setMessageLoading(false)
+      }
+    }
   }
 
   loadConversations()
@@ -381,9 +458,13 @@ useEffect(() => {
   async function loadFollowingUsers() {
     setIsSearchingAccounts(true)
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const searchUserResult = await withTimeout(
+      supabase.auth.getUser(),
+      6000,
+      'message_search_user'
+    )
+
+    const user = searchUserResult?.data.user
 
     if (!user) {
       setSearchAccounts([])
@@ -391,12 +472,19 @@ useEffect(() => {
       return
     }
 
-    const { data: followsData, error: followsError } = await supabase
-      .from('follows')
-      .select('following_id')
-      .eq('follower_id', user.id)
+    const followsResult = await withTimeout(
+      supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id),
+      6000,
+      'message_search_follows'
+    )
 
-    if (followsError) {
+    const followsData = followsResult?.data
+    const followsError = followsResult?.error
+
+    if (!followsResult || followsError) {
       console.error('讀取追蹤用戶失敗:', followsError)
       setSearchAccounts([])
       setIsSearchingAccounts(false)
@@ -412,12 +500,19 @@ useEffect(() => {
       return
     }
 
-    const { data: profilesData, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, username, display_name, avatar_url, bio')
-      .in('id', followingIds)
+    const profilesResult = await withTimeout(
+      supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url, bio')
+        .in('id', followingIds),
+      6000,
+      'message_search_profiles'
+    )
 
-    if (profilesError) {
+    const profilesData = profilesResult?.data
+    const profilesError = profilesResult?.error
+
+    if (!profilesResult || profilesError) {
       console.error('讀取 profiles 失敗:', profilesError)
       setSearchAccounts([])
       setIsSearchingAccounts(false)
@@ -435,7 +530,7 @@ useEffect(() => {
           profile.bio ||
           (locale === 'en'
             ? 'Following user'
-            : '已追蹤用戶'),
+            : '已追蹤的使用者'),
         avatarUrl: profile.avatar_url || '',
       })) ?? []
 
@@ -444,7 +539,62 @@ useEffect(() => {
   }
 
   loadFollowingUsers()
+    .catch((err) => {
+      console.warn('load following users failed:', err)
+      setSearchAccounts([])
+    })
+    .finally(() => {
+      setIsSearchingAccounts(false)
+    })
 }, [isSearchPanelOpen, locale])
+
+async function toggleConversationPin(conversation: ConversationItem) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  const shouldPin = !conversation.isPinned
+  const now = new Date().toISOString()
+  let previousConversations: ConversationItem[] = []
+
+  setConversations((prev) => {
+    previousConversations = prev
+
+    return sortMessageConversations(
+      prev.map((item) =>
+        item.id === conversation.id
+          ? {
+              ...item,
+              isPinned: shouldPin,
+              pinnedAt: shouldPin ? now : null,
+            }
+          : item
+      )
+    )
+  })
+
+  const { error } = await supabase
+    .from('message_conversation_settings')
+    .upsert(
+      {
+        user_id: user.id,
+        conversation_id: conversation.id,
+        is_pinned: shouldPin,
+        is_hidden: conversation.isHidden ?? false,
+        pinned_at: shouldPin ? now : null,
+        hidden_at: conversation.hiddenAt ?? null,
+        updated_at: now,
+      },
+      { onConflict: 'user_id,conversation_id' }
+    )
+
+  if (error) {
+    console.error('toggle conversation pin failed:', error)
+    setConversations(previousConversations)
+  }
+}
 
   function handleMessageScroll(e: React.UIEvent<HTMLDivElement>) {
     const currentY = e.currentTarget.scrollTop
@@ -476,9 +626,31 @@ useEffect(() => {
     </div>
 
     <div
-      onScroll={handleMessageScroll}
-      className="relative flex h-screen flex-col overflow-y-auto bg-[var(--app-bg)] px-4 pt-4 pb-2 text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    >
+  onScroll={handleMessageScroll}
+  className="relative flex h-screen flex-col overflow-y-auto bg-[var(--app-bg)] px-4 pt-4 pb-2 text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+>
+
+  <AnimatePresence>
+    {isPinEditMode && (
+      <motion.button
+  type="button"
+  onClick={() => setIsPinEditMode(false)}
+  initial={{ x: '-50%', y: -28, opacity: 0 }}
+  animate={{ x: '-50%', y: 0, opacity: 1 }}
+  exit={{ x: '-50%', y: -28, opacity: 0 }}
+  whileTap={{ scale: 0.96 }}
+  transition={{
+    type: 'spring',
+    stiffness: 420,
+    damping: 30,
+  }}
+  className="fixed left-1/2 top-[77px] z-[150] flex h-[54px] min-w-[168px] items-center justify-center rounded-full bg-[#c893cf] px-8 text-[24px] font-medium leading-none text-white"
+>
+  釘選完成
+</motion.button>
+    )}
+  </AnimatePresence>
+
       <div className="relative flex-1 px-0 pb-4 pt-[70px]">
         <div
           className={`fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[var(--app-bg)]/95 px-4 pt-4 pb-3 backdrop-blur-md transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
@@ -627,33 +799,31 @@ useEffect(() => {
                 )}
 
                 {isEditPanelOpen && (
-                  <div className="overflow-hidden rounded-[30px] border border-[var(--app-card-border)] bg-[var(--app-card)]/95 shadow-[0_14px_30px_rgba(0,0,0,0.14)] backdrop-blur-md">
-                    <div className="flex items-center justify-between px-4 pt-4">
-                      <div>
-                        <div className="text-[18px] font-medium text-[var(--app-text)]">
-                          {messageText[locale].editMessage}
-                        </div>
-                        <div className="mt-1 text-[12px] text-[var(--app-muted)]">
-                          {messageText[locale].editMessageSub}
-                        </div>
-                      </div>
+  <div className="overflow-hidden rounded-[30px] border border-[var(--app-card-border)] bg-[var(--app-card)]/95 shadow-[0_14px_30px_rgba(0,0,0,0.14)] backdrop-blur-md">
+    <div className="flex flex-col">
+      <button
+  type="button"
+  onClick={() => {
+    setIsPinEditMode((prev) => !prev)
+    setIsEditPanelOpen(false)
+  }}
+  className="flex h-[58px] w-full items-center justify-center text-center text-[16px] font-medium text-[var(--app-text)] active:bg-black/5"
+>
+  編輯釘選
+</button>
 
-                      <button
-                        type="button"
-                        onClick={() => setIsEditPanelOpen(false)}
-                        className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[var(--app-surface)] active:scale-95"
-                      >
-                        <X size={22} strokeWidth={2.4} className="text-[var(--app-text)]" />
-                      </button>
-                    </div>
+      <div className="mx-5 h-px bg-[var(--app-card-border)]" />
 
-                    <div className="p-2 pt-3">
-                      
-                    </div>
-                  </div>
-                )}
+      <button
+  type="button"
+  className="flex h-[58px] w-full items-center justify-center text-center text-[16px] font-medium text-[var(--app-text)] active:bg-black/5"
+>
+  編輯隱藏
+</button>
+    </div>
+  </div>
+)}
 
-                
               </div>
             </div>
           </>
@@ -691,7 +861,14 @@ useEffect(() => {
     <button
   key={conversation.id}
   type="button"
-  onClick={() => setOpenedChat(conversation)}
+  onClick={() => {
+    if (isPinEditMode) {
+      toggleConversationPin(conversation)
+      return
+    }
+
+    setOpenedChat(conversation)
+  }}
   className="flex items-center gap-4 rounded-[24px] px-1 py-2 text-left active:scale-[0.99]"
 >
       <div className="h-[58px] w-[58px] overflow-hidden rounded-full bg-[var(--app-card)]">
@@ -712,6 +889,24 @@ useEffect(() => {
           {conversation.lastMessage || '開始聊天'}
         </div>
       </div>
+      {(isPinEditMode || conversation.isPinned) && (
+  <span
+    role="button"
+    tabIndex={0}
+    onClick={(e) => {
+      e.stopPropagation()
+      toggleConversationPin(conversation)
+    }}
+    className={`shrink-0 rounded-full px-3 py-1 text-[12px] font-medium active:scale-95 ${
+      conversation.isPinned
+        ? 'bg-[#c86cff] text-white'
+        : 'bg-[var(--app-card)] text-[var(--app-muted)]'
+    }`}
+  >
+    {conversation.isPinned ? '已釘選' : '釘選'}
+  </span>
+)}
+
     </button>
   ))}
 </div>

@@ -14,6 +14,11 @@ import type { FolderUser, FolderUsersMap } from './PeopleFolderPage'
 import { supabase } from '../../../../lib/supabase'
 import type { Locale } from '@/i18n'
 
+import {
+  sortPeopleLibraryUsers,
+  type PeopleLibraryUser,
+} from './sortPeopleLibraryUsers'
+
 type PickedUser = FolderUser
 
 type PickUserPayload = {
@@ -51,224 +56,12 @@ function getFolderName(id: string, locale: Locale) {
     recent: locale === 'en' ? '🆕 Recently Followed' : '🆕 最近追蹤',
     favorite: locale === 'en' ? '✨ My Favorites' : '✨ 我的最愛',
     'more-interaction': locale === 'en' ? '💬 Frequent Interactions' : '💬 較常互動',
-    'mutual-follow': locale === 'en' ? '🔁 Mutual Following' : '🔁 互相關注中',
-    'social-lover': locale === 'en' ? '🥳 Social Lovers' : '🥳 熱愛社交的人',
-    'might-care': locale === 'en' ? '👀 People You May Like' : '👀 你可能在意的人',
     'less-interaction': locale === 'en' ? '💤 Less Interaction' : '💤 較少互動',
     creator: locale === 'en' ? '🎨 Vibelink Creators' : '🎨 Vibelink創作者',
     'official-business': locale === 'en' ? '🏢 Official & Business' : '🏢 官方和商業帳戶',
-    'high-reply': locale === 'en' ? '⚡ High Replies' : '⚡ 高頻互動與回覆',
   }
 
   return map[id] || 'People Library'
-}
-
-export default function PeopleLibraryPage({
-  query,
-  locale,
-  onClose,
-  onPickUser,
-  onOpenProfile,
-}: PeopleLibraryPageProps) {
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
-  const [recentUsers, setRecentUsers] = useState<PickedUser[]>([])
-  const [favoriteUsers, setFavoriteUsers] = useState<FolderUser[]>([])
-  const [peopleLoading, setPeopleLoading] = useState(true)
-  const [peopleError, setPeopleError] = useState('')
-
-  const folders = useMemo(() => getFolders(locale), [locale])
-  const folderUsers = useMemo<FolderUsersMap>(() => {
-  const emptyFolders = Object.fromEntries(
-    folders.map((folder) => [folder.id, [] as FolderUser[]])
-  ) as FolderUsersMap
-
-  return {
-    ...emptyFolders,
-    recent: recentUsers,
-favorite: favoriteUsers,
-  }
-}, [favoriteUsers, folders, recentUsers])
-
-  const scrollRef = useRef<HTMLDivElement | null>(null)
-  const canDragCloseRef = useRef(true)
-
-  const sheetY = useMotionValue(0)
-  const overlayOpacity = useTransform(sheetY, [0, 320], [1, 0.78])
-  const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function fetchRecentFollowedUsers(retry = 0) {
-      try {
-        setPeopleLoading(true)
-        setPeopleError('')
-
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser()
-
-        if (authError) throw authError
-
-        if (!user) {
-          if (!cancelled) setRecentUsers([])
-          return
-        }
-
-        const { data: followRows, error: followError } = await supabase
-          .from('follows')
-          .select('following_id, created_at')
-          .eq('follower_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(50)
-
-        if (followError) throw followError
-
-        const allFollowingIds =
-  followRows
-    ?.map((row: any) => row.following_id)
-    .filter(Boolean) ?? []
-
-const { data: favoriteRowsForRecent } = await supabase
-  .from('favorite_users')
-  .select('favorite_user_id')
-  .eq('user_id', user.id)
-
-const favoriteIdSet = new Set(
-  (favoriteRowsForRecent ?? [])
-    .map((row: any) => row.favorite_user_id)
-    .filter(Boolean)
-)
-
-const followingIds = allFollowingIds
-  .filter((id: string) => !favoriteIdSet.has(id))
-  .slice(0, 50)
-
-if (followingIds.length === 0) {
-  if (!cancelled) setRecentUsers([])
-  return
-}
-
-const { data: profiles, error: profileError } = await supabase
-  .from('profiles')
-  .select('id, username, display_name, avatar_url')
-  .in('id', followingIds)
-
-if (profileError) throw profileError
-
-const profileMap = new Map(
-  (profiles ?? []).map((profile: any) => [profile.id, profile])
-)
-
-const orderedUsers: FolderUser[] = followingIds
-  .map((id: string) => {
-    const profile: any = profileMap.get(id)
-    if (!profile) return null
-
-    return {
-      id: profile.id,
-      name:
-        profile.display_name ||
-        profile.username ||
-        'Vibelink User',
-      avatar: profile.avatar_url || '',
-    }
-  })
-  .filter(Boolean) as FolderUser[]
-
-if (!cancelled) {
-  setRecentUsers(orderedUsers)
-}
-      } catch (error) {
-        console.error('People Library 最近追蹤讀取失敗:', error)
-
-        if (retry < 1) {
-          window.setTimeout(() => {
-            fetchRecentFollowedUsers(retry + 1)
-          }, 600)
-          return
-        }
-
-        if (!cancelled) {
-          setPeopleError(locale === 'en' ? 'People Library failed to load. Please try again.' : 'People Library 讀取失敗，請再試一次')
-          setRecentUsers([])
-        }
-      }
-    }
-
-    async function fetchFavoriteUser(retry = 0) {
-  try {
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError) throw authError
-
-    if (!user) {
-      if (!cancelled) setFavoriteUsers([])
-      return
-    }
-
-    const { data: favoriteRows, error: favoriteError } = await supabase
-      .from('favorite_users')
-      .select('favorite_user_id, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true })
-      .limit(20)
-
-    if (favoriteError) throw favoriteError
-
-    const favoriteIds =
-      favoriteRows
-        ?.map((row: any) => row.favorite_user_id)
-        .filter(Boolean) ?? []
-
-    if (favoriteIds.length === 0) {
-      if (!cancelled) setFavoriteUsers([])
-      return
-    }
-
-    const { data: profiles, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, username, display_name, avatar_url')
-      .in('id', favoriteIds)
-
-    if (profileError) throw profileError
-
-    const profileMap = new Map(
-      (profiles ?? []).map((profile: any) => [profile.id, profile])
-    )
-
-    const orderedUsers: FolderUser[] = favoriteIds
-      .map((id: string) => {
-        const profile: any = profileMap.get(id)
-        if (!profile) return null
-
-        return {
-          id: profile.id,
-          name:
-            profile.display_name ||
-            profile.username ||
-            'Vibelink User',
-          avatar: profile.avatar_url || '',
-        }
-      })
-      .filter(Boolean) as FolderUser[]
-
-    if (!cancelled) {
-      setFavoriteUsers(orderedUsers)
-    }
-  } catch (error) {
-    console.error('People Library 我的最愛讀取失敗:', error)
-
-    if (retry < 1) {
-      window.setTimeout(() => {
-        fetchFavoriteUser(retry + 1)
-      }, 600)
-    }
-  }
 }
 
 function withTimeout<T>(
@@ -287,63 +80,197 @@ function withTimeout<T>(
   ])
 }
 
-    async function reloadPeopleLibrary() {
-  setPeopleLoading(true)
-  setPeopleError('')
+export default function PeopleLibraryPage({
+  query,
+  locale,
+  onClose,
+  onPickUser,
+  onOpenProfile,
+}: PeopleLibraryPageProps) {
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
+  const [allPeopleUsers, setAllPeopleUsers] = useState<PeopleLibraryUser[]>([])
+  const [peopleLoading, setPeopleLoading] = useState(true)
+  const [peopleError, setPeopleError] = useState('')
 
-  try {
-    await Promise.all([
-  withTimeout(
-    fetchRecentFollowedUsers(),
-    8000,
-    'people_library_recent'
-  ),
-  withTimeout(
-    fetchFavoriteUser(),
-    8000,
-    'people_library_favorite'
-  ),
-])
-  } catch (error) {
-    console.warn('People Library reload failed:', error)
+  const folders = useMemo(() => getFolders(locale), [locale])
 
-    if (!cancelled) {
-      setPeopleError(
-        locale === 'en'
-          ? 'People Library failed to load. Please try again.'
-          : 'People Library 讀取失敗，請再試一次'
+  const folderUsers = useMemo<FolderUsersMap>(() => {
+    const emptyFolders = Object.fromEntries(
+      folders.map((folder) => [folder.id, [] as FolderUser[]])
+    ) as FolderUsersMap
+
+    const sortedFolders = Object.fromEntries(
+      Object.entries(sortPeopleLibraryUsers(allPeopleUsers)).map(
+        ([folderId, users]) => [
+          folderId,
+          users.map((user) => ({
+            id: user.id,
+            name: user.name,
+            avatar: user.avatar ?? '',
+          })),
+        ]
       )
-      setRecentUsers([])
-      setFavoriteUsers([])
+    ) as FolderUsersMap
+
+    return {
+      ...emptyFolders,
+      ...sortedFolders,
     }
-  } finally {
-    if (!cancelled) {
-      setPeopleLoading(false)
+  }, [allPeopleUsers, folders])
+
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const canDragCloseRef = useRef(true)
+
+  const sheetY = useMotionValue(0)
+  const overlayOpacity = useTransform(sheetY, [0, 320], [1, 0.78])
+  const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function fetchPeopleLibraryUsers(retry = 0) {
+      try {
+        setPeopleLoading(true)
+        setPeopleError('')
+
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
+
+        if (authError) throw authError
+
+        if (!user) {
+          if (!cancelled) setAllPeopleUsers([])
+          return
+        }
+
+        const { data: followRows, error: followError } = await supabase
+          .from('follows')
+          .select('following_id, created_at')
+          .eq('follower_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(300)
+
+        if (followError) throw followError
+
+        const { data: favoriteRows, error: favoriteError } = await supabase
+          .from('favorite_users')
+          .select('favorite_user_id, created_at')
+          .eq('user_id', user.id)
+
+        if (favoriteError) throw favoriteError
+
+        const followingIds =
+          followRows?.map((row: any) => row.following_id).filter(Boolean) ?? []
+
+        const favoriteIds =
+          favoriteRows?.map((row: any) => row.favorite_user_id).filter(Boolean) ?? []
+
+        const mergedIds = Array.from(new Set([...followingIds, ...favoriteIds]))
+
+        if (mergedIds.length === 0) {
+          if (!cancelled) setAllPeopleUsers([])
+          return
+        }
+
+        const { data: profiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, username, display_name, avatar_url')
+          .in('id', mergedIds)
+
+        if (profileError) throw profileError
+
+        const followMap = new Map(
+          (followRows ?? []).map((row: any) => [row.following_id, row.created_at])
+        )
+
+        const favoriteMap = new Map(
+          (favoriteRows ?? []).map((row: any) => [
+            row.favorite_user_id,
+            row.created_at,
+          ])
+        )
+
+        const mappedUsers: PeopleLibraryUser[] =
+          profiles?.map((profile: any) => ({
+            id: profile.id,
+            name: profile.display_name || profile.username || 'Vibelink User',
+            avatar: profile.avatar_url || '',
+            followedAt: followMap.get(profile.id) ?? null,
+            favoritedAt: favoriteMap.get(profile.id) ?? null,
+            isFavorite: favoriteMap.has(profile.id),
+
+            accountType: 'normal',
+            isCreator: false,
+
+            messageCount: 0,
+            commentCount: 0,
+            likeCount: 0,
+            profileViewCount: 0,
+          })) ?? []
+
+        if (!cancelled) {
+          setAllPeopleUsers(mappedUsers)
+        }
+      } catch (error) {
+        console.error('People Library 讀取失敗:', error)
+
+        if (retry < 1) {
+          window.setTimeout(() => {
+            fetchPeopleLibraryUsers(retry + 1)
+          }, 600)
+          return
+        }
+
+        if (!cancelled) {
+          setPeopleError(
+            locale === 'en'
+              ? 'People Library failed to load. Please try again.'
+              : 'People Library 讀取失敗，請再試一次'
+          )
+          setAllPeopleUsers([])
+        }
+      }
     }
-  }
-}
+
+    async function reloadPeopleLibrary() {
+      setPeopleLoading(true)
+      setPeopleError('')
+
+      try {
+        await withTimeout(fetchPeopleLibraryUsers(), 8000, 'people_library_users')
+      } catch (error) {
+        console.warn('People Library reload failed:', error)
+
+        if (!cancelled) {
+          setPeopleError(
+            locale === 'en'
+              ? 'People Library failed to load. Please try again.'
+              : 'People Library 讀取失敗，請再試一次'
+          )
+          setAllPeopleUsers([])
+        }
+      } finally {
+        if (!cancelled) {
+          setPeopleLoading(false)
+        }
+      }
+    }
 
     reloadPeopleLibrary()
 
     const timeoutId = window.setTimeout(() => {
-  if (!cancelled && peopleLoading) {
-    console.warn('People Library timeout')
-
-    setPeopleLoading(false)
-
-    setPeopleError(
-      locale === 'en'
-        ? 'People Library took too long to load. Please try again.'
-        : 'People Library 讀取時間過久，請再試一次'
-    )
-  }
-}, 10000)
+      if (!cancelled) {
+        setPeopleLoading(false)
+      }
+    }, 10000)
 
     return () => {
       cancelled = true
       window.clearTimeout(timeoutId)
     }
-  }, [])
+  }, [locale])
 
   function closeSheet() {
     animate(sheetY, 540, {
@@ -474,7 +401,9 @@ function withTimeout<T>(
 
             {peopleLoading && (
               <div className="mb-4 rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 py-3 text-center text-[13px] text-[var(--app-muted)]">
-                {locale === 'en' ? 'Loading People Library...' : 'People Library 讀取中...'}
+                {locale === 'en'
+                  ? 'Loading People Library...'
+                  : 'People Library 讀取中...'}
               </div>
             )}
 

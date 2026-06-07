@@ -8,6 +8,8 @@ import FavoriteFeedPage from '@/components/home/sections/feed/FavoriteFeedPage'
 
 type Props = {
   mergedPosts: PostItem[]
+  reportedPostIds: string[]
+  reportedVideoIds: string[]
   handleOpenFeedPost: (post: PostItem) => void
   openCommentSheet: (post: PostItem) => void
   setIsShareSheetOpen: Dispatch<SetStateAction<boolean>>
@@ -24,6 +26,8 @@ type Props = {
 
 export default function HomeFeedSection({
   mergedPosts,
+  reportedPostIds,
+  reportedVideoIds,
   handleOpenFeedPost,
   openCommentSheet,
   setIsShareSheetOpen,
@@ -47,6 +51,8 @@ export default function HomeFeedSection({
 >
   <FeedGrid
   posts={mergedPosts}
+  reportedPostIds={reportedPostIds}
+  reportedVideoIds={reportedVideoIds}
   onOpenPost={handleOpenFeedPost}
   onOpenComments={openCommentSheet}
   onOpenShare={() => setIsShareSheetOpen(true)}

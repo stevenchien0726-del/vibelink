@@ -28,6 +28,8 @@ export type PostItem = {
 
 type FeedGridProps = {
   posts?: PostItem[]
+  reportedPostIds?: string[]
+  reportedVideoIds?: string[]
   onOpenPost?: (post: PostItem) => void
   onOpenComments?: (post: PostItem) => void
   onOpenShare?: (post: PostItem) => void
@@ -192,10 +194,12 @@ function VideoPreview({ post }: { post: PostItem }) {
 const FeedCard = memo(function FeedCard({
   post,
   index,
+  isReported,
   onOpenPost,
 }: {
   post: PostItem
   index: number
+  isReported: boolean
   onOpenPost?: (post: PostItem) => void
 }) {
   const isVideo = Boolean(getVideoSrc(post) || post.type === 'video')
@@ -213,7 +217,13 @@ const FeedCard = memo(function FeedCard({
     >
       {isVideo ? (
         <>
-          <VideoPreview post={post} />
+          <div
+            className={`h-full w-full ${
+              isReported ? 'blur-xl opacity-60' : ''
+            }`}
+          >
+            <VideoPreview post={post} />
+          </div>
 
           <div className="pointer-events-none absolute inset-0 bg-black/10" />
 
@@ -260,17 +270,34 @@ const FeedCard = memo(function FeedCard({
             </div>
           )}
 
-          <NormalImage
-            src={previewImage || FALLBACK_IMAGE}
-            alt={post.author || 'Vibelink post'}
-          />
+          <div
+            className={`h-full w-full ${
+              isReported ? 'blur-xl opacity-60' : ''
+            }`}
+          >
+            <NormalImage
+              src={previewImage || FALLBACK_IMAGE}
+              alt={post.author || 'Vibelink post'}
+            />
+          </div>
         </>
+      )}
+
+      {isReported && (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/45 px-4 text-center text-[14px] font-medium text-white">
+          已檢舉，內容已隱藏
+        </div>
       )}
     </motion.button>
   )
 })
 
-function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
+function FeedGrid({
+  posts = [],
+  reportedPostIds = [],
+  reportedVideoIds = [],
+  onOpenPost,
+}: FeedGridProps) {
   const [renderCount, setRenderCount] = useState(INITIAL_RENDER_COUNT)
 
   useEffect(() => {
@@ -320,6 +347,11 @@ function FeedGrid({ posts = [], onOpenPost }: FeedGridProps) {
             key={`${post.type || 'post'}-${post.id}-${index}`}
             post={post}
             index={index}
+            isReported={
+              Boolean(getVideoSrc(post) || post.type === 'video')
+                ? reportedVideoIds.includes(post.id)
+                : reportedPostIds.includes(post.id)
+            }
             onOpenPost={onOpenPost}
           />
         ))}

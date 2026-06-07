@@ -8,7 +8,6 @@ import {
   MessageCircleMore,
   Archive,
   Trash2,
-  UserPlus,
   AlertCircle,
   Ban,
 } from 'lucide-react'
@@ -21,6 +20,8 @@ type Props = {
   onOpenInsights?: () => void
   onTogglePin?: () => void
   onBlock?: () => void
+  onReport?: () => void
+  isReported?: boolean
 
   isPinned?: boolean
 
@@ -38,43 +39,43 @@ export default function WideMenuSheet({
   onDelete,
   onOpenInsights,
   onTogglePin,
-onBlock,
-isPinned = false,
-replyPermission = 'everyone',
-onChangeReplyPermission,
+  onBlock,
+  onReport,
+  isReported = false,
+  isPinned = false,
+  replyPermission = 'everyone',
+  onChangeReplyPermission,
 }: Props) {
   const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
-
   const [replyMenuOpen, setReplyMenuOpen] = useState(false)
-
   const [isClosing, setIsClosing] = useState(false)
 
-const handleClose = () => {
-  if (isClosing) return
-  setIsClosing(true)
+  const handleClose = () => {
+    if (isClosing) return
+    setIsClosing(true)
 
-  setTimeout(() => {
-    onClose()
-  }, 260)
-}
+    setTimeout(() => {
+      onClose()
+    }, 260)
+  }
 
   return (
     <AnimatePresence>
       <motion.div
-  className="fixed inset-0 z-[99999] flex justify-center bg-black/40"
-  onClick={handleClose}
-  initial={{ opacity: 0 }}
-  animate={{ opacity: isClosing ? 0 : 1 }}
-  transition={{ duration: 0.22 }}
->
+        className="fixed inset-0 z-[99999] flex justify-center bg-black/40"
+        onClick={handleClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isClosing ? 0 : 1 }}
+        transition={{ duration: 0.22 }}
+      >
         <motion.div
-  onClick={(e) => e.stopPropagation()}
-  className="absolute bottom-0 w-full max-w-[430px] rounded-t-[28px] bg-[var(--app-bg)] px-5 pb-8 pt-4"
-  initial={{ y: '100%' }}
-  animate={{ y: isClosing ? '100%' : 0 }}
-  transition={{ type: 'spring', stiffness: 360, damping: 34 }}
->
+          onClick={(e) => e.stopPropagation()}
+          className="absolute bottom-0 w-full max-w-[430px] rounded-t-[28px] bg-[var(--app-bg)] px-5 pb-8 pt-4"
+          initial={{ y: '100%' }}
+          animate={{ y: isClosing ? '100%' : 0 }}
+          transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+        >
           <div className="mb-8 flex justify-center">
             <div className="h-[4px] w-[40px] rounded-full bg-gray-400/60" />
           </div>
@@ -85,12 +86,12 @@ const handleClose = () => {
                 <button
                   type="button"
                   onClick={() => {
-  handleClose()
+                    handleClose()
 
-  setTimeout(() => {
-    onOpenInsights?.()
-  }, 220)
-}}
+                    setTimeout(() => {
+                      onOpenInsights?.()
+                    }, 220)
+                  }}
                   className="flex items-center gap-7"
                 >
                   <BarChart3 size={20} />
@@ -100,74 +101,80 @@ const handleClose = () => {
                 </button>
 
                 <button
-  type="button"
-  onClick={() => {
-    onTogglePin?.()
-    handleClose()
-  }}
-  className="flex items-center gap-7"
->
-  <Pin size={20} />
+                  type="button"
+                  onClick={() => {
+                    onTogglePin?.()
+                    handleClose()
+                  }}
+                  className="flex items-center gap-7"
+                >
+                  <Pin size={20} />
 
-  <span className="text-[16px] text-[var(--app-text)]">
-    {isPinned ? '取消釘選' : '釘選'}
-  </span>
-</button>
+                  <span className="text-[16px] text-[var(--app-text)]">
+                    {isPinned ? '取消釘選' : '釘選'}
+                  </span>
+                </button>
 
                 <div className="relative">
-  <button
-    type="button"
-    onClick={() => setReplyMenuOpen((prev) => !prev)}
-    className="flex items-center gap-7"
-  >
-    <MessageCircleMore size={20} />
-    <span className="text-[16px] text-[var(--app-text)]">
-      變更可回復對象
-    </span>
-  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReplyMenuOpen((prev) => !prev)}
+                    className="flex items-center gap-7"
+                  >
+                    <MessageCircleMore size={20} />
+                    <span className="text-[16px] text-[var(--app-text)]">
+                      變更可回復對象
+                    </span>
+                  </button>
 
-  <AnimatePresence>
-    {replyMenuOpen && (
-      <motion.div
-        initial={{ opacity: 0, y: -6, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -6, scale: 0.96 }}
-        transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-        className="ml-[18px] mt-4 overflow-hidden rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-surface)] shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
-      >
-        {[
-          { value: 'everyone', label: '所有人' },
-          { value: 'following', label: '你跟隨的用戶' },
-          { value: 'off', label: '關閉回復功能' },
-        ].map((item) => {
-          const active = replyPermission === item.value
+                  <AnimatePresence>
+                    {replyMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                        transition={{
+                          duration: 0.18,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                        className="ml-[18px] mt-4 overflow-hidden rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-surface)] shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
+                      >
+                        {[
+                          { value: 'everyone', label: '所有人' },
+                          { value: 'following', label: '你跟隨的用戶' },
+                          { value: 'off', label: '關閉回復功能' },
+                        ].map((item) => {
+                          const active = replyPermission === item.value
 
-          return (
-            <button
-              key={item.value}
-              type="button"
-              onClick={() => {
-                onChangeReplyPermission?.(
-  item.value as 'everyone' | 'following' | 'off'
-)
+                          return (
+                            <button
+                              key={item.value}
+                              type="button"
+                              onClick={() => {
+                                onChangeReplyPermission?.(
+                                  item.value as
+                                    | 'everyone'
+                                    | 'following'
+                                    | 'off'
+                                )
 
-                setReplyMenuOpen(false)
-              }}
-              className={`flex h-[46px] w-full items-center justify-between px-4 text-left text-[15px] ${
-                active
-                  ? 'bg-purple-500/15 text-purple-400'
-                  : 'text-[var(--app-text)] active:bg-black/5'
-              }`}
-            >
-              <span>{item.label}</span>
-              {active && <span className="text-[14px]">✓</span>}
-            </button>
-          )
-        })}
-      </motion.div>
-    )}
-  </AnimatePresence>
-</div>
+                                setReplyMenuOpen(false)
+                              }}
+                              className={`flex h-[46px] w-full items-center justify-between px-4 text-left text-[15px] ${
+                                active
+                                  ? 'bg-purple-500/15 text-purple-400'
+                                  : 'text-[var(--app-text)] active:bg-black/5'
+                              }`}
+                            >
+                              <span>{item.label}</span>
+                              {active && <span className="text-[14px]">✓</span>}
+                            </button>
+                          )
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
                 <button
                   type="button"
@@ -191,37 +198,46 @@ const handleClose = () => {
               </div>
             </div>
           ) : (
-            <>
-              
-
-              <div className="rounded-[18px] bg-[var(--app-card)] px-5 py-6 shadow-sm">
-                <div className="flex flex-col gap-6">
-                  <button
-                    type="button"
-                    className="flex items-center gap-7"
-                  >
-                    <AlertCircle size={18} />
-                    <span className="text-[16px] text-[var(--app-text)]">
-                      檢舉
-                    </span>
-                  </button>
-
-                  <button
-  type="button"
-  onClick={() => {
-    onBlock?.()
-    handleClose()
-  }}
-  className="flex items-center gap-7"
+            <div className="rounded-[18px] bg-[var(--app-card)] px-5 py-6 shadow-sm">
+              <div className="flex flex-col gap-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onReport?.()
+                    handleClose()
+                  }}
+                  className="flex items-center gap-7"
+                >
+                  <AlertCircle
+  size={18}
+  color={isReported ? '#f97316' : undefined}
+/>
+                  <span
+  className={`text-[16px] ${
+    isReported
+      ? 'text-orange-500'
+      : 'text-[var(--app-text)]'
+  }`}
 >
-                    <Ban size={18} />
-                    <span className="text-[16px] text-[var(--app-text)]">
-                      封鎖
-                    </span>
-                  </button>
-                </div>
+  {isReported ? '取消檢舉' : '檢舉'}
+</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onBlock?.()
+                    handleClose()
+                  }}
+                  className="flex items-center gap-7"
+                >
+                  <Ban size={18} />
+                  <span className="text-[16px] text-[var(--app-text)]">
+                    封鎖
+                  </span>
+                </button>
               </div>
-            </>
+            </div>
           )}
         </motion.div>
 

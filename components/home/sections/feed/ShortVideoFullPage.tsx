@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, animate, motion, useMotionValue } from 'framer-motion'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import {
   Heart,
   MessageCircle,
@@ -21,6 +21,8 @@ type Props = {
   open: boolean
   videos: PostItem[]
   initialVideoId?: string
+  reportedVideoIds?: string[]
+  setReportedVideoIds?: Dispatch<SetStateAction<string[]>>
   onClose: () => void
   onLike?: (post: PostItem) => void
   onComment?: (post: PostItem) => void
@@ -35,6 +37,8 @@ export default function ShortVideoFullPage({
   open,
   videos,
   initialVideoId,
+  reportedVideoIds = [],
+  setReportedVideoIds,
   onClose,
   onLike,
   onComment,
@@ -158,6 +162,10 @@ if (isStuck && reloadCount < 2) {
 
   if (!open) return null
 
+  function isVideoReported(videoId: string) {
+    return reportedVideoIds.includes(videoId)
+  }
+
   function closeWithAnimation() {
     Object.values(videoRefs.current).forEach((video) => {
       if (!video) return
@@ -266,6 +274,7 @@ const distanceFromActive =
 const shouldRenderVideo = distanceFromActive <= 2
 const shouldPreloadVideo = distanceFromActive <= 2
 const isActiveVideo = video.id === activeVideoId
+const isReported = isVideoReported(video.id)
               const videoSrc = video.videoUrl || (video as any).video_url
 
               return (
@@ -345,7 +354,9 @@ onError={() => {
     [video.id]: (prev[video.id] ?? 0) + 1,
   }))
 }}
-                      className="absolute inset-0 z-[10] h-full w-full bg-black object-cover"
+                      className={`absolute inset-0 z-[10] h-full w-full bg-black object-cover ${
+                        isReported ? 'blur-xl opacity-60' : ''
+                      }`}
                     />
                   
   ) : (() => {
@@ -362,7 +373,9 @@ onError={() => {
   return (
     <img
       src={thumbnailSrc}
-      className="absolute inset-0 z-[10] h-full w-full bg-black object-cover"
+      className={`absolute inset-0 z-[10] h-full w-full bg-black object-cover ${
+        isReported ? 'blur-xl opacity-60' : ''
+      }`}
       draggable={false}
       onError={(e) => {
         const el = e.currentTarget
@@ -372,6 +385,12 @@ onError={() => {
     />
   )
 })()}
+
+                  {isReported && (
+                    <div className="pointer-events-none absolute inset-0 z-[45] flex items-center justify-center bg-black/45 px-6 text-center text-[15px] font-medium text-white">
+                      你已檢舉這支短影片，內容已暫時隱藏
+                    </div>
+                  )}
 
                   <div className="pointer-events-none absolute inset-0 z-[20] bg-gradient-to-b from-black/20 via-transparent to-black/55" />
                   <AnimatePresence>
@@ -412,18 +431,16 @@ onError={() => {
                     <X size={24} color="white" strokeWidth={2.8} />
                   </button>
 
-                  {video.isMine && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setMenuVideo(video)
-                      }}
-                      className="absolute right-[72px] top-6 z-[50] flex h-[38px] w-[38px] items-center justify-center rounded-full bg-black/22 text-white backdrop-blur-md active:scale-90"
-                    >
-                      <MoreHorizontal size={24} strokeWidth={3} color="white" />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setMenuVideo(video)
+                    }}
+                    className="absolute right-[72px] top-6 z-[50] flex h-[38px] w-[38px] items-center justify-center rounded-full bg-black/22 text-white backdrop-blur-md active:scale-90"
+                  >
+                    <MoreHorizontal size={24} strokeWidth={3} color="white" />
+                  </button>
 
                   <div className="absolute bottom-[118px] right-5 z-[50] flex flex-col items-center gap-6 text-white">
                     <button
@@ -528,8 +545,18 @@ onError={() => {
               className="fixed inset-0 z-[10020]"
             >
               <WideMenuSheet
-  variant="mine"
+  variant={menuVideo.isMine ? 'mine' : 'other'}
+  isReported={reportedVideoIds.includes(menuVideo.id)}
   onClose={() => setMenuVideo(null)}
+  onReport={() => {
+    setReportedVideoIds?.((prev) =>
+      prev.includes(menuVideo.id)
+        ? prev.filter((id) => id !== menuVideo.id)
+        : [...prev, menuVideo.id]
+    )
+
+    setMenuVideo(null)
+  }}
   onArchive={() => {
     if (!menuVideo) return
 
