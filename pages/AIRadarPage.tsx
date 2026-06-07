@@ -100,6 +100,7 @@ function getRandomStarterPrompts() {
 
   const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false)
 const [voiceTranscript, setVoiceTranscript] = useState('')
+const recognitionRef = useRef<any>(null)
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 const [authLoading, setAuthLoading] = useState(false)
@@ -559,7 +560,12 @@ function handleVoiceInput() {
     return
   }
 
+  try {
+    recognitionRef.current?.abort?.()
+  } catch {}
+
   const recognition = new SpeechRecognition()
+  recognitionRef.current = recognition
 
   recognition.lang =
   safeLocale === 'en'
@@ -576,10 +582,11 @@ function handleVoiceInput() {
     if (transcript) {
   setVoiceTranscript(transcript)
   setInputValue(transcript)
-}
+  }
   }
 
-  recognition.onerror = () => {
+  recognition.onerror = (event: any) => {
+    console.warn('voice recognition error:', event)
     setIsListening(false)
   }
 
@@ -587,7 +594,14 @@ function handleVoiceInput() {
   setIsListening(false)
 }
 
-  recognition.start()
+  try {
+    setIsListening(true)
+    recognition.start()
+  } catch (error) {
+    console.warn('voice recognition start failed:', error)
+    setIsListening(false)
+    alert(text.voiceNotSupported)
+  }
 }
 
 function handleVoiceSubmit() {
@@ -1358,7 +1372,6 @@ typeText(nextAiText, requestId)
   onClick={() => {
     setVoiceTranscript('')
     setIsVoicePanelOpen(true)
-    handleVoiceInput()
   }}
       className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/18 border border-white/10 text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95 ${
   isListening ? 'ring-2 ring-purple-400' : ''
@@ -1448,6 +1461,11 @@ typeText(nextAiText, requestId)
   open={isVoicePanelOpen}
   transcript={voiceTranscript}
   onClose={() => {
+    try {
+      recognitionRef.current?.abort?.()
+    } catch {}
+
+    setIsListening(false)
     setIsVoicePanelOpen(false)
   }}
   onStart={() => {
