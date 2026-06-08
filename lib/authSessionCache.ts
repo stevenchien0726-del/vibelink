@@ -6,33 +6,6 @@ let pendingSessionPromise: Promise<Session | null> | null = null
 
 const SESSION_TIMEOUT_MS = 5000
 
-function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number,
-  label: string
-): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer =
-      typeof window !== 'undefined'
-        ? window.setTimeout(() => {
-            reject(new Error(`${label} timeout`))
-          }, ms)
-        : setTimeout(() => {
-            reject(new Error(`${label} timeout`))
-          }, ms)
-
-    promise
-      .then((value) => {
-        clearTimeout(timer)
-        resolve(value)
-      })
-      .catch((error) => {
-        clearTimeout(timer)
-        reject(error)
-      })
-  })
-}
-
 export async function getCachedSession(
   forceRefresh = false
 ): Promise<Session | null> {
@@ -44,17 +17,66 @@ export async function getCachedSession(
     return pendingSessionPromise
   }
 
-  pendingSessionPromise = withTimeout(
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (error) throw error
+  pendingSessionPromise = new Promise<Session | null>((resolve) => {
+    let settled = false
 
-      cachedSession = data.session ?? null
-      return cachedSession
-    }),
-    SESSION_TIMEOUT_MS,
-    'auth_get_session'
-  ).finally(() => {
-    pendingSessionPromise = null
+    const timeoutId = setTimeout(() => {
+      if (settled) return
+
+      settled = true
+      console.warn('auth_get_session timeout')
+
+      if (cachedSession === undefined) {
+        cachedSession = null
+      }
+
+      resolve(cachedSession)
+    }, SESSION_TIMEOUT_MS)
+
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (settled) {
+          if (!error) {
+            cachedSession = data.session ?? null
+          }
+          return
+        }
+
+        settled = true
+        clearTimeout(timeoutId)
+
+        if (error) {
+          console.warn('auth_get_session_error', error)
+
+          if (cachedSession === undefined) {
+            cachedSession = null
+          }
+
+          resolve(cachedSession)
+          return
+        }
+
+        cachedSession = data.session ?? null
+        resolve(cachedSession)
+      })
+      .catch((error) => {
+        if (settled) return
+
+        settled = true
+        clearTimeout(timeoutId)
+
+        console.warn('auth_get_session_error', error)
+
+        if (cachedSession === undefined) {
+          cachedSession = null
+        }
+
+        resolve(cachedSession)
+      })
+      .finally(() => {
+        pendingSessionPromise = null
+      })
   })
 
   return pendingSessionPromise
