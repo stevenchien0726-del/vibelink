@@ -1,33 +1,85 @@
 import { supabase } from '@/lib/supabase'
+import type { Session } from '@supabase/supabase-js'
 
-type GetSessionResult = Awaited<ReturnType<typeof supabase.auth.getSession>>
-type CachedSession = GetSessionResult['data']['session']
+let cachedSession: Session | null | undefined = undefined
+let pendingSessionPromise: Promise<Session | null> | null = null
 
-const SESSION_CACHE_TTL_MS = 30_000
+const SESSION_TIMEOUT_MS = 5000
 
-let cachedSession: CachedSession = null
-let cachedAt = 0
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer =
+      typeof window !== 'undefined'
+        ? window.setTimeout(() => {
+            reject(new Error(`${label} timeout`))
+          }, ms)
+        : setTimeout(() => {
+            reject(new Error(`${label} timeout`))
+          }, ms)
 
-export async function getCachedSession(): Promise<CachedSession> {
-  const now = Date.now()
+    promise
+      .then((value) => {
+        clearTimeout(timer)
+        resolve(value)
+      })
+      .catch((error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
+  })
+}
 
-  if (cachedAt > 0 && now - cachedAt < SESSION_CACHE_TTL_MS) {
+export async function getCachedSession(
+  forceRefresh = false
+): Promise<Session | null> {
+  if (!forceRefresh && cachedSession !== undefined) {
     return cachedSession
   }
 
-  const { data, error } = await supabase.auth.getSession()
+  if (!forceRefresh && pendingSessionPromise) {
+    return pendingSessionPromise
+  }
+
+  pendingSessionPromise = withTimeout(
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) throw error
+
+      cachedSession = data.session ?? null
+      return cachedSession
+    }),
+    SESSION_TIMEOUT_MS,
+    'auth_get_session'
+  ).finally(() => {
+    pendingSessionPromise = null
+  })
+
+  return pendingSessionPromise
+}
+
+export function setCachedSession(session: Session | null): void {
+  cachedSession = session
+}
+
+export function clearCachedSession(): void {
+  cachedSession = null
+}
+
+export function subscribeAuthSession() {
+  return supabase.auth.onAuthStateChange((_event, session) => {
+    cachedSession = session ?? null
+  })
+}
+
+export async function signOutCurrentUser(): Promise<void> {
+  const { error } = await supabase.auth.signOut()
 
   if (error) {
     throw error
   }
 
-  cachedSession = data.session
-  cachedAt = now
-
-  return cachedSession
-}
-
-export function clearSessionCache() {
-  cachedSession = null
-  cachedAt = 0
+  clearCachedSession()
 }
