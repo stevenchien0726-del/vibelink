@@ -29,6 +29,7 @@ import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPa
 
 import WideMenuSheet from '@/components/WideMenuSheet'
 import ShareSheet from '@/components/ShareSheet'
+import { reportContent } from '@/lib/reportContent'
 
 type Props = {
   userId?: string
@@ -1354,13 +1355,30 @@ if (!error) {
 
   onClose={() => setIsPostMenuOpen(false)}
 
-  onReport={() => {
+  onReport={async () => {
   if (selectedPost?.id) {
-    setReportedPostIds((prev) =>
-      prev.includes(selectedPost.id)
-        ? prev.filter((id) => id !== selectedPost.id)
-        : [...prev, selectedPost.id]
-    )
+    const alreadyReported = reportedPostIds.includes(selectedPost.id)
+
+    if (alreadyReported) {
+      setReportedPostIds((prev) =>
+        prev.filter((id) => id !== selectedPost.id)
+      )
+    } else {
+      const result = await reportContent({
+        targetType: 'post',
+        targetPostId: selectedPost.id,
+      })
+
+      alert(result.message ?? '檢舉送出失敗，請稍後再試')
+
+      if (result.ok || result.duplicate) {
+        setReportedPostIds((prev) =>
+          prev.includes(selectedPost.id)
+            ? prev
+            : [...prev, selectedPost.id]
+        )
+      }
+    }
   }
 
   setIsPostMenuOpen(false)
