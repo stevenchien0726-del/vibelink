@@ -22,21 +22,56 @@ export default function FavoriteFeedPage({ onClose, onOpenPost }: Props) {
     empty: uiText('目前最愛用戶還沒有貼文或短影音', 'Favorite users do not have posts or short videos yet'),
   }
 
+  function withTimeout<T>(
+    promise: PromiseLike<T>,
+    ms = 6000,
+    label = 'favorite_feed_request'
+  ): Promise<T | null> {
+    let timeoutId: number | null = null
+
+    return Promise.race([
+      Promise.resolve(promise),
+      new Promise<null>((resolve) => {
+        timeoutId = window.setTimeout(() => {
+          console.warn(`${label} timeout`)
+          resolve(null)
+        }, ms)
+      }),
+    ]).finally(() => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId)
+      }
+    })
+  }
+
   useEffect(() => {
+    let cancelled = false
+
     async function loadFavoriteFeed() {
-      const {
-  data: { user },
-} = await supabase.auth.getUser()
+      try {
+        if (!cancelled) {
+          setLoading(true)
+        }
+
+      const userResult = await withTimeout(
+  supabase.auth.getUser(),
+  6000,
+  'favorite_feed_user'
+)
+
+const user = userResult?.data.user
 
 if (!user) {
-  setItems([])
-  setLoading(false)
+  if (!cancelled) {
+    setItems([])
+  }
   return
 }
 
-const { data: favoriteRows } = await supabase
-  .from('favorite_users')
-  .select(`
+const favoriteResult = await withTimeout(
+  supabase
+    .from('favorite_users')
+    .select(`
     favorite_user_id,
     profiles:favorite_user_id (
       id,
@@ -45,7 +80,12 @@ const { data: favoriteRows } = await supabase
       avatar_url
     )
   `)
-  .eq('user_id', user.id)
+    .eq('user_id', user.id),
+  6000,
+  'favorite_feed_favorite_users'
+)
+
+const favoriteRows = favoriteResult?.data
 
 const favoriteUsers = favoriteRows ?? []
 const favoriteUserIds = favoriteUsers.map(
@@ -53,8 +93,9 @@ const favoriteUserIds = favoriteUsers.map(
 )
 
 if (favoriteUserIds.length === 0) {
-  setItems([])
-  setLoading(false)
+  if (!cancelled) {
+    setItems([])
+  }
   return
 }
 
@@ -69,9 +110,10 @@ favoriteUsers.forEach((row: any) => {
   )
 })
 
-      const { data: postsData } = await supabase
-        .from('posts')
-        .select(`
+      const postsResult = await withTimeout(
+        supabase
+          .from('posts')
+          .select(`
           id,
           caption,
           created_at,
@@ -80,39 +122,62 @@ favoriteUsers.forEach((row: any) => {
             image_url
           )
         `)
-        .in('user_id', favoriteUserIds)
-        .order('created_at', { ascending: false })
+          .in('user_id', favoriteUserIds)
+          .order('created_at', { ascending: false })
+          .limit(60),
+        6000,
+        'favorite_feed_posts'
+      )
 
-      const { data: videoData } = await supabase
-        .from('short_videos')
-        .select(`
+      const videoResult = await withTimeout(
+        supabase
+          .from('short_videos')
+          .select(`
           id,
           caption,
           video_url,
           created_at,
           user_id
         `)
-        .in('user_id', favoriteUserIds)
-        .order('created_at', { ascending: false })
+          .in('user_id', favoriteUserIds)
+          .order('created_at', { ascending: false })
+          .limit(60),
+        6000,
+        'favorite_feed_short_videos'
+      )
+
+      const postsData = postsResult?.data ?? []
+      const videoData = videoResult?.data ?? []
 
         const postIds = (postsData ?? []).map((post: any) => post.id)
 const videoIds = (videoData ?? []).map((video: any) => video.id)
 
-const { data: likeRows } =
+const likeResult =
   postIds.length > 0
-    ? await supabase
-        .from('likes')
-        .select('post_id, user_id')
-        .in('post_id', postIds)
+    ? await withTimeout(
+        supabase
+          .from('likes')
+          .select('post_id, user_id')
+          .in('post_id', postIds),
+        6000,
+        'favorite_feed_likes'
+      )
     : { data: [] }
 
-const { data: videoLikeRows } =
+const videoLikeResult =
   videoIds.length > 0
-    ? await supabase
-        .from('short_video_likes')
-        .select('short_video_id, user_id')
-        .in('short_video_id', videoIds)
+    ? await withTimeout(
+        supabase
+          .from('short_video_likes')
+          .select('short_video_id, user_id')
+          .in('short_video_id', videoIds),
+        6000,
+        'favorite_feed_video_likes'
+      )
     : { data: [] }
+
+const likeRows = likeResult?.data ?? []
+const videoLikeRows = videoLikeResult?.data ?? []
 
 const likeCountMap = new Map<string, number>()
 const videoLikeCountMap = new Map<string, number>()
@@ -158,11 +223,27 @@ const videoLikeCountMap = new Map<string, number>()
         isMine: false,
       }))
 
-      setItems([...videoItems, ...photoItems])
-      setLoading(false)
+      if (!cancelled) {
+        setItems([...videoItems, ...photoItems])
+      }
+    } catch (error) {
+      console.warn('favorite feed load failed:', error)
+
+      if (!cancelled) {
+        setItems([])
+      }
+    } finally {
+      if (!cancelled) {
+        setLoading(false)
+      }
+    }
     }
 
     loadFavoriteFeed()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return (
@@ -196,7 +277,7 @@ const videoLikeCountMap = new Map<string, number>()
             {text.empty}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1">
             {items.map((post) => {
               const isVideo = post.type === 'video' || !!post.videoUrl
               const cover = post.images?.[0]
@@ -206,7 +287,7 @@ const videoLikeCountMap = new Map<string, number>()
                   key={post.id}
                   type="button"
                   onClick={() => onOpenPost(post)}
-                  className="relative h-[280px] w-full overflow-hidden rounded-[20px] bg-[var(--app-card)] active:scale-[0.98]"
+                  className="relative h-[280px] w-full overflow-hidden rounded-[6px] bg-[var(--app-card)] active:scale-[0.98]"
                 >
                   {isVideo ? (
                     <>

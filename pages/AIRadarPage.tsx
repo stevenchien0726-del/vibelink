@@ -210,15 +210,21 @@ function withTimeout<T>(
   ms = 10000,
   label = 'request'
 ): Promise<T | null> {
+  let timeoutId: number | null = null
+
   return Promise.race([
     Promise.resolve(promise),
     new Promise<null>((resolve) => {
-      window.setTimeout(() => {
+      timeoutId = window.setTimeout(() => {
         console.warn(`${label} timeout`)
         resolve(null)
       }, ms)
     }),
-  ])
+  ]).finally(() => {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId)
+    }
+  })
 }
 
 async function safeTask<T>(
@@ -342,7 +348,13 @@ useEffect(() => {
 
       if (cancelled) return
 
-      if (!response?.ok) {
+      if (!response) {
+        console.warn('starter prompts timed out, using fallback prompts')
+        setStarterPrompts(getRandomStarterPrompts())
+        return
+      }
+
+      if (!response.ok) {
         setStarterPrompts(getRandomStarterPrompts())
         return
       }
@@ -376,9 +388,13 @@ useEffect(() => {
 
 useEffect(() => {
   async function initAuth() {
-    const {
-  data: { session },
-} = await supabase.auth.getSession()
+    const sessionResult = await withTimeout(
+      supabase.auth.getSession(),
+      6000,
+      'ai_radar_auth_session'
+    )
+
+const session = sessionResult?.data.session
 
 const user = session?.user
 
@@ -391,7 +407,7 @@ const user = session?.user
 
 void safeTask(
   () => ensureUserProfile(),
-  'ai_radar_ensure_profile'
+  'ai_radar_auth_ensure_profile'
 )
 
 const { count, error } = await supabase
@@ -855,9 +871,21 @@ try {
   finishRequest()
 }, 25000, requestId)
 
-  const {
-    data: { session: radarSession },
-  } = await supabase.auth.getSession()
+  const radarSessionResult = await withTimeout(
+    supabase.auth.getSession(),
+    6000,
+    'ai_radar_submit_session'
+  )
+
+  const radarSession = radarSessionResult?.data.session
+
+  if (!radarSessionResult) {
+    setErrorType('AUTH_TIMEOUT')
+    setAiText('AI 雷達暫時無法確認登入狀態，請再試一次。')
+    setDisplayedAiText('AI 雷達暫時無法確認登入狀態，請再試一次。')
+    finishRequest()
+    return
+  }
 
   if (requestSequenceRef.current !== requestId) {
   setLoading(false)
