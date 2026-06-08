@@ -3,12 +3,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Camera, ChevronLeft, Copy, Share2 } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
-import { uiText } from '@/lib/uiText'
 
 type Props = {
   open: boolean
   onClose: () => void
   profile?: {
+    id?: string
     display_name?: string
     username?: string
     avatar_url?: string
@@ -16,29 +16,103 @@ type Props = {
   }
 }
 
+function getProfileShareBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim()
+
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, '')
+  }
+
+  if (typeof window !== 'undefined' && window.location.origin) {
+    return window.location.origin.replace(/\/+$/, '')
+  }
+
+  return 'https://vibelink.app'
+}
+
+function getProfileShareUrl(profile?: Props['profile']): string {
+  const baseUrl = getProfileShareBaseUrl()
+  const username = profile?.username?.trim().replace(/^@/, '')
+  const userId = profile?.id?.trim()
+
+  if (username) {
+    return `${baseUrl}/u/${encodeURIComponent(username)}`
+  }
+
+  if (userId) {
+    return `${baseUrl}/profile/${encodeURIComponent(userId)}`
+  }
+
+  return `${baseUrl}/profile/user`
+}
+
 export default function ShareProfilePage({
   open,
   onClose,
   profile,
 }: Props) {
-  const profileUrl = `https://vibelink.app/${profile?.username || 'user'}`
+  const profileUrl = getProfileShareUrl(profile)
   const text = {
-    copied: uiText('已複製個人檔案連結', 'Profile link copied'),
-    copyFailed: uiText('複製失敗', 'Copy failed'),
-    title: uiText('分享檔案', 'Share Profile'),
-    copyLink: uiText('複製連結', 'Copy Link'),
-    share: uiText('分享', 'Share'),
-    helperLine1: uiText('分享你的 Vibelink 個人檔案，', 'Share your Vibelink profile,'),
-    helperLine2: uiText('讓更多人認識你的 Vibe。', 'and let more people discover your vibe.'),
+    copied: '已複製個人檔案連結',
+    copyFailed: '複製連結失敗',
+    shareFallback: '無法分享，已改為複製連結',
+    title: '分享個人檔案',
+    copyLink: '複製連結',
+    share: '分享',
+    igStory: '分享到 IG Story',
+    description: '讓朋友掃描 QR Code，快速找到你的 Vibelink。',
+  }
+
+  function fallbackCopy(textToCopy: string): boolean {
+    if (typeof document === 'undefined') return false
+
+    try {
+      const textarea = document.createElement('textarea')
+      textarea.value = textToCopy
+      textarea.setAttribute('readonly', '')
+      textarea.style.position = 'fixed'
+      textarea.style.left = '-9999px'
+      textarea.style.top = '0'
+
+      document.body.appendChild(textarea)
+      textarea.focus()
+      textarea.select()
+
+      const copied = document.execCommand('copy')
+      document.body.removeChild(textarea)
+
+      return copied
+    } catch {
+      return false
+    }
+  }
+
+  async function copyProfileUrl(showSuccess = true): Promise<boolean> {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(profileUrl)
+
+        if (showSuccess) {
+          alert(text.copied)
+        }
+
+        return true
+      }
+    } catch {
+      // Fall through to the textarea copy fallback.
+    }
+
+    const copied = fallbackCopy(profileUrl)
+
+    if (showSuccess) {
+      alert(copied ? text.copied : text.copyFailed)
+    }
+
+    return copied
   }
 
   async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(profileUrl)
-      alert(text.copied)
-    } catch {
-      alert(text.copyFailed)
-    }
+    await copyProfileUrl()
   }
 
   async function handleNativeShare() {
@@ -46,16 +120,19 @@ export default function ShareProfilePage({
       if (navigator.share) {
         await navigator.share({
           title: 'Vibelink Profile',
-          text: `${profile?.display_name || profile?.username || 'Vibelink User'}`,
+          text: `${
+            profile?.display_name || profile?.username || 'Vibelink User'
+          }`,
           url: profileUrl,
         })
         return
       }
-
-      handleCopy()
     } catch (error) {
       console.error(error)
     }
+
+    await copyProfileUrl(false)
+    alert(text.shareFallback)
   }
 
   return (
@@ -135,11 +212,19 @@ export default function ShareProfilePage({
             </motion.div>
 
             <div className="mt-7 grid w-full grid-cols-3 gap-3">
-              <ShareActionButton icon={<Copy size={24} strokeWidth={2.2} />} label={text.copyLink} onClick={handleCopy} />
-              <ShareActionButton icon={<Share2 size={24} strokeWidth={2.2} />} label={text.share} onClick={handleNativeShare} />
+              <ShareActionButton
+                icon={<Copy size={24} strokeWidth={2.2} />}
+                label={text.copyLink}
+                onClick={handleCopy}
+              />
+              <ShareActionButton
+                icon={<Share2 size={24} strokeWidth={2.2} />}
+                label={text.share}
+                onClick={handleNativeShare}
+              />
               <ShareActionButton
                 icon={<Camera size={24} strokeWidth={2.2} />}
-                label="IG Story"
+                label={text.igStory}
                 onClick={() => {
                   window.open(
                     'https://instagram.com',
@@ -151,9 +236,7 @@ export default function ShareProfilePage({
             </div>
 
             <div className="mt-8 text-center text-[13px] leading-[1.5] text-[var(--app-muted)]">
-              {text.helperLine1}
-              <br />
-              {text.helperLine2}
+              {text.description}
             </div>
           </div>
         </motion.div>
