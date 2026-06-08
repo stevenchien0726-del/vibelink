@@ -25,7 +25,6 @@ import AccountManagePage from '@/components/message/AccountManagePage'
 import SettingsPage from '@/pages/SettingsPage'
 import ArchivedContentPage from '@/components/profile/ArchivedContentPage'
 import NotificationsPage from '@/components/profile/NotificationsPage'
-import ShareProfilePage from '@/components/profile/ShareProfilePage'
 import PostInsightsPage from '@/components/profile/PostInsightsPage'
 
 import {
@@ -51,6 +50,7 @@ import { useProfileGestures } from '@/src/hooks/profile/useProfileGestures'
 import { useProfileUIState } from '@/src/hooks/profile/useProfileUIState'
 import { useSavedPosts } from '@/src/hooks/profile/useSavedPosts'
 
+const VIBELINK_SHARE_URL = 'https://vibelink-beta-access.vercel.app'
 
 type ProfilePageProps = {
   onCloseMenu?: () => void
@@ -85,8 +85,6 @@ export default function ProfilePage({
     setShowArchivedPage,
     showNotificationsPage,
     setShowNotificationsPage,
-    showShareProfilePage,
-    setShowShareProfilePage,
     showPostInsightsPage,
     setShowPostInsightsPage,
     showAccountManagePage,
@@ -130,6 +128,15 @@ const [commentLoading, setCommentLoading] = useState(false)
 const [selectedComment, setSelectedComment] = useState<any>(null)
 const [isCommentMenuOpen, setIsCommentMenuOpen] = useState(false)
 const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
+
+async function copyVibelinkShareUrl() {
+  try {
+    await navigator.clipboard.writeText(VIBELINK_SHARE_URL)
+    alert('已複製 Vibelink 連結')
+  } catch {
+    alert('複製失敗，請稍後再試')
+  }
+}
 
   const {
     archivedPosts,
@@ -433,9 +440,9 @@ async function toggleSelectedPostSave() {
 
         <ProfileActionButtons
   editLabel={text.editProfile}
-  shareLabel={text.shareProfile}
+  shareLabel="分享 Vibelink"
   onEdit={() => setIsEditProfileOpen(true)}
-  onShare={() => setShowShareProfilePage(true)}
+  onShare={copyVibelinkShareUrl}
 />
 
         <ProfileTabs
@@ -910,12 +917,6 @@ async function toggleSelectedPostSave() {
     <ShareSheet
   open={isShareSheetOpen}
   onClose={() => setIsShareSheetOpen(false)}
-/>
-
-<ShareProfilePage
-  open={showShareProfilePage}
-  onClose={() => setShowShareProfilePage(false)}
-  profile={profile}
 />
 
     <ShortVideoFullPage
