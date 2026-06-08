@@ -17,6 +17,7 @@ import ChatRoomPage from '@/components/chat/ChatRoomPage'
 
 import type { Locale } from '@/i18n'
 import { supabase } from '@/lib/supabase'
+import { getCachedSession } from '@/lib/authSessionCache'
 
 type ConversationItem = {
   id: string
@@ -217,13 +218,11 @@ function sortMessageConversations(items: ConversationItem[]) {
     try {
     setMessageLoading(true)
 setMessageError('')
-    const sessionResult = await withTimeout(
-      supabase.auth.getSession(),
+    const session = await withTimeout(
+      getCachedSession(),
       6000,
       'message_session'
     )
-
-const session = sessionResult?.data.session
 
 const user = session?.user
 

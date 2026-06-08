@@ -8,7 +8,7 @@ import {
   useMotionValue,
   useTransform,
 } from 'framer-motion'
-import { Trash2 } from 'lucide-react'
+
 import { uiText } from '@/lib/uiText'
 
 export type FolderUser = {
@@ -147,12 +147,7 @@ export default function PeopleFolderPage({
             </div>
 
             <div className="flex items-center gap-4">
-              <button
-                type="button"
-                className="grid h-[28px] w-[28px] place-items-center text-[var(--app-text)] active:scale-95"
-              >
-                <Trash2 size={21} strokeWidth={2.2} />
-              </button>
+              
 
               <button
                 type="button"

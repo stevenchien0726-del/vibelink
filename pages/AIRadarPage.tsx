@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { supabase } from '@/lib/supabase'
+import { getCachedSession } from '@/lib/authSessionCache'
 import { ensureUserProfile } from '@/lib/profile'
 
 import { AnimatePresence, motion } from 'framer-motion'
@@ -388,13 +389,11 @@ useEffect(() => {
 
 useEffect(() => {
   async function initAuth() {
-    const sessionResult = await withTimeout(
-      supabase.auth.getSession(),
+    const session = await withTimeout(
+      getCachedSession(),
       6000,
       'ai_radar_auth_session'
     )
-
-const session = sessionResult?.data.session
 
 const user = session?.user
 
@@ -871,21 +870,11 @@ try {
   finishRequest()
 }, 25000, requestId)
 
-  const radarSessionResult = await withTimeout(
-    supabase.auth.getSession(),
+  const radarSession = await withTimeout(
+    getCachedSession(),
     6000,
     'ai_radar_submit_session'
   )
-
-  const radarSession = radarSessionResult?.data.session
-
-  if (!radarSessionResult) {
-    setErrorType('AUTH_TIMEOUT')
-    setAiText('AI 雷達暫時無法確認登入狀態，請再試一次。')
-    setDisplayedAiText('AI 雷達暫時無法確認登入狀態，請再試一次。')
-    finishRequest()
-    return
-  }
 
   if (requestSequenceRef.current !== requestId) {
   setLoading(false)
