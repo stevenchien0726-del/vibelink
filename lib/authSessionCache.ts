@@ -5,6 +5,7 @@ let cachedSession: Session | null | undefined = undefined
 let pendingSessionPromise: Promise<Session | null> | null = null
 
 const SESSION_TIMEOUT_MS = 5000
+const SIGN_OUT_TIMEOUT_MS = 5000
 
 export async function getCachedSession(
   forceRefresh = false
@@ -97,10 +98,47 @@ export function subscribeAuthSession() {
 }
 
 export async function signOutCurrentUser(): Promise<void> {
-  const { error } = await supabase.auth.signOut()
+  type SignOutResult = Awaited<ReturnType<typeof supabase.auth.signOut>>
 
-  if (error) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+  const timeoutPromise = new Promise<'timeout'>((resolve) => {
+    timeoutId = setTimeout(() => {
+      resolve('timeout')
+    }, SIGN_OUT_TIMEOUT_MS)
+  })
+
+  let result: SignOutResult | 'timeout'
+
+  try {
+    result = await Promise.race<SignOutResult | 'timeout'>([
+      supabase.auth.signOut(),
+      timeoutPromise,
+    ])
+  } catch (error) {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+
+    console.warn('auth_sign_out_error', error)
+    clearCachedSession()
     throw error
+  }
+
+  if (timeoutId) {
+    clearTimeout(timeoutId)
+  }
+
+  if (result === 'timeout') {
+    console.warn('auth_sign_out timeout')
+    clearCachedSession()
+    return
+  }
+
+  if (result.error) {
+    console.warn('auth_sign_out_error', result.error)
+    clearCachedSession()
+    throw result.error
   }
 
   clearCachedSession()
