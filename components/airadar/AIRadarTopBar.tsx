@@ -1,44 +1,75 @@
 'use client'
 
-type Props = {
+import Image from 'next/image'
+import { ChevronRight } from 'lucide-react'
+
+type AIRadarTopBarProps = {
   showTopBar: boolean
   onClickVibePlus: () => void
+  onClickAIRadarInfo?: () => void
 }
 
 export default function AIRadarTopBar({
   showTopBar,
   onClickVibePlus,
-}: Props) {
+  onClickAIRadarInfo,
+}: AIRadarTopBarProps) {
+  if (!showTopBar) return null
+
   return (
-    <div
-      className={`fixed left-1/2 top-0 z-[40] flex h-[60px] w-full max-w-[430px] -translate-x-1/2 items-center justify-center border-b border-[var(--app-card-border)] bg-[var(--app-bg)]/95 px-4 text-[var(--app-text)] backdrop-blur-md transition-transform duration-300 ${
-        showTopBar ? 'translate-y-0' : '-translate-y-full'
-      }`}
-    >
+    <div className="fixed left-1/2 top-0 z-[80] flex h-[64px] w-full max-w-[430px] -translate-x-1/2 items-center justify-between border-b border-[var(--app-card-border)] bg-[var(--app-bg)] px-5 backdrop-blur-[18px]">
+      {/* Left: AI Radar info button */}
+      <button
+        type="button"
+        onClick={onClickAIRadarInfo}
+        className="
+          flex
+          h-[44px]
+          items-center
+          gap-0
+          rounded-full
+          bg-transparent
+          px-0
+          transition
+          active:scale-[0.97]
+        "
+      >
+        
+        <Image
+          src="/image/ai-radar-logo.png"
+          alt="AI Radar"
+          width={116}
+          height={30}
+          className="-ml-6 h-[85px] w-auto object-contain"
+          priority
+        />
+      </button>
+
+      {/* Right: Vibe Plus entrance */}
       <button
         type="button"
         onClick={onClickVibePlus}
-        className="flex items-center gap-[4px] rounded-full px-4 py-2 text-[var(--app-text)] active:scale-[0.97]"
+        className="
+          flex
+          h-[44px]
+          items-center
+          gap-1
+          rounded-full
+          px-0
+          text-[15px]
+          font-medium
+          text-white
+          transition
+          active:scale-[0.97]
+        "
       >
-        <span className="text-[17px] font-medium text-[var(--app-text)]">
-          Vibe Plus
-        </span>
+        <span className="text-white">Vibe Plus</span>
 
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          className="text-[var(--app-text)]"
-        >
-          <path
-            d="M9 6l6 6-6 6"
-            stroke="currentColor"
-            strokeWidth="2.1"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <ChevronRight
+          size={18}
+          strokeWidth={2.2}
+          className="text-white"
+        />
       </button>
     </div>
   )

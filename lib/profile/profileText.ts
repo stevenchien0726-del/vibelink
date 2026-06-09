@@ -11,7 +11,6 @@ export const profileText = {
     archive: '典藏內容',
     membership: 'Vibe會員',
     account: '帳號管理',
-    ads: '廣告中心',
     favorites: '我的收藏',
     public: '公開',
     private: '不公開',
@@ -41,7 +40,7 @@ export const profileText = {
     archive: 'Archive',
     membership: 'Vibe Membership',
     account: 'Account',
-    ads: 'Ads Center',
+    
     favorites: 'My Favorites',
     public: 'Public',
     private: 'Private',

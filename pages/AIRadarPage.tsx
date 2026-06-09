@@ -22,6 +22,7 @@ import AIRadarResultCard from '@/components/airadar/AIRadarResultCard'
 
 import AIRadarTopBar from '@/components/airadar/AIRadarTopBar'
 import AIRadarInputBar from '@/components/airadar/AIRadarInputBar'
+import AIRadarInfoSheet from '@/components/ai-radar/AIRadarInfoSheet'
 
 import EmailOtpLogin from '@/components/auth/EmailOtpLogin'
 
@@ -102,6 +103,7 @@ function getRandomStarterPrompts() {
   const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false)
 const [voiceTranscript, setVoiceTranscript] = useState('')
 const recognitionRef = useRef<any>(null)
+const [showAIRadarInfo, setShowAIRadarInfo] = useState(false)
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 const [authLoading, setAuthLoading] = useState(false)
@@ -1133,6 +1135,7 @@ typeText(nextAiText, requestId)
 
 <AIRadarTopBar
   showTopBar={showTopBar}
+  onClickAIRadarInfo={() => setShowAIRadarInfo(true)}
   onClickVibePlus={() => openLink(MEMBERSHIP_URL)}
 />
 
@@ -1548,6 +1551,11 @@ typeText(nextAiText, requestId)
     </motion.div>
   )}
 </AnimatePresence>
+
+<AIRadarInfoSheet
+  open={showAIRadarInfo}
+  onClose={() => setShowAIRadarInfo(false)}
+/>
     </>
   )
 }
