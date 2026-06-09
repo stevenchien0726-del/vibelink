@@ -1,6 +1,10 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  FixedSizeList,
+  type ListChildComponentProps,
+} from 'react-window'
 import {
   AnimatePresence,
   motion,
@@ -41,10 +45,31 @@ export default function PeopleFolderPage({
 }: PeopleFolderPageProps) {
   const touchStartYRef = useRef<number | null>(null)
   const touchStartXRef = useRef<number | null>(null)
+  const [listHeight, setListHeight] = useState(560)
 
   const dragY = useMotionValue(0)
   const overlayOpacity = useTransform(dragY, [0, 260], [1, 0.72])
   const pageScale = useTransform(dragY, [0, 260], [1, 0.975])
+  const userRows = useMemo(() => {
+    const rows: FolderUser[][] = []
+
+    for (let index = 0; index < users.length; index += 4) {
+      rows.push(users.slice(index, index + 4))
+    }
+
+    return rows
+  }, [users])
+
+  useEffect(() => {
+    function updateListHeight() {
+      setListHeight(Math.max(240, window.innerHeight - 56 - 20 - 120))
+    }
+
+    updateListHeight()
+    window.addEventListener('resize', updateListHeight)
+
+    return () => window.removeEventListener('resize', updateListHeight)
+  }, [])
 
   function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
     const touch = e.touches[0]
@@ -114,6 +139,37 @@ export default function PeopleFolderPage({
     onOpenProfile?.(user.id)
   }
 
+  function UserRow({ index, style }: ListChildComponentProps) {
+    const rowUsers = userRows[index] ?? []
+
+    return (
+      <div style={style} className="grid grid-cols-4 gap-x-5">
+        {rowUsers.map((user) => (
+          <button
+            key={user.id}
+            type="button"
+            onClick={(e) => handlePickUser(user, e)}
+            className="flex flex-col items-center active:scale-95"
+          >
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="h-[52px] w-[52px] rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-[52px] w-[52px] rounded-full border border-[var(--app-card-border)] bg-[#b8b8b8]/45" />
+            )}
+
+            <div className="mt-2 max-w-[72px] truncate text-[13px] text-[var(--app-muted)]">
+              {user.name}
+            </div>
+          </button>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <AnimatePresence>
       <motion.div
@@ -161,30 +217,15 @@ export default function PeopleFolderPage({
 
           <div className="px-5 pb-[120px] pt-5">
             {users.length > 0 ? (
-              <div className="grid grid-cols-4 gap-x-5 gap-y-8">
-                {users.map((user) => (
-                  <button
-                    key={user.id}
-                    type="button"
-                    onClick={(e) => handlePickUser(user, e)}
-                    className="flex flex-col items-center active:scale-95"
-                  >
-                    {user.avatar ? (
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="h-[62px] w-[62px] rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-[62px] w-[62px] rounded-full border border-[var(--app-card-border)] bg-[#b8b8b8]/45" />
-                    )}
-
-                    <div className="mt-3 max-w-[72px] truncate text-[13px] text-[var(--app-muted)]">
-                      {user.name}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <FixedSizeList
+                height={listHeight}
+                itemCount={userRows.length}
+                itemSize={80}
+                overscanCount={4}
+                width="100%"
+              >
+                {UserRow}
+              </FixedSizeList>
             ) : (
               <div className="rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 py-5 text-center text-[14px] text-[var(--app-muted)]">
                 {uiText('目前沒有用戶', 'No users yet')}
