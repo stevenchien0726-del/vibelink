@@ -390,6 +390,20 @@ useEffect(() => {
 }, [safeLocale])
 
 useEffect(() => {
+  let cancelled = false
+  let ensuredProfileForUserId: string | null = null
+
+  function ensureAIRadarProfileOnce(userId: string) {
+    if (ensuredProfileForUserId === userId) return
+
+    ensuredProfileForUserId = userId
+
+    void safeTask(
+      () => ensureUserProfile(),
+      'ai_radar_auth_ensure_profile'
+    )
+  }
+
   async function initAuth() {
     const session = await withTimeout(
       getCachedSession(),
@@ -399,6 +413,8 @@ useEffect(() => {
 
 const user = session?.user
 
+    if (cancelled) return
+
     if (!user) {
       setIsAuthModalOpen(true)
       return
@@ -406,15 +422,14 @@ const user = session?.user
 
     setIsAuthModalOpen(false)
 
-void safeTask(
-  () => ensureUserProfile(),
-  'ai_radar_auth_ensure_profile'
-)
+ensureAIRadarProfileOnce(user.id)
 
 const { count, error } = await supabase
   .from('posts')
   .select('id', { count: 'exact', head: true })
   .eq('user_id', user.id)
+
+if (cancelled) return
 
 if (!error && (count ?? 0) === 0) {
   setShowNewUserUploadGuide(true)
@@ -427,20 +442,21 @@ if (!error && (count ?? 0) === 0) {
 
   const { data: listener } = supabase.auth.onAuthStateChange(
     async (_event, session) => {
+      if (cancelled) return
+
       if (session) {
   setIsAuthModalOpen(false)
 
-  void safeTask(
-    () => ensureUserProfile(),
-    'ai_radar_auth_ensure_profile'
-  )
-
   const user = session.user
+
+  ensureAIRadarProfileOnce(user.id)
 
   const { count, error } = await supabase
     .from('posts')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
+
+  if (cancelled) return
 
   if (!error && (count ?? 0) === 0) {
     setShowNewUserUploadGuide(true)
@@ -455,6 +471,7 @@ if (!error && (count ?? 0) === 0) {
   )
 
   return () => {
+    cancelled = true
     listener.subscription.unsubscribe()
   }
 }, [])
