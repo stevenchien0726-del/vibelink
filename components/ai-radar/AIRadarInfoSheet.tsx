@@ -23,7 +23,16 @@ export default function AIRadarInfoSheet({
           onClick={onClose}
         >
           <motion.div
-            className="relative max-h-[86vh] w-full max-w-[430px] overflow-y-auto scrollbar-hide rounded-t-[32px] border border-white/10 bg-[#09060f] px-6 pb-8 pt-6 text-white shadow-[0_-20px_70px_rgba(132,55,255,0.28)]"
+  className="relative max-h-[86vh] w-full max-w-[430px] overflow-y-auto scrollbar-hide rounded-t-[32px] border border-white/10 bg-[#09060f] px-6 pb-8 pt-6 text-white shadow-[0_-20px_70px_rgba(132,55,255,0.28)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  drag="y"
+  dragDirectionLock
+  dragConstraints={{ top: 0, bottom: 0 }}
+  dragElastic={{ top: 0, bottom: 0.28 }}
+  onDragEnd={(_, info) => {
+    if (info.offset.y > 90 || info.velocity.y > 700) {
+      onClose()
+    }
+  }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
