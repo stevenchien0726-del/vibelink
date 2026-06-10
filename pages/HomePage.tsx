@@ -14,7 +14,7 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 
 import type { Locale } from '@/i18n'
 
-import ShareSheet from '@/components/ShareSheet'
+import ShareSheet, { type ShareTarget } from '@/components/ShareSheet'
 
 import ShortVideoFullPage from '@/components/home/sections/feed/ShortVideoFullPage'
 
@@ -69,6 +69,43 @@ type CommentItem = {
     username?: string | null
     avatar_url?: string | null
   } | null
+}
+
+type ShareMediaPost = PostItem & {
+  thumbnail?: string
+  poster_url?: string
+  cover_url?: string
+}
+
+function getShareImage(post: PostItem) {
+  const mediaPost = post as ShareMediaPost
+
+  return (
+    post.thumbnailUrl ||
+    post.thumbnail_url ||
+    mediaPost.thumbnail ||
+    mediaPost.poster_url ||
+    mediaPost.cover_url ||
+    post.images?.[0] ||
+    ''
+  )
+}
+
+function buildShareTarget(
+  post: PostItem,
+  targetType?: ShareTarget['type']
+): ShareTarget {
+  const type = targetType || (post.type === 'video' || post.videoUrl ? 'video' : 'post')
+
+  return {
+    id: post.id,
+    type,
+    title: post.author ? `${post.author} 的${type === 'video' ? '短影片' : '貼文'}` : undefined,
+    author: post.author,
+    text: post.text,
+    image: getShareImage(post),
+    url: type === 'video' ? `/video/${post.id}` : `/post/${post.id}`,
+  }
 }
 
 const mockStories: StoryItem[] = [
@@ -134,6 +171,7 @@ const detailImageTouchStartYRef = useRef<number | null>(null)
 const detailLastTapTimeRef = useRef(0)
 
 const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
+const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null)
 
 const [isDetailMenuOpen, setIsDetailMenuOpen] = useState(false)
 
@@ -1090,6 +1128,11 @@ openDetailPostRef.current = openDetailPost
 const safeTaskRef = useRef(safeTask)
 safeTaskRef.current = safeTask
 
+const openShareSheet = useCallback((post: PostItem, targetType?: ShareTarget['type']) => {
+  setShareTarget(buildShareTarget(post, targetType))
+  setIsShareSheetOpen(true)
+}, [])
+
 const handleOpenFeedPost = useCallback(
   (post: PostItem) => {
     if (post.type === 'video' || post.videoUrl) {
@@ -1172,10 +1215,10 @@ if (realVideos.length > 0) {
       <HomeFeedSection
   mergedPosts={mergedPosts}
   reportedPostIds={reportedPostIds}
-  reportedVideoIds={reportedVideoIds}
+        reportedVideoIds={reportedVideoIds}
         handleOpenFeedPost={handleOpenFeedPost}
         openCommentSheet={openCommentSheet}
-        setIsShareSheetOpen={setIsShareSheetOpen}
+        onOpenShare={(post) => openShareSheet(post)}
         handleDeletePost={handleDeletePost}
         setSelectedProfileUserId={setSelectedProfileUserId}
         isFollowingFeedOpen={isFollowingFeedOpen}
@@ -1206,7 +1249,7 @@ if (realVideos.length > 0) {
   selectedPostLiked={selectedPostLiked}
   selectedPostLikeCount={selectedPostLikeCount}
   toggleDetailLike={toggleDetailLike}
-  setIsShareSheetOpen={setIsShareSheetOpen}
+  onOpenShare={(post) => openShareSheet(post, 'post')}
   selectedPostSaved={selectedPostSaved}
   toggleDetailSave={toggleDetailSave}
   commentSectionRef={commentSectionRef}
@@ -1382,6 +1425,7 @@ if (realVideos.length > 0) {
 <ShareSheet
   open={isShareSheetOpen}
   onClose={() => setIsShareSheetOpen(false)}
+  target={shareTarget}
 />
 
 <ShortVideoFullPage
@@ -1393,7 +1437,7 @@ if (realVideos.length > 0) {
   onClose={() => setIsShortVideoPageOpen(false)}
   onLike={toggleShortVideoLike}
   onComment={openCommentSheet}
-  onShare={() => setIsShareSheetOpen(true)}
+  onShare={(video) => openShareSheet(video, 'video')}
   onSave={toggleShortVideoSave}
   onDelete={handleDeletePost}
   onOpenProfile={(userId) => {

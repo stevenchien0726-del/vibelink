@@ -32,7 +32,7 @@ type Props = {
   selectedPostLiked: boolean
   selectedPostLikeCount: number
   toggleDetailLike: () => void
-  setIsShareSheetOpen: (open: boolean) => void
+  onOpenShare: (post: PostItem) => void
   selectedPostSaved: boolean
   toggleDetailSave: () => void
   commentSectionRef: React.RefObject<HTMLDivElement | null>
@@ -68,7 +68,7 @@ export default function HomeDetailPostModal({
   selectedPostLiked,
   selectedPostLikeCount,
   toggleDetailLike,
-  setIsShareSheetOpen,
+  onOpenShare,
   selectedPostSaved,
   toggleDetailSave,
   commentSectionRef,
@@ -254,7 +254,7 @@ export default function HomeDetailPostModal({
                 <div className="flex items-center gap-5">
                   <button
                     type="button"
-                    onClick={() => setIsShareSheetOpen(true)}
+                    onClick={() => onOpenShare(selectedPost)}
                     className="active:scale-90"
                   >
                     <Send size={25} strokeWidth={2.1} />

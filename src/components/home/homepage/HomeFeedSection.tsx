@@ -12,7 +12,7 @@ type Props = {
   reportedVideoIds: string[]
   handleOpenFeedPost: (post: PostItem) => void
   openCommentSheet: (post: PostItem) => void
-  setIsShareSheetOpen: Dispatch<SetStateAction<boolean>>
+  onOpenShare: (post: PostItem) => void
   handleDeletePost: (post: PostItem) => void
   setSelectedProfileUserId: Dispatch<SetStateAction<string | null>>
   isFollowingFeedOpen: boolean
@@ -30,7 +30,7 @@ export default function HomeFeedSection({
   reportedVideoIds,
   handleOpenFeedPost,
   openCommentSheet,
-  setIsShareSheetOpen,
+  onOpenShare,
   handleDeletePost,
   setSelectedProfileUserId,
   isFollowingFeedOpen,
@@ -55,7 +55,7 @@ export default function HomeFeedSection({
   reportedVideoIds={reportedVideoIds}
   onOpenPost={handleOpenFeedPost}
   onOpenComments={openCommentSheet}
-  onOpenShare={() => setIsShareSheetOpen(true)}
+  onOpenShare={onOpenShare}
 onDeletePost={handleDeletePost}
 onOpenProfile={(post) => {
   setSelectedProfileUserId(post.user_id || post.id)
