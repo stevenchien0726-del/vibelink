@@ -1,6 +1,6 @@
 'use client'
 
-import type { Dispatch, SetStateAction } from 'react'
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Bookmark,
@@ -47,6 +47,39 @@ type Props = {
     postId: string,
     value: 'everyone' | 'following' | 'off'
   ) => void
+}
+
+type PostWithAvatar = PostItem & {
+  avatarUrl?: string | null
+  avatar_url?: string | null
+}
+
+function PostAuthorAvatar({ post }: { post: PostItem }) {
+  const avatarPost = post as PostWithAvatar
+  const avatarUrl = avatarPost.avatarUrl || avatarPost.avatar_url || ''
+  const [imageFailed, setImageFailed] = useState(false)
+
+  useEffect(() => {
+    setImageFailed(false)
+  }, [avatarUrl])
+
+  const showImage = Boolean(avatarUrl && !imageFailed)
+
+  return (
+    <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#4a4a4a] text-[13px] font-semibold text-white [html.dark_&]:bg-[#d9d9d9] [html.dark_&]:text-[#333]">
+      {showImage ? (
+        <img
+          src={avatarUrl}
+          alt={post.author || 'Vibelink User'}
+          className="h-full w-full object-cover"
+          draggable={false}
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <span>{(post.author || 'V').slice(0, 1).toUpperCase()}</span>
+      )}
+    </div>
+  )
 }
 
 export default function HomeDetailPostModal({
@@ -124,6 +157,7 @@ export default function HomeDetailPostModal({
                 </div>
               </div>
 
+              <div className="px-3">
               <button
                 type="button"
                 onClick={(e) => {
@@ -133,26 +167,21 @@ export default function HomeDetailPostModal({
                   setSelectedPost(null)
                   setSelectedProfileUserId(selectedPost.user_id || selectedPost.id)
                 }}
-                className="mb-5 ml-7 flex items-center gap-3 py-3 pr-5 active:scale-95"
+                className="mb-12 mt-10 flex w-fit items-center gap-3 py-2 active:scale-95"
               >
-                <div className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[var(--app-card)]">
-                  {(selectedPost as any).avatarUrl ? (
-                    <img
-                      src={(selectedPost as any).avatarUrl}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : null}
-                </div>
+                <PostAuthorAvatar post={selectedPost} />
 
                 <div className="text-[15px] font-medium text-[var(--app-text)]">
                   {selectedPost.author}
                 </div>
               </button>
 
+              <div className="flex flex-col gap-5 px-5 pt-3"></div>
+
               <div
                 data-detail-image-area="true"
                 data-block-page-swipe="true"
-                className="mt-3 px-3"
+                className=""
                 style={{ touchAction: 'pan-y' }}
                 onTouchStart={handleDetailImageTouchStart}
                 onTouchMove={handleDetailImageTouchMove}
@@ -229,8 +258,9 @@ export default function HomeDetailPostModal({
                   </div>
                 )}
               </div>
+              </div>
 
-              <div className="flex items-center justify-between px-4 pt-4">
+              <div className="flex items-center justify-between px-3 pt-4">
                 <div className="flex items-center gap-5">
                   <button
                     onClick={toggleDetailLike}
@@ -293,7 +323,7 @@ export default function HomeDetailPostModal({
                       if (e.key === 'Enter') submitComment()
                     }}
                     placeholder="新增留言..."
-                    className="h-[42px] flex-1 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 text-[14px] text-[var(--app-text)] outline-none"
+                    className="h-[42px] flex-1 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-3 text-[14px] text-[var(--app-text)] outline-none"
                   />
 
                   <button
