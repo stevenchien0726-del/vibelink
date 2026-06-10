@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { ChevronRight } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 type AIRadarTopBarProps = {
   showTopBar: boolean
@@ -14,6 +15,38 @@ export default function AIRadarTopBar({
   onClickVibePlus,
   onClickAIRadarInfo,
 }: AIRadarTopBarProps) {
+  const [isDarkMode, setIsDarkMode] = useState(false)
+
+  useEffect(() => {
+    const updateTheme = () => {
+      const html = document.documentElement
+      const body = document.body
+
+      setIsDarkMode(
+        html.classList.contains('dark') ||
+          body.classList.contains('dark') ||
+          html.getAttribute('data-theme') === 'dark' ||
+          body.getAttribute('data-theme') === 'dark'
+      )
+    }
+
+    updateTheme()
+
+    const observer = new MutationObserver(updateTheme)
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    })
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   if (!showTopBar) return null
 
   return (
@@ -34,7 +67,6 @@ export default function AIRadarTopBar({
           active:scale-[0.97]
         "
       >
-        
         <Image
           src="/image/ai-radar-logo.png"
           alt="AI Radar"
@@ -55,20 +87,23 @@ export default function AIRadarTopBar({
           items-center
           gap-1
           rounded-full
+          bg-transparent
           px-0
           text-[15px]
           font-medium
-          text-white
+          shadow-none
           transition
           active:scale-[0.97]
         "
+        style={{
+          color: isDarkMode ? '#ffffff' : '#111111',
+        }}
       >
-        <span className="text-white">Vibe Plus</span>
+        <span>Vibe Plus</span>
 
         <ChevronRight
           size={18}
           strokeWidth={2.2}
-          className="text-white"
         />
       </button>
     </div>

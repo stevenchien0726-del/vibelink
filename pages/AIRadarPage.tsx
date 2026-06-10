@@ -1551,8 +1551,8 @@ typeText(nextAiText, requestId)
       }}
       onDragEnd={(_, info) => {
         const shouldClose =
-          info.offset.x > 110 ||
-          info.velocity.x > 520
+          info.offset.x > 80 ||
+          info.velocity.x > 420
 
         if (shouldClose) {
           setSelectedProfileUser(null)
@@ -1571,6 +1571,7 @@ typeText(nextAiText, requestId)
 
 <AIRadarInfoSheet
   open={showAIRadarInfo}
+  locale={safeLocale}
   onClose={() => setShowAIRadarInfo(false)}
 />
     </>

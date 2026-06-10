@@ -657,19 +657,7 @@ if (!error) {
       exit={{ opacity: 0, scale: 0.92, y: 40 }}
       transition={{ type: 'spring', stiffness: 360, damping: 34 }}
       
-      onPointerDown={(e) => e.stopPropagation()}
-      onTouchStart={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
-      onDragEnd={(_, info) => {
-        const shouldClose =
-          info.offset.y > 120 ||
-          info.offset.x > 120 ||
-          info.velocity.y > 700 ||
-          info.velocity.x > 700
-
-        if (shouldClose) onClose()
-      }}
     >
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[76px]">
         <div className="fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 bg-[var(--app-bg)]/95 px-4 pt-4 pb-3 backdrop-blur-md">
