@@ -121,6 +121,24 @@ const isUuid = (value: string) =>
     value
   )
 
+function getProfileBioText(value: unknown) {
+  if (typeof value !== 'string') return ''
+
+  const bioText = value.trim()
+  const normalized = bioText.toLowerCase()
+
+  if (
+    normalized === 'loading' ||
+    normalized === 'loading...' ||
+    bioText === '載入中' ||
+    bioText === '載入中...'
+  ) {
+    return ''
+  }
+
+  return bioText
+}
+
 export default function OtherUserProfilePage({
   userId,
   user,
@@ -502,6 +520,7 @@ setFollowStateLoaded(true)
   }, [userId, locale])
 
   const gridItems = posts.filter((post) => post.post_images?.length > 0)
+  const bioText = getProfileBioText(profile?.bio)
 
   useEffect(() => {
   async function loadFavoriteState() {
@@ -739,11 +758,13 @@ if (!error) {
               </div>
             </div>
 
-            <div className="mb-3">
-              <div className="text-[16px] leading-[1.45] text-[var(--app-text)]">
-                {profile?.bio || ''}
+            {bioText && (
+              <div className="mb-3">
+                <div className="text-[16px] leading-[1.45] text-[var(--app-text)]">
+                  {bioText}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="mb-4 flex items-center">
               <motion.button

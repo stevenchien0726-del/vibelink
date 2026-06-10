@@ -10,6 +10,7 @@ type Props = {
   onOpenProfile?: (userId: string) => void
   onOpenPost?: (postId: string) => void
   onOpenShortVideo?: (shortVideoId: string) => void
+  onUnreadCountChange?: (count: number) => void
 }
 
 type NotificationItem = {
@@ -63,6 +64,7 @@ export default function NotificationsPage({
   onOpenProfile,
   onOpenPost,
 onOpenShortVideo,
+  onUnreadCountChange,
 }: Props) {
   const [items, setItems] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -139,18 +141,15 @@ onOpenShortVideo,
       throw error
     }
 
-    setItems((data ?? []) as NotificationItem[])
+    const notifications = (data ?? []) as NotificationItem[]
 
-    const unreadIds = (data ?? [])
+    setItems(notifications)
+
+    const unreadIds = notifications
       .filter((item: NotificationItem) => !item.is_read)
       .map((item: NotificationItem) => item.id)
 
-    if (unreadIds.length > 0) {
-      void supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .in('id', unreadIds)
-    }
+    void markNotificationsAsRead(unreadIds, user.id)
     } catch (error) {
       if (!isStale()) {
         console.warn('load notifications failed:', error)
@@ -163,6 +162,35 @@ onOpenShortVideo,
       if (!isStale()) {
         setLoading(false)
       }
+    }
+  }
+
+  async function markNotificationsAsRead(
+    notificationIds: string[],
+    userId: string
+  ) {
+    if (notificationIds.length === 0) return
+
+    setItems((prev) =>
+      prev.map((item) =>
+        notificationIds.includes(item.id)
+          ? {
+              ...item,
+              is_read: true,
+            }
+          : item
+      )
+    )
+    onUnreadCountChange?.(0)
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('recipient_user_id', userId)
+      .in('id', notificationIds)
+
+    if (error) {
+      console.warn('mark notifications as read failed:', error)
     }
   }
 

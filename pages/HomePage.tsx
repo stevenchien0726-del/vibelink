@@ -1460,6 +1460,7 @@ if (realVideos.length > 0) {
         setIsNotificationsOpen(false)
         setUnreadNotificationCount(0)
       }}
+      onUnreadCountChange={setUnreadNotificationCount}
       onOpenProfile={(userId) => {
         setIsNotificationsOpen(false)
         setUnreadNotificationCount(0)

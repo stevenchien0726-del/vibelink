@@ -17,10 +17,9 @@ export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
   const [loading, setLoading] = useState(true)
   const text = {
     title: uiText('追蹤中', 'Following'),
-    loading: uiText('載入追蹤中貼文...', 'Loading following posts...'),
-    empty: uiText('目前追蹤用戶還沒有貼文或短影音', 'Followed users do not have posts or short videos yet'),
+    loading: uiText('讀取中', 'Loading'),
+    empty: uiText('目前還沒有新的內容', 'No new content yet'),
   }
-
   function withTimeout<T>(
     promise: PromiseLike<T>,
     ms = 6000,

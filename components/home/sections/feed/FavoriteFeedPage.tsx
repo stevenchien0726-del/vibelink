@@ -18,10 +18,9 @@ export default function FavoriteFeedPage({ onClose, onOpenPost }: Props) {
   const [loading, setLoading] = useState(true)
   const text = {
     title: uiText('最愛', 'Favorites'),
-    loading: uiText('載入最愛貼文中...', 'Loading favorite posts...'),
-    empty: uiText('目前最愛用戶還沒有貼文或短影音', 'Favorite users do not have posts or short videos yet'),
+    loading: uiText('讀取中', 'Loading'),
+    empty: uiText('目前還沒有新的內容', 'No new content yet'),
   }
-
   function withTimeout<T>(
     promise: PromiseLike<T>,
     ms = 6000,

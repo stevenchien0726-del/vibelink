@@ -146,7 +146,7 @@ export default function ProfilePostGridTabs({
         {/* 第3頁：收藏 */}
         <div className="w-full shrink-0">
           <div className="mb-3 mt-2 flex items-center justify-between">
-            <span className="text-[16px] font-medium text-[#111] dark:text-white">
+            <span className="text-[16px] font-medium text-[var(--app-text)]">
               {text.favorites}
             </span>
 
