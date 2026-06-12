@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
-import { uiText } from '@/lib/uiText'
 
 type Props = {
   open: boolean
@@ -11,7 +10,7 @@ type Props = {
 
 export default function AIRadarLoadingOverlay({
   open,
-  text = uiText('AI 正在掃描新的 vibe...', 'AI is scanning new vibes...'),
+  text = '',
 }: Props) {
   return (
     <AnimatePresence>

@@ -52,6 +52,12 @@ const AI_RADAR_USER_RULES: RateLimitRule[] = [
   },
 ]
 
+type AIRadarProgressStage = 'searching' | 'parsing' | 'generating'
+
+function encodeAIRadarStreamEvent(event: unknown) {
+  return `data: ${JSON.stringify(event)}\n\n`
+}
+
 function rateLimitResponse(retryAfterSeconds: number) {
   return NextResponse.json(
     {
@@ -150,6 +156,35 @@ export async function POST(req: Request) {
         aiReply: '請先輸入你想找的人。',
       })
     }
+
+    const encoder = new TextEncoder()
+
+    const stream = new ReadableStream({
+      start(controller) {
+        const send = (event: unknown) => {
+          controller.enqueue(
+            encoder.encode(encodeAIRadarStreamEvent(event))
+          )
+        }
+
+        const sendProgress = (stage: AIRadarProgressStage) => {
+          send({
+            type: 'progress',
+            stage,
+          })
+        }
+
+        const sendResult = (data: unknown) => {
+          send({
+            type: 'result',
+            data,
+          })
+        }
+
+        void (async () => {
+          try {
+            sendProgress('searching')
+            sendProgress('parsing')
 
     console.log('🟣 [AI Radar] parsing query...')
 
@@ -264,6 +299,8 @@ export async function POST(req: Request) {
       matchedUsers.length
     )
 
+    sendProgress('generating')
+
     console.log('🟣 [AI Radar] generating human feeling...')
 
     const humanFeelingSignal =
@@ -369,12 +406,41 @@ export async function POST(req: Request) {
       'ms'
     )
 
-    return NextResponse.json({
+    sendResult({
       ok: true,
       parsedQuery,
       matchedUsers: displayUsers,
       aiReply,
       rewritePrompts,
+    })
+          } catch (error) {
+            console.error('🔴 [AI Radar] API route failed:', error)
+            console.error(
+              '🔴 [AI Radar] failed after',
+              Date.now() - startedAt,
+              'ms'
+            )
+
+            sendResult({
+              ok: false,
+              error: 'AI_RADAR_API_FAILED',
+              matchedUsers: [],
+              aiReply: 'AI 雷達目前暫時無法完成，請再試一次。',
+            })
+          } finally {
+            controller.close()
+          }
+        })()
+      },
+    })
+
+    return new Response(stream, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+      },
     })
   } catch (error) {
     console.error('🔴 [AI Radar] API route failed:', error)

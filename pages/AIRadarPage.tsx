@@ -37,6 +37,12 @@ type AIRadarPageProps = {
   locale: Locale
 }
 
+type AIRadarLoadingStage =
+  | 'idle'
+  | 'searching'
+  | 'parsing'
+  | 'generating'
+
 export default function AIRadarPage({ locale }: AIRadarPageProps) {
   const safeLocale: Locale = locale ?? 'zh-TW'
 const text = getAIRadarText(safeLocale)
@@ -98,7 +104,8 @@ function getRandomStarterPrompts() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [refreshCount, setRefreshCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
-  const [loadingStep, setLoadingStep] = useState(0)
+  const [loadingStage, setLoadingStage] =
+    useState<AIRadarLoadingStage>('idle')
 
   const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false)
 const [voiceTranscript, setVoiceTranscript] = useState('')
@@ -134,19 +141,6 @@ const [homeWarmVideos, setHomeWarmVideos] = useState<string[]>([])
 
 const [showTopBar, setShowTopBar] = useState(true)
 const [showNewUserUploadGuide, setShowNewUserUploadGuide] = useState(false)
-
-  const loadingTexts =
-  safeLocale === 'en'
-    ? [
-        'AI is scanning new vibes...',
-        'Matched users found...',
-        'Preparing results...',
-      ]
-    : [
-        'AI 正在掃描新的 vibe...',
-        '已找到匹配用戶...',
-        '準備生成中...',
-      ]
 
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const [selectedLibraryUser, setSelectedLibraryUser] = useState<{
@@ -239,6 +233,90 @@ async function safeTask<T>(
   } catch (error) {
     console.warn(`${label} failed:`, error)
     return null
+  }
+}
+
+async function readAIRadarStreamResponse(
+  response: Response,
+  onStage: (stage: AIRadarLoadingStage) => void
+) {
+  if (!response.body) {
+    return response.json()
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let resultData: any = null
+  let rawText = ''
+
+  const handleEvent = (event: any) => {
+    if (event?.type === 'progress') {
+      if (
+        event.stage === 'searching' ||
+        event.stage === 'parsing' ||
+        event.stage === 'generating'
+      ) {
+        onStage(event.stage)
+      }
+
+      return
+    }
+
+    if (event?.type === 'result') {
+      resultData = event.data
+    }
+  }
+
+  const consumeChunk = (chunk: string) => {
+    rawText += chunk
+    buffer += chunk
+
+    const parts = buffer.split('\n\n')
+    buffer = parts.pop() ?? ''
+
+    for (const part of parts) {
+      const dataLines = part
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).trim())
+
+      if (dataLines.length === 0) continue
+
+      try {
+        handleEvent(JSON.parse(dataLines.join('\n')))
+      } catch (error) {
+        console.error('[AI Radar Frontend] stream event parse failed:', error)
+      }
+    }
+  }
+
+  while (true) {
+    const { value, done } = await reader.read()
+
+    if (done) break
+
+    consumeChunk(decoder.decode(value, { stream: true }))
+  }
+
+  consumeChunk(decoder.decode())
+
+  if (buffer.trim()) {
+    consumeChunk('\n\n')
+  }
+
+  if (resultData) {
+    return resultData
+  }
+
+  try {
+    return JSON.parse(rawText)
+  } catch (error) {
+    console.error('[AI Radar Frontend] JSON parse failed:', error)
+    throw Object.assign(new Error('JSON_PARSE_FAILED'), {
+      cause: error,
+    })
   }
 }
 
@@ -842,11 +920,9 @@ const finishRequest = () => {
     timeoutId = null
   }
 
-  window.clearTimeout(loadingTimer1)
-  window.clearTimeout(loadingTimer2)
-
   setLoading(false)
   setIsLoading(false)
+  setLoadingStage('idle')
 
   inFlightRef.current = false
 
@@ -856,16 +932,7 @@ const finishRequest = () => {
 }
 
     setIsLoading(true)
-
-    setLoadingStep(0)
-
-const loadingTimer1 = scheduleRequestTimer(() => {
-  setLoadingStep(1)
-}, 1200, requestId)
-
-const loadingTimer2 = scheduleRequestTimer(() => {
-  setLoadingStep(2)
-}, 2600, requestId)
+    setLoadingStage('searching')
 
   setShowTopBar(true)
 
@@ -898,6 +965,7 @@ try {
   if (requestSequenceRef.current !== requestId) {
   setLoading(false)
   setIsLoading(false)
+  setLoadingStage('idle')
 
   inFlightRef.current = false
 
@@ -942,6 +1010,7 @@ const response = await fetch('/api/ai-radar', {
   if (requestSequenceRef.current !== requestId) {
   setLoading(false)
   setIsLoading(false)
+  setLoadingStage('idle')
 
   inFlightRef.current = false
 
@@ -950,7 +1019,25 @@ const response = await fetch('/api/ai-radar', {
 
   console.log('[AI Radar Frontend] response status:', response.status)
 
-const rawText = await response.text()
+try {
+  data = await readAIRadarStreamResponse(response, (stage) => {
+    if (requestSequenceRef.current === requestId) {
+      setLoadingStage(stage)
+    }
+  })
+} catch (jsonError: any) {
+  if (jsonError?.message !== 'JSON_PARSE_FAILED') {
+    throw jsonError
+  }
+
+  setErrorType('JSON_PARSE_FAILED')
+
+  data = {
+    ok: false,
+    matchedUsers: [],
+    aiReply: 'AI 雷達目前回傳格式異常，請再試一次。',
+  }
+}
 
 if (timeoutId !== null) {
   window.clearTimeout(timeoutId)
@@ -962,31 +1049,13 @@ if (requestSequenceRef.current !== requestId) {
 return
 }
 
-console.log('[AI Radar Frontend] raw response:', rawText)
-
-try {
-  data = JSON.parse(rawText)
-
-  console.log('[AI Radar Frontend] parsed data:', data)
-} catch (jsonError) {
-  console.error(
-    '[AI Radar Frontend] JSON parse failed:',
-    jsonError
-  )
-
-  setErrorType('JSON_PARSE_FAILED')
-
-data = {
-  ok: false,
-  matchedUsers: [],
-  aiReply: 'AI 雷達目前回傳格式異常，請再試一次。',
-}
-}
+console.log('[AI Radar Frontend] parsed data:', data)
 }
 } catch (error: any) {
   if (requestSequenceRef.current !== requestId) {
   setLoading(false)
   setIsLoading(false)
+  setLoadingStage('idle')
 
   inFlightRef.current = false
 
@@ -1015,6 +1084,7 @@ scheduleRequestTimer(() => {
   if (requestSequenceRef.current !== requestId) {
   setLoading(false)
   setIsLoading(false)
+  setLoadingStage('idle')
 
   inFlightRef.current = false
 
@@ -1037,10 +1107,9 @@ if (matchedUsers.length > 0) {
 }
 
     setAiText(nextAiText)
-    window.clearTimeout(loadingTimer1)
-window.clearTimeout(loadingTimer2)
     setLoading(false)
         setIsLoading(false)
+        setLoadingStage('idle')
 
     if (matchedUsers.length > 0) {
   setResults(matchedUsers as any)
@@ -1070,6 +1139,7 @@ typeText(nextAiText, requestId)
     console.error('AI Radar render failed:', renderError)
     setLoading(false)
     setIsLoading(false)
+    setLoadingStage('idle')
     setErrorType('RENDER_FAILED')
     setAiText('AI 雷達顯示結果時發生問題，請再試一次。')
     setDisplayedAiText('AI 雷達顯示結果時發生問題，請再試一次。')
@@ -1117,7 +1187,7 @@ typeText(nextAiText, requestId)
 
     <AIRadarLoadingOverlay
   open={isLoading}
-  text={loadingTexts[loadingStep]}
+  text={loadingStage === 'idle' ? '' : text.loading[loadingStage]}
 />
 
       {isAuthModalOpen && (
@@ -1382,12 +1452,14 @@ typeText(nextAiText, requestId)
     if (refreshCount >= 2) return
 
     setIsLoading(true)
+    setLoadingStage('searching')
 
     setTimeout(() => {
       setRefreshKey((prev) => prev + 1)
       setRefreshCount((prev) => prev + 1)
 
       setIsLoading(false)
+      setLoadingStage('idle')
     }, 1000)
   }}
   onTouchStart={stopSwipePropagation}

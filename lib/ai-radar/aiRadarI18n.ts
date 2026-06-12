@@ -10,6 +10,11 @@ export type AIRadarLanguagePack = {
   rewriteTitle: string
   inputPlaceholder: string
   loadingPrompts: string
+  loading: {
+    searching: string
+    parsing: string
+    generating: string
+  }
   noResultPrefix: string
   noResultSuffix: string
   voiceNotSupported: string
@@ -27,6 +32,11 @@ export const AI_RADAR_I18N: Record<Locale, AIRadarLanguagePack> = {
     rewriteTitle: '你也可以試試這樣問',
     inputPlaceholder: 'AI雷達',
     loadingPrompts: '生成提示詞中...',
+    loading: {
+      searching: '正在搜索...',
+      parsing: '正在解析...',
+      generating: '準備產生結果...',
+    },
     noResultPrefix: '目前沒有找到完全符合「',
     noResultSuffix: '」的用戶，你可以換更簡短的描述再試一次。',
     voiceNotSupported: '目前瀏覽器不支援語音輸入，建議使用 Chrome 測試。',
@@ -44,6 +54,11 @@ export const AI_RADAR_I18N: Record<Locale, AIRadarLanguagePack> = {
     rewriteTitle: 'You can also try asking',
     inputPlaceholder: 'AI Radar',
     loadingPrompts: 'Generating prompts...',
+    loading: {
+      searching: 'Searching...',
+      parsing: 'Analyzing...',
+      generating: 'Preparing results...',
+    },
     noResultPrefix: 'No users fully matched “',
     noResultSuffix: '”. Try a shorter description and search again.',
     voiceNotSupported:
