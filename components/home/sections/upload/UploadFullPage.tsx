@@ -131,8 +131,53 @@ export default function UploadFullPage({
             </button>
           </div>
 
-          <div className="h-[72px] shrink-0" />
-          <div className="flex-1" />
+          <div className="sticky top-0 z-[2] bg-[var(--app-bg)] pb-3 pt-4">
+            <div className="relative grid grid-cols-2 rounded-[18px] bg-[var(--app-card)] p-[4px]">
+              <motion.div
+                className="absolute bottom-[4px] top-[4px] rounded-[14px] bg-[var(--app-surface)]"
+                animate={{
+                  left: activeTab === 'post' ? '4px' : 'calc(50% + 1px)',
+                  width: 'calc(50% - 6px)',
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 360,
+                  damping: 30,
+                  mass: 0.9,
+                }}
+              />
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('post')}
+                className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
+                style={{
+                  color:
+                    activeTab === 'post'
+                      ? 'var(--app-text)'
+                      : 'var(--app-muted)',
+                }}
+              >
+                {text.post}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('video')}
+                className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
+                style={{
+                  color:
+                    activeTab === 'video'
+                      ? 'var(--app-text)'
+                      : 'var(--app-muted)',
+                }}
+              >
+                {text.shortVideo}
+              </button>
+            </div>
+          </div>
+
+          <div className="h-[24px] shrink-0" />
 
           <AnimatePresence mode="wait">
             {activeTab === 'video' && (
@@ -172,54 +217,6 @@ export default function UploadFullPage({
               </motion.div>
             )}
           </AnimatePresence>
-
-          <div className="h-[24px] shrink-0" />
-
-          <div className="pb-2">
-            <div className="relative grid grid-cols-2 rounded-[18px] bg-[var(--app-card)] p-[4px]">
-              <motion.div
-                className="absolute bottom-[4px] top-[4px] rounded-[14px] bg-[var(--app-surface)]"
-                animate={{
-                  left: activeTab === 'video' ? '4px' : 'calc(50% + 1px)',
-                  width: 'calc(50% - 6px)',
-                }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 360,
-                  damping: 30,
-                  mass: 0.9,
-                }}
-              />
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('video')}
-                className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
-                style={{
-                  color:
-                    activeTab === 'video'
-                      ? 'var(--app-text)'
-                      : 'var(--app-muted)',
-                }}
-              >
-                {text.shortVideo}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('post')}
-                className="relative z-[2] h-[48px] rounded-[14px] border-none bg-transparent text-[15px] font-medium"
-                style={{
-                  color:
-                    activeTab === 'post'
-                      ? 'var(--app-text)'
-                      : 'var(--app-muted)',
-                }}
-              >
-                {text.post}
-              </button>
-            </div>
-          </div>
         </div>
       </motion.div>
     </motion.div>

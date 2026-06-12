@@ -1206,10 +1206,7 @@ handleSubmitSearch={handleSubmitSearch}
 const user = data.session?.user ?? null
 
 void safeTask(() => loadPosts(user), 'upload_reload_posts')
-
-if (realVideos.length > 0) {
-  void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
-}
+void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
 }}
   onPostCreated={handlePostCreated}
 />

@@ -174,6 +174,8 @@ const activeAbortControllerRef = useRef<AbortController | null>(null)
 const requestSequenceRef = useRef(0)
 const requestTimersRef = useRef<number[]>([])
 const typingTimerRef = useRef<number | null>(null)
+const hasShownUploadGuideRef = useRef(false)
+const uploadGuideSessionKey = 'vibelink_ai_radar_upload_guide_shown'
 
 function clearRequestTimers() {
   requestTimersRef.current.forEach((timer) => {
@@ -234,6 +236,144 @@ async function safeTask<T>(
     console.warn(`${label} failed:`, error)
     return null
   }
+}
+
+async function checkUserHasUploadedContent(
+  userId: string
+): Promise<boolean | null> {
+  const [postsResult, postImagesResult, shortVideosResult, profileResult] =
+    await Promise.allSettled([
+      withTimeout(
+        supabase
+          .from('posts')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .limit(1),
+        6000,
+        'ai_radar_posts_exists'
+      ),
+      withTimeout(
+        supabase
+          .from('posts')
+          .select(`
+            id,
+            post_images (
+              image_url
+            )
+          `)
+          .eq('user_id', userId)
+          .limit(5),
+        6000,
+        'ai_radar_post_images_exists'
+      ),
+      withTimeout(
+        supabase
+          .from('short_videos')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .limit(1),
+        6000,
+        'ai_radar_short_videos_exists'
+      ),
+      withTimeout(
+        supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', userId)
+          .maybeSingle(),
+        6000,
+        'ai_radar_profile_avatar_exists'
+      ),
+    ])
+
+  let hadUnknownResult = false
+
+  function unwrapResult<T>(
+    result: PromiseSettledResult<T | null>,
+    label: string
+  ): T | null {
+    if (result.status === 'rejected') {
+      console.warn(`${label} failed:`, result.reason)
+      hadUnknownResult = true
+      return null
+    }
+
+    if (result.value === null) {
+      hadUnknownResult = true
+      return null
+    }
+
+    return result.value
+  }
+
+  const posts = unwrapResult(postsResult, 'ai_radar_posts_exists')
+  const postImages = unwrapResult(
+    postImagesResult,
+    'ai_radar_post_images_exists'
+  )
+  const shortVideos = unwrapResult(
+    shortVideosResult,
+    'ai_radar_short_videos_exists'
+  )
+  const profile = unwrapResult(profileResult, 'ai_radar_profile_avatar_exists')
+
+  if (posts?.error || postImages?.error || shortVideos?.error || profile?.error) {
+    console.warn('AI Radar upload check skipped because a query failed', {
+      posts: posts?.error,
+      postImages: postImages?.error,
+      shortVideos: shortVideos?.error,
+      profile: profile?.error,
+    })
+    return null
+  }
+
+  const hasPosts = (posts?.count ?? 0) > 0
+  const hasPostImages = Boolean(
+    postImages?.data?.some(
+      (post: { post_images?: { image_url?: string | null }[] | null }) =>
+        (post.post_images?.length ?? 0) > 0
+    )
+  )
+  const hasShortVideos = (shortVideos?.count ?? 0) > 0
+  const hasAvatar = Boolean(profile?.data?.avatar_url)
+
+  if (hasPosts || hasPostImages || hasShortVideos || hasAvatar) {
+    return true
+  }
+
+  return hadUnknownResult ? null : false
+}
+
+function hasUploadGuideBeenShownThisSession() {
+  if (hasShownUploadGuideRef.current) return true
+  if (typeof window === 'undefined') return false
+
+  return window.sessionStorage.getItem(uploadGuideSessionKey) === 'true'
+}
+
+function markUploadGuideShownThisSession() {
+  hasShownUploadGuideRef.current = true
+
+  if (typeof window !== 'undefined') {
+    window.sessionStorage.setItem(uploadGuideSessionKey, 'true')
+  }
+}
+
+async function updateUploadGuideForUser(userId: string) {
+  const hasUploadedContent = await checkUserHasUploadedContent(userId)
+
+  if (hasUploadedContent !== false) {
+    setShowNewUserUploadGuide(false)
+    return
+  }
+
+  if (hasUploadGuideBeenShownThisSession()) {
+    setShowNewUserUploadGuide(false)
+    return
+  }
+
+  markUploadGuideShownThisSession()
+  setShowNewUserUploadGuide(true)
 }
 
 async function readAIRadarStreamResponse(
@@ -502,25 +642,9 @@ const user = session?.user
 
 ensureAIRadarProfileOnce(user.id)
 
-const postCountResult = await withTimeout(
-  supabase
-    .from('posts')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id),
-  6000,
-  'ai_radar_profile_posts_count'
-)
-
-const count = postCountResult?.count ?? 0
-const error = postCountResult?.error
+await updateUploadGuideForUser(user.id)
 
 if (cancelled) return
-
-if (!error && (count ?? 0) === 0) {
-  setShowNewUserUploadGuide(true)
-} else {
-  setShowNewUserUploadGuide(false)
-}
   }
 
   initAuth()
@@ -536,25 +660,9 @@ if (!error && (count ?? 0) === 0) {
 
   ensureAIRadarProfileOnce(user.id)
 
-  const postCountResult = await withTimeout(
-    supabase
-      .from('posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id),
-    6000,
-    'ai_radar_auth_posts_count'
-  )
-
-  const count = postCountResult?.count ?? 0
-  const error = postCountResult?.error
+  await updateUploadGuideForUser(user.id)
 
   if (cancelled) return
-
-  if (!error && (count ?? 0) === 0) {
-    setShowNewUserUploadGuide(true)
-  } else {
-    setShowNewUserUploadGuide(false)
-  }
 }
       else {
         setIsAuthModalOpen(true)

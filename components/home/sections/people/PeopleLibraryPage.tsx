@@ -32,6 +32,23 @@ type FolderItem = {
   emoji?: string
 }
 
+type PeopleFollowRow = {
+  following_id: string | null
+  created_at: string | null
+}
+
+type PeopleFavoriteRow = {
+  favorite_user_id: string | null
+  created_at: string | null
+}
+
+type PeopleProfileRow = {
+  id: string
+  username?: string | null
+  display_name?: string | null
+  avatar_url?: string | null
+}
+
 type PeopleLibraryPageProps = {
   query?: string
   locale: Locale
@@ -65,20 +82,29 @@ function getFolderName(id: string, locale: Locale) {
 }
 
 function withTimeout<T>(
-  promise: Promise<T>,
+  promise: PromiseLike<T>,
   ms: number,
   label: string
 ): Promise<T | null> {
+  let timeoutId: number | null = null
+
   return Promise.race([
-    promise,
+    Promise.resolve(promise),
     new Promise<null>((resolve) => {
-      window.setTimeout(() => {
+      timeoutId = window.setTimeout(() => {
         console.warn(`${label} timeout`)
         resolve(null)
       }, ms)
     }),
-  ])
+  ]).finally(() => {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId)
+    }
+  })
 }
+
+const PEOPLE_LIBRARY_TIMEOUT_MS = 6000
+const PEOPLE_LIBRARY_PROFILE_BATCH_SIZE = 80
 
 export default function PeopleLibraryPage({
   query,
@@ -128,6 +154,7 @@ export default function PeopleLibraryPage({
   useEffect(() => {
     let cancelled = false
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async function fetchPeopleLibraryUsers(retry = 0) {
       try {
         setPeopleLoading(true)
@@ -234,12 +261,180 @@ export default function PeopleLibraryPage({
       }
     }
 
+    async function fetchProfilesInBatches(userIds: string[]) {
+      const batches: string[][] = []
+
+      for (
+        let index = 0;
+        index < userIds.length;
+        index += PEOPLE_LIBRARY_PROFILE_BATCH_SIZE
+      ) {
+        batches.push(
+          userIds.slice(index, index + PEOPLE_LIBRARY_PROFILE_BATCH_SIZE)
+        )
+      }
+
+      const batchResults = await Promise.allSettled(
+        batches.map((batch, index) =>
+          withTimeout(
+            supabase
+              .from('profiles')
+              .select('id, username, display_name, avatar_url')
+              .in('id', batch),
+            PEOPLE_LIBRARY_TIMEOUT_MS,
+            `people_library_profiles_${index}`
+          )
+        )
+      )
+
+      return batchResults.flatMap((result): PeopleProfileRow[] => {
+        if (result.status === 'rejected') {
+          console.warn('People Library profiles batch failed:', result.reason)
+          return []
+        }
+
+        if (!result.value) return []
+
+        if (result.value.error) {
+          console.warn('People Library profiles batch error:', result.value.error)
+          return []
+        }
+
+        return (result.value.data ?? []) as PeopleProfileRow[]
+      })
+    }
+
+    async function fetchPeopleLibraryUsersFast() {
+      setPeopleLoading(true)
+      setPeopleError('')
+      setAllPeopleUsers([])
+
+      try {
+        const authResult = await withTimeout(
+          supabase.auth.getUser(),
+          PEOPLE_LIBRARY_TIMEOUT_MS,
+          'people_library_auth_user'
+        )
+
+        const user = authResult?.data.user
+
+        if (authResult?.error) {
+          console.warn('People Library auth failed:', authResult.error)
+        }
+
+        if (!user) return
+
+        const [followResult, favoriteResult] = await Promise.allSettled([
+          withTimeout(
+            supabase
+              .from('follows')
+              .select('following_id, created_at')
+              .eq('follower_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(300),
+            PEOPLE_LIBRARY_TIMEOUT_MS,
+            'people_library_follows'
+          ),
+          withTimeout(
+            supabase
+              .from('favorite_users')
+              .select('favorite_user_id, created_at')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(300),
+            PEOPLE_LIBRARY_TIMEOUT_MS,
+            'people_library_favorite_users'
+          ),
+        ])
+
+        const followRows =
+          followResult.status === 'fulfilled' &&
+          followResult.value &&
+          !followResult.value.error
+            ? ((followResult.value.data ?? []) as PeopleFollowRow[])
+            : []
+
+        const favoriteRows =
+          favoriteResult.status === 'fulfilled' &&
+          favoriteResult.value &&
+          !favoriteResult.value.error
+            ? ((favoriteResult.value.data ?? []) as PeopleFavoriteRow[])
+            : []
+
+        if (followResult.status === 'rejected') {
+          console.warn('People Library follows failed:', followResult.reason)
+        } else if (followResult.value?.error) {
+          console.warn('People Library follows error:', followResult.value.error)
+        }
+
+        if (favoriteResult.status === 'rejected') {
+          console.warn('People Library favorites failed:', favoriteResult.reason)
+        } else if (favoriteResult.value?.error) {
+          console.warn('People Library favorites error:', favoriteResult.value.error)
+        }
+
+        const followingIds = followRows
+          .map((row) => row.following_id)
+          .filter((id): id is string => Boolean(id))
+
+        const favoriteIds = favoriteRows
+          .map((row) => row.favorite_user_id)
+          .filter((id): id is string => Boolean(id))
+
+        const mergedIds = Array.from(new Set([...followingIds, ...favoriteIds]))
+
+        if (mergedIds.length === 0) return
+
+        const profiles = await fetchProfilesInBatches(mergedIds)
+
+        const followMap = new Map(
+          followRows.map((row) => [row.following_id, row.created_at])
+        )
+
+        const favoriteMap = new Map(
+          favoriteRows.map((row) => [
+            row.favorite_user_id,
+            row.created_at,
+          ])
+        )
+
+        const mappedUsers: PeopleLibraryUser[] = profiles.map((profile) => ({
+          id: profile.id,
+          name: profile.display_name || profile.username || 'Vibelink User',
+          avatar: profile.avatar_url || '',
+          followedAt: followMap.get(profile.id) ?? null,
+          favoritedAt: favoriteMap.get(profile.id) ?? null,
+          isFavorite: favoriteMap.has(profile.id),
+          accountType: 'normal',
+          isCreator: false,
+          messageCount: 0,
+          commentCount: 0,
+          likeCount: 0,
+          profileViewCount: 0,
+        }))
+
+        if (!cancelled) {
+          setAllPeopleUsers(mappedUsers)
+        }
+      } catch (error) {
+        console.warn('People Library partial load failed:', error)
+
+        if (!cancelled) {
+          setAllPeopleUsers([])
+        }
+      } finally {
+        if (!cancelled) {
+          setPeopleLoading(false)
+        }
+      }
+    }
+
     async function reloadPeopleLibrary() {
       setPeopleLoading(true)
       setPeopleError('')
 
       try {
-        await withTimeout(fetchPeopleLibraryUsers(), 8000, 'people_library_users')
+        await fetchPeopleLibraryUsersFast()
       } catch (error) {
         console.warn('People Library reload failed:', error)
 
