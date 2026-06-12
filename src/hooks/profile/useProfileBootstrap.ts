@@ -4,7 +4,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { delay } from './useProfileTasks'
+import {
+  AUTH_TIMEOUT_MS,
+  logNativeLifecycle,
+  withTimeout,
+} from '@/lib/asyncTimeout'
 
 type UseProfileBootstrapParams = {
   ensureMyProfile: () => Promise<void>
@@ -49,9 +53,19 @@ export function useProfileBootstrap({
         setProfileLoading(true)
         setProfileError('')
 
+        logNativeLifecycle('auth_session_start')
+
         const {
           data: { session },
-        } = await supabase.auth.getSession()
+        } = await withTimeout(
+          supabase.auth.getSession(),
+          AUTH_TIMEOUT_MS,
+          'auth_session'
+        )
+
+        logNativeLifecycle('auth_session_success', {
+          hasSession: Boolean(session),
+        })
 
         const user = session?.user
 
@@ -66,10 +80,21 @@ export function useProfileBootstrap({
         setCurrentUserId(user.id)
         bootstrappedUserIdRef.current = user.id
 
-        void safeTask(
-  () => ensureMyProfile(),
-  'auth_ensure_profile'
-)
+        const firstLoadResults = await Promise.allSettled([
+          safeTask(
+            () => ensureMyProfile(),
+            'auth_ensure_profile'
+          ),
+          safeTask(() => loadMyPosts(), 'my_posts'),
+          safeTask(
+            () => loadMyFollowerCount(),
+            'followers'
+          ),
+        ])
+
+        logNativeLifecycle('profile_load_success', {
+          settled: firstLoadResults.map((result) => result.status),
+        })
 
         if (alive) {
           setProfileLoading(false)
@@ -108,23 +133,15 @@ export function useProfileBootstrap({
             console.warn('profile saved warmup failed', err)
           }
         }, 2000)
-
-        await delay(500)
-
-        if (!alive) return
-
-        void safeTask(() => loadMyPosts(), 'my_posts')
-
-        await delay(700)
-
-        if (!alive) return
-
-        void safeTask(
-          () => loadMyFollowerCount(),
-          'followers'
-        )
       } catch (error) {
-        console.error('?芸楛 Profile ???仃??', error)
+        const message = error instanceof Error ? error.message : String(error)
+        logNativeLifecycle(
+          message.includes('timeout')
+            ? 'auth_session_timeout'
+            : 'profile_load_error',
+          { message }
+        )
+        console.error('Profile bootstrap failed:', error)
 
         if (retry < 1) {
           window.setTimeout(() => {
@@ -136,7 +153,7 @@ export function useProfileBootstrap({
 
         if (!alive) return
 
-        setProfileError('Profile 霈?仃??')
+        setProfileError('Profile 載入失敗')
         setProfileLoading(false)
       }
     }
@@ -164,28 +181,20 @@ export function useProfileBootstrap({
       window.setTimeout(async () => {
         if (!alive) return
 
-        await safeTask(
-          () => ensureMyProfile(),
-          'auth_ensure_profile'
-        )
-
-        await delay(500)
-
-        if (!alive) return
-
-        void safeTask(
-          () => loadMyPosts(),
-          'auth_my_posts'
-        )
-
-        await delay(700)
-
-        if (!alive) return
-
-        void safeTask(
-          () => loadMyFollowerCount(),
-          'auth_followers'
-        )
+        await Promise.allSettled([
+          safeTask(
+            () => ensureMyProfile(),
+            'auth_ensure_profile'
+          ),
+          safeTask(
+            () => loadMyPosts(),
+            'auth_my_posts'
+          ),
+          safeTask(
+            () => loadMyFollowerCount(),
+            'auth_followers'
+          ),
+        ])
       }, 300)
     })
 

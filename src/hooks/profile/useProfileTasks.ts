@@ -2,7 +2,7 @@
 
 export function withTimeout<T>(
   promise: PromiseLike<T>,
-  ms = 15000,
+  ms = 8000,
   label = 'request'
 ): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -24,7 +24,7 @@ export async function safeTask<T>(
   label: string
 ): Promise<T | null> {
   try {
-    return await withTimeout(task(), 15000, label)
+    return await withTimeout(task(), 8000, label)
   } catch (error) {
     console.warn(`${label} failed:`, error)
     return null

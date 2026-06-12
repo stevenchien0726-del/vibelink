@@ -368,11 +368,15 @@ const preloadChats = Array.from(conversationMap.values()).slice(0, 3)
 window.setTimeout(() => {
   preloadChats.forEach(async (chat) => {
     try {
-      await supabase
-        .from('chat_messages')
-        .select('id')
-        .eq('conversation_id', chat.id)
-        .limit(8)
+      await withTimeout(
+        supabase
+          .from('chat_messages')
+          .select('id')
+          .eq('conversation_id', chat.id)
+          .limit(8),
+        6000,
+        'message_chat_preload'
+      )
     } catch (err) {
       console.warn('chat preload failed', err)
     }
@@ -392,19 +396,26 @@ window.setTimeout(() => {
   loadConversations()
   window.setTimeout(async () => {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const userResult = await withTimeout(
+      supabase.auth.getUser(),
+      6000,
+      'message_warm_people_user'
+    )
+    const user = userResult?.data.user
 
     if (!user) return
 
-    const { data } = await supabase
-      .from('follows')
-      .select('following_id')
-      .eq('follower_id', user.id)
-      .limit(12)
+    const followsResult = await withTimeout(
+      supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id)
+        .limit(12),
+      6000,
+      'message_warm_people_follows'
+    )
 
-    setPeopleLibraryWarmUsers(data ?? [])
+    setPeopleLibraryWarmUsers(followsResult?.data ?? [])
   } catch (err) {
     console.warn('People Library warmup failed', err)
   }
@@ -412,29 +423,42 @@ window.setTimeout(() => {
 
 window.setTimeout(async () => {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const userResult = await withTimeout(
+      supabase.auth.getUser(),
+      6000,
+      'message_warm_profile_user'
+    )
+    const user = userResult?.data.user
 
     if (!user) return
 
-    await supabase
-      .from('profiles')
-      .select('id, username, display_name, avatar_url, bio')
-      .eq('id', user.id)
-      .maybeSingle()
+    await withTimeout(
+      supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url, bio')
+        .eq('id', user.id)
+        .maybeSingle(),
+      6000,
+      'message_warm_profile'
+    )
 
-    const { data: postsData } = await supabase
-      .from('posts')
-      .select(`
+    const postsResult = await withTimeout(
+      supabase
+        .from('posts')
+        .select(`
         id,
         post_images (
           image_url
         )
       `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(9)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(9),
+      6000,
+      'message_warm_posts'
+    )
+
+    const postsData = postsResult?.data
 
     const images =
       postsData

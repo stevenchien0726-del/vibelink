@@ -4,6 +4,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import {
+  AUTH_TIMEOUT_MS,
+  SUPABASE_TIMEOUT_MS,
+  withTimeout,
+} from '@/lib/asyncTimeout'
 
 type UseMyPostsParams = {
   activeTab: number
@@ -53,16 +58,21 @@ export function useMyPosts({
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser()
+    } = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_TIMEOUT_MS,
+      'profile_posts_auth_user'
+    )
 
     if (userError || !user) {
       console.error('撠?餃')
       return
     }
 
-    const { data, error } = await supabase
-      .from('posts')
-      .select(`
+    const { data, error } = await withTimeout(
+      supabase
+        .from('posts')
+        .select(`
   id,
   caption,
   created_at,
@@ -74,9 +84,12 @@ export function useMyPosts({
     image_url
   )
 `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .range(start, end)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(start, end),
+      SUPABASE_TIMEOUT_MS,
+      'profile_posts_load'
+    )
 
     if (error) {
       console.error('霈???票?仃??', error)
@@ -93,10 +106,14 @@ export function useMyPosts({
 
     const { data: likeRows } =
       postIds.length > 0
-        ? await supabase
-            .from('likes')
-            .select('post_id, user_id')
-            .in('post_id', postIds)
+        ? await withTimeout(
+            supabase
+              .from('likes')
+              .select('post_id, user_id')
+              .in('post_id', postIds),
+            SUPABASE_TIMEOUT_MS,
+            'profile_posts_likes'
+          )
         : { data: [] }
 
     const likeCountMap = new Map<string, number>()

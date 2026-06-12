@@ -4,6 +4,11 @@
 
 import { useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import {
+  AUTH_TIMEOUT_MS,
+  SUPABASE_TIMEOUT_MS,
+  withTimeout,
+} from '@/lib/asyncTimeout'
 
 type UseSavedPostsParams = {
   safeTask: <T>(task: () => PromiseLike<T>, label: string) => Promise<T | null>
@@ -26,13 +31,19 @@ export function useSavedPosts({ safeTask }: UseSavedPostsParams) {
     try {
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_TIMEOUT_MS,
+      'profile_saved_auth_user'
+    )
 
     if (!user) return
 
-    const { data: photoSavedRows, error: photoError } = await supabase
-      .from('saved_posts')
-      .select(`
+    const [photoResult, videoResult] = await Promise.allSettled([
+      withTimeout(
+        supabase
+          .from('saved_posts')
+          .select(`
       post_id,
       posts (
         id,
@@ -42,16 +53,14 @@ export function useSavedPosts({ safeTask }: UseSavedPostsParams) {
         )
       )
     `)
-      .eq('user_id', user.id)
-
-    if (photoError) {
-      console.error('霈???仃??', photoError)
-      throw photoError
-    }
-
-    const { data: videoSavedRows, error: videoError } = await supabase
-      .from('saved_short_videos')
-      .select(`
+          .eq('user_id', user.id),
+        SUPABASE_TIMEOUT_MS,
+        'profile_saved_posts'
+      ),
+      withTimeout(
+        supabase
+          .from('saved_short_videos')
+          .select(`
       short_video_id,
       short_videos (
         id,
@@ -61,11 +70,31 @@ export function useSavedPosts({ safeTask }: UseSavedPostsParams) {
         user_id
       )
     `)
-      .eq('user_id', user.id)
+          .eq('user_id', user.id),
+        SUPABASE_TIMEOUT_MS,
+        'profile_saved_videos'
+      ),
+    ])
 
-    if (videoError) {
-      console.error('霈?敶梁??嗉?憭望?:', videoError)
-      throw videoError
+    const photoSavedRows =
+      photoResult.status === 'fulfilled' ? photoResult.value.data : []
+    const videoSavedRows =
+      videoResult.status === 'fulfilled' ? videoResult.value.data : []
+
+    if (photoResult.status === 'fulfilled' && photoResult.value.error) {
+      console.error('Saved photo posts failed:', photoResult.value.error)
+    }
+
+    if (videoResult.status === 'fulfilled' && videoResult.value.error) {
+      console.error('Saved short videos failed:', videoResult.value.error)
+    }
+
+    if (photoResult.status === 'rejected') {
+      console.warn('Saved photo posts timed out/failed:', photoResult.reason)
+    }
+
+    if (videoResult.status === 'rejected') {
+      console.warn('Saved short videos timed out/failed:', videoResult.reason)
     }
 
     const photoPosts = (photoSavedRows ?? [])

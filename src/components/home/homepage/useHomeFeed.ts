@@ -1,8 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { ensureUserProfile } from '@/lib/profile'
+import {
+  AUTH_TIMEOUT_MS,
+  SUPABASE_TIMEOUT_MS,
+  logNativeLifecycle,
+} from '@/lib/asyncTimeout'
 
 import type { PostItem } from '@/components/home/sections/feed/FeedGrid'
 
@@ -99,6 +105,7 @@ export function useHomeFeed({
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
 
   const isLoadingShortVideosRef = useRef(false)
+  const bootstrappedHomeUserIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem('vibelink_mock_saved_posts')
@@ -109,14 +116,15 @@ export function useHomeFeed({
   }, [])
 
   function withTimeout<T>(
-  promise: Promise<T>,
-  ms = 30000,
+  promise: PromiseLike<T>,
+  ms = SUPABASE_TIMEOUT_MS,
   label = 'request'
 ): Promise<T | null> {
   return Promise.race([
     promise,
     new Promise<null>((resolve) => {
       window.setTimeout(() => {
+        logNativeLifecycle(`${label}_timeout`, { timeoutMs: ms })
         console.warn(`${label} timeout`)
         resolve(null)
       }, ms)
@@ -129,7 +137,7 @@ export function useHomeFeed({
     label: string
   ): Promise<T | null> {
     try {
-      return await withTimeout(Promise.resolve(task()), 15000, label)
+      return await withTimeout(Promise.resolve(task()), SUPABASE_TIMEOUT_MS, label)
     } catch (error) {
       console.warn(`${label} failed:`, error)
       return null
@@ -147,7 +155,7 @@ export function useHomeFeed({
           method: 'GET',
           cache: 'no-store',
         }),
-        15000,
+        SUPABASE_TIMEOUT_MS,
         'feed'
       )
 
@@ -225,7 +233,7 @@ const data = await response.json()
           .order('created_at', { ascending: false })
           .limit(limit)
       ),
-      30000,
+      SUPABASE_TIMEOUT_MS,
 'short_videos'
     )
 
@@ -269,7 +277,7 @@ if (videosError) throw videosError
       `)
       .in('id', userIds)
   ),
-  30000,
+  SUPABASE_TIMEOUT_MS,
 'short_video_profiles'
 )
 
@@ -345,14 +353,21 @@ if (profilesResult) {
       return
     }
 
-    const { count, error } = await supabase
-      .from('notifications')
-      .select('id', {
-        count: 'exact',
-        head: true,
-      })
-      .eq('recipient_user_id', userId)
-      .eq('is_read', false)
+    const notificationResult = await withTimeout(
+      supabase
+        .from('notifications')
+        .select('id', {
+          count: 'exact',
+          head: true,
+        })
+        .eq('recipient_user_id', userId)
+        .eq('is_read', false),
+      SUPABASE_TIMEOUT_MS,
+      'home_unread_notifications'
+    )
+
+    const count = notificationResult?.count ?? 0
+    const error = notificationResult?.error ?? null
 
     if (error) {
       console.error('讀取未讀通知數失敗:', error)
@@ -367,6 +382,10 @@ if (profilesResult) {
 
     async function setupNotificationRealtime(userId: string | null) {
       if (!userId) return
+
+      if (notificationChannel?.topic.includes(`notifications-${userId}-`)) {
+        return
+      }
 
       if (notificationChannel) {
         await supabase.removeChannel(notificationChannel)
@@ -402,108 +421,130 @@ if (profilesResult) {
       notificationChannel.subscribe()
     }
 
-    async function initHome() {
-      const { data } = await supabase.auth.getSession()
-      const user = data.session?.user ?? null
-
-      console.log('目前 session:', data.session)
-
-      setCurrentUserId(user?.id ?? null)
-
-      void loadUnreadNotificationCount(user?.id ?? null)
-      void setupNotificationRealtime(user?.id ?? null)
-
-      if (!data.session) {
-        setIsAuthModalOpen(true)
-        return
-      }
-
-      setIsAuthModalOpen(false)
-
-      void safeTask(
-        () => ensureUserProfile(),
-        'home_ensure_profile'
-      ).then((profile) => {
-        console.log('目前登入者 Profile:', profile)
-      })
-
-      void loadShortVideos(user, SHORT_VIDEO_FIRST_BATCH)
-
-      void safeTask(
-        () => loadPosts(user, FEED_FIRST_BATCH),
-        'home_load_posts_first'
-      )
-
+    function scheduleHomeFollowupLoads(user: User, labelPrefix: string) {
       window.setTimeout(() => {
         void safeTask(
           () => loadPosts(user, FEED_SECOND_BATCH),
-          'home_load_posts_second'
+          `${labelPrefix}_load_posts_second`
         )
       }, 1200)
 
       window.setTimeout(() => {
         void safeTask(
           () => loadShortVideos(user, SHORT_VIDEO_SECOND_BATCH),
-          'home_load_short_videos_second'
+          `${labelPrefix}_load_short_videos_second`
         )
       }, 1500)
 
       window.setTimeout(() => {
         void safeTask(
           () => loadPosts(user, FEED_FULL_BATCH),
-          'home_load_posts_full'
+          `${labelPrefix}_load_posts_full`
         )
       }, 15000)
+    }
+
+    async function loadHomeForUser(user: User, labelPrefix: string) {
+      logNativeLifecycle('home_feed_load_start', { labelPrefix })
+
+      const firstLoadResults = await Promise.allSettled([
+        safeTask(
+          () => ensureUserProfile(),
+          `${labelPrefix}_ensure_profile`
+        ),
+        safeTask(
+          () => loadShortVideos(user, SHORT_VIDEO_FIRST_BATCH),
+          `${labelPrefix}_load_short_videos_first`
+        ),
+        safeTask(
+          () => loadPosts(user, FEED_FIRST_BATCH),
+          `${labelPrefix}_load_posts_first`
+        ),
+        safeTask(
+          () => loadUnreadNotificationCount(user?.id ?? null),
+          `${labelPrefix}_unread_notifications`
+        ),
+      ])
+
+      logNativeLifecycle('home_feed_load_success', {
+        labelPrefix,
+        settled: firstLoadResults.map((result) => result.status),
+      })
+
+      scheduleHomeFollowupLoads(user, labelPrefix)
+    }
+
+    async function initHome() {
+      try {
+        logNativeLifecycle('auth_session_start')
+        const sessionResult = await withTimeout(
+          supabase.auth.getSession(),
+          AUTH_TIMEOUT_MS,
+          'auth_session'
+        )
+
+        if (!sessionResult) {
+          logNativeLifecycle('auth_session_timeout')
+          setCurrentUserId(null)
+          setIsAuthModalOpen(true)
+          return
+        }
+
+        const session = sessionResult.data.session
+        const user = session?.user ?? null
+
+        logNativeLifecycle('auth_session_success', {
+          hasSession: Boolean(session),
+        })
+        console.log('Home session:', session)
+
+        setCurrentUserId(user?.id ?? null)
+        void setupNotificationRealtime(user?.id ?? null)
+
+        if (!session || !user) {
+          setIsAuthModalOpen(true)
+          return
+        }
+
+        setIsAuthModalOpen(false)
+        bootstrappedHomeUserIdRef.current = user.id
+        await loadHomeForUser(user, 'home')
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        logNativeLifecycle(
+          message.includes('timeout')
+            ? 'home_feed_load_timeout'
+            : 'home_feed_load_error',
+          { message }
+        )
+        console.error('Home init failed:', error)
+        setIsAuthModalOpen(true)
+      }
     }
 
     initHome()
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        console.log('登入狀態變化:', session)
+        console.log('Home auth state changed:', session)
 
-        if (session) {
-          setIsAuthModalOpen(false)
-          setCurrentUserId(session.user.id)
-
-          void loadUnreadNotificationCount(session.user.id)
-          void setupNotificationRealtime(session.user.id)
-
-          void safeTask(
-            () => ensureUserProfile(),
-            'home_auth_ensure_profile'
-          ).then((profile) => {
-            console.log('目前登入者 Profile:', profile)
-          })
-
-          void loadShortVideos(session.user, SHORT_VIDEO_FIRST_BATCH)
-
-          void safeTask(
-            () => loadPosts(session.user, FEED_FIRST_BATCH),
-            'home_auth_load_posts_first'
-          )
-
-          window.setTimeout(() => {
-            void safeTask(
-              () => loadPosts(session.user, FEED_SECOND_BATCH),
-              'home_auth_load_posts_second'
-            )
-          }, 1200)
-
-          window.setTimeout(() => {
-            void safeTask(
-              () => loadShortVideos(session.user, SHORT_VIDEO_SECOND_BATCH),
-              'home_auth_load_short_videos_second'
-            )
-          }, 1500)
-
-          window.setTimeout(() => {
-            void safeTask(
-              () => loadPosts(session.user, FEED_FULL_BATCH),
-              'home_auth_load_posts_full'
-            )
-          }, 15000)
+        if (!session) {
+          setCurrentUserId(null)
+          bootstrappedHomeUserIdRef.current = null
+          setIsAuthModalOpen(true)
+          return
         }
+
+        setIsAuthModalOpen(false)
+        setCurrentUserId(session.user.id)
+        void setupNotificationRealtime(session.user.id)
+
+        if (bootstrappedHomeUserIdRef.current === session.user.id) {
+          return
+        }
+
+        bootstrappedHomeUserIdRef.current = session.user.id
+        await loadHomeForUser(session.user, 'home_auth')
       }
     )
 

@@ -1,4 +1,9 @@
 import { supabase } from '@/lib/supabase'
+import {
+  AUTH_TIMEOUT_MS,
+  logNativeLifecycle,
+  withTimeout,
+} from '@/lib/asyncTimeout'
 
 type GetSessionResult = Awaited<ReturnType<typeof supabase.auth.getSession>>
 type CachedSession = GetSessionResult['data']['session']
@@ -15,14 +20,25 @@ export async function getCachedSession(): Promise<CachedSession> {
     return cachedSession
   }
 
-  const { data, error } = await supabase.auth.getSession()
+  logNativeLifecycle('auth_session_start')
+
+  const { data, error } = await withTimeout(
+    supabase.auth.getSession(),
+    AUTH_TIMEOUT_MS,
+    'auth_session'
+  )
 
   if (error) {
+    logNativeLifecycle('auth_session_error', { message: error.message })
     throw error
   }
 
   cachedSession = data.session
   cachedAt = now
+
+  logNativeLifecycle('auth_session_success', {
+    hasSession: Boolean(cachedSession),
+  })
 
   return cachedSession
 }

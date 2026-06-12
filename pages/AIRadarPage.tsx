@@ -502,10 +502,17 @@ const user = session?.user
 
 ensureAIRadarProfileOnce(user.id)
 
-const { count, error } = await supabase
-  .from('posts')
-  .select('id', { count: 'exact', head: true })
-  .eq('user_id', user.id)
+const postCountResult = await withTimeout(
+  supabase
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id),
+  6000,
+  'ai_radar_profile_posts_count'
+)
+
+const count = postCountResult?.count ?? 0
+const error = postCountResult?.error
 
 if (cancelled) return
 
@@ -529,10 +536,17 @@ if (!error && (count ?? 0) === 0) {
 
   ensureAIRadarProfileOnce(user.id)
 
-  const { count, error } = await supabase
-    .from('posts')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
+  const postCountResult = await withTimeout(
+    supabase
+      .from('posts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+    6000,
+    'ai_radar_auth_posts_count'
+  )
+
+  const count = postCountResult?.count ?? 0
+  const error = postCountResult?.error
 
   if (cancelled) return
 

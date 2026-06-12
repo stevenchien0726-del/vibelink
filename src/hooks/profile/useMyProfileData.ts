@@ -5,6 +5,12 @@
 import { useRef, useState } from 'react'
 import { loadMyFollowerCount as fetchMyFollowerCount } from '@/lib/profile/profileApi'
 import { supabase } from '@/lib/supabase'
+import {
+  AUTH_TIMEOUT_MS,
+  SUPABASE_TIMEOUT_MS,
+  logNativeLifecycle,
+  withTimeout,
+} from '@/lib/asyncTimeout'
 
 type UseMyProfileDataParams = {
   setAvatarUploading: (value: boolean) => void
@@ -20,6 +26,22 @@ export function useMyProfileData({
   const ensureProfilePromiseRef = useRef<Promise<void> | null>(null)
   const followerCountLoadingRef = useRef(false)
 
+  function buildFallbackProfile(user: any) {
+    const fallbackName =
+      user?.user_metadata?.full_name ||
+      user?.user_metadata?.name ||
+      user?.email?.split('@')[0] ||
+      'Vibelink User'
+
+    return {
+      id: user?.id ?? 'local-fallback-profile',
+      username: user?.email?.split('@')[0] || 'vibelink',
+      display_name: fallbackName,
+      avatar_url: user?.user_metadata?.avatar_url || null,
+      bio: '',
+    }
+  }
+
   async function ensureMyProfile() {
     if (ensureProfilePromiseRef.current) {
       return ensureProfilePromiseRef.current
@@ -33,59 +55,94 @@ export function useMyProfileData({
   }
 
   async function runEnsureMyProfile() {
+    logNativeLifecycle('profile_load_start')
+
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser()
+    } = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_TIMEOUT_MS,
+      'profile_load_auth_user'
+    )
 
     if (userError || !user) {
-      console.error('撠?餃')
+      logNativeLifecycle('profile_load_error', {
+        message: userError?.message ?? 'missing auth user',
+      })
+      console.error('Profile auth user missing')
       return
     }
 
-    const { data: existingProfile, error: selectError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle()
+    const fallbackProfile = buildFallbackProfile(user)
+    let existingProfile: any = null
 
-    if (selectError) {
-      console.error('霈??profile 憭望?:', selectError)
-      throw selectError
+    try {
+      const { data, error: selectError } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle(),
+        SUPABASE_TIMEOUT_MS,
+        'profile_load_profile'
+      )
+
+      if (selectError) throw selectError
+
+      existingProfile = data
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      logNativeLifecycle(
+        message.includes('timeout')
+          ? 'profile_load_timeout'
+          : 'profile_load_error',
+        { message }
+      )
+      console.error('Profile load failed:', error)
+      setProfile(fallbackProfile)
+      return
     }
 
     if (existingProfile) {
       setProfile(existingProfile)
+      logNativeLifecycle('profile_load_success', { source: 'profiles' })
       return
     }
-
-    const fallbackName =
-      user.user_metadata?.full_name ||
-      user.user_metadata?.name ||
-      user.email?.split('@')[0] ||
-      'Vibelink User'
 
     const newProfile = {
       id: user.id,
       username: `user_${user.id.slice(0, 5)}`,
-      display_name: fallbackName,
+      display_name: fallbackProfile.display_name,
       avatar_url: user.user_metadata?.avatar_url || null,
       bio: '',
     }
 
-    const { error: insertError } = await supabase
-      .from('profiles')
-      .insert(newProfile)
+    try {
+      const { error: upsertError } = await withTimeout(
+        supabase
+          .from('profiles')
+          .upsert(newProfile, { onConflict: 'id' })
+          .select('id')
+          .maybeSingle(),
+        SUPABASE_TIMEOUT_MS,
+        'profile_load_upsert'
+      )
 
-    if (insertError) {
-      console.error('撱箇? profile 憭望?:', insertError)
-
-      setProfile(newProfile)
-
-      return
+      if (upsertError) throw upsertError
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      logNativeLifecycle(
+        message.includes('timeout')
+          ? 'ensure_profile_timeout'
+          : 'ensure_profile_error',
+        { message }
+      )
+      console.error('Profile upsert failed:', error)
     }
 
     setProfile(newProfile)
+    logNativeLifecycle('profile_load_success', { source: 'fallback-upsert' })
   }
 
   async function loadMyFollowerCount() {
@@ -96,13 +153,31 @@ export function useMyProfileData({
     try {
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_TIMEOUT_MS,
+      'profile_stats_auth_user'
+    )
 
     if (!user) return
 
-    const count = await fetchMyFollowerCount(user.id)
+    const count = await withTimeout(
+      fetchMyFollowerCount(user.id),
+      SUPABASE_TIMEOUT_MS,
+      'profile_stats_followers'
+    )
 
     setFollowerCount(count)
+    logNativeLifecycle('profile_load_success', { stats: 'followers' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      logNativeLifecycle(
+        message.includes('timeout')
+          ? 'profile_load_timeout'
+          : 'profile_load_error',
+        { message, stats: 'followers' }
+      )
+      setFollowerCount(0)
     } finally {
       followerCountLoadingRef.current = false
     }

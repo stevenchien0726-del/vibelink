@@ -4,6 +4,11 @@
 
 import { useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import {
+  AUTH_TIMEOUT_MS,
+  SUPABASE_TIMEOUT_MS,
+  withTimeout,
+} from '@/lib/asyncTimeout'
 
 export function useMyShortVideos() {
   const [myShortVideos, setMyShortVideos] = useState<any[]>([])
@@ -20,21 +25,29 @@ export function useMyShortVideos() {
     try {
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_TIMEOUT_MS,
+      'profile_videos_auth_user'
+    )
 
     if (!user) return
 
-    const { data, error } = await supabase
-      .from('short_videos')
-      .select(`
+    const { data, error } = await withTimeout(
+      supabase
+        .from('short_videos')
+        .select(`
       id,
       caption,
       video_url,
       created_at,
       user_id
     `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }),
+      SUPABASE_TIMEOUT_MS,
+      'profile_videos_load'
+    )
 
     if (error) {
       console.error('霈???敶梁?憭望?:', error)
@@ -45,18 +58,26 @@ export function useMyShortVideos() {
 
     const { data: likeRows } =
       videoIds.length > 0
-        ? await supabase
-            .from('short_video_likes')
-            .select('short_video_id, user_id')
-            .in('short_video_id', videoIds)
+        ? await withTimeout(
+            supabase
+              .from('short_video_likes')
+              .select('short_video_id, user_id')
+              .in('short_video_id', videoIds),
+            SUPABASE_TIMEOUT_MS,
+            'profile_videos_likes'
+          )
         : { data: [] }
 
     const { data: savedRows } =
       videoIds.length > 0
-        ? await supabase
-            .from('saved_short_videos')
-            .select('short_video_id, user_id')
-            .in('short_video_id', videoIds)
+        ? await withTimeout(
+            supabase
+              .from('saved_short_videos')
+              .select('short_video_id, user_id')
+              .in('short_video_id', videoIds),
+            SUPABASE_TIMEOUT_MS,
+            'profile_videos_saved'
+          )
         : { data: [] }
 
     const likeCountMap = new Map<string, number>()

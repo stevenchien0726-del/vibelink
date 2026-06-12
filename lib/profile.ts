@@ -1,4 +1,9 @@
 import { supabase } from '@/lib/supabase'
+import {
+  AUTH_TIMEOUT_MS,
+  SUPABASE_TIMEOUT_MS,
+  logNativeLifecycle,
+} from '@/lib/asyncTimeout'
 
 type EnsuredUserProfile = {
   id: string
@@ -10,7 +15,7 @@ let ensureUserProfilePromise: Promise<EnsuredUserProfile> | null = null
 let lastEnsureUserProfileAt = 0
 
 const ENSURE_PROFILE_CACHE_MS = 30_000
-const ENSURE_PROFILE_TIMEOUT_MS = 8_000
+const ENSURE_PROFILE_TIMEOUT_MS = SUPABASE_TIMEOUT_MS
 
 function withAbortTimeout<T>(
   task: (signal: AbortSignal) => PromiseLike<T>,
@@ -49,10 +54,21 @@ export async function ensureUserProfile() {
   })
 
   try {
+    logNativeLifecycle('ensure_profile_start')
     const result = await ensureUserProfilePromise
     lastEnsureUserProfileAt = Date.now()
+    logNativeLifecycle('ensure_profile_success', {
+      hasProfile: Boolean(result),
+    })
     return result
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    logNativeLifecycle(
+      message.includes('timeout')
+        ? 'ensure_profile_timeout'
+        : 'ensure_profile_error',
+      { message }
+    )
     console.warn('ensureUserProfile failed:', error)
     return null
   }
@@ -62,7 +78,10 @@ async function runEnsureUserProfile() {
   const {
     data: { user },
     error: userError,
-  } = await withAbortTimeout(() => supabase.auth.getUser(), 6_000)
+  } = await withAbortTimeout(
+    () => supabase.auth.getUser(),
+    AUTH_TIMEOUT_MS
+  )
 
   if (userError || !user) {
     return null
@@ -90,6 +109,8 @@ async function runEnsureUserProfile() {
         }
       )
       .abortSignal(signal)
+      .select('id')
+      .maybeSingle()
   )
 
   if (error) {
