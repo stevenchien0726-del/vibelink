@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { uiText } from '@/lib/uiText'
+import { getAuthCallbackUrl } from '@/lib/authRedirect'
 
 export default function EmailOtpLogin() {
   const [email, setEmail] = useState('')
@@ -21,7 +22,7 @@ export default function EmailOtpLogin() {
     const { error } = await supabase.auth.signInWithOtp({
       email: safeEmail,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: getAuthCallbackUrl(),
       },
     })
 

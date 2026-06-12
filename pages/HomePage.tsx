@@ -26,6 +26,7 @@ import type { PostItem } from '@/components/home/sections/feed/FeedGrid'
 import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
 
 import { supabase } from '@/lib/supabase'
+import { getAuthCallbackUrl } from '@/lib/authRedirect'
 
 import NotificationsPage from '@/components/profile/NotificationsPage'
 import HomeTopBar from '@/src/components/home/homepage/HomeTopBar'
@@ -463,6 +464,9 @@ useEffect(() => {
   async function handleLogin() {
   const { error } = await supabase.auth.signInWithOtp({
     email: 'stevenchien0726@gmail.com',
+    options: {
+      emailRedirectTo: getAuthCallbackUrl(),
+    },
   })
 
   if (error) {

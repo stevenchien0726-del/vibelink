@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import ThemeInit from '../components/ThemeInit'
 import ReactQueryProvider from '../components/providers/ReactQueryProvider'
+import AuthDeepLinkHandler from '../components/auth/AuthDeepLinkHandler'
 
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeInit />
+        <AuthDeepLinkHandler />
         <ReactQueryProvider>
           {children}
         </ReactQueryProvider>
