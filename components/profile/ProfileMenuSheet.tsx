@@ -5,8 +5,6 @@ import {
   BarChart3,
   Bell,
   Clock3,
-  Grid3x3,
-  Megaphone,
   Settings,
   Ticket,
   UserCircle2,
@@ -28,10 +26,21 @@ type Props = {
 function MenuItem({
   icon,
   label,
+  labelImage,
+  imageLabelClassName = 'h-[18px] w-[96px]',
+  imageLabelInnerClassName = 'h-full w-full',
+  contentClassName,
   onClick,
 }: {
   icon: React.ReactNode
   label: string
+  labelImage?: {
+    src: string
+    alt: string
+  }
+  imageLabelClassName?: string
+  imageLabelInnerClassName?: string
+  contentClassName?: string
   onClick?: () => void
 }) {
   return (
@@ -48,13 +57,23 @@ function MenuItem({
         hover:bg-white/10
       "
     >
-      <div className="flex min-w-[170px] items-center justify-center gap-4">
+      <div className={`flex min-w-[170px] items-center justify-center gap-4 ${contentClassName ?? ''}`}>
         <span className="flex h-[24px] w-[24px] shrink-0 items-center justify-center text-[var(--app-text)]">
           {icon}
         </span>
 
         <span className="w-[96px] text-left leading-none">
-          {label}
+          {labelImage ? (
+            <span className={`${imageLabelClassName} relative block overflow-hidden`}>
+              <img
+                src={labelImage.src}
+                alt={labelImage.alt}
+                className={`${imageLabelInnerClassName} absolute left-0 top-1/2 max-w-none -translate-y-1/2 object-contain object-left dark:invert`}
+              />
+            </span>
+          ) : (
+            label
+          )}
         </span>
       </div>
     </button>
@@ -94,11 +113,15 @@ export default function ProfileMenuSheet({
           w-[300px] -translate-x-1/2
           rounded-[26px]
           border border-[var(--app-card-border)]
-          bg-[var(--app-card)]
           px-6 py-6
           text-[var(--app-text)]
           shadow-[0_16px_40px_rgba(0,0,0,0.18)]
         "
+        style={{
+          backgroundColor: 'color-mix(in srgb, var(--app-card) 82%, white 18%)',
+          originX: 0.88,
+          originY: 0,
+        }}
         initial={{ opacity: 0, scale: 0.82, y: -18 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.86, y: -10 }}
@@ -108,7 +131,6 @@ export default function ProfileMenuSheet({
           damping: 28,
           mass: 0.9,
         }}
-        style={{ originX: 0.88, originY: 0 }}
       >
         <div className="flex flex-col gap-3">
           <MenuItem icon={<Bell size={22} />} label={text.notifications} onClick={onNotifications} />
@@ -118,8 +140,21 @@ export default function ProfileMenuSheet({
           <MenuItem icon={<UserCircle2 size={22} />} label={text.account} onClick={onAccount} />
           <MenuItem icon={<Ticket size={22} />} label={text.membership} onClick={onMembership} />
           <MenuItem
-  icon={<Grid3x3 size={22} />}
+  icon={
+    <img
+      src="/image/vibe-city-wing-icon.png"
+      alt=""
+      className="h-[35px] w-[35px] object-contain"
+    />
+  }
   label="Vibe City"
+  labelImage={{
+    src: '/image/vibe-city-wordmark.png',
+    alt: 'VIBE CITY',
+  }}
+  imageLabelClassName="relative left-[-16px] h-[26px] w-[130px]"
+  imageLabelInnerClassName="h-[82px] w-[150px]"
+  contentClassName="-ml-[0px] gap-3"
   onClick={onVibeCity}
 />
           
