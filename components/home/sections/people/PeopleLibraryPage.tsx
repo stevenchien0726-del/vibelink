@@ -13,6 +13,7 @@ import PeopleFolderPage from './PeopleFolderPage'
 import type { FolderUser, FolderUsersMap } from './PeopleFolderPage'
 import { supabase } from '../../../../lib/supabase'
 import type { Locale } from '@/i18n'
+import { useBodyScrollLock } from '@/src/hooks/useBodyScrollLock'
 
 import {
   sortPeopleLibraryUsers,
@@ -150,6 +151,8 @@ export default function PeopleLibraryPage({
   const sheetY = useMotionValue(0)
   const overlayOpacity = useTransform(sheetY, [0, 320], [1, 0.78])
   const sheetScale = useTransform(sheetY, [0, 320], [1, 0.97])
+
+  useBodyScrollLock(true)
 
   useEffect(() => {
     let cancelled = false
@@ -485,11 +488,12 @@ export default function PeopleLibraryPage({
     <AnimatePresence>
       <motion.div
         data-block-page-swipe="true"
-        className="fixed inset-0 z-[1400] flex justify-center bg-[var(--app-bg)]/95 text-[var(--app-text)]"
+        className="fixed inset-0 z-[1400] flex justify-center overscroll-contain bg-[var(--app-bg)]/95 text-[var(--app-text)] touch-pan-y"
         initial={{ opacity: 0 }}
         onTouchStart={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
         onTouchEnd={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
         onPointerDown={(e) => {
           e.preventDefault()
           e.stopPropagation()
@@ -508,7 +512,7 @@ export default function PeopleLibraryPage({
         transition={{ duration: 0.18 }}
       >
         <motion.div
-          className="relative z-[1401] min-h-screen w-full max-w-[430px] overflow-hidden bg-[var(--app-bg)]"
+          className="relative z-[1401] h-[100dvh] w-full max-w-[430px] overflow-hidden overscroll-contain bg-[var(--app-bg)] touch-pan-y"
           initial={{ scale: 0.94, opacity: 0, y: 18 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.98, opacity: 0, y: 10 }}
@@ -575,7 +579,8 @@ export default function PeopleLibraryPage({
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
-            className="h-screen overflow-y-auto px-4 pb-[120px] pt-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="h-[100dvh] overflow-y-auto overscroll-contain px-4 pb-[120px] pt-3 touch-pan-y [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <div className="mb-4 flex items-center gap-3 pt-2">
               <div className="flex h-[36px] flex-1 items-center rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 text-[var(--app-text)]">

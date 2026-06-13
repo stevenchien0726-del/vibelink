@@ -12,6 +12,7 @@ import CreateShortVideoBox, {
   type CreateShortVideoBoxRef,
 } from '@/components/CreateShortVideoBox'
 import { uiText } from '@/lib/uiText'
+import { useBodyScrollLock } from '@/src/hooks/useBodyScrollLock'
 
 type UploadTab = 'video' | 'post'
 
@@ -32,6 +33,8 @@ export default function UploadFullPage({
   const createPostRef = useRef<CreatePostBoxRef>(null)
   const createShortVideoRef = useRef<CreateShortVideoBoxRef>(null)
 
+  useBodyScrollLock(true)
+
   const text = {
     close: uiText('關閉', 'CLOSE'),
     publishing: uiText('發佈中...', 'Publishing...'),
@@ -47,14 +50,19 @@ export default function UploadFullPage({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] flex justify-center bg-[var(--app-bg)]/95 text-[var(--app-text)]"
+      data-block-page-swipe="true"
+      className="fixed inset-0 z-[9999] flex justify-center overscroll-contain bg-[var(--app-bg)]/95 text-[var(--app-text)] touch-pan-y"
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
       <motion.div
-        className="relative min-h-screen w-full max-w-[430px] overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] touch-pan-y"
+        className="relative h-[100dvh] w-full max-w-[430px] overflow-hidden overscroll-contain bg-[var(--app-bg)] text-[var(--app-text)] touch-pan-y"
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
@@ -77,7 +85,10 @@ export default function UploadFullPage({
           }
         }}
       >
-        <div className="flex min-h-screen flex-col px-4 pb-5 pt-4">
+        <div
+          className="flex h-[100dvh] flex-col overflow-y-auto overscroll-contain px-4 pb-5 pt-4 touch-pan-y"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           <div className="flex items-center justify-between">
             <button
               type="button"

@@ -34,6 +34,7 @@ import HomeFeedSection from '@/src/components/home/homepage/HomeFeedSection'
 import HomeAuthModal from '@/src/components/home/homepage/HomeAuthModal'
 import HomeDetailPostModal from '@/src/components/home/homepage/HomeDetailPostModal'
 import { useHomeFeed } from '@/src/components/home/homepage/useHomeFeed'
+import { useBodyScrollLock } from '@/src/hooks/useBodyScrollLock'
 
 type StoryItem = {
   id: string
@@ -257,7 +258,6 @@ function handlePostCreated(post: CreatedPostPayload) {
   const storyTouchStartXRef = useRef<number | null>(null)
   const lastScrollYRef = useRef(0)
   const scrollTickingRef = useRef(false)
-  const lockedScrollYRef = useRef(0)
 
   const storyDragY = useMotionValue(0)
   const storyCardScale = useTransform(storyDragY, [0, 320], [1, 0.94])
@@ -269,50 +269,13 @@ const isHomeOverlayOpen = Boolean(
     isShortVideoPageOpen ||
     isCommentSheetOpen ||
     isShareSheetOpen ||
+    isUploadOpen ||
     isPeopleLibraryOpen ||
     isNotificationsOpen ||
     selectedProfileUserId
 )
 
-useEffect(() => {
-  if (!isHomeOverlayOpen) return
-
-  const body = document.body
-  const html = document.documentElement
-  const previousBodyStyle = {
-    overflow: body.style.overflow,
-    position: body.style.position,
-    top: body.style.top,
-    width: body.style.width,
-    overscrollBehavior: body.style.overscrollBehavior,
-  }
-  const previousHtmlStyle = {
-    overflow: html.style.overflow,
-    overscrollBehavior: html.style.overscrollBehavior,
-  }
-
-  lockedScrollYRef.current = window.scrollY || window.pageYOffset || 0
-
-  body.style.overflow = 'hidden'
-  body.style.position = 'fixed'
-  body.style.top = `-${lockedScrollYRef.current}px`
-  body.style.width = '100%'
-  body.style.overscrollBehavior = 'none'
-  html.style.overflow = 'hidden'
-  html.style.overscrollBehavior = 'none'
-
-  return () => {
-    body.style.overflow = previousBodyStyle.overflow
-    body.style.position = previousBodyStyle.position
-    body.style.top = previousBodyStyle.top
-    body.style.width = previousBodyStyle.width
-    body.style.overscrollBehavior = previousBodyStyle.overscrollBehavior
-    html.style.overflow = previousHtmlStyle.overflow
-    html.style.overscrollBehavior = previousHtmlStyle.overscrollBehavior
-
-    window.scrollTo(0, lockedScrollYRef.current)
-  }
-}, [isHomeOverlayOpen])
+useBodyScrollLock(isHomeOverlayOpen)
 
   const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
 
