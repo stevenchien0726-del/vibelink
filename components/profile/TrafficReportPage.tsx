@@ -17,20 +17,206 @@ type TrafficStats = {
   followers: number
 }
 
+const TRAFFIC_REPORT_TIMEOUT_MS = 5000
+const EMPTY_TRAFFIC_STATS: TrafficStats = {
+  views: 0,
+  likes: 0,
+  comments: 0,
+  followers: 0,
+}
+const trafficReportCache = new Map<string, TrafficStats>()
+const trafficReportInFlight = new Map<string, Promise<TrafficStats>>()
+
+function withTrafficReportTimeout<T>(
+  promise: PromiseLike<T>,
+  label: string
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error(`${label} timeout`))
+      }, TRAFFIC_REPORT_TIMEOUT_MS)
+    }),
+  ]).finally(() => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId)
+    }
+  })
+}
+
+async function getCurrentTrafficReportUserId() {
+  const {
+    data: { user },
+  } = await withTrafficReportTimeout(
+    supabase.auth.getUser(),
+    'traffic_report_auth_user'
+  )
+
+  return user?.id ?? null
+}
+
+function getSettledCount(result: PromiseSettledResult<any>) {
+  if (result.status === 'rejected') {
+    console.warn('Traffic report count failed:', result.reason)
+    return 0
+  }
+
+  if (result.value?.error) {
+    console.warn('Traffic report count error:', result.value.error)
+    return 0
+  }
+
+  return result.value?.count ?? 0
+}
+
+async function fetchTrafficStatsForUser(userId: string) {
+  const inFlight = trafficReportInFlight.get(userId)
+
+  if (inFlight) return inFlight
+
+  const request = (async () => {
+    const since = new Date()
+    since.setDate(since.getDate() - 30)
+    const sinceIso = since.toISOString()
+
+    const postsResult = await withTrafficReportTimeout(
+      supabase.from('posts').select('id').eq('user_id', userId),
+      'traffic_report_posts'
+    )
+
+    if (postsResult.error) throw postsResult.error
+
+    const postIds = postsResult.data?.map((post) => post.id) ?? []
+
+    const followersPromise = withTrafficReportTimeout(
+      supabase
+        .from('follows')
+        .select('id', { count: 'exact', head: true })
+        .eq('following_id', userId)
+        .gte('created_at', sinceIso),
+      'traffic_report_followers'
+    )
+
+    if (postIds.length === 0) {
+      const [followersResult] = await Promise.allSettled([followersPromise])
+      const stats = {
+        ...EMPTY_TRAFFIC_STATS,
+        followers: getSettledCount(followersResult),
+      }
+
+      trafficReportCache.set(userId, stats)
+
+      return stats
+    }
+
+    const [
+      followersResult,
+      viewsResult,
+      likesResult,
+      commentsResult,
+    ] = await Promise.allSettled([
+      followersPromise,
+      withTrafficReportTimeout(
+        supabase
+          .from('post_views')
+          .select('id', { count: 'exact', head: true })
+          .in('post_id', postIds)
+          .gte('created_at', sinceIso),
+        'traffic_report_views'
+      ),
+      withTrafficReportTimeout(
+        supabase
+          .from('likes')
+          .select('id', { count: 'exact', head: true })
+          .in('post_id', postIds)
+          .gte('created_at', sinceIso),
+        'traffic_report_likes'
+      ),
+      withTrafficReportTimeout(
+        supabase
+          .from('comments')
+          .select('id', { count: 'exact', head: true })
+          .in('post_id', postIds)
+          .gte('created_at', sinceIso),
+        'traffic_report_comments'
+      ),
+    ])
+
+    const stats = {
+      views: getSettledCount(viewsResult),
+      likes: getSettledCount(likesResult),
+      comments: getSettledCount(commentsResult),
+      followers: getSettledCount(followersResult),
+    }
+
+    trafficReportCache.set(userId, stats)
+
+    return stats
+  })().finally(() => {
+    trafficReportInFlight.delete(userId)
+  })
+
+  trafficReportInFlight.set(userId, request)
+
+  return request
+}
+
+export async function preloadTrafficReportData(userId?: string | null) {
+  const resolvedUserId = userId ?? (await getCurrentTrafficReportUserId())
+
+  if (!resolvedUserId) return
+
+  await fetchTrafficStatsForUser(resolvedUserId)
+}
+
 export default function TrafficReportPage({ onClose }: Props) {
   const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState<TrafficStats>({
-    views: 0,
-    likes: 0,
-    comments: 0,
-    followers: 0,
-  })
+  const [stats, setStats] = useState<TrafficStats>(EMPTY_TRAFFIC_STATS)
 
   useEffect(() => {
     loadTrafficStats()
   }, [])
 
   async function loadTrafficStats() {
+    let hasCache = false
+
+    try {
+      const userId = await getCurrentTrafficReportUserId()
+
+      if (!userId) {
+        setStats(EMPTY_TRAFFIC_STATS)
+        return
+      }
+
+      const cachedStats = trafficReportCache.get(userId)
+      hasCache = Boolean(cachedStats)
+
+      if (cachedStats) {
+        setStats(cachedStats)
+        setLoading(false)
+      } else {
+        setLoading(true)
+      }
+
+      const nextStats = await fetchTrafficStatsForUser(userId)
+
+      setStats(nextStats)
+    } catch (error) {
+      console.error('load traffic report failed:', error)
+
+      if (!hasCache) {
+        setStats(EMPTY_TRAFFIC_STATS)
+      }
+    } finally {
+      setLoading(false)
+    }
+
+    return
+    /*
+
     try {
       setLoading(true)
 
@@ -50,7 +236,7 @@ export default function TrafficReportPage({ onClose }: Props) {
       const { data: myPosts, error: postsError } = await supabase
         .from('posts')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', user!.id)
 
       if (postsError) {
         console.error('讀取自己的貼文失敗:', postsError)
@@ -62,7 +248,7 @@ export default function TrafficReportPage({ onClose }: Props) {
       const { count: followersCount, error: followersError } = await supabase
         .from('follows')
         .select('id', { count: 'exact', head: true })
-        .eq('following_id', user.id)
+        .eq('following_id', user!.id)
         .gte('created_at', since.toISOString())
 
       if (followersError) {
@@ -118,6 +304,7 @@ export default function TrafficReportPage({ onClose }: Props) {
     } finally {
       setLoading(false)
     }
+    */
   }
 
   const rows = [

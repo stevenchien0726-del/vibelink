@@ -29,6 +29,91 @@ type NotificationItem = {
 }
 
 const NOTIFICATIONS_TIMEOUT_MS = 4500
+const notificationsCache = new Map<string, NotificationItem[]>()
+const notificationsInFlight = new Map<string, Promise<NotificationItem[]>>()
+
+function withNotificationsTimeout<T>(
+  promise: PromiseLike<T>,
+  label: string
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error(`${label} timeout`))
+      }, NOTIFICATIONS_TIMEOUT_MS)
+    }),
+  ]).finally(() => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId)
+    }
+  })
+}
+
+async function getCurrentNotificationUserId() {
+  const {
+    data: { user },
+  } = await withNotificationsTimeout(
+    supabase.auth.getUser(),
+    'notifications_auth_user'
+  )
+
+  return user?.id ?? null
+}
+
+async function fetchNotificationsForUser(userId: string) {
+  const inFlight = notificationsInFlight.get(userId)
+
+  if (inFlight) return inFlight
+
+  const request = withNotificationsTimeout(
+    supabase
+      .from('notifications_with_profiles')
+      .select(`
+        id,
+        type,
+        title,
+        body,
+        is_read,
+        created_at,
+        actor_user_id,
+        post_id,
+        short_video_id,
+        actor_username,
+        actor_display_name,
+        actor_avatar_url
+      `)
+      .eq('recipient_user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50),
+    'notifications_query'
+  )
+    .then(({ data, error }) => {
+      if (error) throw error
+
+      const notifications = (data ?? []) as NotificationItem[]
+      notificationsCache.set(userId, notifications)
+
+      return notifications
+    })
+    .finally(() => {
+      notificationsInFlight.delete(userId)
+    })
+
+  notificationsInFlight.set(userId, request)
+
+  return request
+}
+
+export async function preloadNotificationsPageData(userId?: string | null) {
+  const resolvedUserId = userId ?? (await getCurrentNotificationUserId())
+
+  if (!resolvedUserId) return
+
+  await fetchNotificationsForUser(resolvedUserId)
+}
 
 function getNotificationIcon(type: NotificationItem['type']) {
   if (type === 'like') return <Heart size={22} strokeWidth={2.2} />
@@ -89,76 +174,51 @@ onOpenShortVideo,
     const requestId = requestIdRef.current + 1
     requestIdRef.current = requestId
     const isStale = () => isCancelled() || requestId !== requestIdRef.current
-
-    const timeoutId = window.setTimeout(() => {
-      if (isStale()) return
-
-      setItems([])
-      setLoadError(true)
-      setLoading(false)
-      requestIdRef.current += 1
-    }, NOTIFICATIONS_TIMEOUT_MS)
+    let hasCache = false
 
     try {
       if (isStale()) return
       setLoadError(false)
-      setLoading(true)
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+      const userId = await getCurrentNotificationUserId()
 
-    if (isStale()) return
+      if (isStale()) return
 
-    if (!user) {
-      setItems([])
-      return
-    }
+      if (!userId) {
+        setItems([])
+        return
+      }
 
-    const { data, error } = await supabase
-      .from('notifications_with_profiles')
-      .select(`
-        id,
-        type,
-        title,
-        body,
-        is_read,
-        created_at,
-        actor_user_id,
-        post_id,
-        short_video_id,
-        actor_username,
-        actor_display_name,
-        actor_avatar_url
-      `)
-      .eq('recipient_user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50)
+      const cachedNotifications = notificationsCache.get(userId)
+      hasCache = Boolean(cachedNotifications)
 
-    if (isStale()) return
+      if (cachedNotifications) {
+        setItems(cachedNotifications)
+        setLoading(false)
+      } else {
+        setLoading(true)
+      }
 
-    if (error) {
-      throw error
-    }
+      const notifications = await fetchNotificationsForUser(userId)
 
-    const notifications = (data ?? []) as NotificationItem[]
+      if (isStale()) return
 
-    setItems(notifications)
+      setItems(notifications)
 
-    const unreadIds = notifications
-      .filter((item: NotificationItem) => !item.is_read)
-      .map((item: NotificationItem) => item.id)
+      const unreadIds = notifications
+        .filter((item: NotificationItem) => !item.is_read)
+        .map((item: NotificationItem) => item.id)
 
-    void markNotificationsAsRead(unreadIds, user.id)
+      void markNotificationsAsRead(unreadIds, userId)
     } catch (error) {
       if (!isStale()) {
         console.warn('load notifications failed:', error)
-        setItems([])
-        setLoadError(true)
+        if (!hasCache) {
+          setItems([])
+          setLoadError(true)
+        }
       }
     } finally {
-      window.clearTimeout(timeoutId)
-
       if (!isStale()) {
         setLoading(false)
       }
@@ -181,6 +241,22 @@ onOpenShortVideo,
           : item
       )
     )
+    const cachedNotifications = notificationsCache.get(userId)
+
+    if (cachedNotifications) {
+      notificationsCache.set(
+        userId,
+        cachedNotifications.map((item) =>
+          notificationIds.includes(item.id)
+            ? {
+                ...item,
+                is_read: true,
+              }
+            : item
+        )
+      )
+    }
+
     onUnreadCountChange?.(0)
 
     const { error } = await supabase

@@ -35,6 +35,7 @@ import HomeAuthModal from '@/src/components/home/homepage/HomeAuthModal'
 import HomeDetailPostModal from '@/src/components/home/homepage/HomeDetailPostModal'
 import { useHomeFeed } from '@/src/components/home/homepage/useHomeFeed'
 import { useBodyScrollLock } from '@/src/hooks/useBodyScrollLock'
+import { usePullToRefresh } from '@/src/hooks/usePullToRefresh'
 
 type StoryItem = {
   id: string
@@ -179,6 +180,7 @@ const [isDetailMenuOpen, setIsDetailMenuOpen] = useState(false)
 
 const [isShortVideoPageOpen, setIsShortVideoPageOpen] = useState(false)
 const [shortVideoStartId, setShortVideoStartId] = useState<string | undefined>()
+const [isRefreshingHome, setIsRefreshingHome] = useState(false)
 
 const detailTouchStartXRef = useRef<number | null>(null)
 const {
@@ -203,6 +205,7 @@ loadUnreadNotificationCount,
   setCurrentUserId,
   setToast,
 })
+
 function handlePostCreated(post: CreatedPostPayload) {
   const newPost: PostItem = {
     id: post.id,
@@ -276,6 +279,36 @@ const isHomeOverlayOpen = Boolean(
 )
 
 useBodyScrollLock(isHomeOverlayOpen)
+
+async function refreshHomeFeed() {
+  if (isRefreshingHome || isHomeOverlayOpen) return
+
+  setIsRefreshingHome(true)
+
+  try {
+    const { data } = await supabase.auth.getSession()
+    const user = data.session?.user ?? null
+
+    await Promise.allSettled([
+      safeTask(() => loadPosts(user), 'home_manual_refresh_posts'),
+      safeTask(() => loadShortVideos(user), 'home_manual_refresh_short_videos'),
+      safeTask(
+        () => loadUnreadNotificationCount(user?.id ?? null),
+        'home_manual_refresh_notifications'
+      ),
+    ])
+  } finally {
+    setIsRefreshingHome(false)
+  }
+}
+
+const { pullDistance: homePullDistance, pullHandlers: homePullHandlers } =
+  usePullToRefresh({
+    isRefreshing: isRefreshingHome,
+    disabled: isHomeOverlayOpen,
+    onRefresh: refreshHomeFeed,
+    threshold: 120,
+  })
 
   const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
 
@@ -1190,8 +1223,31 @@ const handleOpenFeedPost = useCallback(
   return (
   <div
   data-auth-modal-open={isAuthModalOpen ? 'true' : 'false'}
+  {...homePullHandlers}
   className="relative min-h-screen w-full overflow-x-hidden bg-[var(--app-bg)] text-[var(--app-text)]"
 >
+    {(isRefreshingHome || homePullDistance > 0) && (
+      <div
+        className="pointer-events-none fixed left-1/2 top-[72px] z-[180] flex h-8 w-8 items-center justify-center rounded-full bg-[var(--app-card)] text-[var(--app-text)] shadow-sm"
+        style={{
+          opacity: isRefreshingHome ? 1 : Math.min(homePullDistance / 120, 1),
+          transform: `translate(-50%, ${Math.min(homePullDistance * 0.35, 36)}px)`,
+        }}
+      >
+        <div
+          className={`h-6 w-6 rounded-full border-2 text-[var(--app-text)] ${
+            isRefreshingHome ? 'animate-spin' : ''
+          }`}
+          style={{
+            borderColor: 'color-mix(in srgb, currentColor 22%, transparent)',
+            borderTopColor: 'currentColor',
+            transform: isRefreshingHome
+              ? undefined
+              : `rotate(${Math.min(homePullDistance * 3, 300)}deg)`,
+          }}
+        />
+      </div>
+    )}
 
     <HomeTopBar
       isTopBarVisible={isTopBarVisible}

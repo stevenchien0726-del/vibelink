@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import ProfileHeader from '@/components/profile/ProfileHeader'
@@ -14,7 +14,9 @@ import EditProfilePage from '@/components/profile/EditProfilePage'
 import ProfilePostDetailModal from '@/components/profile/ProfilePostDetailModal'
 import ProfilePostGridTabs from '@/components/profile/ProfilePostGridTabs'
 
-import TrafficReportPage from '@/components/profile/TrafficReportPage'
+import TrafficReportPage, {
+  preloadTrafficReportData,
+} from '@/components/profile/TrafficReportPage'
 
 import { profileText } from '@/lib/profile/profileText'
 
@@ -24,7 +26,9 @@ import UploadFullPage from '@/components/home/sections/upload/UploadFullPage'
 import AccountManagePage from '@/components/message/AccountManagePage'
 import SettingsPage from '@/pages/SettingsPage'
 import ArchivedContentPage from '@/components/profile/ArchivedContentPage'
-import NotificationsPage from '@/components/profile/NotificationsPage'
+import NotificationsPage, {
+  preloadNotificationsPageData,
+} from '@/components/profile/NotificationsPage'
 import PostInsightsPage from '@/components/profile/PostInsightsPage'
 
 import {
@@ -200,6 +204,26 @@ async function copyVibelinkShareUrl() {
     loadMyFollowerCount,
     safeTask,
   })
+
+  const menuPreloadUserIdRef = useRef<string | null>(null)
+
+  function preloadProfileMenuPages() {
+    if (!currentUserId) return
+    if (menuPreloadUserIdRef.current === currentUserId) return
+
+    menuPreloadUserIdRef.current = currentUserId
+
+    void Promise.allSettled([
+      safeTask(
+        () => preloadNotificationsPageData(currentUserId),
+        'profile_menu_preload_notifications'
+      ),
+      safeTask(
+        () => preloadTrafficReportData(currentUserId),
+        'profile_menu_preload_traffic_report'
+      ),
+    ])
+  }
 
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false)
 
@@ -472,8 +496,10 @@ async function toggleSelectedPostSave() {
   isMenuOpen={isMenuOpen}
   uploadLabel={text.upload}
   onMenuClick={() => {
+    const nextOpen = !isMenuOpen
     setIsUploadOpen(false)
-    setIsMenuOpen((prev) => !prev)
+    setIsMenuOpen(nextOpen)
+    if (nextOpen) preloadProfileMenuPages()
   }}
   onUploadClick={() => {
     setIsMenuOpen(false)

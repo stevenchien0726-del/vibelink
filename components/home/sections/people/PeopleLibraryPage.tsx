@@ -106,6 +106,8 @@ function withTimeout<T>(
 
 const PEOPLE_LIBRARY_TIMEOUT_MS = 6000
 const PEOPLE_LIBRARY_PROFILE_BATCH_SIZE = 80
+const peopleLibraryUsersCache = new Map<string, PeopleLibraryUser[]>()
+const peopleLibraryInFlight = new Map<string, Promise<PeopleLibraryUser[]>>()
 
 export default function PeopleLibraryPage({
   query,
@@ -308,9 +310,8 @@ export default function PeopleLibraryPage({
     }
 
     async function fetchPeopleLibraryUsersFast() {
-      setPeopleLoading(true)
       setPeopleError('')
-      setAllPeopleUsers([])
+      let hasCachedUsers = false
 
       try {
         const authResult = await withTimeout(
@@ -325,9 +326,31 @@ export default function PeopleLibraryPage({
           console.warn('People Library auth failed:', authResult.error)
         }
 
-        if (!user) return
+        if (!user) {
+          if (!cancelled) {
+            setAllPeopleUsers([])
+          }
+          return
+        }
 
-        const [followResult, favoriteResult] = await Promise.allSettled([
+        const cachedUsers = peopleLibraryUsersCache.get(user.id)
+        hasCachedUsers = Boolean(cachedUsers)
+
+        if (cachedUsers) {
+          if (!cancelled) {
+            setAllPeopleUsers(cachedUsers)
+            setPeopleLoading(false)
+          }
+        } else if (!cancelled) {
+          setPeopleLoading(true)
+          setAllPeopleUsers([])
+        }
+
+        const existingRequest = peopleLibraryInFlight.get(user.id)
+        const freshUsers =
+          existingRequest ??
+          (async () => {
+            const [followResult, favoriteResult] = await Promise.allSettled([
           withTimeout(
             supabase
               .from('follows')
@@ -350,58 +373,58 @@ export default function PeopleLibraryPage({
           ),
         ])
 
-        const followRows =
+            const followRows =
           followResult.status === 'fulfilled' &&
           followResult.value &&
           !followResult.value.error
             ? ((followResult.value.data ?? []) as PeopleFollowRow[])
             : []
 
-        const favoriteRows =
+            const favoriteRows =
           favoriteResult.status === 'fulfilled' &&
           favoriteResult.value &&
           !favoriteResult.value.error
             ? ((favoriteResult.value.data ?? []) as PeopleFavoriteRow[])
             : []
 
-        if (followResult.status === 'rejected') {
+            if (followResult.status === 'rejected') {
           console.warn('People Library follows failed:', followResult.reason)
         } else if (followResult.value?.error) {
           console.warn('People Library follows error:', followResult.value.error)
         }
 
-        if (favoriteResult.status === 'rejected') {
+            if (favoriteResult.status === 'rejected') {
           console.warn('People Library favorites failed:', favoriteResult.reason)
         } else if (favoriteResult.value?.error) {
           console.warn('People Library favorites error:', favoriteResult.value.error)
         }
 
-        const followingIds = followRows
+            const followingIds = followRows
           .map((row) => row.following_id)
           .filter((id): id is string => Boolean(id))
 
-        const favoriteIds = favoriteRows
+            const favoriteIds = favoriteRows
           .map((row) => row.favorite_user_id)
           .filter((id): id is string => Boolean(id))
 
-        const mergedIds = Array.from(new Set([...followingIds, ...favoriteIds]))
+            const mergedIds = Array.from(new Set([...followingIds, ...favoriteIds]))
 
-        if (mergedIds.length === 0) return
+            if (mergedIds.length === 0) return []
 
-        const profiles = await fetchProfilesInBatches(mergedIds)
+            const profiles = await fetchProfilesInBatches(mergedIds)
 
-        const followMap = new Map(
+            const followMap = new Map(
           followRows.map((row) => [row.following_id, row.created_at])
         )
 
-        const favoriteMap = new Map(
+            const favoriteMap = new Map(
           favoriteRows.map((row) => [
             row.favorite_user_id,
             row.created_at,
           ])
         )
 
-        const mappedUsers: PeopleLibraryUser[] = profiles.map((profile) => ({
+            const mappedUsers: PeopleLibraryUser[] = profiles.map((profile) => ({
           id: profile.id,
           name: profile.display_name || profile.username || 'Vibelink User',
           avatar: profile.avatar_url || '',
@@ -416,6 +439,19 @@ export default function PeopleLibraryPage({
           profileViewCount: 0,
         }))
 
+            return mappedUsers
+          })().finally(() => {
+            peopleLibraryInFlight.delete(user.id)
+          })
+
+        if (!existingRequest) {
+          peopleLibraryInFlight.set(user.id, freshUsers)
+        }
+
+        const mappedUsers = await freshUsers
+
+        peopleLibraryUsersCache.set(user.id, mappedUsers)
+
         if (!cancelled) {
           setAllPeopleUsers(mappedUsers)
         }
@@ -423,7 +459,9 @@ export default function PeopleLibraryPage({
         console.warn('People Library partial load failed:', error)
 
         if (!cancelled) {
-          setAllPeopleUsers([])
+          if (!hasCachedUsers) {
+            setAllPeopleUsers([])
+          }
         }
       } finally {
         if (!cancelled) {
