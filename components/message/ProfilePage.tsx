@@ -228,6 +228,7 @@ async function copyVibelinkShareUrl() {
     isRefreshing: isRefreshingProfile,
     disabled: profileLoading,
     onRefresh: refreshProfilePage,
+    threshold: 110,
   })
 
 async function deleteSelectedPost() {
@@ -425,12 +426,26 @@ async function toggleSelectedPostSave() {
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[90px]">
         {(isRefreshingProfile || profilePullDistance > 0) && (
           <div
-            className="pointer-events-none fixed left-1/2 top-[74px] z-[180] -translate-x-1/2 rounded-full bg-[var(--app-card)] px-4 py-2 text-[12px] text-[var(--app-muted)] shadow-sm"
+            className="pointer-events-none fixed left-1/2 top-[74px] z-[180] flex h-8 w-8 items-center justify-center rounded-full bg-[var(--app-card)] text-[0px] text-transparent shadow-sm"
             style={{
-              transform: `translate(-50%, ${Math.min(profilePullDistance, 48)}px)`,
+              opacity: isRefreshingProfile
+                ? 1
+                : Math.min(profilePullDistance / 110, 1),
+              transform: `translate(-50%, ${Math.min(profilePullDistance * 0.35, 36)}px)`,
             }}
           >
-            {isRefreshingProfile ? '重新讀取中...' : '下拉重新讀取'}
+            <div
+              className={`h-6 w-6 rounded-full border-2 text-[var(--app-text)] ${
+                isRefreshingProfile ? 'animate-spin' : ''
+              }`}
+              style={{
+                borderColor: 'color-mix(in srgb, currentColor 22%, transparent)',
+                borderTopColor: 'currentColor',
+                transform: isRefreshingProfile
+                  ? undefined
+                  : `rotate(${Math.min(profilePullDistance * 3, 300)}deg)`,
+              }}
+            />
           </div>
         )}
 

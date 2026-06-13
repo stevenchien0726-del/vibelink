@@ -8,6 +8,7 @@ type UsePullToRefreshParams = {
   onRefresh: () => Promise<void>
   getScrollTop?: () => number
   threshold?: number
+  minPullDistance?: number
 }
 
 export function usePullToRefresh({
@@ -15,7 +16,8 @@ export function usePullToRefresh({
   isRefreshing,
   onRefresh,
   getScrollTop,
-  threshold = 72,
+  threshold = 110,
+  minPullDistance = 18,
 }: UsePullToRefreshParams) {
   const startYRef = useRef<number | null>(null)
   const pullingRef = useRef(false)
@@ -49,8 +51,14 @@ export function usePullToRefresh({
       return
     }
 
+    if (deltaY < minPullDistance) {
+      pullingRef.current = false
+      setPullDistance(0)
+      return
+    }
+
     pullingRef.current = true
-    setPullDistance(Math.min(deltaY * 0.45, 96))
+    setPullDistance(Math.min(deltaY, 130))
     event.preventDefault()
   }
 

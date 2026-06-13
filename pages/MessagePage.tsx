@@ -236,6 +236,7 @@ const { pullDistance, pullHandlers } = usePullToRefresh({
   disabled: messageLoading,
   onRefresh: refreshMessages,
   getScrollTop: () => messageScrollRef.current?.scrollTop ?? 0,
+  threshold: 110,
 })
 
   useEffect(() => {
@@ -684,12 +685,24 @@ async function toggleConversationPin(conversation: ConversationItem) {
 >
   {(isRefreshingMessages || pullDistance > 0) && (
     <div
-      className="pointer-events-none sticky top-0 z-[120] mb-2 flex justify-center"
-      style={{ transform: `translateY(${Math.min(pullDistance, 48)}px)` }}
+      className="pointer-events-none sticky top-0 z-[120] mb-2 flex h-8 justify-center"
+      style={{
+        opacity: isRefreshingMessages ? 1 : Math.min(pullDistance / 110, 1),
+        transform: `translateY(${Math.min(pullDistance * 0.35, 36)}px)`,
+      }}
     >
-      <div className="rounded-full bg-[var(--app-card)] px-4 py-2 text-[12px] text-[var(--app-muted)] shadow-sm">
-        {isRefreshingMessages ? '重新讀取中...' : '下拉重新讀取'}
-      </div>
+      <div
+        className={`h-6 w-6 rounded-full border-2 text-[var(--app-text)] ${
+          isRefreshingMessages ? 'animate-spin' : ''
+        }`}
+        style={{
+          borderColor: 'color-mix(in srgb, currentColor 22%, transparent)',
+          borderTopColor: 'currentColor',
+          transform: isRefreshingMessages
+            ? undefined
+            : `rotate(${Math.min(pullDistance * 3, 300)}deg)`,
+        }}
+      />
     </div>
   )}
 
