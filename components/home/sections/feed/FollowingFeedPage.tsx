@@ -12,6 +12,8 @@ type Props = {
   onOpenPost: (post: PostItem) => void
 }
 
+const followingFeedCache = new Map<string, PostItem[]>()
+
 export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
   const [items, setItems] = useState<PostItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -46,6 +48,8 @@ export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
     let cancelled = false
 
     async function loadFollowingFeed() {
+      let hasCache = false
+
       try {
         if (!cancelled) {
           setLoading(true)
@@ -66,6 +70,14 @@ export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
         return
       }
 
+      const cachedItems = followingFeedCache.get(user.id)
+      hasCache = Boolean(cachedItems)
+
+      if (cachedItems && !cancelled) {
+        setItems(cachedItems)
+        setLoading(false)
+      }
+
       const followsResult = await withTimeout(
         supabase
           .from('follows')
@@ -81,6 +93,8 @@ export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
         (followRows ?? []).map((row: any) => row.following_id)
 
       if (followingIds.length === 0) {
+        followingFeedCache.set(user.id, [])
+
         if (!cancelled) {
           setItems([])
         }
@@ -208,12 +222,14 @@ export default function FollowingFeedPage({ onClose, onOpenPost }: Props) {
       }))
 
       if (!cancelled) {
-        setItems([...videoItems, ...photoItems])
+        const nextItems = [...videoItems, ...photoItems]
+        followingFeedCache.set(user.id, nextItems)
+        setItems(nextItems)
       }
     } catch (error) {
       console.warn('following feed load failed:', error)
 
-      if (!cancelled) {
+      if (!cancelled && !hasCache) {
         setItems([])
       }
     } finally {

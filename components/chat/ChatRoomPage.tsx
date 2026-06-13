@@ -29,6 +29,17 @@ type MessageItem = {
   recalled?: boolean
 }
 
+type ChatRoomCacheEntry = {
+  messages: MessageItem[]
+  resolvedAvatar: string
+}
+
+const chatRoomCache = new Map<string, ChatRoomCacheEntry>()
+
+function getChatRoomCacheKey(userId: string, roomId: string) {
+  return `${userId}:${roomId}`
+}
+
 export default function ChatRoomPage({
   otherUserId,
   userName = '(用戶名)',
@@ -102,6 +113,8 @@ const realtimeChannelRef = useRef<any>(null)
   }
 
   useEffect(() => {
+    let cancelled = false
+
     async function loadOtherUserProfile() {
       if (!otherUserId) return
 
@@ -117,7 +130,7 @@ const realtimeChannelRef = useRef<any>(null)
 
       const data = result?.data
 
-      if (data?.avatar_url) {
+      if (!cancelled && data?.avatar_url) {
         setResolvedAvatar(data.avatar_url)
       }
     }
@@ -128,11 +141,11 @@ const realtimeChannelRef = useRef<any>(null)
       } = await supabase.auth.getUser()
 
       if (!user || !otherUserId) {
-        setChatLoading(false)
+        if (!cancelled) setChatLoading(false)
         return
       }
 
-      setCurrentUserId(user.id)
+      if (!cancelled) setCurrentUserId(user.id)
 
       const sortedUsers = [user.id, otherUserId].sort()
 
@@ -176,7 +189,19 @@ const realtimeChannelRef = useRef<any>(null)
         return
       }
 
+      if (cancelled) return
+
       setConversationId(conversation.id)
+
+      const cacheKey = getChatRoomCacheKey(user.id, conversation.id)
+      const cachedRoom = chatRoomCache.get(cacheKey)
+
+      if (cachedRoom) {
+        setMessages(cachedRoom.messages)
+        setResolvedAvatar(cachedRoom.resolvedAvatar || userAvatar || '')
+        setChatError('')
+        setChatLoading(false)
+      }
 
       const { data: messageRows, error: messageError } = await supabase
         .from('chat_messages')
@@ -185,6 +210,7 @@ const realtimeChannelRef = useRef<any>(null)
         .order('created_at', { ascending: true })
 
       if (messageError) {
+        if (cachedRoom) return
         console.error('讀取聊天訊息失敗:', messageError)
         setChatError('聊天室讀取失敗')
         setChatLoading(false)
@@ -200,6 +226,18 @@ const realtimeChannelRef = useRef<any>(null)
         }))
       )
 
+      chatRoomCache.set(cacheKey, {
+        messages: (messageRows ?? []).map((msg) => ({
+          id: msg.id,
+          text: msg.recalled ? 'Message recalled' : msg.text,
+          mine: msg.sender_id === user.id,
+          recalled: msg.recalled,
+        })),
+        resolvedAvatar,
+      })
+
+      if (cancelled) return
+
       setChatLoading(false)
     }
 
@@ -210,6 +248,10 @@ const realtimeChannelRef = useRef<any>(null)
     }
 
     initChatRoom()
+
+    return () => {
+      cancelled = true
+    }
   }, [otherUserId])
 
   useEffect(() => {

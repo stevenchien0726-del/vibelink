@@ -29,6 +29,13 @@ type VibelinkProfile = {
 
 const LOAD_PROFILES_TIMEOUT_MS = 4500
 const CREATE_PROFILE_TIMEOUT_MS = 6000
+const accountManageCache = new Map<
+  string,
+  {
+    profiles: VibelinkProfile[]
+    activeProfileId: string | null
+  }
+>()
 
 export default function AccountManagePage({
   onClose,
@@ -74,11 +81,14 @@ export default function AccountManagePage({
     loadProfilesRequestIdRef.current = requestId
     const isStale = () =>
       isCancelled() || requestId !== loadProfilesRequestIdRef.current
+    let hasCache = false
 
     const timeoutId = window.setTimeout(() => {
       if (isStale()) return
 
-      setLoadError(true)
+      if (!hasCache) {
+        setLoadError(true)
+      }
       setLoadingProfiles(false)
       loadProfilesRequestIdRef.current += 1
     }, LOAD_PROFILES_TIMEOUT_MS)
@@ -100,6 +110,15 @@ export default function AccountManagePage({
       return
     }
 
+    const cachedData = accountManageCache.get(user.id)
+    hasCache = Boolean(cachedData)
+
+    if (cachedData) {
+      setProfiles(cachedData.profiles)
+      setActiveProfileId(cachedData.activeProfileId)
+      setLoadingProfiles(false)
+    }
+
     const { data, error } = await supabase
       .from('profiles')
       .select('id, username, display_name, avatar_url, is_active, created_at')
@@ -117,6 +136,10 @@ export default function AccountManagePage({
 
     const active = safeProfiles.find((item) => item.is_active) ?? safeProfiles[0]
     setActiveProfileId(active?.id ?? null)
+    accountManageCache.set(user.id, {
+      profiles: safeProfiles,
+      activeProfileId: active?.id ?? null,
+    })
 
     if (active?.id) {
       localStorage.setItem('vibelink-active-profile-id', active.id)
@@ -124,7 +147,9 @@ export default function AccountManagePage({
     } catch (error) {
       if (!isStale()) {
         console.warn('load profiles failed:', error)
-        setLoadError(true)
+        if (!hasCache) {
+          setLoadError(true)
+        }
       }
     } finally {
       window.clearTimeout(timeoutId)
@@ -176,12 +201,16 @@ export default function AccountManagePage({
     setActiveProfileId(profileId)
     localStorage.setItem('vibelink-active-profile-id', profileId)
 
-    setProfiles((prev) =>
-      prev.map((profile) => ({
+    const nextProfiles = profiles.map((profile) => ({
         ...profile,
         is_active: profile.id === profileId,
       }))
-    )
+
+    setProfiles(nextProfiles)
+    accountManageCache.set(user.id, {
+      profiles: nextProfiles,
+      activeProfileId: profileId,
+    })
     } catch (error) {
       console.warn('switch profile failed:', error)
     } finally {
@@ -262,8 +291,8 @@ await supabase
 
 if (isStale()) return
 
-  setProfiles((prev) => [
-  ...prev.map((profile) => ({
+const nextProfiles = [
+  ...profiles.map((profile) => ({
     ...profile,
     is_active: false,
   })),
@@ -271,9 +300,14 @@ if (isStale()) return
     ...data,
     is_active: true,
   },
-])
+]
 
+setProfiles(nextProfiles)
 setActiveProfileId(data.id)
+accountManageCache.set(user.id, {
+  profiles: nextProfiles,
+  activeProfileId: data.id,
+})
 
 localStorage.setItem(
   'vibelink-active-profile-id',

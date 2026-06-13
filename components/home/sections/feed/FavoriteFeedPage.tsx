@@ -13,6 +13,8 @@ type Props = {
   onOpenPost: (post: PostItem) => void
 }
 
+const favoriteFeedCache = new Map<string, PostItem[]>()
+
 export default function FavoriteFeedPage({ onClose, onOpenPost }: Props) {
   const [items, setItems] = useState<PostItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,6 +49,8 @@ export default function FavoriteFeedPage({ onClose, onOpenPost }: Props) {
     let cancelled = false
 
     async function loadFavoriteFeed() {
+      let hasCache = false
+
       try {
         if (!cancelled) {
           setLoading(true)
@@ -65,6 +69,14 @@ if (!user) {
     setItems([])
   }
   return
+}
+
+const cachedItems = favoriteFeedCache.get(user.id)
+hasCache = Boolean(cachedItems)
+
+if (cachedItems && !cancelled) {
+  setItems(cachedItems)
+  setLoading(false)
 }
 
 const favoriteResult = await withTimeout(
@@ -92,6 +104,8 @@ const favoriteUserIds = favoriteUsers.map(
 )
 
 if (favoriteUserIds.length === 0) {
+  favoriteFeedCache.set(user.id, [])
+
   if (!cancelled) {
     setItems([])
   }
@@ -223,12 +237,14 @@ const videoLikeCountMap = new Map<string, number>()
       }))
 
       if (!cancelled) {
-        setItems([...videoItems, ...photoItems])
+        const nextItems = [...videoItems, ...photoItems]
+        favoriteFeedCache.set(user.id, nextItems)
+        setItems(nextItems)
       }
     } catch (error) {
       console.warn('favorite feed load failed:', error)
 
-      if (!cancelled) {
+      if (!cancelled && !hasCache) {
         setItems([])
       }
     } finally {
