@@ -21,14 +21,20 @@ export function useProfileUIState() {
 
   const [showAccountManagePage, setShowAccountManagePage] = useState(false)
   const [isFavoritesPublic, setIsFavoritesPublic] = useState(true)
-  const [darkMode, setDarkMode] = useState(false)
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === 'undefined') return true
+
+    const saved = localStorage.getItem('vibelink-dark-mode')
+
+    return saved !== 'light'
+  })
 
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem('vibelink-dark-mode')
-    const next = saved === 'dark'
+    const next = saved !== 'light'
 
     setDarkMode(next)
     document.documentElement.classList.toggle('dark', next)

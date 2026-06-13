@@ -70,7 +70,7 @@ const settingsText = {
 
 export default function SettingsPage({
   onClose,
-  initialDarkMode = false,
+  initialDarkMode = true,
   initialShowCity = false,
 
   locale,
