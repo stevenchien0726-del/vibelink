@@ -49,6 +49,7 @@ import { safeTask } from '@/src/hooks/profile/useProfileTasks'
 import { useProfileGestures } from '@/src/hooks/profile/useProfileGestures'
 import { useProfileUIState } from '@/src/hooks/profile/useProfileUIState'
 import { useSavedPosts } from '@/src/hooks/profile/useSavedPosts'
+import { usePullToRefresh } from '@/src/hooks/usePullToRefresh'
 
 const VIBELINK_SHARE_URL = 'https://vibelink-beta-access.vercel.app'
 
@@ -155,6 +156,7 @@ async function copyVibelinkShareUrl() {
     setSavedPosts,
     profileWarmSavedImages,
     setProfileWarmSavedImages,
+    loadSavedPosts,
     lazyLoadSavedPosts,
   } = useSavedPosts({ safeTask })
 
@@ -197,6 +199,35 @@ async function copyVibelinkShareUrl() {
     loadMyPosts,
     loadMyFollowerCount,
     safeTask,
+  })
+
+  const [isRefreshingProfile, setIsRefreshingProfile] = useState(false)
+
+  async function refreshProfilePage() {
+    if (isRefreshingProfile || profileLoading) return
+
+    setIsRefreshingProfile(true)
+
+    try {
+      await Promise.allSettled([
+        safeTask(() => ensureMyProfile(), 'profile_manual_ensure_profile'),
+        safeTask(() => loadMyPosts(), 'profile_manual_posts'),
+        safeTask(() => loadMyFollowerCount(), 'profile_manual_followers'),
+        safeTask(() => loadMyShortVideos(), 'profile_manual_short_videos'),
+        safeTask(() => loadSavedPosts(), 'profile_manual_saved_posts'),
+      ])
+    } finally {
+      setIsRefreshingProfile(false)
+    }
+  }
+
+  const {
+    pullDistance: profilePullDistance,
+    pullHandlers: profilePullHandlers,
+  } = usePullToRefresh({
+    isRefreshing: isRefreshingProfile,
+    disabled: profileLoading,
+    onRefresh: refreshProfilePage,
   })
 
 async function deleteSelectedPost() {
@@ -387,8 +418,22 @@ async function toggleSelectedPostSave() {
       ))}
     </div>
 
-    <div className="relative min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] pb-[110px]">
+    <div
+      {...profilePullHandlers}
+      className="relative min-h-screen overscroll-contain bg-[var(--app-bg)] pb-[110px] text-[var(--app-text)] touch-pan-y"
+    >
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[90px]">
+        {(isRefreshingProfile || profilePullDistance > 0) && (
+          <div
+            className="pointer-events-none fixed left-1/2 top-[74px] z-[180] -translate-x-1/2 rounded-full bg-[var(--app-card)] px-4 py-2 text-[12px] text-[var(--app-muted)] shadow-sm"
+            style={{
+              transform: `translate(-50%, ${Math.min(profilePullDistance, 48)}px)`,
+            }}
+          >
+            {isRefreshingProfile ? '重新讀取中...' : '下拉重新讀取'}
+          </div>
+        )}
+
         {profileLoading && (
   <div className="py-20 text-center text-[14px] text-[var(--app-muted)]">
     Profile 讀取中...

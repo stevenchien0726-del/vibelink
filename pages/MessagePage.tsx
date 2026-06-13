@@ -18,6 +18,7 @@ import ChatRoomPage from '@/components/chat/ChatRoomPage'
 import type { Locale } from '@/i18n'
 import { supabase } from '@/lib/supabase'
 import { getCachedSession } from '@/lib/authSessionCache'
+import { usePullToRefresh } from '@/src/hooks/usePullToRefresh'
 
 type ConversationItem = {
   id: string
@@ -117,6 +118,9 @@ const [openedChat, setOpenedChat] = useState<ConversationItem | null>(null)
 
 const [messageLoading, setMessageLoading] = useState(true)
 const [messageError, setMessageError] = useState('')
+const [isRefreshingMessages, setIsRefreshingMessages] = useState(false)
+const messageScrollRef = useRef<HTMLDivElement | null>(null)
+const reloadConversationsRef = useRef<(() => Promise<void>) | null>(null)
 
     const filteredAccounts = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
@@ -210,6 +214,29 @@ function sortMessageConversations(items: ConversationItem[]) {
     )
   })
 }
+
+async function refreshMessages() {
+  if (isRefreshingMessages || messageLoading) return
+
+  setIsRefreshingMessages(true)
+
+  try {
+    await withTimeout(
+      reloadConversationsRef.current?.() ?? Promise.resolve(),
+      9000,
+      'message_manual_refresh'
+    )
+  } finally {
+    setIsRefreshingMessages(false)
+  }
+}
+
+const { pullDistance, pullHandlers } = usePullToRefresh({
+  isRefreshing: isRefreshingMessages,
+  disabled: messageLoading,
+  onRefresh: refreshMessages,
+  getScrollTop: () => messageScrollRef.current?.scrollTop ?? 0,
+})
 
   useEffect(() => {
   async function loadConversations(retry = 0) {
@@ -393,6 +420,7 @@ window.setTimeout(() => {
     }
   }
 
+  reloadConversationsRef.current = () => loadConversations(0)
   loadConversations()
   window.setTimeout(async () => {
   try {
@@ -649,9 +677,21 @@ async function toggleConversationPin(conversation: ConversationItem) {
     </div>
 
     <div
+  ref={messageScrollRef}
   onScroll={handleMessageScroll}
+  {...pullHandlers}
   className="relative flex h-screen flex-col overflow-y-auto bg-[var(--app-bg)] px-4 pt-4 pb-2 text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 >
+  {(isRefreshingMessages || pullDistance > 0) && (
+    <div
+      className="pointer-events-none sticky top-0 z-[120] mb-2 flex justify-center"
+      style={{ transform: `translateY(${Math.min(pullDistance, 48)}px)` }}
+    >
+      <div className="rounded-full bg-[var(--app-card)] px-4 py-2 text-[12px] text-[var(--app-muted)] shadow-sm">
+        {isRefreshingMessages ? '重新讀取中...' : '下拉重新讀取'}
+      </div>
+    </div>
+  )}
 
   <AnimatePresence>
     {isPinEditMode && (

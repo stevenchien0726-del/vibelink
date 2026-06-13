@@ -124,7 +124,7 @@ export default function HomeDetailPostModal({
         {selectedPost && (
           <motion.div
             data-block-page-swipe="true"
-            className="fixed inset-0 z-[700] overflow-x-hidden bg-[var(--app-bg)] text-[var(--app-text)]"
+            className="fixed inset-0 z-[700] overflow-x-hidden bg-[var(--app-bg)] text-[var(--app-text)] overscroll-contain touch-pan-y"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -132,7 +132,10 @@ export default function HomeDetailPostModal({
             onTouchStart={handleDetailTouchStart}
             onTouchEnd={handleDetailTouchEnd}
           >
-            <div className="mx-auto h-full w-full max-w-[430px] overflow-x-hidden overflow-y-auto pb-[110px] scrollbar-hide">
+            <div
+              className="mx-auto h-full w-full max-w-[430px] overflow-x-hidden overflow-y-auto overscroll-contain touch-pan-y pb-[110px] scrollbar-hide"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               <div className="sticky top-0 z-[20] flex h-[56px] items-center justify-between bg-[var(--app-surface)]/95 px-4 backdrop-blur-md">
                 <button
                   type="button"

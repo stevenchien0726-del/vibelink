@@ -257,11 +257,62 @@ function handlePostCreated(post: CreatedPostPayload) {
   const storyTouchStartXRef = useRef<number | null>(null)
   const lastScrollYRef = useRef(0)
   const scrollTickingRef = useRef(false)
+  const lockedScrollYRef = useRef(0)
 
   const storyDragY = useMotionValue(0)
   const storyCardScale = useTransform(storyDragY, [0, 320], [1, 0.94])
   const storyCardOpacity = useTransform(storyDragY, [0, 320], [1, 0.72])
   const storyOverlayOpacity = useTransform(storyDragY, [0, 320], [1, 0.86])
+
+const isHomeOverlayOpen = Boolean(
+  selectedPost ||
+    isShortVideoPageOpen ||
+    isCommentSheetOpen ||
+    isShareSheetOpen ||
+    isPeopleLibraryOpen ||
+    isNotificationsOpen ||
+    selectedProfileUserId
+)
+
+useEffect(() => {
+  if (!isHomeOverlayOpen) return
+
+  const body = document.body
+  const html = document.documentElement
+  const previousBodyStyle = {
+    overflow: body.style.overflow,
+    position: body.style.position,
+    top: body.style.top,
+    width: body.style.width,
+    overscrollBehavior: body.style.overscrollBehavior,
+  }
+  const previousHtmlStyle = {
+    overflow: html.style.overflow,
+    overscrollBehavior: html.style.overscrollBehavior,
+  }
+
+  lockedScrollYRef.current = window.scrollY || window.pageYOffset || 0
+
+  body.style.overflow = 'hidden'
+  body.style.position = 'fixed'
+  body.style.top = `-${lockedScrollYRef.current}px`
+  body.style.width = '100%'
+  body.style.overscrollBehavior = 'none'
+  html.style.overflow = 'hidden'
+  html.style.overscrollBehavior = 'none'
+
+  return () => {
+    body.style.overflow = previousBodyStyle.overflow
+    body.style.position = previousBodyStyle.position
+    body.style.top = previousBodyStyle.top
+    body.style.width = previousBodyStyle.width
+    body.style.overscrollBehavior = previousBodyStyle.overscrollBehavior
+    html.style.overflow = previousHtmlStyle.overflow
+    html.style.overscrollBehavior = previousHtmlStyle.overscrollBehavior
+
+    window.scrollTo(0, lockedScrollYRef.current)
+  }
+}, [isHomeOverlayOpen])
 
   const [detailBigHeartVisible, setDetailBigHeartVisible] = useState(false)
 
@@ -1292,7 +1343,8 @@ void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
 <AnimatePresence>
   {isCommentSheetOpen && commentSheetPost && (
     <motion.div
-      className="fixed inset-0 z-[10050] flex items-end justify-center bg-black/35"
+      data-block-page-swipe="true"
+      className="fixed inset-0 z-[10050] flex items-end justify-center overscroll-contain bg-black/35 touch-pan-y"
       onClick={() => {
         setIsCommentSheetOpen(false)
         setCommentSheetPost(null)
@@ -1317,7 +1369,10 @@ void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
           留言
         </div>
 
-        <div className="flex-1 overflow-y-auto pb-4">
+        <div
+          className="flex-1 overflow-y-auto overscroll-contain pb-4 touch-pan-y"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           {comments.length === 0 ? (
             <div className="pt-4 text-[14px] text-[var(--app-muted)]">
               尚無留言，成為第一個留言的人

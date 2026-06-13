@@ -234,7 +234,7 @@ if (isStuck && reloadCount < 2) {
       <>
         <motion.div
           data-block-page-swipe="true"
-          className="fixed inset-0 z-[9999] h-[100dvh] w-full overflow-hidden bg-black"
+          className="fixed inset-0 z-[9999] h-[100dvh] w-full overflow-hidden overscroll-contain bg-black touch-pan-y"
           initial={{ y: 40, scale: 0.92, opacity: 0 }}
           animate={{ y: 0, scale: 1, opacity: 1 }}
           exit={{ y: 40, scale: 0.92, opacity: 0 }}
@@ -256,10 +256,11 @@ if (isStuck && reloadCount < 2) {
         >
           <div
             data-block-page-swipe="true"
-            className="no-scrollbar mx-auto h-[100dvh] w-full max-w-[430px] snap-y snap-mandatory overflow-y-auto overflow-x-hidden bg-black"
+            className="no-scrollbar mx-auto h-[100dvh] w-full max-w-[430px] snap-y snap-mandatory overflow-y-auto overflow-x-hidden overscroll-contain bg-black touch-pan-y"
             style={{
               WebkitOverflowScrolling: 'touch',
               touchAction: 'pan-y',
+              overscrollBehavior: 'contain',
             }}
           >
             {orderedVideos.map((video, index) => {
