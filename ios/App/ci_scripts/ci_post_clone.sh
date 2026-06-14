@@ -5,7 +5,11 @@ echo "===== XCODE CLOUD POST CLONE START ====="
 
 cd /Volumes/workspace/repository
 
+echo "Current directory:"
+pwd
+
 echo "Install Node.js by Homebrew"
+which brew
 brew update
 brew install node
 
@@ -20,5 +24,8 @@ npm ci
 
 echo "Sync Capacitor iOS"
 npx cap sync ios
+
+echo "Verify Capacitor package exists"
+ls -la node_modules/@capacitor/app
 
 echo "===== XCODE CLOUD POST CLONE END ====="
