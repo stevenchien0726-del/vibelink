@@ -1,10 +1,13 @@
-#!/bin/sh
+#!/bin/zsh
 set -e
 
-echo "Install Node dependencies"
+echo "===== XCODE CLOUD POST CLONE START ====="
+
+node -v || true
+npm -v || true
+
 npm ci
 
-echo "Sync Capacitor iOS"
 npx cap sync ios
 
-echo "Done post-clone setup"
+echo "===== XCODE CLOUD POST CLONE END ====="
