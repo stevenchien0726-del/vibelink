@@ -126,6 +126,9 @@ export default function PeopleFolderPage({
     user: FolderUser,
     e: React.MouseEvent<HTMLButtonElement>
   ) {
+    e.preventDefault()
+    e.stopPropagation()
+
     const sourceRect = e.currentTarget.getBoundingClientRect()
 
     if (onPickUser) {

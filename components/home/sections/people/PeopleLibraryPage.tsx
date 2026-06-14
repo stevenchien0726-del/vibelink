@@ -717,11 +717,11 @@ function UserAvatarWithName({
       onPointerUpCapture={(e) => {
         e.preventDefault()
         e.stopPropagation()
-        onClick(e as unknown as React.MouseEvent<HTMLButtonElement>)
       }}
       onClick={(e) => {
         e.preventDefault()
         e.stopPropagation()
+        onClick(e)
       }}
       className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
       aria-label={`Open ${user.name} profile`}
@@ -759,7 +759,11 @@ function MoreUsersPreview({
   return (
     <button
       type="button"
-      onClick={onOpenFolder}
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onOpenFolder()
+      }}
       className="flex h-[64px] w-[64px] flex-col items-center justify-start bg-transparent p-0 transition-transform active:scale-95"
       aria-label="Open folder"
     >
@@ -820,6 +824,7 @@ function FolderPreview({
             key={user.id}
             user={user}
             onClick={(e) => {
+              e.preventDefault()
               e.stopPropagation()
 
               const sourceRect = e.currentTarget.getBoundingClientRect()
