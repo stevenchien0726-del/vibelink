@@ -5,35 +5,20 @@ echo "===== XCODE CLOUD POST CLONE START ====="
 
 cd /Volumes/workspace/repository
 
-echo "Current directory:"
-pwd
+echo "Install Node.js by Homebrew"
+brew update
+brew install node
 
-echo "PATH:"
-echo $PATH
+echo "Node version:"
+node -v
 
-# Xcode Cloud Node locations
-export PATH="/opt/homebrew/bin:$PATH"
-export PATH="/usr/local/bin:$PATH"
+echo "NPM version:"
+npm -v
 
-# Try common node locations
-if [ -x "/usr/local/bin/node" ]; then
-  export PATH="/usr/local/bin:$PATH"
-fi
-
-if [ -x "/opt/homebrew/bin/node" ]; then
-  export PATH="/opt/homebrew/bin:$PATH"
-fi
-
-which node || true
-which npm || true
-
-node -v || true
-npm -v || true
-
-echo "Install dependencies"
+echo "Install Node dependencies"
 npm ci
 
-echo "Sync Capacitor"
+echo "Sync Capacitor iOS"
 npx cap sync ios
 
 echo "===== XCODE CLOUD POST CLONE END ====="
