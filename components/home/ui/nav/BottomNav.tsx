@@ -67,7 +67,17 @@ export default function BottomNav({ current, setPage }: Props) {
         : 1
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[40] flex justify-center pb-5">
+    <>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-[39] bg-[var(--app-bg)]"
+        style={{ height: 'env(safe-area-inset-bottom)' }}
+      />
+
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-[40] flex justify-center"
+        style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
+      >
       <div
         className="
           pointer-events-auto relative h-[58px] w-[330px]
@@ -120,6 +130,7 @@ export default function BottomNav({ current, setPage }: Props) {
           })}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

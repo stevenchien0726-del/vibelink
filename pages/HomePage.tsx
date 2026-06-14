@@ -1224,7 +1224,7 @@ const handleOpenFeedPost = useCallback(
   <div
   data-auth-modal-open={isAuthModalOpen ? 'true' : 'false'}
   {...homePullHandlers}
-  className="relative min-h-screen w-full overflow-x-hidden bg-[var(--app-bg)] text-[var(--app-text)]"
+  className="relative min-h-[100dvh] w-full overflow-x-hidden bg-[var(--app-bg)] text-[var(--app-text)]"
 >
     {(isRefreshingHome || homePullDistance > 0) && (
       <div

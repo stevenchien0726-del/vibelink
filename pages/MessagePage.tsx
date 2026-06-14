@@ -681,7 +681,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
   ref={messageScrollRef}
   onScroll={handleMessageScroll}
   {...pullHandlers}
-  className="relative flex h-screen flex-col overflow-y-auto bg-[var(--app-bg)] px-4 pt-4 pb-2 text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  className="relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-y-auto overflow-x-hidden bg-[var(--app-bg)] px-4 pt-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 >
   {(isRefreshingMessages || pullDistance > 0) && (
     <div

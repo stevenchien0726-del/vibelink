@@ -445,7 +445,7 @@ async function toggleSelectedPostSave() {
 
     <div
       {...profilePullHandlers}
-      className="relative min-h-screen overscroll-contain bg-[var(--app-bg)] pb-[110px] text-[var(--app-text)] touch-pan-y"
+      className="relative min-h-[100dvh] overflow-x-hidden overscroll-contain bg-[var(--app-bg)] pb-[calc(110px+env(safe-area-inset-bottom))] text-[var(--app-text)] touch-pan-y"
     >
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[90px]">
         {(isRefreshingProfile || profilePullDistance > 0) && (

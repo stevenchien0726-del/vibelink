@@ -310,6 +310,14 @@ useEffect(() => {
     isSwipeBlockedRef.current = false
   }
 
+  function resetPageSwipe() {
+    isPointerDownRef.current = false
+    isSwipeBlockedRef.current = false
+    setIsDraggingPage(false)
+    setIsSnapAnimating(false)
+    setSwipeOffset(0)
+  }
+
   const pageTranslateStyle =
     isDraggingPage || isSnapAnimating
       ? { transform: `translateX(${swipeOffset}px)` }
@@ -321,13 +329,15 @@ useEffect(() => {
 
   return (
     <main
-      className="mx-auto min-h-screen w-full max-w-[430px] overflow-x-hidden bg-[#f5f5f5] pb-[90px]"
+      className="mx-auto min-h-[100dvh] w-full max-w-[430px] overflow-x-hidden bg-[var(--app-bg)] pb-[calc(90px+env(safe-area-inset-bottom))] text-[var(--app-text)]"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onTouchCancel={resetPageSwipe}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerCancel={resetPageSwipe}
     >
 
       {showWarning && (
@@ -336,7 +346,7 @@ useEffect(() => {
   </div>
 )}
       <div
-        className={`min-h-screen ${
+        className={`min-h-[100dvh] bg-[var(--app-bg)] ${
           isDraggingPage
             ? 'will-change-transform'
             : isSnapAnimating

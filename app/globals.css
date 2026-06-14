@@ -11,6 +11,7 @@
   --ai-tool-icon: #111111;
 
   --switch-track: #f3f3f3;
+  color-scheme: light;
 }
 
 html.dark {
@@ -26,6 +27,7 @@ html.dark {
   --app-border: #3f3f49;
   --ai-tool-icon: #ffffff;
   --switch-track: #3a3a46;
+  color-scheme: dark;
 }
 
 html,
@@ -35,6 +37,14 @@ body {
   background: var(--app-bg);
   overflow-x: hidden;
   overscroll-behavior-x: none;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100dvh;
 }
 
 * {
