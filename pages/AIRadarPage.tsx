@@ -1271,6 +1271,9 @@ typeText(nextAiText, requestId)
 }, 320, requestId)
 }
 
+  const promptPillClassName =
+    'rounded-[18px] border border-white/[0.12] bg-white/[0.06] px-4 py-3 text-center font-semibold shadow-[0_6px_18px_rgba(0,0,0,0.06)] backdrop-blur-[8px] transition active:scale-[0.98]'
+
   return (
   <>
     <div className="hidden">
@@ -1480,12 +1483,16 @@ typeText(nextAiText, requestId)
             ease: [0.22, 1, 0.36, 1],
           }}
         >
-          <div className="mb-6 flex items-center justify-center gap-2 rounded-[18px] bg-[var(--app-card)] px-4 py-3 text-center text-[15px] font-semibold text-purple-700 shadow-[0_6px_18px_rgba(0,0,0,0.06)]">
-            <Sparkles size={17} fill="currentColor" />
-            <span>{text.heroTitle}</span>
-          </div>
-
           <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => setShowAIRadarInfo(true)}
+              className={`flex w-full items-center justify-center gap-2 text-[15px] text-[#a855f7] ${promptPillClassName}`}
+            >
+              <Sparkles size={17} fill="currentColor" />
+              <span>{text.heroTitle}</span>
+            </button>
+
             {starterPrompts.map((item, index) => (
               <motion.button
                 key={item}
@@ -1498,9 +1505,9 @@ typeText(nextAiText, requestId)
                   duration: 0.36,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="min-h-[52px] rounded-[18px] bg-[var(--app-card)] px-4 py-3 text-center shadow-[0_6px_18px_rgba(0,0,0,0.06)] backdrop-blur-[8px] transition active:scale-[0.98]"
+                className={`min-h-[52px] w-full text-[14px] text-[var(--app-text)] ${promptPillClassName}`}
               >
-                <span className="block text-[14px] leading-[1.35] text-[var(--app-text)]">
+                <span className="block leading-[1.35]">
                   {item}
                 </span>
               </motion.button>
