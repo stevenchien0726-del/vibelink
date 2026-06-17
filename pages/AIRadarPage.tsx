@@ -1272,7 +1272,7 @@ typeText(nextAiText, requestId)
 }
 
   const promptPillClassName =
-    'rounded-[18px] border border-white/[0.12] bg-white/[0.06] px-4 py-3 text-center font-semibold shadow-[0_6px_18px_rgba(0,0,0,0.06)] backdrop-blur-[8px] transition active:scale-[0.98]'
+    'min-h-[52px] rounded-[18px] border border-white/[0.12] bg-white/[0.06] px-5 py-3 text-center font-semibold shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] active:scale-[0.98] transition'
 
   return (
   <>
