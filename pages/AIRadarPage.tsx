@@ -1636,17 +1636,19 @@ typeText(nextAiText, requestId)
     </button>
   </div>
 
-<AIRadarInputBar
-  inputValue={inputValue}
-  locale={safeLocale}
-  setInputValue={setInputValue}
-  selectedLibraryUser={selectedLibraryUser}
-  setSelectedLibraryUser={setSelectedLibraryUser}
-  onOpenPeopleLibrary={() => setIsPeopleLibraryOpen(true)}
-  onSubmit={handleSubmit}
-  hasInput={hasInput}
-  targetRef={targetRef}
-/>
+<div className="[&_button.h-\[22px\].w-\[22px\]]:!text-black [&_button.h-\[22px\].w-\[22px\]_svg]:!text-black">
+  <AIRadarInputBar
+    inputValue={inputValue}
+    locale={safeLocale}
+    setInputValue={setInputValue}
+    selectedLibraryUser={selectedLibraryUser}
+    setSelectedLibraryUser={setSelectedLibraryUser}
+    onOpenPeopleLibrary={() => setIsPeopleLibraryOpen(true)}
+    onSubmit={handleSubmit}
+    hasInput={hasInput}
+    targetRef={targetRef}
+  />
+</div>
 
       {/* People Library */}
       {isPeopleLibraryOpen && (

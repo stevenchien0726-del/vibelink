@@ -1013,7 +1013,7 @@ if (!error) {
                   <button
                     type="button"
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex h-[42px] min-w-[112px] items-center justify-center rounded-[15px] bg-white text-[13px] text-[var(--app-text)] active:scale-95"
+                    className="flex h-[42px] min-w-[112px] items-center justify-center rounded-[15px] bg-white text-[13px] !text-black active:scale-95"
                   >
                     CLOSE
                   </button>
@@ -1106,7 +1106,7 @@ if (!error) {
                   <button
                     type="button"
                     onClick={() => setIsFollowMenuOpen(false)}
-                    className="flex h-[42px] min-w-[112px] items-center justify-center rounded-[15px] bg-white text-[13px] text-[var(--app-text)] active:scale-95"
+                    className="flex h-[42px] min-w-[112px] items-center justify-center rounded-[15px] bg-white text-[13px] !text-black active:scale-95"
                   >
                     CLOSE
                   </button>
@@ -1117,13 +1117,13 @@ if (!error) {
                 <button
   type="button"
   onClick={toggleFavorite}
-  className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[var(--app-text)] active:bg-black/5"
+  className="flex h-[58px] w-full items-center pr-5 text-[14px] !text-black active:bg-black/5"
 >
   <div className="flex w-[54px] items-center justify-end">
   <Star
     size={18}
-    fill={isFavorite ? '#A855F7' : 'transparent'}
-    color={isFavorite ? '#A855F7' : '#111'}
+    fill={isFavorite ? '#000' : 'transparent'}
+    color="#000"
   />
 </div>
 
@@ -1140,10 +1140,10 @@ if (!error) {
                     setIsFollowMenuOpen(false)
                     setIsUnfollowConfirmOpen(true)
                   }}
-                  className="flex h-[58px] w-full items-center pr-5 text-[14px] text-[var(--app-text)] active:bg-black/5"
+                  className="flex h-[58px] w-full items-center pr-5 text-[14px] !text-black active:bg-black/5"
                 >
                   <div className="flex w-[54px] items-center justify-end">
-                    <CircleX size={18} />
+                    <CircleX size={18} className="!text-black" />
                   </div>
 
                   <span className="ml-5">
