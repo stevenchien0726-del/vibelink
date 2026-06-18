@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import ThemeInit from '../components/ThemeInit'
 import ReactQueryProvider from '../components/providers/ReactQueryProvider'
@@ -8,6 +8,14 @@ import AuthDeepLinkHandler from '../components/auth/AuthDeepLinkHandler'
 export const metadata: Metadata = {
   title: 'Vibelink',
   description: 'Vibelink App',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
