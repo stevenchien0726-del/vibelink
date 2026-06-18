@@ -1,10 +1,13 @@
 'use client'
 
-import { Ticket, ChevronRight } from 'lucide-react'
-import { VIBETV_APP_URL, openLink } from '@/lib/links'
+import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Ticket, ChevronDown, ChevronRight } from 'lucide-react'
 import { uiText } from '@/lib/uiText'
 
 export default function VibeTvPage() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   const text = {
     membership: uiText('Vibe會員', 'Vibe Membership'),
     comingSoon: uiText(
@@ -18,16 +21,57 @@ export default function VibeTvPage() {
       <div className="mx-auto w-full max-w-[430px]">
         <div className="fixed left-1/2 top-0 z-[100] w-full max-w-[430px] -translate-x-1/2 border-b border-[var(--app-card-border)] bg-[var(--app-bg)]/95 px-3 pb-3 pt-4 backdrop-blur-md">
           <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                window.open('https://vibe-membership-web.vercel.app', '_blank')
-              }}
-              className="flex h-10 items-center justify-center gap-2 rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 text-[18px] font-medium text-[var(--app-text)] active:scale-[0.98]"
-            >
-              <Ticket className="h-[18px] w-[18px]" strokeWidth={2.2} />
-              <span>{text.membership}</span>
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                aria-expanded={isMenuOpen}
+                onClick={() => setIsMenuOpen((prev) => !prev)}
+                className="flex min-h-10 items-center justify-center gap-2 rounded-full border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 active:scale-[0.98]"
+              >
+                <img
+                  src="/image/vibe-tv-logo.png"
+                  alt="VIBE TV"
+                  className="block h-[22px] w-auto object-contain"
+                />
+
+                <ChevronDown
+                  className={`h-6 w-6 shrink-0 self-center text-[var(--app-text)] transition-transform duration-200 ${
+                    isMenuOpen ? 'rotate-180' : 'rotate-0'
+                  }`}
+                  strokeWidth={2.4}
+                />
+              </button>
+
+              <AnimatePresence>
+                {isMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.92, y: -6 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: -6 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    className="absolute left-0 top-[calc(100%+8px)] z-[110] rounded-[16px] border border-white/15 bg-black/60 p-2 shadow-[0_12px_32px_rgba(0,0,0,0.24)] backdrop-blur-md"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false)
+                        window.open(
+                          'https://vibe-membership-web.vercel.app',
+                          '_blank'
+                        )
+                      }}
+                      className="flex h-10 min-w-[150px] items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 text-[16px] font-medium text-white transition active:scale-[0.98]"
+                    >
+                      <Ticket
+                        className="h-[18px] w-[18px]"
+                        strokeWidth={2.2}
+                      />
+                      <span>{text.membership}</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             <div
   className="
@@ -56,17 +100,6 @@ export default function VibeTvPage() {
         </div>
 
         <main className="flex min-h-screen flex-col items-center px-4 pt-[86px]">
-          <div className="mb-5 w-full">
-            <h1 className="text-[36px] font-black italic leading-[1.18] tracking-[-0.03em]">
-              <span className="inline-block bg-gradient-to-r from-[#c86ad9] to-[#7a4fd1] bg-clip-text pr-[10px] text-transparent">
-                VIBE
-              </span>
-              <span className="ml-1 inline-block text-[var(--app-text)]">
-                TV
-              </span>
-            </h1>
-          </div>
-
           <div className="w-full overflow-hidden rounded-[28px] border border-[var(--app-card-border)] bg-[var(--app-card)] shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
             <img
               src="/image/vibetv-coming-soon.png"

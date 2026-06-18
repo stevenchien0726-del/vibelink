@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import type { Locale } from '@/i18n'
 
@@ -38,6 +40,42 @@ const inputText = {
   },
 } as const
 
+const MAX_TEXTAREA_LINES = 4
+const TEXTAREA_LINE_HEIGHT = 20
+const MAX_TEXTAREA_HEIGHT = MAX_TEXTAREA_LINES * TEXTAREA_LINE_HEIGHT
+const INPUT_LIMIT_MESSAGE = '已達到輸入上限'
+
+function resizeTextarea(textarea: HTMLTextAreaElement) {
+  textarea.style.height = 'auto'
+  textarea.style.height = `${Math.min(
+    textarea.scrollHeight,
+    MAX_TEXTAREA_HEIGHT
+  )}px`
+
+  return Math.min(
+    MAX_TEXTAREA_LINES,
+    Math.max(1, Math.ceil(textarea.scrollHeight / TEXTAREA_LINE_HEIGHT))
+  )
+}
+
+function fitsTextareaLimit(
+  textarea: HTMLTextAreaElement,
+  nextValue: string
+) {
+  const previousValue = textarea.value
+  const previousHeight = textarea.style.height
+
+  textarea.value = nextValue
+  textarea.style.height = 'auto'
+
+  const fits = textarea.scrollHeight <= MAX_TEXTAREA_HEIGHT
+
+  textarea.value = previousValue
+  textarea.style.height = previousHeight
+
+  return fits
+}
+
 export default function AIRadarInputBar({
   inputValue,
   setInputValue,
@@ -49,8 +87,44 @@ export default function AIRadarInputBar({
   targetRef,
   locale,
 }: Props) {
+  const canSend = hasInput || !!selectedLibraryUser
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const lastAcceptedValueRef = useRef(inputValue)
+  const [textareaLineCount, setTextareaLineCount] = useState(1)
+
+  function handleTextareaChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    const textarea = event.currentTarget
+    const nextValue = textarea.value
+
+    if (!fitsTextareaLimit(textarea, nextValue)) {
+      alert(INPUT_LIMIT_MESSAGE)
+      textarea.value = inputValue
+      setTextareaLineCount(resizeTextarea(textarea))
+      return
+    }
+
+    lastAcceptedValueRef.current = nextValue
+    setInputValue(nextValue)
+    setTextareaLineCount(resizeTextarea(textarea))
+  }
+
+  useEffect(() => {
+    const textarea = textareaRef.current
+
+    if (!textarea) return
+
+    if (!fitsTextareaLimit(textarea, inputValue)) {
+      alert(INPUT_LIMIT_MESSAGE)
+      setInputValue(lastAcceptedValueRef.current)
+      return
+    }
+
+    lastAcceptedValueRef.current = inputValue
+    setTextareaLineCount(resizeTextarea(textarea))
+  }, [inputValue, setInputValue])
+
   return (
-    <div className="fixed bottom-[92px] left-1/2 z-[60] flex w-full max-w-[430px] -translate-x-1/2 items-center gap-2 px-4">
+    <div className="flex w-full items-end gap-2 px-4">
       <div ref={targetRef} className="relative h-[50px] w-[130px] shrink-0">
         {selectedLibraryUser ? (
           <div className="flex h-[50px] w-full items-center gap-2 rounded-full bg-[#D9D9D9] px-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
@@ -93,25 +167,30 @@ export default function AIRadarInputBar({
         )}
       </div>
 
-      <div className="flex h-[50px] min-w-0 flex-1 items-center rounded-full bg-[#d0d0d0] pl-4 pr-[6px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-        <input
+      <div
+        className={`flex min-w-0 flex-1 items-center rounded-[25px] bg-[#d0d0d0] pl-4 pr-[6px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ${
+          textareaLineCount > 1
+            ? 'min-h-[50px] py-[15px]'
+            : 'min-h-[40px] py-[10px]'
+        }`}
+      >
+        <textarea
+          ref={textareaRef}
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') onSubmit()
-          }}
+          onChange={handleTextareaChange}
           placeholder={inputText[locale].placeholder}
-          className="w-full min-w-0 text-[15px] text-[#222] placeholder:text-[#8a8a8a] outline-none"
+          rows={1}
+          className="max-h-[80px] min-h-[20px] w-full min-w-0 resize-none overflow-hidden border-0 bg-transparent p-0 text-[15px] leading-[20px] text-[#222] placeholder:text-[#8a8a8a] outline-none"
         />
 
         <button
-          type="button"
-          aria-label={inputText[locale].send}
-          onClick={() => onSubmit()}
-          className="ml-2 grid h-[36px] w-[36px] shrink-0 place-items-center rounded-full bg-transparent transition active:scale-95"
-        >
-          <EnterArrowIcon active={hasInput || !!selectedLibraryUser} />
-        </button>
+  type="button"
+  aria-label={inputText[locale].send}
+  onClick={() => onSubmit()}
+  className="relative ml-2 h-[40px] w-[40px] shrink-0 self-center overflow-visible rounded-full bg-transparent transition active:scale-95"
+>
+  <EnterArrowIcon active={canSend} />
+</button>
       </div>
     </div>
   )
@@ -153,26 +232,21 @@ function UserCircleIcon() {
 }
 
 function EnterArrowIcon({ active }: { active: boolean }) {
-  const color = active ? '#9f449f' : '#111111'
-
   return (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2.2" />
-
-      <path
-        d="M12 16V9"
-        stroke={color}
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M8 13l4-4 4 4"
-        stroke={color}
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <AnimatePresence>
+      {active ? (
+        <motion.img
+          key="active-send-icon"
+          src="/image/send-button-icon.png"
+          alt=""
+          aria-hidden="true"
+          initial={{ opacity: 0, scale: 0.75 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.75 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="relative left-1/2 top-1/2 h-[54px] w-[54px] -translate-x-1/2 -translate-y-1/2 object-contain"
+        />
+      ) : null}
+    </AnimatePresence>
   )
 }

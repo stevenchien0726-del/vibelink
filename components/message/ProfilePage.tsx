@@ -723,6 +723,7 @@ async function toggleSelectedPostSave() {
   <ProfileMenuSheet
     open={isMenuOpen}
     text={text}
+    isDarkMode={darkMode}
     onClose={() => setIsMenuOpen(false)}
     onNotifications={() => {
       setShowNotificationsPage(true)

@@ -12,7 +12,15 @@ import {
 
 type Props = {
   open: boolean
-  text: any
+  text: {
+    notifications: string
+    analytics: string
+    archive: string
+    settings: string
+    account: string
+    membership: string
+  }
+  isDarkMode: boolean
   onClose: () => void
   onNotifications: () => void
   onAnalytics: () => void
@@ -68,7 +76,7 @@ function MenuItem({
               <img
                 src={labelImage.src}
                 alt={labelImage.alt}
-                className={`${imageLabelInnerClassName} absolute left-0 top-1/2 max-w-none -translate-y-1/2 object-contain object-left dark:invert`}
+                className={`${imageLabelInnerClassName} absolute left-0 top-1/2 max-w-none -translate-y-1/2 object-contain object-left`}
               />
             </span>
           ) : (
@@ -83,6 +91,7 @@ function MenuItem({
 export default function ProfileMenuSheet({
   open,
   text,
+  isDarkMode,
   onClose,
   onNotifications,
   onAnalytics,
@@ -149,7 +158,9 @@ export default function ProfileMenuSheet({
   }
   label="Vibe City"
   labelImage={{
-    src: '/image/vibe-city-wordmark.png',
+    src: isDarkMode
+      ? '/image/vibe-city-wordmark-white.png'
+      : '/image/vibe-city-wordmark.png',
     alt: 'VIBE CITY',
   }}
   imageLabelClassName="relative left-[-16px] h-[26px] w-[130px]"

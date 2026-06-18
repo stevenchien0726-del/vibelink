@@ -1605,7 +1605,8 @@ typeText(nextAiText, requestId)
 </main>
           
 
-  <div className="fixed bottom-[148px] left-1/2 z-[70] flex w-full max-w-[430px] -translate-x-1/2 justify-end gap-4 pb-1.5 px-6">
+<div className="fixed bottom-[92px] left-1/2 z-[70] flex w-full max-w-[430px] -translate-x-1/2 flex-col gap-2">
+  <div className="flex w-full justify-end gap-4 px-6 pb-1.5">
     <button
       type="button"
       onClick={handleClearInput}
@@ -1636,18 +1637,19 @@ typeText(nextAiText, requestId)
     </button>
   </div>
 
-<div className="[&_button.h-\[22px\].w-\[22px\]]:!text-black [&_button.h-\[22px\].w-\[22px\]_svg]:!text-black">
-  <AIRadarInputBar
-    inputValue={inputValue}
-    locale={safeLocale}
-    setInputValue={setInputValue}
-    selectedLibraryUser={selectedLibraryUser}
-    setSelectedLibraryUser={setSelectedLibraryUser}
-    onOpenPeopleLibrary={() => setIsPeopleLibraryOpen(true)}
-    onSubmit={handleSubmit}
-    hasInput={hasInput}
-    targetRef={targetRef}
-  />
+  <div className="[&_button.h-\[22px\].w-\[22px\]]:!text-black [&_button.h-\[22px\].w-\[22px\]_svg]:!text-black">
+    <AIRadarInputBar
+      inputValue={inputValue}
+      locale={safeLocale}
+      setInputValue={setInputValue}
+      selectedLibraryUser={selectedLibraryUser}
+      setSelectedLibraryUser={setSelectedLibraryUser}
+      onOpenPeopleLibrary={() => setIsPeopleLibraryOpen(true)}
+      onSubmit={handleSubmit}
+      hasInput={hasInput}
+      targetRef={targetRef}
+    />
+  </div>
 </div>
 
       {/* People Library */}
