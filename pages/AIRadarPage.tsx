@@ -1452,7 +1452,7 @@ typeText(nextAiText, requestId)
     touchAction: 'pan-y',
   }}
   ref={mainScrollRef}
-  className="h-[100dvh] min-h-[100dvh] overflow-y-auto overflow-x-hidden bg-[var(--app-bg)] px-4 pt-[76px] pb-[calc(170px+env(safe-area-inset-bottom))] text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  className="h-[100dvh] min-h-[100dvh] overflow-y-auto overflow-x-hidden bg-[var(--app-bg)] px-4 pt-[76px] pb-[calc(210px+env(safe-area-inset-bottom))] text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 >
         <div className="flex min-h-[calc(100vh-76px)] flex-col">
          
@@ -1605,7 +1605,7 @@ typeText(nextAiText, requestId)
 </main>
           
 
-<div className="fixed bottom-[92px] left-1/2 z-[70] flex w-full max-w-[430px] -translate-x-1/2 flex-col gap-2">
+<div className="fixed bottom-[calc(88px+env(safe-area-inset-bottom))] left-1/2 z-[70] flex w-full max-w-[430px] -translate-x-1/2 flex-col gap-2">
   <div className="flex w-full justify-end gap-4 px-6 pb-1.5">
     <button
       type="button"

@@ -74,10 +74,7 @@ export default function BottomNav({ current, setPage }: Props) {
         style={{ height: 'env(safe-area-inset-bottom)' }}
       />
 
-      <div
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-[40] flex justify-center"
-        style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
-      >
+      <div className="pointer-events-none fixed inset-x-0 bottom-[max(12px,env(safe-area-inset-bottom))] z-[40] flex justify-center">
       <div
         className="
           pointer-events-auto relative h-[58px] w-[330px]
