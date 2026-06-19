@@ -51,17 +51,13 @@ export default function EmailOtpLogin() {
   }
 
   return (
-    <div className="w-full text-black">
+    <div className="w-full text-black dark:text-white">
       <div className="flex flex-col gap-3">
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          style={{
-            color: '#111111',
-            WebkitTextFillColor: '#111111',
-          }}
           className="
             h-[54px]
             w-full
@@ -77,8 +73,8 @@ export default function EmailOtpLogin() {
             shadow-[0_4px_14px_rgba(0,0,0,0.06)]
             dark:border-white/15
             dark:bg-white/10
-            dark:text-black
-            dark:placeholder:text-black/45
+            dark:text-white
+            dark:placeholder:text-white/60
           "
         />
 
@@ -86,10 +82,6 @@ export default function EmailOtpLogin() {
           type="button"
           disabled={loading || sent || cooldown > 0}
           onClick={handleSendOtp}
-          style={{
-            color: '#111111',
-            WebkitTextFillColor: '#111111',
-          }}
           className="
             flex
             h-[54px]
@@ -109,7 +101,7 @@ export default function EmailOtpLogin() {
             disabled:opacity-100
             dark:border-white/15
             dark:bg-white/10
-            dark:text-black
+            dark:text-white
           "
         >
           {loading
