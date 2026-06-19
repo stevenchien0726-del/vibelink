@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCachedSession } from '@/lib/authSessionCache'
 import { ensureUserProfile } from '@/lib/profile'
+import { getAuthCallbackUrl } from '@/lib/authRedirect'
 
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -114,6 +115,8 @@ const [showAIRadarInfo, setShowAIRadarInfo] = useState(false)
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 const [authLoading, setAuthLoading] = useState(false)
+const [authErrorMessage, setAuthErrorMessage] = useState('')
+const [showEmailLogin, setShowEmailLogin] = useState(false)
 
   const [inputValue, setInputValue] = useState('')
   const [isListening, setIsListening] = useState(false)
@@ -677,17 +680,21 @@ if (cancelled) return
 }, [])
 
 async function handleGoogleLogin() {
+  if (authLoading) return
+
   setAuthLoading(true)
+  setAuthErrorMessage('')
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: getAuthCallbackUrl(),
     },
   })
 
   if (error) {
     console.error('Google 登入失敗:', error)
+    setAuthErrorMessage('Google 登入失敗，請稍後再試或使用 Email 登入')
     setAuthLoading(false)
   }
 }
@@ -1327,19 +1334,38 @@ typeText(nextAiText, requestId)
         {text.loginSubtitle}
       </p>
 
-      <EmailOtpLogin />
+      {authErrorMessage && (
+        <p className="mt-5 rounded-[18px] bg-red-500/10 px-4 py-3 text-[14px] font-medium text-red-500">
+          {authErrorMessage}
+        </p>
+      )}
 
-      {false && (
-  <button
+      <button
         type="button"
         disabled={authLoading}
         onClick={handleGoogleLogin}
-        className="mt-8 flex h-[54px] w-full items-center justify-center rounded-full bg-[var(--app-card)] text-[18px] font-medium text-[var(--app-text)] shadow-[0_4px_14px_rgba(0,0,0,0.14)] transition active:scale-[0.98] disabled:opacity-60"
+        className="mt-8 flex h-[54px] w-full items-center justify-center rounded-full bg-[var(--app-text)] text-[18px] font-medium text-[var(--app-bg)] shadow-[0_4px_14px_rgba(0,0,0,0.14)] transition active:scale-[0.98] disabled:opacity-60"
       >
         {authLoading
   ? text.loggingIn
-  : text.loginButton}
+  : '使用 Google 登入 Vibelink'}
       </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          setAuthErrorMessage('')
+          setShowEmailLogin((prev) => !prev)
+        }}
+        className="mt-4 text-[15px] font-medium text-[var(--app-muted)] underline-offset-4 active:scale-[0.98]"
+      >
+        使用 Email 登入
+      </button>
+
+      {showEmailLogin && (
+        <div className="mt-5">
+          <EmailOtpLogin />
+        </div>
       )}
     </div>
   </div>

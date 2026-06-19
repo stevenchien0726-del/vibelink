@@ -15,7 +15,7 @@ export default function HomeAuthModal({
   const text = {
     title: uiText('登入 Vibelink', 'Log in to Vibelink'),
     subtitle: uiText('登入後即可發文與使用完整功能', 'Log in to post and use all features'),
-    googleLogin: uiText('GOOGLE 登入', 'Continue with Google'),
+    googleLogin: uiText('使用 Google 登入 Vibelink', 'Continue with Google'),
   }
 
   return (
