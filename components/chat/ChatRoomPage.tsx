@@ -11,6 +11,7 @@ import {
 } from 'framer-motion'
 import { ChevronLeft, Image as ImageIcon, ArrowUp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { uiText } from '@/lib/uiText'
 import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
 import type { Locale } from '@/i18n'
 
@@ -158,7 +159,7 @@ const realtimeChannelRef = useRef<any>(null)
 
       if (findError) {
         console.error('讀取 conversation 失敗:', findError)
-        setChatError('聊天室讀取失敗')
+        setChatError(uiText('聊天室讀取失敗', 'Failed to load chat'))
         setChatLoading(false)
         return
       }
@@ -175,7 +176,7 @@ const realtimeChannelRef = useRef<any>(null)
 
         if (createError) {
           console.error('建立 conversation 失敗:', createError)
-          setChatError('聊天室建立失敗')
+          setChatError(uiText('聊天室建立失敗', 'Failed to create chat'))
           setChatLoading(false)
           return
         }
@@ -184,7 +185,7 @@ const realtimeChannelRef = useRef<any>(null)
       }
 
       if (!conversation) {
-        setChatError('找不到聊天室')
+        setChatError(uiText('找不到聊天室', 'Chat not found'))
         setChatLoading(false)
         return
       }
@@ -212,7 +213,7 @@ const realtimeChannelRef = useRef<any>(null)
       if (messageError) {
         if (cachedRoom) return
         console.error('讀取聊天訊息失敗:', messageError)
-        setChatError('聊天室讀取失敗')
+        setChatError(uiText('聊天室讀取失敗', 'Failed to load chat'))
         setChatLoading(false)
         return
       }
@@ -659,7 +660,7 @@ setMessages((prev) => {
           <div className="flex-1 overflow-y-auto px-4 py-5">
             {chatLoading && (
               <div className="pb-4 text-center text-[14px] text-[var(--app-muted)]">
-                聊天室讀取中...
+                {uiText('聊天室讀取中...', 'Loading chat...')}
               </div>
             )}
 
@@ -674,7 +675,7 @@ setMessages((prev) => {
                   onClick={() => window.location.reload()}
                   className="rounded-full bg-[#c86cff] px-4 py-2 text-[13px] text-white"
                 >
-                  重新讀取
+                  {uiText('重新讀取', 'Retry')}
                 </button>
               </div>
             )}
@@ -837,7 +838,7 @@ setMessages((prev) => {
                     handleSend()
                   }
                 }}
-                placeholder="訊息"
+                placeholder={uiText('訊息', 'Message')}
                 className="flex-1 bg-transparent text-[15px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
               />
 

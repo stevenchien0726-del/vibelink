@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   onClose: () => void
@@ -78,9 +79,9 @@ export default function PostInsightsPage({ onClose, postId }: Props) {
   }
 
   const rows = [
-    { label: '觸及次數', value: stats.views },
-    { label: '按讚次數', value: stats.likes },
-    { label: '留言數', value: stats.comments },
+    { label: uiText('觸及次數', 'Reach'), value: stats.views },
+    { label: uiText('按讚次數', 'Likes'), value: stats.likes },
+    { label: uiText('留言數', 'Comments'), value: stats.comments },
   ]
 
   return (
@@ -102,7 +103,7 @@ export default function PostInsightsPage({ onClose, postId }: Props) {
           </button>
 
           <span className="ml-1 text-[16px] font-medium">
-            貼文流量報告
+            {uiText('貼文流量報告', 'Post Insights')}
           </span>
         </div>
 

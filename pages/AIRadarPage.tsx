@@ -714,7 +714,7 @@ async function handleGoogleLogin() {
 
   if (error) {
     console.error('Google 登入失敗:', error)
-    setAuthErrorMessage('Google 登入失敗，請稍後再試或使用 Email 登入')
+    setAuthErrorMessage(text.googleLoginFailed)
     setAuthLoading(false)
   }
 }
@@ -1134,10 +1134,7 @@ try {
     data = {
       ok: false,
       matchedUsers: [],
-      aiReply:
-        safeLocale === 'en'
-          ? 'Please log in before using AI Radar.'
-          : '請先登入後再使用 AI 雷達。',
+      aiReply: text.loginRequired,
     }
   } else {
   const queryLocale =
@@ -1190,7 +1187,7 @@ try {
   data = {
     ok: false,
     matchedUsers: [],
-    aiReply: 'AI 雷達目前回傳格式異常，請再試一次。',
+    aiReply: text.invalidResponse,
   }
 }
 
@@ -1230,8 +1227,8 @@ console.log('[AI Radar Frontend] parsed data:', data)
     matchedUsers: [],
     aiReply:
       error?.name === 'AbortError'
-        ? 'AI 雷達處理時間較久，請再試一次。'
-        : 'AI 雷達暫時無法連線，請再試一次。',
+        ? text.timeoutError
+        : text.networkError,
   }
 }
 
@@ -1353,13 +1350,11 @@ typeText(nextAiText, requestId)
     <div className="w-full max-w-[360px] rounded-[36px] bg-[var(--app-card)] px-7 py-10 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
       <div className="flex flex-col gap-4">
         <h2 className="text-[28px] font-semibold text-[var(--app-text)]">
-          {safeLocale === 'en' ? 'Choose language' : '選擇語言'}
+          {text.languageTitle}
         </h2>
 
         <p className="text-[16px] text-[var(--app-muted)]">
-          {safeLocale === 'en'
-            ? 'Choose the language you want to use'
-            : '請選擇您想使用的語言'}
+          {text.languageSubtitle}
         </p>
       </div>
 
@@ -1413,7 +1408,7 @@ typeText(nextAiText, requestId)
         >
           {authLoading
     ? text.loggingIn
-    : '使用 Google 登入'}
+    : text.googleLoginButton}
         </button>
 
         <button
@@ -1424,7 +1419,7 @@ typeText(nextAiText, requestId)
           }}
           className="flex h-[52px] w-full items-center justify-center rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)]/55 text-[17px] font-medium text-[var(--app-text)] shadow-[0_4px_14px_rgba(0,0,0,0.06)] transition hover:bg-[var(--app-surface)]/75 active:scale-[0.98]"
         >
-          使用 Email 登入
+          {text.emailLoginButton}
         </button>
       </div>
 
@@ -1486,12 +1481,11 @@ typeText(nextAiText, requestId)
         </div>
 
         <h2 className="text-[24px] font-semibold text-[var(--app-text)]">
-          歡迎來到 Vibelink
+          {text.uploadGuideTitle}
         </h2>
 
         <p className="mt-4 text-[15px] leading-[1.7] text-[var(--app-muted)]">
-          請先上傳第一篇內容，讓 AI 雷達更容易理解你的 Vibe，
-          也讓其他人更容易找到你。
+          {text.uploadGuideSubtitle}
         </p>
 
         <button
@@ -1517,7 +1511,7 @@ typeText(nextAiText, requestId)
             active:scale-[0.98]
           "
         >
-          上傳內容
+          {text.uploadContent}
         </button>
 
         <button
@@ -1531,7 +1525,7 @@ typeText(nextAiText, requestId)
             text-[var(--app-muted)]
           "
         >
-          稍後再說
+          {text.later}
         </button>
       </motion.div>
     </motion.div>

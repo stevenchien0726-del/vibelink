@@ -60,6 +60,14 @@ const messageText = {
 
     pinChat: '釘選重要聊天',
     hideLowInteraction: '隱藏低互動聊天',
+    searchingAccounts: '搜尋追蹤用戶中...',
+    editPinned: '編輯釘選',
+    editHidden: '編輯隱藏',
+    loadingMessages: '訊息讀取中...',
+    retry: '重新讀取',
+    startChat: '開始聊天',
+    pinned: '已釘選',
+    pin: '釘選',
   },
 
   en: {
@@ -79,6 +87,14 @@ const messageText = {
 
     pinChat: 'Pin important chats',
     hideLowInteraction: 'Hide low interaction chats',
+    searchingAccounts: 'Searching followed users...',
+    editPinned: 'Edit pinned',
+    editHidden: 'Edit hidden',
+    loadingMessages: 'Loading messages...',
+    retry: 'Retry',
+    startChat: 'Start chatting',
+    pinned: 'Pinned',
+    pin: 'Pin',
   },
 } as const
 
@@ -826,7 +842,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
                       <div className="flex flex-col gap-2">
                         {isSearchingAccounts ? (
   <div className="rounded-[20px] bg-[var(--app-surface)] px-4 py-5 text-[14px] text-[var(--app-muted)]">
-    搜尋追蹤用戶中...
+    {messageText[locale].searchingAccounts}
   </div>
 ) : filteredAccounts.length > 0 ? (
                           filteredAccounts.map((account) => (
@@ -885,7 +901,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
   }}
   className="flex h-[58px] w-full items-center justify-center text-center text-[16px] font-medium text-[var(--app-text)] active:bg-black/5"
 >
-  編輯釘選
+  {messageText[locale].editPinned}
 </button>
 
       <div className="mx-5 h-px bg-[var(--app-card-border)]" />
@@ -894,7 +910,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
   type="button"
   className="flex h-[58px] w-full items-center justify-center text-center text-[16px] font-medium text-[var(--app-text)] active:bg-black/5"
 >
-  編輯隱藏
+  {messageText[locale].editHidden}
 </button>
     </div>
   </div>
@@ -907,7 +923,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
 
 {messageLoading && (
   <div className="mb-4 rounded-[22px] bg-[#e9e9e9] px-4 py-4 text-[14px] text-[var(--app-muted)]">
-    訊息讀取中...
+    {messageText[locale].loadingMessages}
   </div>
 )}
 
@@ -927,7 +943,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
       }}
       className="rounded-full bg-[#c86cff] px-4 py-2 text-[13px] text-white"
     >
-      重新讀取
+      {messageText[locale].retry}
     </button>
   </div>
 )}
@@ -962,7 +978,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
         </div>
 
         <div className="mt-1 truncate text-[13px] text-[var(--app-muted)]">
-          {conversation.lastMessage || '開始聊天'}
+          {conversation.lastMessage || messageText[locale].startChat}
         </div>
       </div>
       {(isPinEditMode || conversation.isPinned) && (
@@ -979,7 +995,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
         : 'bg-[var(--app-card)] text-[var(--app-muted)]'
     }`}
   >
-    {conversation.isPinned ? '已釘選' : '釘選'}
+    {conversation.isPinned ? messageText[locale].pinned : messageText[locale].pin}
   </span>
 )}
 

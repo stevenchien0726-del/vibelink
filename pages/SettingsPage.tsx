@@ -50,6 +50,11 @@ const settingsText = {
     blocked: '已封鎖',
 
     language: '語言',
+    loading: '讀取中...',
+    noBlockedUsers: '目前沒有封鎖用戶',
+    unblock: '取消封鎖',
+    unblockConfirmTitle: '取消封鎖？',
+    unblockConfirm: '確認取消封鎖',
   },
 
   en: {
@@ -65,6 +70,11 @@ const settingsText = {
     blocked: 'Blocked',
 
     language: 'Language',
+    loading: 'Loading...',
+    noBlockedUsers: 'No blocked users',
+    unblock: 'Unblock',
+    unblockConfirmTitle: 'Unblock?',
+    unblockConfirm: 'Confirm unblock',
   },
 } as const
 
@@ -339,11 +349,11 @@ async function unblockUser(row: any) {
   >
     {blockedLoading ? (
       <div className="py-10 text-center text-[14px] text-[var(--app-muted)]">
-        讀取中...
+        {text.loading}
       </div>
     ) : blockedUsers.length === 0 ? (
       <div className="py-10 text-center text-[14px] text-[var(--app-muted)]">
-        目前沒有封鎖用戶
+        {text.noBlockedUsers}
       </div>
     ) : (
       blockedUsers.map((row) => {
@@ -377,7 +387,7 @@ async function unblockUser(row: any) {
               onClick={() => setConfirmUnblockUser(row)}
               className="rounded-full bg-[#c86cff] px-4 py-2 text-[13px] font-medium text-white active:scale-95"
             >
-              取消封鎖
+              {text.unblock}
             </button>
           </div>
         )
@@ -526,7 +536,7 @@ async function unblockUser(row: any) {
             >
               <div className="px-6 pb-5 pt-6">
                 <div className="text-[18px] font-semibold text-[var(--app-text)]">
-                  取消封鎖？
+                  {text.unblockConfirmTitle}
                 </div>
 
                 <div className="mt-2 text-[14px] leading-relaxed text-[var(--app-muted)]">
@@ -539,7 +549,7 @@ async function unblockUser(row: any) {
                 onClick={() => unblockUser(confirmUnblockUser)}
                 className="h-[48px] w-full border-t border-[var(--app-card-border)] text-[16px] font-medium text-red-500"
               >
-                確認取消封鎖
+                {text.unblockConfirm}
               </button>
 
               <button

@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Ban,
 } from 'lucide-react'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   onClose: () => void
@@ -96,7 +97,7 @@ export default function WideMenuSheet({
                 >
                   <BarChart3 size={20} />
                   <span className="text-[16px] text-[var(--app-text)]">
-                    流量與互動
+                    {uiText('流量與互動', 'Traffic & Interactions')}
                   </span>
                 </button>
 
@@ -111,7 +112,7 @@ export default function WideMenuSheet({
                   <Pin size={20} />
 
                   <span className="text-[16px] text-[var(--app-text)]">
-                    {isPinned ? '取消釘選' : '釘選'}
+                    {isPinned ? uiText('取消釘選', 'Unpin') : uiText('釘選', 'Pin')}
                   </span>
                 </button>
 
@@ -140,9 +141,9 @@ export default function WideMenuSheet({
                         className="ml-[18px] mt-4 overflow-hidden rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-surface)] shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
                       >
                         {[
-                          { value: 'everyone', label: '所有人' },
-                          { value: 'following', label: '你跟隨的用戶' },
-                          { value: 'off', label: '關閉回復功能' },
+                          { value: 'everyone', label: uiText('所有人', 'Everyone') },
+                          { value: 'following', label: uiText('你跟隨的用戶', 'People you follow') },
+                          { value: 'off', label: uiText('關閉回復功能', 'Turn off replies') },
                         ].map((item) => {
                           const active = replyPermission === item.value
 
@@ -243,9 +244,9 @@ export default function WideMenuSheet({
 
         <ConfirmDialog
           open={confirmArchiveOpen}
-          title="確定典藏這篇貼文？"
-          description="典藏後會從個人頁貼文牆隱藏，可到典藏內容頁恢復。"
-          confirmText="確定典藏"
+          title={uiText('確定典藏這篇貼文？', 'Archive this post?')}
+          description={uiText('典藏後會從個人頁貼文牆隱藏，可到典藏內容頁恢復。', 'Archived posts will be hidden from your profile grid and can be restored from Archived Content.')}
+          confirmText={uiText('確定典藏', 'Archive')}
           confirmClassName="text-[#8B5CF6]"
           onConfirm={() => {
             onArchive?.()

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Bell, ChevronLeft, Heart, MessageCircle, UserPlus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
+import { getUiLocale } from '@/lib/uiText'
 
 type Props = {
   onClose: () => void
@@ -31,6 +32,41 @@ type NotificationItem = {
 const NOTIFICATIONS_TIMEOUT_MS = 4500
 const notificationsCache = new Map<string, NotificationItem[]>()
 const notificationsInFlight = new Map<string, Promise<NotificationItem[]>>()
+
+const notificationText = {
+  'zh-TW': {
+    title: '通知',
+    loading: '載入通知中...',
+    emptyTitle: '目前沒有通知',
+    emptyDescription: '新的追蹤、按讚、留言與互動通知之後會顯示在這裡。',
+    loadError: '通知載入逾時或暫時失敗，請稍後再試。',
+    retry: '重新載入',
+    justNow: '剛剛',
+    minutesAgo: (minutes: number) => `${minutes} 分鐘前`,
+    hoursAgo: (hours: number) => `${hours} 小時前`,
+    daysAgo: (days: number) => `${days} 天前`,
+    dateLocale: 'zh-TW',
+    likePost: (name: string) => `${name} 按讚了你的貼文`,
+    commentPost: (name: string) => `${name} 留言了你的貼文`,
+    follow: (name: string) => `${name} 開始追蹤你`,
+  },
+  en: {
+    title: 'Notifications',
+    loading: 'Loading notifications...',
+    emptyTitle: 'No notifications yet',
+    emptyDescription: 'New follows, likes, comments, and interactions will appear here.',
+    loadError: 'Notifications timed out or failed temporarily. Please try again later.',
+    retry: 'Reload',
+    justNow: 'Just now',
+    minutesAgo: (minutes: number) => `${minutes}m ago`,
+    hoursAgo: (hours: number) => `${hours}h ago`,
+    daysAgo: (days: number) => `${days}d ago`,
+    dateLocale: 'en-US',
+    likePost: (name: string) => `${name} liked your post`,
+    commentPost: (name: string) => `${name} commented on your post`,
+    follow: (name: string) => `${name} started following you`,
+  },
+} as const
 
 function withNotificationsTimeout<T>(
   promise: PromiseLike<T>,
@@ -121,29 +157,34 @@ function getNotificationIcon(type: NotificationItem['type']) {
   return <UserPlus size={22} strokeWidth={2.2} />
 }
 
-function formatTime(createdAt: string) {
+function formatTime(
+  createdAt: string,
+  text: (typeof notificationText)['zh-TW'] | (typeof notificationText)['en']
+) {
   const time = new Date(createdAt).getTime()
   const diff = Date.now() - time
   const minutes = Math.floor(diff / 1000 / 60)
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
 
-  if (minutes < 1) return '剛剛'
-  if (minutes < 60) return `${minutes} 分鐘前`
-  if (hours < 24) return `${hours} 小時前`
-  if (days < 7) return `${days} 天前`
+  if (minutes < 1) return text.justNow
+  if (minutes < 60) return text.minutesAgo(minutes)
+  if (hours < 24) return text.hoursAgo(hours)
+  if (days < 7) return text.daysAgo(days)
 
-  return new Date(createdAt).toLocaleDateString('zh-TW')
+  return new Date(createdAt).toLocaleDateString(text.dateLocale)
 }
 
-function getNotificationTitle(item: NotificationItem) {
+function getNotificationTitle(
+  item: NotificationItem,
+  text: (typeof notificationText)['zh-TW'] | (typeof notificationText)['en']
+) {
   const name = item.actor_display_name || item.actor_username || 'Vibelink User'
 
-  if (item.type === 'like') return `${name} 按讚了你的貼文`
-  if (item.type === 'comment') return `${name} 留言了你的貼文`
-  return `${name} 開始追蹤你`
+  if (item.type === 'like') return text.likePost(name)
+  if (item.type === 'comment') return text.commentPost(name)
+  return text.follow(name)
 }
-
 export default function NotificationsPage({
   onClose,
   onOpenProfile,
@@ -151,6 +192,7 @@ export default function NotificationsPage({
 onOpenShortVideo,
   onUnreadCountChange,
 }: Props) {
+  const text = notificationText[getUiLocale()]
   const [items, setItems] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -322,7 +364,7 @@ onOpenShortVideo,
             </button>
 
             <div className="text-[20px] font-medium tracking-[0.02em]">
-              通知
+              {text.title}
             </div>
           </div>
         </div>
@@ -330,7 +372,7 @@ onOpenShortVideo,
         <div className="min-h-screen px-4 pb-[120px] pt-[72px]">
           {loading ? (
             <div className="flex min-h-[70vh] items-center justify-center text-[14px] text-[var(--app-muted)]">
-              載入通知中...
+              {text.loading}
             </div>
           ) : items.length === 0 ? (
             <div className="flex min-h-[80vh] flex-col items-center justify-center px-6 pb-[120px] text-center">
@@ -339,17 +381,17 @@ onOpenShortVideo,
               </div>
 
               <div className="mt-5 text-[18px] font-medium">
-                目前沒有通知
+                {text.emptyTitle}
               </div>
 
               <div className="mt-2 max-w-[260px] text-[14px] leading-relaxed text-[var(--app-muted)]">
-                新的追蹤、按讚、留言與互動通知之後會顯示在這裡。
+                {text.emptyDescription}
               </div>
 
               {loadError && (
                 <>
                   <div className="mt-2 max-w-[260px] text-[14px] leading-relaxed text-[var(--app-muted)]">
-                    通知載入逾時或暫時失敗，請稍後再試。
+                    {text.loadError}
                   </div>
 
                   <button
@@ -357,7 +399,7 @@ onOpenShortVideo,
                     onClick={() => loadNotifications()}
                     className="mt-5 rounded-full bg-[var(--app-surface)] px-5 py-2 text-[14px] font-medium text-[var(--app-text)] active:scale-95"
                   >
-                    重新載入
+                    {text.retry}
                   </button>
                 </>
               )}
@@ -391,7 +433,7 @@ onOpenShortVideo,
 
                   <div className="min-w-0 flex-1">
                     <div className="text-[15px] font-medium text-[var(--app-text)]">
-                      {getNotificationTitle(item)}
+                      {getNotificationTitle(item, text)}
                     </div>
 
                     {item.body && (
@@ -401,7 +443,7 @@ onOpenShortVideo,
                     )}
 
                     <div className="mt-1 text-[12px] text-[var(--app-muted)]">
-                      {formatTime(item.created_at)}
+                      {formatTime(item.created_at, text)}
                     </div>
                   </div>
 

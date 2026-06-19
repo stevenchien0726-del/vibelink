@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
+import { getUiLocale } from '@/lib/uiText'
 import {
   ChevronRight,
   ExternalLink,
@@ -50,6 +51,69 @@ type LinkPortRow = {
 const MAX_LINKS = 8
 const DEFAULT_TYPE: LinkType = 'Custom'
 const REQUEST_TIMEOUT_MS = 8000
+
+const linkPortText = {
+  'zh-TW': {
+    editLink: '編輯連結',
+    addLink: '新增連結',
+    loginExpired: '登入狀態逾時，請重新登入後再試',
+    loadFailed: '讀取失敗，請稍後再試',
+    maxLinks: (max: number) => `最多只能新增 ${max} 個連結`,
+    titleRequired: '請輸入標題',
+    urlRequired: '請輸入連結',
+    titleTooLong: '標題最多 32 字',
+    urlTooLong: '連結最多 300 字',
+    noPermission: '沒有儲存權限，請重新登入後再試',
+    timeout: '連線逾時，請稍後再試',
+    saveFailed: '儲存失敗，請稍後再試',
+    deleteConfirm: '確定要刪除此連結嗎？',
+    deleteFailed: '刪除失敗，請稍後再試',
+    unavailable: '目前登入狀態尚未完成，請重新整理或重新登入後再試。',
+    maxLinksHint: (max: number) => `最多可新增 ${max} 個個人連結`,
+    typeLabel: '連結類型',
+    titleLabel: '標題',
+    titlePlaceholder: '連結名稱，例如 Instagram',
+    urlLabel: '連結',
+    urlPlaceholder: 'https://example.com',
+    cancel: '取消',
+    saving: '儲存中...',
+    save: '儲存',
+    deleteLink: '刪除連結',
+    loading: '載入中...',
+    empty: '尚未新增任何連結',
+    add: '新增',
+  },
+  en: {
+    editLink: 'Edit link',
+    addLink: 'Add link',
+    loginExpired: 'Login session expired. Please sign in again and try later.',
+    loadFailed: 'Failed to load. Please try again later.',
+    maxLinks: (max: number) => `You can add up to ${max} links`,
+    titleRequired: 'Please enter a title',
+    urlRequired: 'Please enter a link',
+    titleTooLong: 'Title can be up to 32 characters',
+    urlTooLong: 'Link can be up to 300 characters',
+    noPermission: 'No permission to save. Please sign in again and try later.',
+    timeout: 'Connection timed out. Please try again later.',
+    saveFailed: 'Failed to save. Please try again later.',
+    deleteConfirm: 'Delete this link?',
+    deleteFailed: 'Failed to delete. Please try again later.',
+    unavailable: 'Your login state is not ready yet. Please refresh or sign in again.',
+    maxLinksHint: (max: number) => `You can add up to ${max} personal links`,
+    typeLabel: 'Link type',
+    titleLabel: 'Title',
+    titlePlaceholder: 'Link name, e.g. Instagram',
+    urlLabel: 'Link',
+    urlPlaceholder: 'https://example.com',
+    cancel: 'Cancel',
+    saving: 'Saving...',
+    save: 'Save',
+    deleteLink: 'Delete link',
+    loading: 'Loading...',
+    empty: 'No links added yet',
+    add: 'Add',
+  },
+} as const
 
 function isValidUuid(value?: string | null) {
   if (!value) return false
@@ -180,6 +244,7 @@ export default function LinkPortSheet({
   userId,
   isOwner,
 }: Props) {
+  const text = linkPortText[getUiLocale()]
   const mountedRef = useRef(false)
   const requestSeqRef = useRef(0)
 
@@ -198,9 +263,9 @@ export default function LinkPortSheet({
   const canUseLinkPort = isValidUuid(userId)
 
   const formTitleText = useMemo(() => {
-    if (formMode === 'edit') return '編輯連結'
-    return '新增連結'
-  }, [formMode])
+    if (formMode === 'edit') return text.editLink
+    return text.addLink
+  }, [formMode, text])
 
   const isSaveDisabled = useMemo(() => {
     return (
@@ -224,7 +289,7 @@ export default function LinkPortSheet({
     if (!isValidUuid(userId)) {
       setLinks([])
       if (isOwner) {
-        setErrorMessage('登入狀態逾時，請重新登入後再試')
+        setErrorMessage(text.loginExpired)
       }
       return
     }
@@ -262,13 +327,13 @@ export default function LinkPortSheet({
       if (!mountedRef.current) return
 
       setLinks([])
-      setErrorMessage('讀取失敗，請稍後再試')
+      setErrorMessage(text.loadFailed)
     } finally {
       if (mountedRef.current && requestSeqRef.current === seq) {
         setLoading(false)
       }
     }
-  }, [isOwner, userId])
+  }, [isOwner, text, userId])
 
   useEffect(() => {
     mountedRef.current = true
@@ -294,12 +359,12 @@ export default function LinkPortSheet({
     if (!isOwner) return
 
     if (!canUseLinkPort) {
-      setErrorMessage('登入狀態逾時，請重新登入後再試')
+      setErrorMessage(text.loginExpired)
       return
     }
 
     if (isMaxLinks) {
-      setErrorMessage(`最多只能新增 ${MAX_LINKS} 個連結`)
+      setErrorMessage(text.maxLinks(MAX_LINKS))
       return
     }
 
@@ -327,22 +392,22 @@ export default function LinkPortSheet({
     const nextUrl = formUrl.trim()
 
     if (!nextTitle) {
-      setErrorMessage('請輸入標題')
+      setErrorMessage(text.titleRequired)
       return false
     }
 
     if (!nextUrl) {
-      setErrorMessage('請輸入連結')
+      setErrorMessage(text.urlRequired)
       return false
     }
 
     if (nextTitle.length > 32) {
-      setErrorMessage('標題最多 32 字')
+      setErrorMessage(text.titleTooLong)
       return false
     }
 
     if (nextUrl.length > 300) {
-      setErrorMessage('連結最多 300 字')
+      setErrorMessage(text.urlTooLong)
       return false
     }
 
@@ -354,12 +419,12 @@ export default function LinkPortSheet({
     if (!isOwner) return
 
     if (!isValidUuid(userId)) {
-      setErrorMessage('登入狀態逾時，請重新登入後再試')
+      setErrorMessage(text.loginExpired)
       return
     }
 
     if (formMode === 'add' && isMaxLinks) {
-      setErrorMessage(`最多只能新增 ${MAX_LINKS} 個連結`)
+      setErrorMessage(text.maxLinks(MAX_LINKS))
       return
     }
 
@@ -454,11 +519,11 @@ export default function LinkPortSheet({
       const readableError = getReadableError(error)
 
       if (readableError.includes('row-level security')) {
-        setErrorMessage('沒有儲存權限，請重新登入後再試')
+        setErrorMessage(text.noPermission)
       } else if (readableError.includes('timeout')) {
-        setErrorMessage('連線逾時，請稍後再試')
+        setErrorMessage(text.timeout)
       } else {
-        setErrorMessage('儲存失敗，請稍後再試')
+        setErrorMessage(text.saveFailed)
       }
     } finally {
       if (mountedRef.current) {
@@ -471,11 +536,11 @@ export default function LinkPortSheet({
     if (!isOwner || saving) return
 
     if (!isValidUuid(userId)) {
-      setErrorMessage('登入狀態逾時，請重新登入後再試')
+      setErrorMessage(text.loginExpired)
       return
     }
 
-    if (!window.confirm('確定要刪除此連結嗎？')) return
+    if (!window.confirm(text.deleteConfirm)) return
 
     setSaving(true)
     setErrorMessage('')
@@ -497,7 +562,7 @@ export default function LinkPortSheet({
 
       if (!mountedRef.current) return
 
-      setErrorMessage('刪除失敗，請稍後再試')
+      setErrorMessage(text.deleteFailed)
     } finally {
       if (mountedRef.current) {
         setSaving(false)
@@ -562,7 +627,7 @@ export default function LinkPortSheet({
 
               {!canUseLinkPort && isOwner && (
                 <div className="rounded-[16px] border border-yellow-400/20 bg-yellow-500/10 px-4 py-3 text-[13px] leading-[1.5] text-yellow-100">
-                  目前登入狀態尚未完成，請重新整理或重新登入後再試。
+                  {text.unavailable}
                 </div>
               )}
 
@@ -573,13 +638,13 @@ export default function LinkPortSheet({
                       {formTitleText}
                     </div>
                     <div className="mt-1 text-[13px] text-white/45">
-                      最多可新增 {MAX_LINKS} 個個人連結
+                      {text.maxLinksHint(MAX_LINKS)}
                     </div>
                   </div>
 
                   <label className="block">
                     <span className="mb-2 block text-[13px] text-white/55">
-                      平台類型
+                      {text.typeLabel}
                     </span>
 
                     <select
@@ -600,7 +665,7 @@ export default function LinkPortSheet({
 
                   <label className="block">
                     <span className="mb-2 block text-[13px] text-white/55">
-                      標題
+                      {text.titleLabel}
                     </span>
 
                     <input
@@ -608,7 +673,7 @@ export default function LinkPortSheet({
                       maxLength={32}
                       disabled={saving}
                       onChange={(event) => setFormTitle(event.target.value)}
-                      placeholder="連結名稱，例如 Instagram"
+                      placeholder={text.titlePlaceholder}
                       className="h-[50px] w-full rounded-[16px] border border-white/10 bg-white/[0.04] px-4 text-[15px] text-white outline-none placeholder:text-white/28 focus:border-[#a855f7]/60 disabled:cursor-not-allowed disabled:opacity-50"
                     />
 
@@ -619,7 +684,7 @@ export default function LinkPortSheet({
 
                   <label className="block">
                     <span className="mb-2 block text-[13px] text-white/55">
-                      連結
+                      {text.urlLabel}
                     </span>
 
                     <input
@@ -627,7 +692,7 @@ export default function LinkPortSheet({
                       maxLength={300}
                       disabled={saving}
                       onChange={(event) => setFormUrl(event.target.value)}
-                      placeholder="https://example.com"
+                      placeholder={text.urlPlaceholder}
                       className="h-[50px] w-full rounded-[16px] border border-white/10 bg-white/[0.04] px-4 text-[15px] text-white outline-none placeholder:text-white/28 focus:border-[#a855f7]/60 disabled:cursor-not-allowed disabled:opacity-50"
                     />
 
@@ -643,7 +708,7 @@ export default function LinkPortSheet({
                       onClick={resetForm}
                       className="flex h-[46px] flex-1 items-center justify-center rounded-[16px] border border-white/10 text-[15px] text-white/75 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      取消
+                      {text.cancel}
                     </button>
 
                     <button
@@ -652,7 +717,7 @@ export default function LinkPortSheet({
                       onClick={saveLink}
                       className="flex h-[46px] flex-1 items-center justify-center rounded-[16px] bg-[#8B5CF6] text-[15px] font-medium text-white transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      {saving ? '儲存中...' : '儲存'}
+                      {saving ? text.saving : text.save}
                     </button>
                   </div>
 
@@ -664,7 +729,7 @@ export default function LinkPortSheet({
                       className="flex h-[46px] w-full items-center justify-center gap-2 rounded-[16px] text-[14px] text-red-200/80 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Trash2 size={16} />
-                      刪除連結
+                      {text.deleteLink}
                     </button>
                   )}
                 </div>
@@ -674,7 +739,7 @@ export default function LinkPortSheet({
                     <div className="flex flex-col items-center justify-center py-12 text-center">
                       <div className="h-7 w-7 animate-spin rounded-full border-2 border-white/15 border-t-white/70" />
                       <div className="mt-4 text-[14px] text-white/45">
-                        載入中...
+                        {text.loading}
                       </div>
                     </div>
                   ) : links.length > 0 ? (
@@ -736,7 +801,7 @@ export default function LinkPortSheet({
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
                       <div className="text-[14px] text-white/45">
-                        尚未新增任何連結
+                        {text.empty}
                       </div>
                     </div>
                   )}
@@ -745,7 +810,7 @@ export default function LinkPortSheet({
                     <div className="mt-6 text-center">
                       {isMaxLinks ? (
                         <div className="text-[14px] text-white/45">
-                          最多只能新增 {MAX_LINKS} 個連結
+                          {text.maxLinks(MAX_LINKS)}
                         </div>
                       ) : (
                         <button
@@ -755,7 +820,7 @@ export default function LinkPortSheet({
                           className="inline-flex h-[40px] items-center justify-center gap-1 rounded-full px-4 text-[15px] text-white/90 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <Plus size={17} />
-                          新增
+                          {text.add}
                         </button>
                       )}
                     </div>

@@ -13,6 +13,7 @@ import {
   Check,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { uiText } from '@/lib/uiText'
 
 type AccountManagePageProps = {
   onClose: () => void
@@ -431,7 +432,7 @@ localStorage.setItem(
             </button>
 
             <div className="text-[20px] font-medium tracking-[0.01em] text-[var(--app-text)]">
-              帳號管理
+              {uiText('帳號管理', 'Account Management')}
             </div>
           </div>
         </div>
@@ -440,7 +441,7 @@ localStorage.setItem(
           <div className="overflow-hidden rounded-[24px] border border-[var(--app-card-border)] bg-[var(--app-card)] py-[12px]">
             {loadingProfiles ? (
               <div className="py-8 text-center text-[14px] text-[var(--app-muted)]">
-                帳號讀取中...
+                {uiText('帳號讀取中...', 'Loading accounts...')}
               </div>
             ) : loadError ? (
               <div className="flex flex-col items-center py-8 text-center text-[14px] text-[var(--app-muted)]">
@@ -516,7 +517,11 @@ localStorage.setItem(
       <Plus size={25} style={{ strokeWidth: 2.1 }} />
     </div>
   }
-  title={creatingAccount ? '建立中...' : '新增Vibelink帳號'}
+  title={
+    creatingAccount
+      ? uiText('建立中...', 'Creating...')
+      : uiText('新增 Vibelink 帳號', 'Add Vibelink account')
+  }
   subtitle="建立和切換身分"
   trailing={
     <ChevronRight
@@ -536,7 +541,7 @@ localStorage.setItem(
             <AccountActionRow
   onClick={() => setShowLogoutConfirm(true)}
   icon={<LogOut size={21} style={{ strokeWidth: 2.1 }} />}
-  label="登出"
+  label={uiText('登出', 'Log out')}
 />
 
             <GroupDivider />
@@ -574,7 +579,7 @@ localStorage.setItem(
         transition={{ duration: 0.18 }}
       >
         <div className="text-[18px] font-semibold text-[var(--app-text)]">
-          確定要登出嗎？
+          {uiText('確定要登出嗎？', 'Log out?')}
         </div>
 
         <div className="mt-2 text-[14px] leading-relaxed text-[var(--app-muted)]">
@@ -587,7 +592,7 @@ localStorage.setItem(
             onClick={() => setShowLogoutConfirm(false)}
             className="h-[46px] flex-1 rounded-full bg-[var(--app-surface)] text-[15px] font-medium text-[var(--app-text)] active:scale-[0.98]"
           >
-            取消
+            {uiText('取消', 'Cancel')}
           </button>
 
           <button
@@ -595,7 +600,7 @@ localStorage.setItem(
             onClick={handleLogout}
             className="h-[46px] flex-1 rounded-full bg-[#c86cff] text-[15px] font-semibold text-white active:scale-[0.98]"
           >
-            登出
+            {uiText('登出', 'Log out')}
           </button>
         </div>
       </motion.div>

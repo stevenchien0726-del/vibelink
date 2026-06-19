@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { uiText } from '@/lib/uiText'
 
 type Props = {
   posts: any[]
@@ -43,7 +44,7 @@ export default function ArchivedContentPage({
             </button>
 
             <div className="text-[20px] font-medium tracking-[0.02em] text-[var(--app-text)]">
-              典藏內容
+              {uiText('典藏內容', 'Archived Content')}
             </div>
           </div>
         </div>
@@ -56,7 +57,7 @@ export default function ArchivedContentPage({
               </div>
 
               <div className="mt-5 text-[18px] font-medium text-[var(--app-text)]">
-                目前沒有典藏內容
+                {uiText('目前沒有典藏內容', 'No archived content yet')}
               </div>
 
               <div className="mt-2 max-w-[260px] text-[14px] leading-relaxed text-[var(--app-muted)]">

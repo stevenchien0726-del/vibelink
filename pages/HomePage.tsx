@@ -27,6 +27,7 @@ import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
 
 import { supabase } from '@/lib/supabase'
 import { getAuthCallbackUrl } from '@/lib/authRedirect'
+import { uiText } from '@/lib/uiText'
 
 import NotificationsPage from '@/components/profile/NotificationsPage'
 import HomeTopBar from '@/src/components/home/homepage/HomeTopBar'
@@ -227,7 +228,7 @@ function handlePostCreated(post: CreatedPostPayload) {
 
   setRealPosts((prev) => [newPost, ...prev])
 
-  setToast('發文成功')
+  setToast(uiText('發文成功', 'Post published'))
   setIsUploadOpen(false)
 
   setTimeout(() => {
@@ -518,11 +519,11 @@ useEffect(() => {
 
   if (error) {
     console.error(error)
-    setToast('登入信寄送失敗')
+    setToast(uiText('登入信寄送失敗', 'Failed to send login email'))
     return
   }
 
-  setToast('登入信已寄出')
+  setToast(uiText('登入信已寄出', 'Login email sent'))
 }
 
 async function handleGoogleLogin() {
@@ -535,7 +536,12 @@ async function handleGoogleLogin() {
 
   if (error) {
     console.error(error)
-    setToast('Google 登入失敗，請稍後再試或使用 Email 登入')
+    setToast(
+      uiText(
+        'Google 登入失敗，請稍後再試或使用 Email 登入',
+        'Google login failed. Please try again later or use Email login.'
+      )
+    )
   }
 }
 
@@ -1385,7 +1391,7 @@ void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
         </div>
 
         <div className="mb-4 text-center text-[16px] font-medium">
-          留言
+          {uiText('留言', 'Comments')}
         </div>
 
         <div
@@ -1475,7 +1481,7 @@ void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
             onKeyDown={(e) => {
               if (e.key === 'Enter') submitComment()
             }}
-            placeholder="新增留言..."
+            placeholder={uiText('新增留言...', 'Add a comment...')}
             className="h-[42px] flex-1 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 text-[14px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
           />
 
@@ -1489,7 +1495,7 @@ void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
                 : 'bg-[#e5e5e5] text-[var(--app-muted)]'
             }`}
           >
-            送出
+            {uiText('送出', 'Send')}
           </button>
                 </div>
       </motion.div>
