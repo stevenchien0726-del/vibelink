@@ -46,11 +46,25 @@ useEffect(() => {
 
   return 'zh-TW'
 })
+const [hasLocalePreference, setHasLocalePreference] = useState(() => {
+  if (typeof window === 'undefined') return false
+
+  const saved = localStorage.getItem(LOCALE_STORAGE_KEY)
+
+  return saved === 'zh-TW' || saved === 'en'
+})
 
 useEffect(() => {
   if (!mounted) return
+  if (!hasLocalePreference) return
+
   localStorage.setItem(LOCALE_STORAGE_KEY, locale)
-}, [locale, mounted])
+}, [hasLocalePreference, locale, mounted])
+
+function handleChangeLocale(nextLocale: Locale) {
+  setHasLocalePreference(true)
+  setLocale(nextLocale)
+}
 
   const [showWarning, setShowWarning] = useState(false)
 
@@ -363,7 +377,11 @@ useEffect(() => {
 
         {visitedPages.has('ai') && (
           <div className={page === 'ai' ? 'block' : 'hidden'}>
-            <AIHelperPage locale={locale} />
+            <AIHelperPage
+              locale={locale}
+              hasLocalePreference={hasLocalePreference}
+              onChangeLocale={handleChangeLocale}
+            />
           </div>
         )}
 
@@ -377,7 +395,7 @@ useEffect(() => {
           <div className={page === 'profile' ? 'block' : 'hidden'}>
             <ProfilePage
               locale={locale}
-              onChangeLocale={setLocale}
+              onChangeLocale={handleChangeLocale}
             />
           </div>
         )}

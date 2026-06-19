@@ -36,6 +36,8 @@ import AIRadarVoiceInput from '@/components/airadar/AIRadarVoiceInput'
 
 type AIRadarPageProps = {
   locale: Locale
+  hasLocalePreference: boolean
+  onChangeLocale: (locale: Locale) => void
 }
 
 type AIRadarLoadingStage =
@@ -44,7 +46,11 @@ type AIRadarLoadingStage =
   | 'parsing'
   | 'generating'
 
-export default function AIRadarPage({ locale }: AIRadarPageProps) {
+export default function AIRadarPage({
+  locale,
+  hasLocalePreference,
+  onChangeLocale,
+}: AIRadarPageProps) {
   const safeLocale: Locale = locale ?? 'zh-TW'
 const text = getAIRadarText(safeLocale)
 const FALLBACK_STARTER_PROMPTS_POOL =
@@ -114,6 +120,7 @@ const recognitionRef = useRef<any>(null)
 const [showAIRadarInfo, setShowAIRadarInfo] = useState(false)
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false)
 const [authLoading, setAuthLoading] = useState(false)
 const [authErrorMessage, setAuthErrorMessage] = useState('')
 const [showEmailLogin, setShowEmailLogin] = useState(false)
@@ -614,6 +621,17 @@ useEffect(() => {
   let cancelled = false
   let ensuredProfileForUserId: string | null = null
 
+  function showLoggedOutEntryFlow() {
+    if (hasLocalePreference) {
+      setIsLanguageModalOpen(false)
+      setIsAuthModalOpen(true)
+      return
+    }
+
+    setIsAuthModalOpen(false)
+    setIsLanguageModalOpen(true)
+  }
+
   function ensureAIRadarProfileOnce(userId: string) {
     if (ensuredProfileForUserId === userId) return
 
@@ -637,10 +655,11 @@ const user = session?.user
     if (cancelled) return
 
     if (!user) {
-      setIsAuthModalOpen(true)
+      showLoggedOutEntryFlow()
       return
     }
 
+    setIsLanguageModalOpen(false)
     setIsAuthModalOpen(false)
 
 ensureAIRadarProfileOnce(user.id)
@@ -657,6 +676,7 @@ if (cancelled) return
       if (cancelled) return
 
       if (session) {
+  setIsLanguageModalOpen(false)
   setIsAuthModalOpen(false)
 
   const user = session.user
@@ -668,7 +688,7 @@ if (cancelled) return
   if (cancelled) return
 }
       else {
-        setIsAuthModalOpen(true)
+        showLoggedOutEntryFlow()
       }
     }
   )
@@ -677,7 +697,7 @@ if (cancelled) return
     cancelled = true
     listener.subscription.unsubscribe()
   }
-}, [])
+}, [hasLocalePreference])
 
 async function handleGoogleLogin() {
   if (authLoading) return
@@ -697,6 +717,12 @@ async function handleGoogleLogin() {
     setAuthErrorMessage('Google 登入失敗，請稍後再試或使用 Email 登入')
     setAuthLoading(false)
   }
+}
+
+function handleSelectLoginLanguage(nextLocale: Locale) {
+  onChangeLocale(nextLocale)
+  setIsLanguageModalOpen(false)
+  setIsAuthModalOpen(true)
 }
 
 const hasInput = inputValue.trim().length > 0 || !!selectedLibraryUser
@@ -1317,10 +1343,46 @@ typeText(nextAiText, requestId)
   ))}
 </div>
 
-    <AIRadarLoadingOverlay
+<AIRadarLoadingOverlay
   open={isLoading}
   text={loadingStage === 'idle' ? '' : text.loading[loadingStage]}
 />
+
+      {isLanguageModalOpen && (
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6 backdrop-blur-[10px]">
+    <div className="w-full max-w-[360px] rounded-[36px] bg-[var(--app-card)] px-7 py-10 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+      <div className="flex flex-col gap-4">
+        <h2 className="text-[28px] font-semibold text-[var(--app-text)]">
+          {safeLocale === 'en' ? 'Choose language' : '選擇語言'}
+        </h2>
+
+        <p className="text-[16px] text-[var(--app-muted)]">
+          {safeLocale === 'en'
+            ? 'Choose the language you want to use'
+            : '請選擇您想使用的語言'}
+        </p>
+      </div>
+
+      <div className="mt-6 flex flex-col gap-[13px]">
+        <button
+          type="button"
+          onClick={() => handleSelectLoginLanguage('zh-TW')}
+          className="flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--app-text)] text-[17px] font-medium text-[var(--app-bg)] shadow-[0_4px_14px_rgba(0,0,0,0.14)] transition hover:opacity-90 active:scale-[0.98]"
+        >
+          繁體中文
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleSelectLoginLanguage('en')}
+          className="flex h-[52px] w-full items-center justify-center rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)]/55 text-[17px] font-medium text-[var(--app-text)] shadow-[0_4px_14px_rgba(0,0,0,0.06)] transition hover:bg-[var(--app-surface)]/75 active:scale-[0.98]"
+        >
+          English
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {isAuthModalOpen && (
   <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6 backdrop-blur-[10px]">
