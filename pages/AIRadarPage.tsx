@@ -1324,46 +1324,50 @@ typeText(nextAiText, requestId)
 
       {isAuthModalOpen && (
   <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6 backdrop-blur-[10px]">
-    <div className="w-full max-w-[360px] rounded-[36px] bg-[var(--app-card)] px-7 py-9 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+    <div className="w-full max-w-[360px] rounded-[36px] bg-[var(--app-card)] px-7 py-10 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
 
-      <h2 className="text-[28px] font-semibold text-[var(--app-text)]">
-        {text.loginTitle}
-      </h2>
+      <div className="flex flex-col gap-4">
+        <h2 className="text-[28px] font-semibold text-[var(--app-text)]">
+          {text.loginTitle}
+        </h2>
 
-      <p className="mt-4 text-[16px] text-[var(--app-muted)]">
-        {text.loginSubtitle}
-      </p>
+        <p className="text-[16px] text-[var(--app-muted)]">
+          {text.loginSubtitle}
+        </p>
+      </div>
 
       {authErrorMessage && (
-        <p className="mt-5 rounded-[18px] bg-red-500/10 px-4 py-3 text-[14px] font-medium text-red-500">
+        <p className="mt-6 rounded-[18px] bg-red-500/10 px-4 py-3 text-[14px] font-medium text-red-500">
           {authErrorMessage}
         </p>
       )}
 
-      <button
-        type="button"
-        disabled={authLoading}
-        onClick={handleGoogleLogin}
-        className="mt-8 flex h-[54px] w-full items-center justify-center rounded-full bg-[var(--app-text)] text-[18px] font-medium text-[var(--app-bg)] shadow-[0_4px_14px_rgba(0,0,0,0.14)] transition active:scale-[0.98] disabled:opacity-60"
-      >
-        {authLoading
-  ? text.loggingIn
-  : '使用 Google 登入 Vibelink'}
-      </button>
+      <div className="mt-6 flex flex-col gap-[13px]">
+        <button
+          type="button"
+          disabled={authLoading}
+          onClick={handleGoogleLogin}
+          className="flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--app-text)] text-[17px] font-medium text-[var(--app-bg)] shadow-[0_4px_14px_rgba(0,0,0,0.14)] transition hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+        >
+          {authLoading
+    ? text.loggingIn
+    : '使用 Google 登入'}
+        </button>
 
-      <button
-        type="button"
-        onClick={() => {
-          setAuthErrorMessage('')
-          setShowEmailLogin((prev) => !prev)
-        }}
-        className="mt-4 text-[15px] font-medium text-[var(--app-muted)] underline-offset-4 active:scale-[0.98]"
-      >
-        使用 Email 登入
-      </button>
+        <button
+          type="button"
+          onClick={() => {
+            setAuthErrorMessage('')
+            setShowEmailLogin((prev) => !prev)
+          }}
+          className="flex h-[52px] w-full items-center justify-center rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)]/55 text-[17px] font-medium text-[var(--app-text)] shadow-[0_4px_14px_rgba(0,0,0,0.06)] transition hover:bg-[var(--app-surface)]/75 active:scale-[0.98]"
+        >
+          使用 Email 登入
+        </button>
+      </div>
 
       {showEmailLogin && (
-        <div className="mt-5">
+        <div className="mt-6">
           <EmailOtpLogin />
         </div>
       )}
