@@ -102,6 +102,9 @@ export default function MessagePage({
   onOpenMenu,
   locale,
 }: MessagePageProps) {
+  const safeLocale: Locale = locale === 'en' || locale === 'zh-TW' ? locale : 'zh-TW'
+  const text = messageText[safeLocale]
+
   const [isPeopleLibraryOpen, setIsPeopleLibraryOpen] = useState(false)
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null)
   
@@ -596,7 +599,7 @@ useEffect(() => {
           'Vibelink User',
         sub:
           profile.bio ||
-          (locale === 'en'
+          (safeLocale === 'en'
             ? 'Following user'
             : '已追蹤的使用者'),
         avatarUrl: profile.avatar_url || '',
@@ -614,7 +617,7 @@ useEffect(() => {
     .finally(() => {
       setIsSearchingAccounts(false)
     })
-}, [isSearchPanelOpen, locale])
+}, [isSearchPanelOpen, safeLocale])
 
 async function toggleConversationPin(conversation: ConversationItem) {
   const {
@@ -808,10 +811,10 @@ async function toggleConversationPin(conversation: ConversationItem) {
                     <div className="flex items-center justify-between px-4 pt-4">
                       <div>
                         <div className="text-[18px] font-medium text-[var(--app-text)]">
-                          {messageText[locale].searchAccounts}
+                          {text.searchAccounts}
                         </div>
                         <div className="mt-1 text-[12px] text-[var(--app-muted)]">
-                          {messageText[locale].searchAccountsSub}
+                          {text.searchAccountsSub}
                         </div>
                       </div>
 
@@ -834,7 +837,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
                         <input
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}
-                          placeholder={messageText[locale].searchPlaceholder}
+                          placeholder={text.searchPlaceholder}
                           className="ml-3 w-full bg-transparent text-[15px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)]"
                         />
                       </div>
@@ -842,7 +845,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
                       <div className="flex flex-col gap-2">
                         {isSearchingAccounts ? (
   <div className="rounded-[20px] bg-[var(--app-surface)] px-4 py-5 text-[14px] text-[var(--app-muted)]">
-    {messageText[locale].searchingAccounts}
+    {text.searchingAccounts}
   </div>
 ) : filteredAccounts.length > 0 ? (
                           filteredAccounts.map((account) => (
@@ -882,7 +885,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
                           ))
                         ) : (
                           <div className="rounded-[20px] bg-[var(--app-surface)] px-4 py-5 text-[14px] text-[var(--app-muted)]">
-                            {messageText[locale].noAccount}
+                            {text.noAccount}
                           </div>
                         )}
                       </div>
@@ -901,7 +904,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
   }}
   className="flex h-[58px] w-full items-center justify-center text-center text-[16px] font-medium text-[var(--app-text)] active:bg-black/5"
 >
-  {messageText[locale].editPinned}
+  {text.editPinned}
 </button>
 
       <div className="mx-5 h-px bg-[var(--app-card-border)]" />
@@ -910,7 +913,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
   type="button"
   className="flex h-[58px] w-full items-center justify-center text-center text-[16px] font-medium text-[var(--app-text)] active:bg-black/5"
 >
-  {messageText[locale].editHidden}
+  {text.editHidden}
 </button>
     </div>
   </div>
@@ -923,7 +926,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
 
 {messageLoading && (
   <div className="mb-4 rounded-[22px] bg-[#e9e9e9] px-4 py-4 text-[14px] text-[var(--app-muted)]">
-    {messageText[locale].loadingMessages}
+    {text.loadingMessages}
   </div>
 )}
 
@@ -943,7 +946,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
       }}
       className="rounded-full bg-[#c86cff] px-4 py-2 text-[13px] text-white"
     >
-      {messageText[locale].retry}
+      {text.retry}
     </button>
   </div>
 )}
@@ -978,7 +981,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
         </div>
 
         <div className="mt-1 truncate text-[13px] text-[var(--app-muted)]">
-          {conversation.lastMessage || messageText[locale].startChat}
+          {conversation.lastMessage || text.startChat}
         </div>
       </div>
       {(isPinEditMode || conversation.isPinned) && (
@@ -995,7 +998,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
         : 'bg-[var(--app-card)] text-[var(--app-muted)]'
     }`}
   >
-    {conversation.isPinned ? messageText[locale].pinned : messageText[locale].pin}
+    {conversation.isPinned ? text.pinned : text.pin}
   </span>
 )}
 
@@ -1007,7 +1010,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
       {isPeopleLibraryOpen && (
         <PeopleLibraryPage
   query="People Library"
-    locale={locale}
+    locale={safeLocale}
   onClose={() => setIsPeopleLibraryOpen(false)}
   onOpenProfile={(userId) => {
   console.log('MessagePage receive open profile:', userId)
@@ -1025,7 +1028,7 @@ async function toggleConversationPin(conversation: ConversationItem) {
     <OtherUserProfilePage
   userId={selectedProfileUserId}
   onClose={() => setSelectedProfileUserId(null)}
-  locale={locale}
+  locale={safeLocale}
 />
   )}
 </AnimatePresence>
