@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, type PanInfo } from 'framer-motion'
 import {
   Bookmark,
   ChevronLeft,
@@ -11,7 +11,9 @@ import {
   Send,
 } from 'lucide-react'
 import WideMenuSheet from '@/components/WideMenuSheet'
+import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
 import type { PostItem } from '@/components/home/sections/feed/FeedGrid'
+import type { Locale } from '@/i18n'
 
 type Props = {
   selectedPost: PostItem | null
@@ -47,6 +49,7 @@ type Props = {
     postId: string,
     value: 'everyone' | 'following' | 'off'
   ) => void
+  locale: Locale
 }
 
 type PostWithAvatar = PostItem & {
@@ -113,10 +116,69 @@ export default function HomeDetailPostModal({
   setSelectedComment,
   setIsCommentMenuOpen,
   onChangeReplyPermission,
+  locale,
 }: Props) {
+  const [swipedProfile, setSwipedProfile] = useState<{
+    postId: string
+    userId: string
+  } | null>(null)
+
   function isPostReported(postId: string) {
     return reportedPostIds.includes(postId)
   }
+
+  function openSelectedPostAuthorProfile() {
+    if (!selectedPost?.user_id) return
+
+    setIsDetailMenuOpen(false)
+    setSwipedProfile({
+      postId: selectedPost.id,
+      userId: selectedPost.user_id,
+    })
+  }
+
+  function isClearHorizontalSwipe(info: PanInfo) {
+    const absX = Math.abs(info.offset.x)
+    const absY = Math.abs(info.offset.y)
+    const absVelocityX = Math.abs(info.velocity.x)
+    const absVelocityY = Math.abs(info.velocity.y)
+
+    return (
+      (absX > 24 && absX > absY * 1.25) ||
+      (absVelocityX > 420 && absVelocityX > absVelocityY * 1.25)
+    )
+  }
+
+  function handleActionAreaDragEnd(
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) {
+    if (!isClearHorizontalSwipe(info)) return
+
+    const shouldOpen = info.offset.x < -80 || info.velocity.x < -500
+
+    if (shouldOpen) {
+      openSelectedPostAuthorProfile()
+    }
+  }
+
+  function handleProfileDragEnd(
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) {
+    if (!isClearHorizontalSwipe(info)) return
+
+    const shouldClose = info.offset.x > 80 || info.velocity.x > 500
+
+    if (shouldClose) {
+      setSwipedProfile(null)
+    }
+  }
+
+  const activeSwipedProfile =
+    swipedProfile && selectedPost?.id === swipedProfile.postId
+      ? swipedProfile
+      : null
 
   return (
     <>
@@ -263,6 +325,17 @@ export default function HomeDetailPostModal({
               </div>
               </div>
 
+              <motion.div
+                data-block-page-swipe="true"
+                data-no-page-swipe="true"
+                className="touch-pan-y"
+                drag="x"
+                dragDirectionLock
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={{ left: 0.16, right: 0 }}
+                style={{ touchAction: 'pan-y' }}
+                onDragEnd={handleActionAreaDragEnd}
+              >
               <div className="flex items-center justify-between px-3 pt-4">
                 <div className="flex items-center gap-5">
                   <button
@@ -380,7 +453,35 @@ export default function HomeDetailPostModal({
                   </div>
                 )}
               </div>
+              </motion.div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
+        {activeSwipedProfile && selectedPost && (
+          <motion.div
+            key={activeSwipedProfile.userId}
+            data-block-page-swipe="true"
+            data-no-page-swipe="true"
+            className="fixed inset-0 z-[900] overflow-hidden bg-[var(--app-bg)]"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+            drag="x"
+            dragDirectionLock
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={{ left: 0, right: 0.22 }}
+            style={{ touchAction: 'pan-y' }}
+            onDragEnd={handleProfileDragEnd}
+          >
+            <OtherUserProfilePage
+              locale={locale}
+              userId={activeSwipedProfile.userId}
+              onClose={() => setSwipedProfile(null)}
+            />
           </motion.div>
         )}
       </AnimatePresence>

@@ -1337,6 +1337,7 @@ void safeTask(() => loadShortVideos(user), 'upload_reload_short_videos')
   comments={comments}
   setSelectedComment={setSelectedComment}
   setIsCommentMenuOpen={setIsCommentMenuOpen}
+  locale={locale}
 />
 
       <AnimatePresence>
