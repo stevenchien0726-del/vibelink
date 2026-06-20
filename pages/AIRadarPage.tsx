@@ -1538,7 +1538,7 @@ typeText(nextAiText, requestId)
     touchAction: 'pan-y',
   }}
   ref={mainScrollRef}
-  className="h-[100dvh] min-h-[100dvh] overflow-y-auto overflow-x-hidden bg-[var(--app-bg)] px-4 pt-[76px] pb-[calc(210px+env(safe-area-inset-bottom))] text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  className="h-[100dvh] min-h-[100dvh] overflow-y-auto overflow-x-hidden bg-[var(--app-bg)] px-4 pt-[calc(76px+env(safe-area-inset-top))] pb-[calc(210px+env(safe-area-inset-bottom))] text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 >
         <div className="flex min-h-[calc(100vh-76px)] flex-col">
          

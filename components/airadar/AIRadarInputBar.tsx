@@ -124,7 +124,7 @@ export default function AIRadarInputBar({
   }, [inputValue, setInputValue])
 
   return (
-    <div className="flex w-full items-end gap-2 px-4">
+    <div className="flex w-full items-center gap-2 px-4">
       <div ref={targetRef} className="relative h-[50px] w-[130px] shrink-0">
         {selectedLibraryUser ? (
           <div className="flex h-[50px] w-full items-center gap-2 rounded-full bg-[#D9D9D9] px-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
@@ -187,7 +187,7 @@ export default function AIRadarInputBar({
   type="button"
   aria-label={inputText[locale].send}
   onClick={() => onSubmit()}
-  className="relative ml-2 h-[40px] w-[40px] shrink-0 self-center overflow-visible rounded-full bg-transparent transition active:scale-95"
+  className="relative ml-2 flex h-[40px] w-[40px] shrink-0 items-center justify-center self-center overflow-visible rounded-full bg-transparent transition active:scale-95"
 >
   <EnterArrowIcon active={canSend} />
 </button>
@@ -244,7 +244,7 @@ function EnterArrowIcon({ active }: { active: boolean }) {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.75 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="relative left-1/2 top-1/2 h-[54px] w-[54px] -translate-x-1/2 -translate-y-1/2 object-contain"
+          className="h-[54px] w-[54px] object-contain"
         />
       ) : null}
     </AnimatePresence>
