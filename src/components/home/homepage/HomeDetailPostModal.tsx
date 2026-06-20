@@ -155,7 +155,7 @@ export default function HomeDetailPostModal({
   ) {
     if (!isClearHorizontalSwipe(info)) return
 
-    const shouldOpen = info.offset.x < -80 || info.velocity.x < -500
+    const shouldOpen = info.offset.x < -45 || info.velocity.x < -300
 
     if (shouldOpen) {
       openSelectedPostAuthorProfile()
@@ -168,7 +168,7 @@ export default function HomeDetailPostModal({
   ) {
     if (!isClearHorizontalSwipe(info)) return
 
-    const shouldClose = info.offset.x > 80 || info.velocity.x > 500
+    const shouldClose = info.offset.x > 45 || info.velocity.x > 300
 
     if (shouldClose) {
       setSwipedProfile(null)
