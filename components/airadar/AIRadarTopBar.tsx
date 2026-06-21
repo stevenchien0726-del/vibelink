@@ -50,7 +50,12 @@ export default function AIRadarTopBar({
   if (!showTopBar) return null
 
   return (
-    <div className="fixed left-1/2 top-0 z-[80] w-full max-w-[430px] -translate-x-1/2 border-b border-[var(--app-card-border)] bg-[var(--app-bg)] pt-[calc(env(safe-area-inset-top)+4px)] backdrop-blur-[18px]">
+    <div
+      className="fixed left-1/2 top-0 z-[80] w-full max-w-[430px] -translate-x-1/2 border-b border-[var(--app-card-border)] bg-[var(--app-bg)] backdrop-blur-[18px]"
+      style={{
+        paddingTop: 'calc(max(env(safe-area-inset-top) - 28px, 0px) + 6px)',
+      }}
+    >
       <div className="flex h-[64px] items-center justify-between px-5">
         {/* Left: AI Radar info button */}
         <button
