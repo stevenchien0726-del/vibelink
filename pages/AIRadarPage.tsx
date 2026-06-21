@@ -1631,9 +1631,10 @@ const handleInputSubmit = useCallback(() => {
       <main
   style={{
     touchAction: 'pan-y',
+    scrollPaddingTop: 'calc(env(safe-area-inset-top) + 112px)',
   }}
   ref={mainScrollRef}
-  className="h-[100dvh] min-h-[100dvh] touch-pan-y overflow-y-auto overflow-x-hidden overscroll-contain bg-[var(--app-bg)] px-4 pt-[calc(76px+env(safe-area-inset-top))] pb-[calc(210px+env(safe-area-inset-bottom))] text-[var(--app-text)] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  className="h-[100dvh] min-h-[100dvh] touch-pan-y overflow-y-auto overflow-x-hidden overscroll-contain bg-[var(--app-bg)] px-4 pt-[calc(env(safe-area-inset-top)+112px)] pb-[calc(210px+env(safe-area-inset-bottom))] text-[var(--app-text)] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 >
         <div className="flex min-h-[calc(100vh-76px)] flex-col">
          
