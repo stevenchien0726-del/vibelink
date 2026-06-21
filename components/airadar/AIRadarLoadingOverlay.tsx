@@ -16,7 +16,7 @@ export default function AIRadarLoadingOverlay({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="pointer-events-none fixed left-1/2 top-[82px] z-[9999] w-full max-w-[430px] -translate-x-1/2 px-4"
+          className="pointer-events-none fixed left-1/2 top-[25vh] z-[9999] w-full max-w-[430px] -translate-x-1/2 px-4"
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
