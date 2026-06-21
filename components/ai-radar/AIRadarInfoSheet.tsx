@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import type { Locale } from '@/i18n'
@@ -57,7 +58,7 @@ const aiRadarInfoText = {
   },
 } as const
 
-export default function AIRadarInfoSheet({
+function AIRadarInfoSheet({
   open,
   onClose,
   locale,
@@ -81,14 +82,14 @@ export default function AIRadarInfoSheet({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/45 backdrop-blur"
+          className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/45"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="relative max-h-[86vh] w-full max-w-[430px] rounded-t-[32px] border border-white/10 bg-[#09060f] text-white shadow-[0_-20px_70px_rgba(132,55,255,0.28)]"
+            className="relative max-h-[86vh] w-full max-w-[430px] rounded-t-[32px] border border-white/10 bg-[#09060f] text-white shadow-[0_-12px_36px_rgba(132,55,255,0.20)] will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -202,3 +203,5 @@ export default function AIRadarInfoSheet({
     </AnimatePresence>
   )
 }
+
+export default memo(AIRadarInfoSheet)

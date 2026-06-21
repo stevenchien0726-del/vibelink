@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { memo, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import type { Locale } from '@/i18n'
@@ -76,7 +76,7 @@ function fitsTextareaLimit(
   return fits
 }
 
-export default function AIRadarInputBar({
+function AIRadarInputBar({
   inputValue,
   setInputValue,
   selectedLibraryUser,
@@ -132,6 +132,10 @@ export default function AIRadarInputBar({
               <img
                 src={selectedLibraryUser.avatar}
                 alt={selectedLibraryUser.name}
+                loading="lazy"
+                decoding="async"
+                width={30}
+                height={30}
                 className="h-[30px] w-[30px] rounded-full object-cover"
               />
             ) : (
@@ -195,6 +199,8 @@ export default function AIRadarInputBar({
     </div>
   )
 }
+
+export default memo(AIRadarInputBar)
 
 function UserCircleIcon() {
   return (

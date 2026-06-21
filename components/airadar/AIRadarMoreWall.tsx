@@ -1,5 +1,7 @@
 'use client'
 
+import { memo, useMemo } from 'react'
+
 import { uiText } from '@/lib/uiText'
 
 type Props = {
@@ -15,7 +17,7 @@ type Props = {
   onWheel: (e: React.WheelEvent<HTMLDivElement>) => void
 }
 
-export default function AIRadarMoreWall({
+function AIRadarMoreWall({
   refreshKey,
   refreshCount,
   isSkySeedSearch,
@@ -27,7 +29,10 @@ export default function AIRadarMoreWall({
   onPointerMove,
   onWheel,
 }: Props) {
-  const imagePool = isSkySeedSearch ? skyImages.filter(Boolean) : []
+  const imagePool = useMemo(
+    () => (isSkySeedSearch ? skyImages.filter(Boolean) : []),
+    [isSkySeedSearch, skyImages]
+  )
 
   return (
     <div className="space-y-2">
@@ -84,6 +89,10 @@ export default function AIRadarMoreWall({
                   <img
                     src={imgSrc}
                     alt={`photo ${photoIndex + 1}`}
+                    loading="lazy"
+                    decoding="async"
+                    width={110}
+                    height={160}
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -100,3 +109,5 @@ export default function AIRadarMoreWall({
     </div>
   )
 }
+
+export default memo(AIRadarMoreWall)

@@ -1,17 +1,26 @@
 'use client'
 
+import { memo, useMemo } from 'react'
+import type { FakeUser } from '@/data/fakeUsers'
+
+type AIRadarCardUser = FakeUser & {
+  image?: string
+  humanFeeling?: string
+  vibe_tags?: string[]
+}
+
 type Props = {
-  user: any
-  getCandidateDescription: (user: any) => string
+  user: AIRadarCardUser
+  getCandidateDescription: (user: AIRadarCardUser) => string
   onTouchStart: (e: React.TouchEvent<HTMLDivElement>) => void
   onTouchMove: (e: React.TouchEvent<HTMLDivElement>) => void
   onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void
   onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => void
   onWheel: (e: React.WheelEvent<HTMLDivElement>) => void
-  onOpenProfile?: (user: any) => void
+  onOpenProfile?: (user: AIRadarCardUser) => void
 }
 
-export default function AIRadarResultCard({
+function AIRadarResultCard({
   user,
   getCandidateDescription,
   onTouchStart,
@@ -21,14 +30,21 @@ export default function AIRadarResultCard({
   onWheel,
   onOpenProfile,
 }: Props) {
-  const userImages =
-    user.images && user.images.length > 0
-      ? user.images
-      : [(user as any).image ?? user.avatar].filter(Boolean)
+  const uniqueImages = useMemo(() => {
+    const userImages =
+      user.images && user.images.length > 0
+        ? user.images
+        : [user.image ?? user.avatar].filter(Boolean)
 
-  const uniqueImages = Array.from(new Set(userImages))
-    .filter((image): image is string => typeof image === 'string')
-    .slice(0, 5)
+    return Array.from(new Set(userImages))
+      .filter((image): image is string => typeof image === 'string')
+      .slice(0, 5)
+  }, [user])
+
+  const candidateDescription = useMemo(
+    () => getCandidateDescription(user),
+    [getCandidateDescription, user]
+  )
 
   return (
     <div className="space-y-3">
@@ -38,7 +54,7 @@ export default function AIRadarResultCard({
         </div>
 
         <div className="text-[14px] leading-[1.5] text-[var(--app-text)]">
-  {getCandidateDescription(user)}
+          {candidateDescription}
 </div>
       </div>
 
@@ -61,12 +77,16 @@ export default function AIRadarResultCard({
                   onClick={() => onOpenProfile?.(user)}
                   className="shrink-0 text-left transition active:scale-[0.98]"
                 >
-                  <div className="h-[160px] w-[110px] overflow-hidden rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-card)] shadow-[0_4px_12px_rgba(0,0,0,0.10)]">
+                  <div className="h-[160px] w-[110px] overflow-hidden rounded-[16px] border border-[var(--app-card-border)] bg-[var(--app-card)] shadow-[0_3px_10px_rgba(0,0,0,0.08)]">
                     <img
                       src={imgSrc}
                       alt={`${user.displayName ?? user.username ?? 'user'} photo ${
                         photoIndex + 1
                       }`}
+                      loading="lazy"
+                      decoding="async"
+                      width={110}
+                      height={160}
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -79,3 +99,5 @@ export default function AIRadarResultCard({
     </div>
   )
 }
+
+export default memo(AIRadarResultCard)

@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Mic, Send, X } from 'lucide-react'
 
@@ -11,7 +12,7 @@ type Props = {
   onSend: () => void
 }
 
-export default function AIRadarVoiceInput({
+function AIRadarVoiceInput({
   open,
   transcript,
   onClose,
@@ -22,13 +23,13 @@ export default function AIRadarVoiceInput({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/45 px-4 pb-[120px] backdrop-blur-[10px]"
+          className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/45 px-4 pb-[120px]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="w-full max-w-[390px] rounded-[34px] bg-[var(--app-card)] px-5 py-6 text-center shadow-[0_18px_60px_rgba(0,0,0,0.32)]"
+            className="w-full max-w-[390px] rounded-[34px] bg-[var(--app-card)] px-5 py-6 text-center shadow-[0_10px_34px_rgba(0,0,0,0.22)] will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
             initial={{ y: 40, scale: 0.96, opacity: 0 }}
             animate={{ y: 0, scale: 1, opacity: 1 }}
             exit={{ y: 24, scale: 0.98, opacity: 0 }}
@@ -118,3 +119,5 @@ export default function AIRadarVoiceInput({
     </AnimatePresence>
   )
 }
+
+export default memo(AIRadarVoiceInput)

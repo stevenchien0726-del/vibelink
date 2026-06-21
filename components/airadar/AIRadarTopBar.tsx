@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { ChevronRight } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 
 type AIRadarTopBarProps = {
   showTopBar: boolean
@@ -10,7 +10,7 @@ type AIRadarTopBarProps = {
   onClickAIRadarInfo?: () => void
 }
 
-export default function AIRadarTopBar({
+function AIRadarTopBar({
   showTopBar,
   onClickVibePlus,
   onClickAIRadarInfo,
@@ -51,7 +51,7 @@ export default function AIRadarTopBar({
 
   return (
     <div
-      className="fixed left-1/2 top-0 z-[80] w-full max-w-[430px] -translate-x-1/2 border-b border-[var(--app-card-border)] bg-[var(--app-bg)] backdrop-blur-[18px]"
+      className="fixed left-1/2 top-0 z-[80] w-full max-w-[430px] -translate-x-1/2 border-b border-[var(--app-card-border)] bg-[var(--app-bg)]/95"
       style={{
         paddingTop: 'calc(max(env(safe-area-inset-top) - 28px, 0px) + 6px)',
       }}
@@ -116,3 +116,5 @@ export default function AIRadarTopBar({
     </div>
   )
 }
+
+export default memo(AIRadarTopBar)

@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { supabase } from '@/lib/supabase'
 import { getCachedSession } from '@/lib/authSessionCache'
@@ -46,14 +46,145 @@ type AIRadarLoadingStage =
   | 'parsing'
   | 'generating'
 
+type AIRadarUser = FakeUser & {
+  humanFeeling?: string
+  tags?: string[]
+  vibe_tags?: string[]
+  matchedReasons?: string[]
+  displayName?: string
+  username?: string
+  avatar?: string
+  image?: string
+  images?: string[]
+}
+
+type AIRadarResponse = {
+  ok?: boolean
+  matchedUsers?: unknown[]
+  aiReply?: string
+}
+
+type AIRadarStreamEvent = {
+  type?: string
+  stage?: AIRadarLoadingStage
+  data?: AIRadarResponse
+}
+
+type SpeechRecognitionResultListLike = {
+  length: number
+  [index: number]:
+    | {
+        [index: number]: { transcript?: string } | undefined
+      }
+    | undefined
+}
+
+type SpeechRecognitionResultEventLike = {
+  results: SpeechRecognitionResultListLike
+}
+
+type SpeechRecognitionLike = {
+  lang: string
+  interimResults: boolean
+  maxAlternatives: number
+  onresult: ((event: SpeechRecognitionResultEventLike) => void) | null
+  onerror: ((event: unknown) => void) | null
+  onend: (() => void) | null
+  start: () => void
+  abort?: () => void
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
+
+type WindowWithSpeechRecognition = Window &
+  typeof globalThis & {
+    SpeechRecognition?: SpeechRecognitionConstructor
+    webkitSpeechRecognition?: SpeechRecognitionConstructor
+  }
+
+const EMPTY_SKY_IMAGES: string[] = []
+
+type AIRadarResultsSectionProps = {
+  showCandidates: boolean
+  showWalls: boolean
+  results: AIRadarUser[]
+  refreshKey: number
+  refreshCount: number
+  getCandidateDescription: (user: AIRadarUser) => string
+  onTouchStart: (e: React.TouchEvent<HTMLDivElement>) => void
+  onTouchMove: (e: React.TouchEvent<HTMLDivElement>) => void
+  onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void
+  onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => void
+  onWheel: (e: React.WheelEvent<HTMLDivElement>) => void
+  onOpenProfile: (user: AIRadarUser) => void
+  onRefresh: () => void
+}
+
+const AIRadarResultsSection = memo(function AIRadarResultsSection({
+  showCandidates,
+  showWalls,
+  results,
+  refreshKey,
+  refreshCount,
+  getCandidateDescription,
+  onTouchStart,
+  onTouchMove,
+  onPointerDown,
+  onPointerMove,
+  onWheel,
+  onOpenProfile,
+  onRefresh,
+}: AIRadarResultsSectionProps) {
+  const visibleResults = useMemo(() => results.slice(0, 2), [results])
+
+  return (
+    <>
+      {showCandidates && visibleResults.length > 0 && (
+        <div className="space-y-4">
+          {visibleResults.map((user) => (
+            <AIRadarResultCard
+              key={user.id}
+              user={user}
+              getCandidateDescription={getCandidateDescription}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onWheel={onWheel}
+              onOpenProfile={onOpenProfile}
+            />
+          ))}
+        </div>
+      )}
+
+      {showWalls && (
+        <div className="space-y-4 pt-4">
+          <AIRadarMoreWall
+            refreshKey={refreshKey}
+            refreshCount={refreshCount}
+            isSkySeedSearch={false}
+            skyImages={EMPTY_SKY_IMAGES}
+            onRefresh={onRefresh}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onWheel={onWheel}
+          />
+        </div>
+      )}
+    </>
+  )
+})
+
 export default function AIRadarPage({
   locale,
   hasLocalePreference,
   onChangeLocale,
 }: AIRadarPageProps) {
   const safeLocale: Locale = locale ?? 'zh-TW'
-const text = getAIRadarText(safeLocale)
-const FALLBACK_STARTER_PROMPTS_POOL =
+const text = useMemo(() => getAIRadarText(safeLocale), [safeLocale])
+const FALLBACK_STARTER_PROMPTS_POOL = useMemo(() =>
   safeLocale === 'en'
     ? [
         'Find people who look emotionally warm and easy to talk to',
@@ -98,15 +229,15 @@ const FALLBACK_STARTER_PROMPTS_POOL =
         '幫我找很懂音樂 vibe 的人',
         '幫我找有情緒療癒感的人',
         '幫我找穿黑色很好看的人',
-      ]
+      ], [safeLocale])
 
-function getRandomStarterPrompts() {
+const getRandomStarterPrompts = useCallback(() => {
   const shuffled = [...FALLBACK_STARTER_PROMPTS_POOL].sort(
     () => Math.random() - 0.5
   )
 
   return shuffled.slice(0, 3)
-}
+}, [FALLBACK_STARTER_PROMPTS_POOL])
 
   const [refreshKey, setRefreshKey] = useState(0)
   const [refreshCount, setRefreshCount] = useState(0)
@@ -116,7 +247,7 @@ function getRandomStarterPrompts() {
 
   const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false)
 const [voiceTranscript, setVoiceTranscript] = useState('')
-const recognitionRef = useRef<any>(null)
+const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
 const [showAIRadarInfo, setShowAIRadarInfo] = useState(false)
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
@@ -129,13 +260,13 @@ const [showEmailLogin, setShowEmailLogin] = useState(false)
   const [isListening, setIsListening] = useState(false)
 
   const [loading, setLoading] = useState(false)
-const [results, setResults] = useState<FakeUser[]>([])
+const [results, setResults] = useState<AIRadarUser[]>([])
 const [aiText, setAiText] = useState('')
 const [errorType, setErrorType] = useState('')
 const [lastQuery, setLastQuery] = useState('')
 
 const [selectedProfileUser, setSelectedProfileUser] =
-  useState<any | null>(null)
+  useState<AIRadarUser | null>(null)
 
 const [displayedAiText, setDisplayedAiText] = useState('')
 const [showCandidates, setShowCandidates] = useState(false)
@@ -143,11 +274,6 @@ const [showWalls, setShowWalls] = useState(false)
 
 const [starterPrompts, setStarterPrompts] = useState<string[]>([])
 const [isGeneratingPrompts, setIsGeneratingPrompts] = useState(true)
-
-const [warmImages, setWarmImages] = useState<string[]>([])
-
-const [homeWarmImages, setHomeWarmImages] = useState<string[]>([])
-const [homeWarmVideos, setHomeWarmVideos] = useState<string[]>([])
 
 const [showTopBar, setShowTopBar] = useState(true)
 const [showNewUserUploadGuide, setShowNewUserUploadGuide] = useState(false)
@@ -178,6 +304,11 @@ const [flyingUser, setFlyingUser] = useState<{
 const targetRef = useRef<HTMLDivElement | null>(null)
 
 const mainScrollRef = useRef<HTMLElement | null>(null)
+const handleSubmitRef = useRef<((queryOverride?: string) => Promise<void>) | null>(
+  null
+)
+const touchStartRef = useRef({ x: 0, y: 0 })
+const pointerStartRef = useRef({ x: 0, y: 0 })
 const inFlightRef = useRef(false)
 const activeQueryRef = useRef('')
 const activeAbortControllerRef = useRef<AbortController | null>(null)
@@ -389,7 +520,7 @@ async function updateUploadGuideForUser(userId: string) {
 async function readAIRadarStreamResponse(
   response: Response,
   onStage: (stage: AIRadarLoadingStage) => void
-) {
+): Promise<AIRadarResponse> {
   if (!response.body) {
     return response.json()
   }
@@ -397,10 +528,10 @@ async function readAIRadarStreamResponse(
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
-  let resultData: any = null
+  let resultData: AIRadarResponse | null = null
   let rawText = ''
 
-  const handleEvent = (event: any) => {
+  const handleEvent = (event: AIRadarStreamEvent) => {
     if (event?.type === 'progress') {
       if (
         event.stage === 'searching' ||
@@ -414,7 +545,7 @@ async function readAIRadarStreamResponse(
     }
 
     if (event?.type === 'result') {
-      resultData = event.data
+      resultData = event.data ?? null
     }
   }
 
@@ -435,7 +566,7 @@ async function readAIRadarStreamResponse(
       if (dataLines.length === 0) continue
 
       try {
-        handleEvent(JSON.parse(dataLines.join('\n')))
+        handleEvent(JSON.parse(dataLines.join('\n')) as AIRadarStreamEvent)
       } catch (error) {
         console.error('[AI Radar Frontend] stream event parse failed:', error)
       }
@@ -461,7 +592,7 @@ async function readAIRadarStreamResponse(
   }
 
   try {
-    return JSON.parse(rawText)
+    return JSON.parse(rawText) as AIRadarResponse
   } catch (error) {
     console.error('[AI Radar Frontend] JSON parse failed:', error)
     throw Object.assign(new Error('JSON_PARSE_FAILED'), {
@@ -478,90 +609,6 @@ useEffect(() => {
     inFlightRef.current = false
     clearRequestTimers()
   }
-}, [])
-
-useEffect(() => {
-  const timer = window.setTimeout(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select(`
-          id,
-          post_images (
-            image_url
-          )
-        `)
-        .not('post_images', 'is', null)
-        .limit(40)
-
-      if (error) {
-        console.warn('AI Radar warm images failed:', error)
-        return
-      }
-
-      const images =
-        data
-          ?.flatMap((post: any) =>
-            post.post_images?.map((img: any) => img.image_url) ?? []
-          )
-          .filter(Boolean)
-          .slice(0, 12) ?? []
-
-      setWarmImages(images)
-    } catch (error) {
-      console.warn('AI Radar warm image preload failed:', error)
-    }
-  }, 900)
-
-  return () => window.clearTimeout(timer)
-}, [])
-
-useEffect(() => {
-  const timer = window.setTimeout(async () => {
-    try {
-      const { data: postsData } = await supabase
-        .from('posts')
-        .select(`
-          id,
-          post_images (
-            image_url
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-      const { data: videosData } = await supabase
-        .from('short_videos')
-        .select(`
-          id,
-          video_url,
-          thumbnail_url
-        `)
-        .order('created_at', { ascending: false })
-        .limit(3)
-
-      const images =
-        postsData
-          ?.flatMap((post: any) =>
-            post.post_images?.map((img: any) => img.image_url) ?? []
-          )
-          .filter(Boolean)
-          .slice(0, 12) ?? []
-
-      const videoUrls =
-        videosData
-          ?.map((video: any) => video.video_url)
-          .filter(Boolean)
-          .slice(0, 3) ?? []
-
-      setHomeWarmImages(images)
-      setHomeWarmVideos(videoUrls)
-    } catch (error) {
-      console.warn('Home feed warmup failed:', error)
-    }
-  }, 900)
-
-  return () => window.clearTimeout(timer)
 }, [])
 
 useEffect(() => {
@@ -761,17 +808,59 @@ const hasInput = inputValue.trim().length > 0 || !!selectedLibraryUser
   }, 22)
 }
 
-const stopSwipePropagation = (e: React.TouchEvent<HTMLDivElement>) => {
-  e.stopPropagation()
-}
+const stopSwipePropagation = useCallback(
+  (e: React.TouchEvent<HTMLDivElement>) => {
+    const touch = e.touches[0]
 
-const stopPointerPropagation = (e: React.PointerEvent<HTMLDivElement>) => {
-  e.stopPropagation()
-}
+    if (!touch) return
 
-const stopWheelPropagation = (e: React.WheelEvent<HTMLDivElement>) => {
-  e.stopPropagation()
-}
+    if (e.type === 'touchstart') {
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+      }
+      return
+    }
+
+    const deltaX = touch.clientX - touchStartRef.current.x
+    const deltaY = touch.clientY - touchStartRef.current.y
+
+    if (Math.abs(deltaY) >= Math.abs(deltaX)) return
+    if (Math.abs(deltaX) < 10) return
+
+    e.stopPropagation()
+  },
+  []
+)
+
+const stopPointerPropagation = useCallback(
+  (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.type === 'pointerdown') {
+      pointerStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+      }
+      return
+    }
+
+    const deltaX = e.clientX - pointerStartRef.current.x
+    const deltaY = e.clientY - pointerStartRef.current.y
+
+    if (Math.abs(deltaY) >= Math.abs(deltaX)) return
+    if (Math.abs(deltaX) < 10) return
+
+    e.stopPropagation()
+  },
+  []
+)
+
+const stopWheelPropagation = useCallback(
+  (e: React.WheelEvent<HTMLDivElement>) => {
+    if (Math.abs(e.deltaY) >= Math.abs(e.deltaX)) return
+    e.stopPropagation()
+  },
+  []
+)
 
 function handlePickLibraryUser(payload: {
   user: { id: string; name: string; avatar: string }
@@ -811,6 +900,37 @@ function handleClearInput() {
   setSelectedLibraryUser(null)
 }
 
+const handleOpenProfile = useCallback((user: AIRadarUser) => {
+  setSelectedProfileUser(user)
+}, [])
+
+const handleRefreshMoreWall = useCallback(() => {
+  if (refreshCount >= 2) return
+
+  setIsLoading(true)
+  setLoadingStage('searching')
+
+  window.setTimeout(() => {
+    setRefreshKey((prev) => prev + 1)
+    setRefreshCount((prev) => prev + 1)
+
+    setIsLoading(false)
+    setLoadingStage('idle')
+  }, 1000)
+}, [refreshCount])
+
+const handleOpenPeopleLibrary = useCallback(() => {
+  setIsPeopleLibraryOpen(true)
+}, [])
+
+const handleOpenAIRadarInfo = useCallback(() => {
+  setShowAIRadarInfo(true)
+}, [])
+
+const handleOpenVibePlus = useCallback(() => {
+  openLink(MEMBERSHIP_URL)
+}, [])
+
 function handleRetry() {
   if (!lastQuery) return
 
@@ -819,8 +939,9 @@ function handleRetry() {
 }
 
 function handleVoiceInput() {
+  const speechWindow = window as WindowWithSpeechRecognition
   const SpeechRecognition =
-    (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition
 
   if (!SpeechRecognition) {
     alert(text.voiceNotSupported)
@@ -843,7 +964,7 @@ function handleVoiceInput() {
 
   setIsListening(true)
 
-  recognition.onresult = (event: any) => {
+  recognition.onresult = (event) => {
     let nextTranscript = ''
 
     for (let i = 0; i < event.results.length; i += 1) {
@@ -865,7 +986,7 @@ function handleVoiceInput() {
     setInputValue(nextTranscript)
   }
 
-  recognition.onerror = (event: any) => {
+  recognition.onerror = (event) => {
     console.warn('voice recognition error:', event)
     setIsListening(false)
   }
@@ -894,7 +1015,7 @@ function handleVoiceSubmit() {
   void handleSubmit(finalVoiceText)
 }
 
-function getCandidateDescription(user: any) {
+const getCandidateDescription = useCallback((user: AIRadarUser) => {
   if (user?.humanFeeling) {
     return user.humanFeeling
   }
@@ -1034,7 +1155,7 @@ function getCandidateDescription(user: any) {
   }
 
   return `${name} 的內容和你的搜尋方向有部分重疊，整體 vibe 看起來自然舒服。`
-}
+}, [lastQuery])
 
     const handleSubmit = async (queryOverride?: string) => {
   const currentInput =
@@ -1103,7 +1224,7 @@ const finishRequest = () => {
 
   setLastQuery(finalQuery)
 
-    let data: any = null
+    let data: AIRadarResponse | null = null
 
 try {
   timeoutId = scheduleRequestTimer(() => {
@@ -1177,8 +1298,8 @@ try {
       setLoadingStage(stage)
     }
   })
-} catch (jsonError: any) {
-  if (jsonError?.message !== 'JSON_PARSE_FAILED') {
+} catch (jsonError: unknown) {
+  if (!(jsonError instanceof Error) || jsonError.message !== 'JSON_PARSE_FAILED') {
     throw jsonError
   }
 
@@ -1203,7 +1324,7 @@ return
 
 console.log('[AI Radar Frontend] parsed data:', data)
 }
-} catch (error: any) {
+} catch (error: unknown) {
   if (requestSequenceRef.current !== requestId) {
   setLoading(false)
   setIsLoading(false)
@@ -1216,7 +1337,9 @@ console.log('[AI Radar Frontend] parsed data:', data)
 
   console.error('[AI Radar Frontend] API failed:', error)
 
-  if (error?.name === 'AbortError') {
+  const errorName = error instanceof Error ? error.name : ''
+
+  if (errorName === 'AbortError') {
     setErrorType('TIMEOUT')
   } else {
     setErrorType('NETWORK_FAILED')
@@ -1226,7 +1349,7 @@ console.log('[AI Radar Frontend] parsed data:', data)
     ok: false,
     matchedUsers: [],
     aiReply:
-      error?.name === 'AbortError'
+      errorName === 'AbortError'
         ? text.timeoutError
         : text.networkError,
   }
@@ -1264,7 +1387,7 @@ if (matchedUsers.length > 0) {
         setLoadingStage('idle')
 
     if (matchedUsers.length > 0) {
-  setResults(matchedUsers as any)
+  setResults(matchedUsers as AIRadarUser[])
 
   scheduleRequestTimer(() => {
     setShowCandidates(true)
@@ -1301,53 +1424,25 @@ typeText(nextAiText, requestId)
 }, 320, requestId)
 }
 
+handleSubmitRef.current = handleSubmit
+
+const handleInputSubmit = useCallback(() => {
+  void handleSubmitRef.current?.()
+}, [])
+
   const promptPillClassName =
-    'min-h-[52px] rounded-[18px] border border-white/[0.12] bg-white/[0.06] px-5 py-3 text-center font-semibold shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] active:scale-[0.98] transition'
+    'min-h-[52px] rounded-[18px] border border-white/[0.12] bg-white/[0.08] px-5 py-3 text-center font-semibold shadow-[0_4px_14px_rgba(0,0,0,0.06)] active:scale-[0.98] transition'
 
   return (
   <>
-    <div className="hidden">
-  {homeWarmImages
-  .filter((src) => !warmImages.includes(src))
-  .map((src) => (
-    <img
-      key={`ai-radar-warm-${src}`}
-      src={src}
-      alt=""
-      loading="eager"
-      decoding="async"
-    />
-  ))}
-
-  {homeWarmImages.map((src) => (
-    <img
-      key={`home-feed-image-warm-${src}`}
-      src={src}
-      alt=""
-      loading="eager"
-      decoding="async"
-    />
-  ))}
-
-  {homeWarmVideos.map((src) => (
-    <video
-      key={`home-feed-video-warm-${src}`}
-      src={src}
-      muted
-      playsInline
-      preload="metadata"
-    />
-  ))}
-</div>
-
 <AIRadarLoadingOverlay
   open={isLoading}
   text={loadingStage === 'idle' ? '' : text.loading[loadingStage]}
 />
 
       {isLanguageModalOpen && (
-  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6 backdrop-blur-[10px]">
-    <div className="w-full max-w-[360px] rounded-[36px] bg-[var(--app-card)] px-7 py-10 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6">
+    <div className="w-full max-w-[360px] rounded-[36px] bg-[var(--app-card)] px-7 py-10 text-center shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
       <div className="flex flex-col gap-4">
         <h2 className="text-[28px] font-semibold text-[var(--app-text)]">
           {text.languageTitle}
@@ -1380,8 +1475,8 @@ typeText(nextAiText, requestId)
 )}
 
       {isAuthModalOpen && (
-  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6 backdrop-blur-[10px]">
-    <div className="w-full max-w-[360px] rounded-[36px] bg-[var(--app-card)] px-7 py-10 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6">
+    <div className="w-full max-w-[360px] rounded-[36px] bg-[var(--app-card)] px-7 py-10 text-center shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
 
       <div className="flex flex-col gap-4">
         <h2 className="text-[28px] font-semibold text-[var(--app-text)]">
@@ -1434,14 +1529,14 @@ typeText(nextAiText, requestId)
 
 <AIRadarTopBar
   showTopBar={showTopBar}
-  onClickAIRadarInfo={() => setShowAIRadarInfo(true)}
-  onClickVibePlus={() => openLink(MEMBERSHIP_URL)}
+  onClickAIRadarInfo={handleOpenAIRadarInfo}
+  onClickVibePlus={handleOpenVibePlus}
 />
 
 <AnimatePresence>
   {showNewUserUploadGuide && !isAuthModalOpen && (
     <motion.div
-      className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 px-6 backdrop-blur-[10px]"
+      className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 px-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -1473,7 +1568,7 @@ typeText(nextAiText, requestId)
           px-7
           py-8
           text-center
-          shadow-[0_18px_60px_rgba(0,0,0,0.28)]
+          shadow-[0_10px_34px_rgba(0,0,0,0.22)]
         "
       >
         <div className="mb-5 text-[52px]">
@@ -1538,7 +1633,7 @@ typeText(nextAiText, requestId)
     touchAction: 'pan-y',
   }}
   ref={mainScrollRef}
-  className="h-[100dvh] min-h-[100dvh] overflow-y-auto overflow-x-hidden bg-[var(--app-bg)] px-4 pt-[calc(76px+env(safe-area-inset-top))] pb-[calc(210px+env(safe-area-inset-bottom))] text-[var(--app-text)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  className="h-[100dvh] min-h-[100dvh] touch-pan-y overflow-y-auto overflow-x-hidden overscroll-contain bg-[var(--app-bg)] px-4 pt-[calc(76px+env(safe-area-inset-top))] pb-[calc(210px+env(safe-area-inset-bottom))] text-[var(--app-text)] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 >
         <div className="flex min-h-[calc(100vh-76px)] flex-col">
          
@@ -1634,58 +1729,21 @@ typeText(nextAiText, requestId)
 )}
 
 
-  {showCandidates && results.length > 0 && (
-  <div className="space-y-4">
-    {results.slice(0, 2).map((user) => (
-      <AIRadarResultCard
-        key={user.id}
-        user={user}
-        getCandidateDescription={getCandidateDescription}
-        onTouchStart={stopSwipePropagation}
-        onTouchMove={stopSwipePropagation}
-        onPointerDown={stopPointerPropagation}
-        onPointerMove={stopPointerPropagation}
-        onWheel={stopWheelPropagation}
-        onOpenProfile={(user) => {
-          setSelectedProfileUser(user)
-        }}
-      />
-    ))}
-  </div>
-)}
-
-{showWalls && (
-  <div className="space-y-4 pt-4">
-    
-<AIRadarMoreWall
-  refreshKey={refreshKey}
-  refreshCount={refreshCount}
-  isSkySeedSearch={false}
-
-  skyImages={[]}
-  onRefresh={() => {
-    if (refreshCount >= 2) return
-
-    setIsLoading(true)
-    setLoadingStage('searching')
-
-    setTimeout(() => {
-      setRefreshKey((prev) => prev + 1)
-      setRefreshCount((prev) => prev + 1)
-
-      setIsLoading(false)
-      setLoadingStage('idle')
-    }, 1000)
-  }}
-  onTouchStart={stopSwipePropagation}
-  onTouchMove={stopSwipePropagation}
-  onPointerDown={stopPointerPropagation}
-  onPointerMove={stopPointerPropagation}
-  onWheel={stopWheelPropagation}
-/>
-    
-        </div>
-  )}
+  <AIRadarResultsSection
+    showCandidates={showCandidates}
+    showWalls={showWalls}
+    results={results}
+    refreshKey={refreshKey}
+    refreshCount={refreshCount}
+    getCandidateDescription={getCandidateDescription}
+    onTouchStart={stopSwipePropagation}
+    onTouchMove={stopSwipePropagation}
+    onPointerDown={stopPointerPropagation}
+    onPointerMove={stopPointerPropagation}
+    onWheel={stopWheelPropagation}
+    onOpenProfile={handleOpenProfile}
+    onRefresh={handleRefreshMoreWall}
+  />
 </div>
 </div>
 </main>
@@ -1696,7 +1754,7 @@ typeText(nextAiText, requestId)
     <button
       type="button"
       onClick={handleClearInput}
-      className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/18 border border-white/10 text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95"
+      className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/80 border border-white/10 text-white shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition active:scale-95"
     >
       <BrushCleaning
   size={22}
@@ -1711,7 +1769,7 @@ typeText(nextAiText, requestId)
     setVoiceTranscript('')
     setIsVoicePanelOpen(true)
   }}
-      className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/18 border border-white/10 text-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-[14px] transition active:scale-95 ${
+      className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/80 border border-white/10 text-white shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition active:scale-95 ${
   isListening ? 'ring-2 ring-purple-400' : ''
 }`}
     >
@@ -1730,8 +1788,8 @@ typeText(nextAiText, requestId)
       setInputValue={setInputValue}
       selectedLibraryUser={selectedLibraryUser}
       setSelectedLibraryUser={setSelectedLibraryUser}
-      onOpenPeopleLibrary={() => setIsPeopleLibraryOpen(true)}
-      onSubmit={handleSubmit}
+      onOpenPeopleLibrary={handleOpenPeopleLibrary}
+      onSubmit={handleInputSubmit}
       hasInput={hasInput}
       targetRef={targetRef}
     />

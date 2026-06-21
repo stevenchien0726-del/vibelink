@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
 
@@ -8,7 +9,7 @@ type Props = {
   text?: string
 }
 
-export default function AIRadarLoadingOverlay({
+function AIRadarLoadingOverlay({
   open,
   text = '',
 }: Props) {
@@ -26,7 +27,7 @@ export default function AIRadarLoadingOverlay({
             animate={{ scale: 1 }}
             exit={{ scale: 0.96 }}
             transition={{ duration: 0.18 }}
-            className="mx-auto flex w-full max-w-[360px] items-center justify-center gap-2 rounded-[24px] bg-white/90 px-5 py-4 shadow-[0_10px_34px_rgba(0,0,0,0.12)] backdrop-blur-xl"
+            className="mx-auto flex w-full max-w-[360px] items-center justify-center gap-2 rounded-[24px] bg-white/95 px-5 py-4 shadow-[0_6px_18px_rgba(0,0,0,0.10)] will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
           >
             <motion.div
               animate={{
@@ -60,3 +61,5 @@ export default function AIRadarLoadingOverlay({
     </AnimatePresence>
   )
 }
+
+export default memo(AIRadarLoadingOverlay)
