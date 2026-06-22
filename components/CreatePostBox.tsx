@@ -165,6 +165,8 @@ const CreatePostBox = forwardRef<CreatePostBoxRef, CreatePostBoxProps>(
       setUploadStatus(text.preparing)
 
       try {
+        const normalizedCaption = caption.trim()
+
         const {
           data: { user },
           error: userError,
@@ -230,7 +232,7 @@ setUploadStatus(text.creatingPost)
           .from('posts')
           .insert({
             user_id: user.id,
-            caption,
+            caption: normalizedCaption,
           })
           .select()
           .single()
@@ -262,7 +264,7 @@ setUploadStatus(text.creatingPost)
 
   author: 'You',
 
-  caption,
+  caption: normalizedCaption,
 
   imageUrl: uploadedImageUrls[0],
   imageUrls: uploadedImageUrls,
@@ -374,7 +376,7 @@ onReadyChange?.(false)
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           placeholder={text.captionPlaceholder}
-          className="mb-3 h-28 w-full resize-none rounded-xl border border-gray-200 p-3 text-sm outline-none"
+          className="mb-3 h-28 w-full resize-none rounded-xl border border-gray-200 bg-white p-3 text-sm text-black placeholder:text-black/40 outline-none"
         />
 
         <label className="mt-2 flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-[#eeeeee] text-[15px] font-medium text-[#222] active:scale-[0.98]">
