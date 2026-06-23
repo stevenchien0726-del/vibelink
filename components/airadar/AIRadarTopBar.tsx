@@ -105,7 +105,7 @@ function AIRadarTopBar({
             color: isDarkMode ? '#ffffff' : '#111111',
           }}
         >
-          <span>Vibe Plus</span>
+          <span>Vibe 會員</span>
 
           <ChevronRight
             size={18}
