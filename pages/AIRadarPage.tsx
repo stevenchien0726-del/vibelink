@@ -1529,6 +1529,7 @@ const handleInputSubmit = useCallback(() => {
 
 <AIRadarTopBar
   showTopBar={showTopBar}
+  locale={safeLocale}
   onClickAIRadarInfo={handleOpenAIRadarInfo}
   onClickVibePlus={handleOpenVibePlus}
 />

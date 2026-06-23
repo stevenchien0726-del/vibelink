@@ -3,19 +3,25 @@
 import Image from 'next/image'
 import { ChevronRight } from 'lucide-react'
 import { memo, useEffect, useState } from 'react'
+import type { Locale } from '@/i18n'
 
 type AIRadarTopBarProps = {
   showTopBar: boolean
+  locale: Locale
   onClickVibePlus: () => void
   onClickAIRadarInfo?: () => void
 }
 
 function AIRadarTopBar({
   showTopBar,
+  locale,
   onClickVibePlus,
   onClickAIRadarInfo,
 }: AIRadarTopBarProps) {
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const membershipLabel = String(locale).toLowerCase().startsWith('en')
+    ? 'Vibe Membership'
+    : 'Vibe會員'
 
   useEffect(() => {
     const updateTheme = () => {
@@ -105,7 +111,7 @@ function AIRadarTopBar({
             color: isDarkMode ? '#ffffff' : '#111111',
           }}
         >
-          <span>Vibe 會員</span>
+          <span>{membershipLabel}</span>
 
           <ChevronRight
             size={18}
