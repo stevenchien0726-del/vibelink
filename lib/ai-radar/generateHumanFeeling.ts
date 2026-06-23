@@ -14,6 +14,73 @@ type Params = {
   signal?: AbortSignal
 }
 
+function buildHumanFeelingFallback({
+  locale = 'zh-TW',
+  aiTags = [],
+  aiStyleTags = [],
+  aiCaption = '',
+  captions = [],
+}: Params) {
+  const signalText = [
+    ...aiTags,
+    ...aiStyleTags,
+    aiCaption,
+    ...captions,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  const hasAny = (keywords: string[]) =>
+    keywords.some((keyword) => signalText.includes(keyword))
+
+  if (hasAny(['cat', 'dog', 'pet'])) {
+    return locale === 'en'
+      ? 'They carry a soft, healing everyday energy, the kind that makes interaction feel light and pressure-free.'
+      : '這個人帶有柔和、療癒的日常感，互動起來可能比較輕鬆沒有壓力。'
+  }
+
+  if (hasAny(['coffee', 'cafe', 'dessert', 'food'])) {
+    return locale === 'en'
+      ? 'They seem like someone who enjoys small details in life, with a chat rhythm that feels warm and natural.'
+      : '這個人像是很會享受生活細節的人，聊天節奏可能舒服、自然、有溫度。'
+  }
+
+  if (hasAny(['travel', 'beach', 'outdoor'])) {
+    return locale === 'en'
+      ? 'They give off a free and relaxed sense of exploration, like someone easy to share life and new moments with.'
+      : '這個人給人自由、放鬆的探索感，像是適合一起分享生活和新鮮事的人。'
+  }
+
+  if (hasAny(['nightlife', 'rave', 'techno', 'dj'])) {
+    return locale === 'en'
+      ? 'They carry stronger social energy, and once familiar, may be the kind of person who lifts the whole mood.'
+      : '這個人帶有比較強的社交能量，熟了之後可能很會帶動氣氛。'
+  }
+
+  if (hasAny(['fashion', 'outfit', 'style'])) {
+    return locale === 'en'
+      ? 'They have a clear personal style, the kind of first impression that tends to stay in your mind.'
+      : '這個人有明顯的個人風格，給人的第一印象比較有記憶點。'
+  }
+
+  if (hasAny(['gym', 'fitness', 'workout'])) {
+    return locale === 'en'
+      ? 'They feel disciplined and energetic, with a life rhythm that seems clear, active, and direct.'
+      : '這個人給人比較自律、有活力的感覺，生活節奏可能清楚又直接。'
+  }
+
+  if (hasAny(['art', 'photo', 'photography', 'creative'])) {
+    return locale === 'en'
+      ? 'They feel observant, like someone who notices small details and the atmosphere around everyday moments.'
+      : '這個人感覺比較有觀察力，像是會注意到生活中細節與氛圍的人。'
+  }
+
+  return locale === 'en'
+    ? 'Their overall vibe feels natural and comfortable, making light everyday topics a good place to start.'
+    : '這個人整體氛圍自然舒服，適合從輕鬆的日常話題開始互動。'
+}
+
 export async function generateHumanFeeling({
   locale = 'zh-TW',
   username,
@@ -57,8 +124,13 @@ The result should feel:
 - socially intuitive
 
 Very important:
+- Every description must be generated from the specific input content.
+- Do not use a generic reusable template.
+- Do not return the same sentence for different users.
 - NEVER say things like:
   "this person likes fitness/travel/nightlife"
+- NEVER return generic lines like:
+  "They feel warm, relaxed, and easy to start a conversation with."
 - NEVER sound analytical
 - NEVER sound corporate
 - NEVER mention AI tags
@@ -151,10 +223,14 @@ Return ONLY the final text.
 
 長度要求：
 - 1~2句
-- 55字內
+- 35～65字
 - 不要寫成小作文
 - 避免長句與過多形容詞堆疊
 - 可以有情緒感，但要精簡、自然、像真人觀察
+- 每個人的介紹都必須根據輸入內容生成，不可使用通用模板
+- 不可回傳「這個人感覺溫和放鬆，像是很容易自然聊起來」這種泛用句
+- 不可讓不同用戶介紹文完全相同
+- 保留真人觀察感，但要具體一點
 - 保留真人觀察感、情緒感、氣氛感
 - 適合手機快速閱讀
 
@@ -201,9 +277,14 @@ ${safeCaptions}
       response.choices[0]?.message?.content?.trim() ?? ''
 
     if (!text) {
-      return locale === 'en'
-        ? 'They feel easy to be around, with a calm and natural warmth.'
-        : '這個人給人舒服自然的感覺，帶一點安定的溫度。'
+      return buildHumanFeelingFallback({
+        locale,
+        username,
+        aiTags,
+        aiStyleTags,
+        aiCaption,
+        captions,
+      })
     }
 
     return text
@@ -213,9 +294,13 @@ ${safeCaptions}
       error
     )
 
-    return locale === 'en'
-      ? 'They feel warm, relaxed, and easy to start a conversation with.'
-      : '這個人感覺溫和放鬆，像是很容易自然聊起來。'
-
+    return buildHumanFeelingFallback({
+      locale,
+      username,
+      aiTags,
+      aiStyleTags,
+      aiCaption,
+      captions,
+    })
   }
 }

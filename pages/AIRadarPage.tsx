@@ -70,6 +70,19 @@ type AIRadarStreamEvent = {
   data?: AIRadarResponse
 }
 
+function isGenericHumanFeeling(text?: string) {
+  if (!text) return true
+
+  const normalized = text.trim()
+
+  return [
+    '這個人感覺溫和放鬆，像是很容易自然聊起來。',
+    '這個人給人舒服自然的感覺，帶一點安定的溫度。',
+    'They feel warm, relaxed, and easy to start a conversation with.',
+    'They feel easy to be around, with a calm and natural warmth.',
+  ].includes(normalized)
+}
+
 type SpeechRecognitionResultListLike = {
   length: number
   [index: number]:
@@ -1016,7 +1029,7 @@ function handleVoiceSubmit() {
 }
 
 const getCandidateDescription = useCallback((user: AIRadarUser) => {
-  if (user?.humanFeeling) {
+  if (user?.humanFeeling && !isGenericHumanFeeling(user.humanFeeling)) {
     return user.humanFeeling
   }
 

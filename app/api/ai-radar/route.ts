@@ -363,6 +363,27 @@ export async function POST(req: Request) {
     const topUsersWithFeeling = humanFeelingSignal
       ? await Promise.all(
           matchedUsers.slice(0, 2).map(async (user: any) => {
+            const aiCaption =
+              user.aiCaption ||
+              user.ai_caption ||
+              user.caption ||
+              user.text ||
+              ''
+
+            const captions = [
+              ...(Array.isArray(user.captions) ? user.captions : []),
+              ...(Array.isArray(user.recentCaptions)
+                ? user.recentCaptions
+                : []),
+              ...(Array.isArray(user.recent_captions)
+                ? user.recent_captions
+                : []),
+              user.caption,
+              user.text,
+              user.aiCaption,
+              user.ai_caption,
+            ].filter(Boolean)
+
             const humanFeeling = await generateHumanFeeling({
               locale,
               username:
@@ -381,17 +402,8 @@ export async function POST(req: Request) {
                 user.ai_style_tags ||
                 user.styleTags ||
                 [],
-              aiCaption:
-                user.aiCaption ||
-                user.ai_caption ||
-                user.caption ||
-                user.text ||
-                '',
-              captions:
-                user.captions ||
-                user.recentCaptions ||
-                user.recent_captions ||
-                [],
+              aiCaption,
+              captions,
               signal: humanFeelingSignal,
             })
 
