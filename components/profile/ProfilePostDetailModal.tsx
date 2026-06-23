@@ -148,21 +148,22 @@ export default function ProfilePostDetailModal({
                   ))}
                 </motion.div>
 
-                {postImages.length > 1 && (
-                  <div className="pointer-events-none absolute bottom-4 left-1/2 z-[30] flex -translate-x-1/2 items-center justify-center gap-2">
-                    {postImages.map((_: any, index: number) => (
-                      <span
-                        key={index}
-                        className={`h-[7px] w-[7px] rounded-full transition-colors ${
-                          selectedPostImageIndex === index
-                            ? 'bg-[#A855F7]'
-                            : 'bg-white/30'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
+
+              {postImages.length > 1 && (
+                <div className="mt-3 flex justify-center gap-2">
+                  {postImages.map((_: any, index: number) => (
+                    <span
+                      key={index}
+                      className={`h-[7px] w-[7px] rounded-full transition-colors ${
+                        selectedPostImageIndex === index
+                          ? 'bg-[#A855F7]'
+                          : 'bg-white/30'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between px-4 pt-4">
