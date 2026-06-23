@@ -28,8 +28,8 @@ export default function ProfileCommentsSection({
   }
 
   return (
-    <div className="mt-5 border-t border-[#ddd] px-4 pt-4">
-      <div className="mb-4 text-[15px] font-medium text-[#222]">
+    <div className="mt-5 border-t border-[var(--app-card-border)] px-4 pt-4">
+      <div className="mb-4 text-[15px] font-medium text-[var(--app-text)]">
         {text.comments}
       </div>
 
@@ -41,7 +41,7 @@ export default function ProfileCommentsSection({
             if (e.key === 'Enter') onSubmitComment()
           }}
           placeholder={text.placeholder}
-          className="h-[42px] flex-1 rounded-full border border-[#ddd] bg-white px-4 text-[14px] text-[#222] outline-none"
+          className="h-[42px] flex-1 rounded-full border border-[var(--app-card-border)] bg-[var(--app-surface)] px-4 text-[14px] text-[var(--app-text)] placeholder:text-[var(--app-muted)] outline-none"
         />
 
         <button
@@ -51,7 +51,7 @@ export default function ProfileCommentsSection({
           className={`h-[42px] rounded-full px-4 text-[14px] font-medium ${
             commentText.trim()
               ? 'bg-[#c86cff] text-white'
-              : 'bg-[#e5e5e5] text-[#999]'
+              : 'bg-[var(--app-surface)] text-[var(--app-muted)]'
           }`}
         >
           {text.send}
@@ -59,7 +59,7 @@ export default function ProfileCommentsSection({
       </div>
 
       {comments.length === 0 ? (
-        <div className="text-[14px] text-[#999]">
+        <div className="text-[14px] text-[var(--app-muted)]">
           {text.empty}
         </div>
       ) : (
@@ -76,13 +76,13 @@ export default function ProfileCommentsSection({
               </div>
 
               <div className="flex-1">
-                <div className="text-[13px] font-medium text-[#222]">
+                <div className="text-[13px] font-medium text-[var(--app-text)]">
                   {comment.profiles?.display_name ||
                     comment.profiles?.username ||
                     'Vibelink User'}
                 </div>
 
-                <div className="mt-1 text-[14px] text-[#444]">
+                <div className="mt-1 text-[14px] text-[var(--app-text)]">
                   {comment.content}
                 </div>
               </div>
@@ -90,7 +90,7 @@ export default function ProfileCommentsSection({
               <button
                 type="button"
                 onClick={() => onOpenCommentMenu(comment)}
-                className="mr-[2px] mt-[0px] flex h-[20px] w-[20px] items-center justify-center rounded-full active:scale-90"
+                className="mr-[2px] mt-[0px] flex h-[20px] w-[20px] items-center justify-center rounded-full text-[var(--app-muted)] active:scale-90"
               >
                 <MoreHorizontal size={20} strokeWidth={2} />
               </button>

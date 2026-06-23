@@ -74,9 +74,11 @@ export default function ProfilePostDetailModal({
   handlePostDetailTouchMove,
   handlePostDetailTouchEnd,
 }: Props) {
+  const postImages = selectedPost?.post_images ?? []
+
   return (
     <AnimatePresence>
-      {open && selectedPost?.post_images?.length > 0 && (
+      {open && postImages.length > 0 && (
         <motion.div
           data-block-page-swipe="true"
           className="fixed inset-0 z-[500] bg-[var(--app-bg)] text-[var(--app-text)]"
@@ -133,7 +135,7 @@ export default function ProfilePostDetailModal({
                   animate={{ x: `-${selectedPostImageIndex * 100}%` }}
                   transition={{ type: 'spring', stiffness: 320, damping: 30 }}
                 >
-                  {selectedPost.post_images?.map((img: any, index: number) => (
+                  {postImages.map((img: any, index: number) => (
                     <div
                       key={index}
                       className="h-[530px] w-full shrink-0 grow-0 basis-full overflow-hidden bg-black"
@@ -148,17 +150,18 @@ export default function ProfilePostDetailModal({
 
               </div>
 
-              {selectedPost.post_images?.length > 1 && (
-                <div className="mt-3 flex items-center justify-center gap-[7px]">
-                  {selectedPost.post_images.map((_: any, index: number) => (
+              {postImages.length > 1 && (
+                <div className="mt-2 flex justify-center gap-2">
+                  {postImages.map((_: any, index: number) => (
                     <button
                       key={index}
                       type="button"
                       onClick={() => setSelectedPostImageIndex(index)}
-                      className={`h-[8px] rounded-full transition-all ${
+                      aria-label={`Show photo ${index + 1}`}
+                      className={`h-[7px] w-[7px] rounded-full transition-colors ${
                         selectedPostImageIndex === index
-                          ? 'w-[18px] bg-[#c86cff]'
-                          : 'w-[8px] bg-[#d9d9d9]'
+                          ? 'bg-[#c86cff]'
+                          : 'bg-[var(--app-muted)]'
                       }`}
                     />
                   ))}
@@ -210,7 +213,7 @@ export default function ProfilePostDetailModal({
             </div>
 
             {selectedPost.caption && (
-              <div className="px-4 pt-3 text-[15px] text-[#222]">
+              <div className="px-4 pt-3 text-[15px] text-[var(--app-text)]">
                 {selectedPost.caption}
               </div>
             )}
@@ -245,7 +248,7 @@ export default function ProfilePostDetailModal({
                 />
 
                 <motion.div
-                  className="fixed bottom-0 left-1/2 z-[630] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[#f3f3f3] px-5 pt-4 pb-8 shadow-[0_-10px_30px_rgba(0,0,0,0.12)]"
+                  className="fixed bottom-0 left-1/2 z-[630] w-full max-w-[430px] -translate-x-1/2 rounded-t-[24px] bg-[var(--app-card)] px-5 pt-4 pb-8 shadow-[0_-10px_30px_rgba(0,0,0,0.12)]"
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
@@ -271,7 +274,7 @@ export default function ProfilePostDetailModal({
                         setIsCommentMenuOpen(false)
                         setSelectedComment(null)
                       }}
-                      className="flex h-[52px] w-full items-center justify-center rounded-[16px] text-[16px] font-medium text-[#222] active:bg-black/5"
+                      className="flex h-[52px] w-full items-center justify-center rounded-[16px] text-[16px] font-medium text-[var(--app-text)] active:bg-black/5"
                     >
                       檢舉留言
                     </button>
