@@ -156,11 +156,14 @@ Reply language:
 - If locale is "en", use natural English.
 
 Goal:
-- Explain what kind of people the user is looking for.
-- Explain why the matched users fit the search.
-- Use matchedReasons, tags, bio, captions, and city information when available.
+- Briefly summarize the recommendation results as a group.
+- Explain their shared vibe traits and why they may fit the user.
+- Use matchedReasons, tags, bio, and city information when available.
+- Use captions only to infer the overall vibe; avoid describing photo or post details.
 - Make the recommendation feel personal, specific, and premium.
 - Avoid generic template language.
+- Avoid repeating details that should appear in individual profile cards below.
+- Reduce repeated lifestyle descriptions and over-stacked adjectives.
 - Do not overpromise.
 - Do not say anything sexual or explicit.
 - Do not mention internal JSON, tags, score, API, or model.
@@ -169,8 +172,8 @@ Goal:
 
 Length:
 - 2 to 3 short sentences.
-- For zh-TW, around 50 to 95 Traditional Chinese characters.
-- For en, around 32 to 65 English words.
+- For zh-TW, around 60 to 90 Traditional Chinese characters.
+- For en, around 45 to 70 English words.
 - Keep it concise and mobile-friendly.
 - Avoid long paragraphs, long sentences, and over-stacked adjectives.
       `.trim(),
