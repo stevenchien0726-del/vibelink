@@ -83,9 +83,11 @@ to go somewhere at 2AM."
 a surprisingly soft side after you know them longer."
 
 Length:
-- 1~3 short sentences
-- natural line breaks are allowed
-- under 90 words
+- 1~2 short sentences
+- under 55 words
+- concise and mobile-friendly
+- avoid long poetic paragraphs
+- avoid over-describing
 - emotionally natural
 - subtle and realistic
 
@@ -148,13 +150,13 @@ Return ONLY the final text.
 凌晨突然找朋友亂跑的人。」
 
 長度要求：
-- 1~3句
-- 不要太長
-- 80字內
-- 可以換行
-- 要自然
-- 要像真人觀察
-- 要有情緒感
+- 1~2句
+- 55字內
+- 不要寫成小作文
+- 避免長句與過多形容詞堆疊
+- 可以有情緒感，但要精簡、自然、像真人觀察
+- 保留真人觀察感、情緒感、氣氛感
+- 適合手機快速閱讀
 
 只回傳最終文字。
 `.trim()
@@ -200,8 +202,8 @@ ${safeCaptions}
 
     if (!text) {
       return locale === 'en'
-        ? 'This person feels easy to naturally spend time with.'
-        : '這個人給人的感覺很自然，也容易讓人想慢慢認識。'
+        ? 'They feel easy to be around, with a calm and natural warmth.'
+        : '這個人給人舒服自然的感覺，帶一點安定的溫度。'
     }
 
     return text
@@ -212,7 +214,8 @@ ${safeCaptions}
     )
 
     return locale === 'en'
-      ? 'This person feels emotionally warm and naturally comfortable to be around.'
-      : '這個人有一種情緒很穩定、相處起來很自然的感覺。'
+      ? 'They feel warm, relaxed, and easy to start a conversation with.'
+      : '這個人感覺溫和放鬆，像是很容易自然聊起來。'
+
   }
 }

@@ -62,8 +62,8 @@ function fallbackReply(
         tags.length > 0
           ? ` Their recent content shows signals like ${tags
               .slice(0, 3)
-              .join(', ')}, so the match is based on lifestyle and vibe clues rather than a generic profile match.`
-          : ` The match is based on their recent content, profile signals, and overall vibe rather than a generic profile match.`
+              .join(', ')}, so the match comes from lifestyle and vibe clues.`
+          : ` The match is based on profile signals, recent content, and overall vibe.`
 
       return `I found a few people who are close to “${query}”${nameText}.${tagText}`
     }
@@ -76,7 +76,7 @@ function fallbackReply(
       )}.`
     }
 
-    return `I couldn’t find an exact match for “${query}” yet. Try a shorter or broader description.`
+    return `I couldn’t find an exact match for “${query}” yet. Try a shorter, broader description.`
   }
 
   if (users.length > 0) {
@@ -87,10 +87,10 @@ function fallbackReply(
       tags.length > 0
         ? `他們近期內容中有 ${tags
             .slice(0, 3)
-            .join('、')} 這類線索，所以這次推薦是根據貼文內容、生活氛圍和 AI 判斷綜合整理。`
-        : `這次推薦主要根據他們的貼文內容、個人資料與整體 vibe 綜合判斷，而不是單純用固定條件配對。`
+            .join('、')} 這類線索，所以推薦更接近生活氛圍與互動感。`
+        : `這次推薦主要看貼文內容、個人資料與整體 vibe。`
 
-    return `根據你想找的「${query}」，我找到幾位氛圍接近的用戶${nameText}。${tagText}`
+    return `根據你想找的「${query}」，我找到幾位氛圍接近的人${nameText}。${tagText}`
   }
 
   const fallbackTags = parsedQuery?.tags?.slice(0, 3) ?? []
@@ -101,7 +101,7 @@ function fallbackReply(
     )}。`
   }
 
-  return `目前沒有找到完全符合「${query}」的用戶，你可以換成更簡短或更寬鬆的描述再試一次。`
+  return `目前沒有找到完全符合「${query}」的用戶，可以換成更簡短或寬鬆的描述。`
 }
 
 function compactUserForPrompt(user: AIRadarReplyUser) {
@@ -168,9 +168,11 @@ Goal:
 - Sound like an intelligent social discovery assistant.
 
 Length:
-- 2 to 4 short sentences.
-- For zh-TW, around 60 to 120 Traditional Chinese characters.
-- For en, around 40 to 80 English words.
+- 2 to 3 short sentences.
+- For zh-TW, around 50 to 95 Traditional Chinese characters.
+- For en, around 32 to 65 English words.
+- Keep it concise and mobile-friendly.
+- Avoid long paragraphs, long sentences, and over-stacked adjectives.
       `.trim(),
     },
     {
