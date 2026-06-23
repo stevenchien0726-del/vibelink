@@ -75,6 +75,58 @@ function rateLimitResponse(retryAfterSeconds: number) {
   )
 }
 
+function rerankVectorUsersByTags(users: any[], tags: string[]) {
+  if (!Array.isArray(users) || users.length === 0 || tags.length === 0) {
+    return users
+  }
+
+  const normalizedTags = tags
+    .filter((tag): tag is string => typeof tag === 'string')
+    .map((tag) => tag.toLowerCase().trim())
+    .filter(Boolean)
+
+  if (normalizedTags.length === 0) return users
+
+  return [...users]
+    .map((user) => {
+      const userTags = [
+        ...(user.tags ?? []),
+        ...(user.vibe_tags ?? []),
+        ...(user.aiTags ?? []),
+        ...(user.ai_tags ?? []),
+        ...(user.aiStyleTags ?? []),
+        ...(user.ai_style_tags ?? []),
+        ...(user.styleTags ?? []),
+      ]
+        .filter((tag): tag is string => typeof tag === 'string')
+        .map((tag) => tag.toLowerCase().trim())
+        .filter(Boolean)
+
+      const matchedTags = normalizedTags.filter((tag) =>
+        userTags.includes(tag)
+      )
+
+      const tagMatchCount = matchedTags.length
+      const vectorScore = Number(user.aiScore ?? user.similarity ?? 0)
+      const imageCount = Array.isArray(user.images) ? user.images.length : 0
+
+      const rerankScore =
+        vectorScore * 100 +
+        tagMatchCount * 35 +
+        imageCount * 0.5
+
+      return {
+        ...user,
+        aiScore: rerankScore,
+        matchedReasons:
+          matchedTags.length > 0
+            ? matchedTags
+            : user.matchedReasons ?? [],
+      }
+    })
+    .sort((a, b) => (b.aiScore ?? 0) - (a.aiScore ?? 0))
+}
+
 async function searchDevelopmentMockUsers(parsedQuery: unknown) {
   if (
     process.env.NODE_ENV !== 'development' &&
@@ -218,7 +270,7 @@ export async function POST(req: Request) {
 
         const matchScore = tags.reduce(
           (score: number, tag: string) => {
-            return userTags.includes(tag) ? score + 20 : score
+            return userTags.includes(tag) ? score + 40 : score
           },
           0
         )
@@ -234,13 +286,13 @@ export async function POST(req: Request) {
       .sort((a: any, b: any) => {
         const scoreA =
           (a.aiScore ?? 0) +
-          (a.matchCount ?? 0) * 2 +
-          (a.images?.length ?? 0) * 3
+          (a.matchCount ?? 0) * 0.5 +
+          (a.images?.length ?? 0) * 1
 
         const scoreB =
           (b.aiScore ?? 0) +
-          (b.matchCount ?? 0) * 2 +
-          (b.images?.length ?? 0) * 3
+          (b.matchCount ?? 0) * 0.5 +
+          (b.images?.length ?? 0) * 1
 
         return scoreB - scoreA
       })
@@ -268,10 +320,11 @@ export async function POST(req: Request) {
       )
 
       const vectorUsers = transformVectorResults(vectorRows)
+      const rerankedVectorUsers = rerankVectorUsersByTags(vectorUsers, tags)
 
       matchedUsers =
-        vectorUsers.length > 0
-          ? vectorUsers
+        rerankedVectorUsers.length > 0
+          ? rerankedVectorUsers
           : transformedSupabaseUsers.length > 0
           ? transformedSupabaseUsers
           : await searchDevelopmentMockUsers(parsedQuery)
