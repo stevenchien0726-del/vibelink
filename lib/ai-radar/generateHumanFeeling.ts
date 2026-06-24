@@ -36,48 +36,48 @@ function buildHumanFeelingFallback({
 
   if (hasAny(['cat', 'dog', 'pet'])) {
     return locale === 'en'
-      ? 'They carry a soft, healing everyday energy, the kind that makes interaction feel light and pressure-free.'
+      ? 'They feel soft, easygoing, and comforting to be around.'
       : '這個人帶有柔和、療癒的日常感，互動起來可能比較輕鬆沒有壓力。'
   }
 
   if (hasAny(['coffee', 'cafe', 'dessert', 'food'])) {
     return locale === 'en'
-      ? 'They seem like someone who enjoys small details in life, with a chat rhythm that feels warm and natural.'
+      ? 'They seem warm, relaxed, and easy to chat with.'
       : '這個人像是很會享受生活細節的人，聊天節奏可能舒服、自然、有溫度。'
   }
 
   if (hasAny(['travel', 'beach', 'outdoor'])) {
     return locale === 'en'
-      ? 'They give off a free and relaxed sense of exploration, like someone easy to share life and new moments with.'
+      ? 'They feel open, relaxed, and curious about life.'
       : '這個人給人自由、放鬆的探索感，像是適合一起分享生活和新鮮事的人。'
   }
 
   if (hasAny(['nightlife', 'rave', 'techno', 'dj'])) {
     return locale === 'en'
-      ? 'They carry stronger social energy, and once familiar, may be the kind of person who lifts the whole mood.'
+      ? 'They bring social energy without feeling too serious.'
       : '這個人帶有比較強的社交能量，熟了之後可能很會帶動氣氛。'
   }
 
   if (hasAny(['fashion', 'outfit', 'style'])) {
     return locale === 'en'
-      ? 'They have a clear personal style, the kind of first impression that tends to stay in your mind.'
+      ? 'They have a clear style that feels memorable.'
       : '這個人有明顯的個人風格，給人的第一印象比較有記憶點。'
   }
 
   if (hasAny(['gym', 'fitness', 'workout'])) {
     return locale === 'en'
-      ? 'They feel disciplined and energetic, with a life rhythm that seems clear, active, and direct.'
+      ? 'They feel active, direct, and self-driven.'
       : '這個人給人比較自律、有活力的感覺，生活節奏可能清楚又直接。'
   }
 
   if (hasAny(['art', 'photo', 'photography', 'creative'])) {
     return locale === 'en'
-      ? 'They feel observant, like someone who notices small details and the atmosphere around everyday moments.'
+      ? 'They seem observant, quiet, and detail-sensitive.'
       : '這個人感覺比較有觀察力，像是會注意到生活中細節與氛圍的人。'
   }
 
   return locale === 'en'
-    ? 'Their overall vibe feels natural and comfortable, making light everyday topics a good place to start.'
+    ? 'Their vibe feels natural, light, and easy to start with.'
     : '這個人整體氛圍自然舒服，適合從輕鬆的日常話題開始互動。'
 }
 
@@ -143,23 +143,22 @@ Instead, describe:
 
 Examples of GOOD style:
 
-"She feels like the kind of person
-who acts very social outside,
-but suddenly becomes quiet late at night."
+"They feel warm, calm, and easy to approach."
 
-"He looks like someone
-who would randomly ask friends
-to go somewhere at 2AM."
+"They seem social, but with a softer private side."
 
-"This kind of person probably has
-a surprisingly soft side after you know them longer."
+"Their vibe feels relaxed, curious, and low-pressure."
 
 Length:
-- 1~2 short sentences
-- under 55 words
+- 1 sentence
+- maximum 2 very short sentences
+- under 28 words
 - concise and mobile-friendly
-- avoid long poetic paragraphs
+- avoid dreamy long paragraphs
+- avoid scene-building like "late-night chats over sushi..."
+- avoid long phrases after commas
 - avoid over-describing
+- make it feel like a short human observation, not a mini story
 - emotionally natural
 - subtle and realistic
 

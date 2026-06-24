@@ -60,18 +60,16 @@ function fallbackReply(
 
       const tagText =
         tags.length > 0
-          ? ` Their recent content shows signals like ${tags
-              .slice(0, 3)
-              .join(', ')}, so the match comes from lifestyle and vibe clues.`
-          : ` The match is based on profile signals, recent content, and overall vibe.`
+          ? ` Their recent vibe points to ${tags.slice(0, 2).join(' and ')}.`
+          : ` Their recent vibe feels aligned with what you’re looking for.`
 
-      return `I found a few people who are close to “${query}”${nameText}.${tagText}`
+      return `I found a few close matches for “${query}”${nameText}.${tagText}`
     }
 
-    const fallbackTags = parsedQuery?.tags?.slice(0, 3) ?? []
+    const fallbackTags = parsedQuery?.tags?.slice(0, 2) ?? []
 
     if (fallbackTags.length > 0) {
-      return `I couldn’t find an exact match for “${query}” yet. Try broadening the vibe, such as: ${fallbackTags.join(
+      return `I couldn’t find an exact match for “${query}” yet. Try a broader vibe, like ${fallbackTags.join(
         ' / '
       )}.`
     }
@@ -173,7 +171,12 @@ Goal:
 Length:
 - 2 to 3 short sentences.
 - For zh-TW, around 60 to 90 Traditional Chinese characters.
-- For en, around 45 to 70 English words.
+- For en, around 22 to 35 English words.
+- Maximum 2 short sentences.
+- Prefer 1 compact paragraph.
+- Do not write explanatory paragraphs.
+- Do not use stacked lifestyle descriptions.
+- Keep the English output about 50% shorter than before.
 - Keep it concise and mobile-friendly.
 - Avoid long paragraphs, long sentences, and over-stacked adjectives.
       `.trim(),
