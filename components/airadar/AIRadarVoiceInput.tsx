@@ -11,6 +11,8 @@ type Props = {
   transcript: string
   isListening: boolean
   errorMessage: string
+  showPermissionSettingsButton: boolean
+  onOpenPermissionSettings: () => void
   onClose: () => void
   onStart: () => void
   onSend: () => void
@@ -22,6 +24,8 @@ function AIRadarVoiceInput({
   transcript,
   isListening,
   errorMessage,
+  showPermissionSettingsButton,
+  onOpenPermissionSettings,
   onClose,
   onStart,
   onSend,
@@ -37,6 +41,7 @@ function AIRadarVoiceInput({
           retry: 'Tap the mic to try again',
           send: 'Send voice search',
           ready: 'Voice captured. Send it to AI Radar.',
+          permissionSettings: 'Open Permission Settings',
         }
       : {
           titleListening: 'AI 雷達正在聽',
@@ -46,6 +51,7 @@ function AIRadarVoiceInput({
           retry: '點擊麥克風重新辨識',
           send: '送出語音搜尋',
           ready: '已辨識到內容，可以送出給 AI 雷達搜尋',
+          permissionSettings: '開啟權限設定',
         }
   const hasTranscript = transcript.trim().length > 0
 
@@ -135,6 +141,16 @@ function AIRadarVoiceInput({
               <p className="mt-3 text-[12px] text-[var(--app-muted)]">
                 {text.retry}
               </p>
+            )}
+
+            {showPermissionSettingsButton && (
+              <button
+                type="button"
+                onClick={onOpenPermissionSettings}
+                className="mt-4 flex h-[46px] w-full items-center justify-center rounded-full bg-[#9b2cff] text-[15px] font-semibold text-white shadow-[0_10px_28px_rgba(155,44,255,0.28)] transition active:scale-95"
+              >
+                {text.permissionSettings}
+              </button>
             )}
 
             {hasTranscript && (

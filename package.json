@@ -20,6 +20,7 @@
     "@capacitor/ios": "^8.4.0",
     "@supabase/supabase-js": "^2.104.1",
     "@tanstack/react-query": "^5.101.0",
+    "capacitor-native-settings": "^8.1.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.16.0",
     "next": "16.1.6",

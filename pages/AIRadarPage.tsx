@@ -265,6 +265,7 @@ const getRandomStarterPrompts = useCallback(() => {
   const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false)
 const [voiceTranscript, setVoiceTranscript] = useState('')
 const [voiceErrorMessage, setVoiceErrorMessage] = useState('')
+const [voicePermissionBlocked, setVoicePermissionBlocked] = useState(false)
 const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
 const [showAIRadarInfo, setShowAIRadarInfo] = useState(false)
 
@@ -1003,8 +1004,48 @@ function getVoiceErrorMessage(error?: string) {
   return '語音辨識失敗，請再試一次或改用文字輸入。'
 }
 
+function isVoicePermissionError(error?: string) {
+  return (
+    error === 'not-allowed' ||
+    error === 'service-not-allowed' ||
+    error === 'audio-capture'
+  )
+}
+
+async function handleOpenVoicePermissionSettings() {
+  try {
+    const { Capacitor } = await import('@capacitor/core')
+
+    if (!Capacitor.isNativePlatform()) {
+      alert(
+        safeLocale === 'en'
+          ? 'Please open your browser or app settings and allow microphone permission for Vibelink.'
+          : '請到瀏覽器或 App 設定中，允許 Vibelink 使用麥克風權限。'
+      )
+      return
+    }
+
+    const settingsModule = await import('capacitor-native-settings')
+    const { NativeSettings, AndroidSettings, IOSSettings } = settingsModule
+
+    await NativeSettings.open({
+      optionAndroid: AndroidSettings.ApplicationDetails,
+      optionIOS: IOSSettings.App,
+    })
+  } catch (error) {
+    console.warn('open permission settings failed:', error)
+
+    alert(
+      safeLocale === 'en'
+        ? 'Could not open settings automatically. Please open your phone settings and allow microphone permission for Vibelink.'
+        : '無法自動開啟設定，請手動到手機設定中允許 Vibelink 使用麥克風權限。'
+    )
+  }
+}
+
 function handleVoiceInput() {
   setVoiceErrorMessage('')
+  setVoicePermissionBlocked(false)
 
   const speechWindow = window as WindowWithSpeechRecognition
   const SpeechRecognition =
@@ -1016,6 +1057,7 @@ function handleVoiceInput() {
         ? 'Voice input is not supported on this browser. You can type your search instead.'
         : '這個瀏覽器暫不支援語音輸入，可以先改用文字搜尋。'
     )
+    setVoicePermissionBlocked(false)
     setIsListening(false)
     return
   }
@@ -1068,6 +1110,7 @@ function handleVoiceInput() {
       return
     }
 
+    setVoicePermissionBlocked(isVoicePermissionError(errorCode))
     setVoiceErrorMessage(getVoiceErrorMessage(errorCode))
   }
 
@@ -1083,6 +1126,7 @@ function handleVoiceInput() {
   } catch (error) {
     console.warn('voice recognition start failed:', error)
     setIsListening(false)
+    setVoicePermissionBlocked(true)
     setVoiceErrorMessage(getVoiceErrorMessage())
   }
 }
@@ -1853,6 +1897,7 @@ const handleInputSubmit = useCallback(() => {
   onClick={() => {
     setVoiceTranscript('')
     setVoiceErrorMessage('')
+    setVoicePermissionBlocked(false)
     setIsVoicePanelOpen(true)
     handleVoiceInput()
   }}
@@ -1949,6 +1994,8 @@ const handleInputSubmit = useCallback(() => {
   transcript={voiceTranscript}
   isListening={isListening}
   errorMessage={voiceErrorMessage}
+  showPermissionSettingsButton={voicePermissionBlocked}
+  onOpenPermissionSettings={handleOpenVoicePermissionSettings}
   onClose={() => {
     stopVoiceRecognition()
     setIsVoicePanelOpen(false)
