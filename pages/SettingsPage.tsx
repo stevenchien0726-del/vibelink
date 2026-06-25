@@ -294,7 +294,7 @@ async function unblockUser(row: any) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[220] flex justify-center bg-[#dcdcdc] touch-pan-y"
+      className="fixed inset-0 z-[220] flex justify-center overflow-x-hidden bg-[var(--app-bg)] touch-pan-y"
       initial={{ x: '100%' }}
       animate={{ x: dragX }}
       exit={{ x: '100%' }}
