@@ -96,12 +96,16 @@ type SpeechRecognitionResultEventLike = {
   results: SpeechRecognitionResultListLike
 }
 
+type SpeechRecognitionErrorEventLike = {
+  error?: string
+}
+
 type SpeechRecognitionLike = {
   lang: string
   interimResults: boolean
   maxAlternatives: number
   onresult: ((event: SpeechRecognitionResultEventLike) => void) | null
-  onerror: ((event: unknown) => void) | null
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null
   onend: (() => void) | null
   start: () => void
   abort?: () => void
@@ -967,6 +971,38 @@ function stopVoiceRecognition() {
   setIsListening(false)
 }
 
+function getVoiceErrorMessage(error?: string) {
+  if (safeLocale === 'en') {
+    if (error === 'no-speech') {
+      return 'No voice was detected. Please try again.'
+    }
+
+    if (error === 'not-allowed' || error === 'service-not-allowed') {
+      return 'Microphone or speech recognition permission was denied. Please enable it in your browser or app settings.'
+    }
+
+    if (error === 'audio-capture') {
+      return 'Could not access the microphone. Please check microphone permission.'
+    }
+
+    return 'Voice recognition failed. Please try again or type your search.'
+  }
+
+  if (error === 'no-speech') {
+    return '沒有偵測到聲音，請再試一次。'
+  }
+
+  if (error === 'not-allowed' || error === 'service-not-allowed') {
+    return '麥克風或語音辨識權限被拒絕，請到瀏覽器或 App 設定開啟權限。'
+  }
+
+  if (error === 'audio-capture') {
+    return '無法取得麥克風，請確認麥克風權限。'
+  }
+
+  return '語音辨識失敗，請再試一次或改用文字輸入。'
+}
+
 function handleVoiceInput() {
   setVoiceErrorMessage('')
 
@@ -1023,13 +1059,16 @@ function handleVoiceInput() {
   recognition.onerror = (event) => {
     if (recognitionRef.current !== recognition) return
 
-    console.warn('voice recognition error:', event)
+    const errorCode = event?.error
+
+    console.warn('voice recognition error:', errorCode, event)
     setIsListening(false)
-    setVoiceErrorMessage(
-      safeLocale === 'en'
-        ? 'Voice recognition failed. Please try again or type your search.'
-        : '語音辨識失敗，請再試一次或改用文字輸入。'
-    )
+
+    if (errorCode === 'aborted') {
+      return
+    }
+
+    setVoiceErrorMessage(getVoiceErrorMessage(errorCode))
   }
 
   recognition.onend = () => {
@@ -1044,11 +1083,7 @@ function handleVoiceInput() {
   } catch (error) {
     console.warn('voice recognition start failed:', error)
     setIsListening(false)
-    setVoiceErrorMessage(
-      safeLocale === 'en'
-        ? 'Voice recognition failed. Please try again or type your search.'
-        : '語音辨識失敗，請再試一次或改用文字輸入。'
-    )
+    setVoiceErrorMessage(getVoiceErrorMessage())
   }
 }
 
@@ -1819,9 +1854,7 @@ const handleInputSubmit = useCallback(() => {
     setVoiceTranscript('')
     setVoiceErrorMessage('')
     setIsVoicePanelOpen(true)
-    window.setTimeout(() => {
-      handleVoiceInput()
-    }, 120)
+    handleVoiceInput()
   }}
       className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/80 border border-white/10 text-white shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition active:scale-95 ${
   isListening ? 'ring-2 ring-purple-400' : ''
