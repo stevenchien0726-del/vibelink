@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server'
 
 import { getAuthenticatedSupabaseUser } from '@/lib/api/authenticatedSupabaseUser'
@@ -13,6 +14,7 @@ import { transformSupabaseAIRadarUsers } from '@/lib/ai-radar/transformSupabaseA
 
 import { searchVectorUsers } from '@/lib/ai-radar/searchVectorUsers'
 import { transformVectorResults } from '@/lib/ai-radar/transformVectorResults'
+import { hybridRankUsers } from '@/lib/ai-radar/hybridRankUsers'
 
 import { generateAIRadarRewritePrompts } from '@/lib/ai-radar/generateAIRadarRewritePrompts'
 import { generateHumanFeeling } from '@/lib/ai-radar/generateHumanFeeling'
@@ -73,58 +75,6 @@ function rateLimitResponse(retryAfterSeconds: number) {
       },
     }
   )
-}
-
-function rerankVectorUsersByTags(users: any[], tags: string[]) {
-  if (!Array.isArray(users) || users.length === 0 || tags.length === 0) {
-    return users
-  }
-
-  const normalizedTags = tags
-    .filter((tag): tag is string => typeof tag === 'string')
-    .map((tag) => tag.toLowerCase().trim())
-    .filter(Boolean)
-
-  if (normalizedTags.length === 0) return users
-
-  return [...users]
-    .map((user) => {
-      const userTags = [
-        ...(user.tags ?? []),
-        ...(user.vibe_tags ?? []),
-        ...(user.aiTags ?? []),
-        ...(user.ai_tags ?? []),
-        ...(user.aiStyleTags ?? []),
-        ...(user.ai_style_tags ?? []),
-        ...(user.styleTags ?? []),
-      ]
-        .filter((tag): tag is string => typeof tag === 'string')
-        .map((tag) => tag.toLowerCase().trim())
-        .filter(Boolean)
-
-      const matchedTags = normalizedTags.filter((tag) =>
-        userTags.includes(tag)
-      )
-
-      const tagMatchCount = matchedTags.length
-      const vectorScore = Number(user.aiScore ?? user.similarity ?? 0)
-      const imageCount = Array.isArray(user.images) ? user.images.length : 0
-
-      const rerankScore =
-        vectorScore * 100 +
-        tagMatchCount * 35 +
-        imageCount * 0.5
-
-      return {
-        ...user,
-        aiScore: rerankScore,
-        matchedReasons:
-          matchedTags.length > 0
-            ? matchedTags
-            : user.matchedReasons ?? [],
-      }
-    })
-    .sort((a, b) => (b.aiScore ?? 0) - (a.aiScore ?? 0))
 }
 
 async function searchDevelopmentMockUsers(parsedQuery: unknown) {
@@ -254,48 +204,30 @@ export async function POST(req: Request) {
     console.log('🟢 [AI Radar] parsedQuery:', parsedQuery)
 
     const tags = parsedQuery?.tags ?? []
+    const hardFilters = parsedQuery?.hardFilters ?? {}
+    const requiredTags = parsedQuery?.requiredTags ?? []
+    const preferredTags = parsedQuery?.preferredTags ?? []
 
     const supabaseUsers = await withRouteDeadline(
       searchAIRadarUsersSupabase({
         tags,
+        city: hardFilters.city,
+        gender: hardFilters.gender,
+        requiredTags,
+        preferredTags,
       }),
       deadlineAt
     )
 
     const transformedSupabaseUsers = transformSupabaseAIRadarUsers(
-      supabaseUsers
+      supabaseUsers,
+      {
+        tags,
+        requiredTags,
+        preferredTags,
+        vibes: parsedQuery?.vibes ?? [],
+      }
     )
-      .map((user: any) => {
-        const userTags = user.tags ?? []
-
-        const matchScore = tags.reduce(
-          (score: number, tag: string) => {
-            return userTags.includes(tag) ? score + 40 : score
-          },
-          0
-        )
-
-        return {
-          ...user,
-          aiScore: matchScore,
-          matchedReasons: tags.filter((tag: string) =>
-            userTags.includes(tag)
-          ),
-        }
-      })
-      .sort((a: any, b: any) => {
-        const scoreA =
-          (a.aiScore ?? 0) +
-          (a.matchCount ?? 0) * 0.5 +
-          (a.images?.length ?? 0) * 1
-
-        const scoreB =
-          (b.aiScore ?? 0) +
-          (b.matchCount ?? 0) * 0.5 +
-          (b.images?.length ?? 0) * 1
-
-        return scoreB - scoreA
-      })
 
     console.log(
       '🟢 [AI Radar] transformedSupabaseUsers:',
@@ -303,6 +235,7 @@ export async function POST(req: Request) {
     )
 
     let matchedUsers: any[] = []
+    let vectorUsers: any[] = []
 
     try {
       const vectorSignal = createDeadlineSignal(
@@ -319,25 +252,22 @@ export async function POST(req: Request) {
         deadlineAt
       )
 
-      const vectorUsers = transformVectorResults(vectorRows)
-      const rerankedVectorUsers = rerankVectorUsersByTags(vectorUsers, tags)
-
-      matchedUsers =
-        rerankedVectorUsers.length > 0
-          ? rerankedVectorUsers
-          : transformedSupabaseUsers.length > 0
-          ? transformedSupabaseUsers
-          : await searchDevelopmentMockUsers(parsedQuery)
+      vectorUsers = transformVectorResults(vectorRows)
     } catch (vectorError) {
       console.error(
-        'AI Radar vector search failed, fallback:',
+        'AI Radar vector search failed, continuing with Supabase users:',
         vectorError
       )
+    }
 
-      matchedUsers =
-        transformedSupabaseUsers.length > 0
-          ? transformedSupabaseUsers
-          : await searchDevelopmentMockUsers(parsedQuery)
+    matchedUsers = hybridRankUsers({
+      vectorUsers,
+      supabaseUsers: transformedSupabaseUsers,
+      parsedQuery,
+    })
+
+    if (matchedUsers.length === 0) {
+      matchedUsers = await searchDevelopmentMockUsers(parsedQuery)
     }
 
     console.log('🟢 [AI Radar] search tags:', tags)

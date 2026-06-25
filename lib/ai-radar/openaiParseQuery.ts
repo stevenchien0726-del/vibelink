@@ -17,6 +17,13 @@ type OpenAIChatResponse = {
 type OpenAIParsedQuery = {
   gender?: 'male' | 'female' | null
   city?: string | null
+  hardFilters?: {
+    gender?: 'male' | 'female' | null
+    city?: string | null
+  } | null
+  requiredTags?: string[]
+  preferredTags?: string[]
+  negativeTags?: string[]
   tags?: string[]
   vibes?: string[]
   keywords?: string[]
@@ -29,6 +36,10 @@ function createEmptyParsedQuery(raw: string): AIRadarParsedQuery {
     raw,
     city: undefined,
     genderHint: undefined,
+    hardFilters: {},
+    requiredTags: [],
+    preferredTags: [],
+    negativeTags: [],
     tags: [],
     vibes: [],
     keywords: raw
@@ -95,26 +106,50 @@ function normalizeParsedQuery(
       : fallback.keywords
 
   const semanticTags = expandSemanticAlias(raw, normalizedKeywords)
+  const requiredTags = normalizeStringArray(parsed.requiredTags)
+  const preferredTags = normalizeStringArray(parsed.preferredTags)
+  const negativeTags = normalizeStringArray(parsed.negativeTags)
 
   const mergedTags = [
+    ...requiredTags,
+    ...preferredTags,
     ...normalizeStringArray(parsed.tags),
     ...semanticTags,
   ]
 
   const uniqueTags = [...new Set(mergedTags)]
+  const hardGender =
+    parsed.hardFilters?.gender === 'male' ||
+    parsed.hardFilters?.gender === 'female'
+      ? parsed.hardFilters.gender
+      : parsed.gender === 'male' || parsed.gender === 'female'
+        ? parsed.gender
+        : undefined
+  const hardCity =
+    typeof parsed.hardFilters?.city === 'string' &&
+    parsed.hardFilters.city.trim()
+      ? parsed.hardFilters.city.toLowerCase().trim()
+      : typeof parsed.city === 'string' && parsed.city.trim()
+        ? parsed.city.toLowerCase().trim()
+        : undefined
 
   return {
     raw,
 
-    city:
-      typeof parsed.city === 'string' && parsed.city.trim()
-        ? parsed.city.toLowerCase().trim()
-        : undefined,
+    city: hardCity,
 
-    genderHint:
-      parsed.gender === 'male' || parsed.gender === 'female'
-        ? parsed.gender
-        : undefined,
+    genderHint: hardGender,
+
+    hardFilters: {
+      gender: hardGender,
+      city: hardCity,
+    },
+
+    requiredTags,
+
+    preferredTags,
+
+    negativeTags,
 
     tags: uniqueTags,
 
@@ -152,6 +187,13 @@ JSON schema:
 {
   "gender": "male" | "female" | null,
   "city": string | null,
+  "hardFilters": {
+    "gender": "male" | "female" | null,
+    "city": string | null
+  },
+  "requiredTags": string[],
+  "preferredTags": string[],
+  "negativeTags": string[],
   "tags": string[],
   "vibes": string[],
   "keywords": string[]
@@ -160,6 +202,10 @@ JSON schema:
 Core Rules:
 - Output JSON only
 - tags must always be lowercase English
+- requiredTags are must-have constraints explicitly requested by the user
+- preferredTags are nice-to-have interests, styles, places, activities, or lifestyle clues
+- negativeTags are things the user explicitly does not want
+- Keep tags as a backward-compatible union of requiredTags and preferredTags
 - vibes must always be lowercase English
 - city should be lowercase English if possible
 - keywords can preserve original language

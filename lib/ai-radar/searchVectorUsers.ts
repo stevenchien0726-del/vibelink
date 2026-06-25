@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase } from '@/lib/supabase'
 import { generateEmbedding } from './generateEmbedding'
 
-const MAX_VECTOR_USERS = 10
+const MAX_VECTOR_USERS = 50
 const MAX_POSTS_PER_USER = 5
 const MAX_IMAGES_PER_POST = 2
 
@@ -40,16 +41,32 @@ export async function searchVectorUsers(
     (matches ?? []).map((item: any) => [item.user_id, item.similarity])
   )
 
-  const { data: users, error: usersError } = await supabase
+  async function loadProfiles(includeProfileMetadata: boolean) {
+    return supabase
     .from('profiles')
     .select(`
       id,
       username,
       display_name,
       avatar_url,
-      bio
+      bio${includeProfileMetadata ? ', city, gender' : ''}
     `)
     .in('id', userIds)
+  }
+
+  let { data: users, error: usersError } = await loadProfiles(true)
+
+  if (usersError) {
+    const shouldRetryWithoutOptionalProfileFields =
+      String(usersError.message ?? usersError).includes('city') ||
+      String(usersError.message ?? usersError).includes('gender')
+
+    if (shouldRetryWithoutOptionalProfileFields) {
+      const fallback = await loadProfiles(false)
+      users = fallback.data
+      usersError = fallback.error
+    }
+  }
 
   if (usersError) {
     console.error('Load vector users failed:', usersError)

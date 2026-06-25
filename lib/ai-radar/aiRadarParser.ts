@@ -7,6 +7,17 @@ export type AIRadarParsedQuery = {
 
   genderHint?: 'male' | 'female'
 
+  hardFilters?: {
+    gender?: 'male' | 'female'
+    city?: string
+  }
+
+  requiredTags: string[]
+
+  preferredTags: string[]
+
+  negativeTags: string[]
+
   tags: string[]
 
   vibes: string[]
@@ -114,6 +125,17 @@ export function parseAIRadarQuery(
     city,
 
     genderHint,
+
+    hardFilters: {
+      gender: genderHint,
+      city,
+    },
+
+    requiredTags: tags,
+
+    preferredTags: [],
+
+    negativeTags: [],
 
     tags,
 
