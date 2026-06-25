@@ -59,7 +59,7 @@ export default function MyAIRadarPage({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[300] flex justify-center bg-[#dcdcdc]"
+      className="fixed inset-0 z-[300] flex justify-center overflow-x-hidden bg-[var(--app-bg)]"
       initial={{ x: '100%' }}
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
