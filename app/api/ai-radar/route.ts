@@ -23,6 +23,11 @@ import {
   hasDeadlineTime,
   withRouteDeadline,
 } from '@/lib/ai-radar/openaiDeadline'
+import {
+  getAIRadarCooldownStatus,
+  getAIRadarRetryAfterSeconds,
+  recordSuccessfulAIRadarUsage,
+} from '@/lib/ai-radar/aiRadarUsage'
 
 const MINUTE = 60 * 1000
 const DAY = 24 * 60 * 60 * 1000
@@ -72,6 +77,24 @@ function rateLimitResponse(retryAfterSeconds: number) {
       status: 429,
       headers: {
         'Retry-After': String(retryAfterSeconds),
+      },
+    }
+  )
+}
+
+function cooldownResponse(cooldownUntil: string) {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: 'AI_RADAR_COOLDOWN',
+      cooldownUntil,
+      matchedUsers: [],
+      aiReply: 'AI 雷達目前正在冷卻中，請稍後再試。',
+    },
+    {
+      status: 429,
+      headers: {
+        'Retry-After': String(getAIRadarRetryAfterSeconds(cooldownUntil)),
       },
     }
   )
@@ -130,6 +153,15 @@ export async function POST(req: Request) {
 
     if (!userLimit.allowed) {
       return rateLimitResponse(userLimit.retryAfterSeconds)
+    }
+
+    const cooldownStatus = await withRouteDeadline(
+      getAIRadarCooldownStatus(auth.user.id),
+      deadlineAt
+    )
+
+    if (cooldownStatus.coolingDown && cooldownStatus.cooldownUntil) {
+      return cooldownResponse(cooldownStatus.cooldownUntil)
     }
 
     const body = await req.json()
@@ -408,6 +440,10 @@ export async function POST(req: Request) {
       aiReply,
       rewritePrompts,
     })
+
+    if (aiReply?.trim()) {
+      await recordSuccessfulAIRadarUsage(auth.user.id)
+    }
           } catch (error) {
             console.error('🔴 [AI Radar] API route failed:', error)
             console.error(

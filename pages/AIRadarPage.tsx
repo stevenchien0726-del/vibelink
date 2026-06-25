@@ -60,6 +60,8 @@ type AIRadarUser = FakeUser & {
 
 type AIRadarResponse = {
   ok?: boolean
+  error?: string
+  cooldownUntil?: string
   matchedUsers?: unknown[]
   aiReply?: string
 }
@@ -1352,6 +1354,7 @@ const finishRequest = () => {
   setLastQuery(finalQuery)
 
     let data: AIRadarResponse | null = null
+    let responseStatus = 0
 
 try {
   timeoutId = scheduleRequestTimer(() => {
@@ -1404,6 +1407,7 @@ const response = await fetch('/api/ai-radar', {
   }),
   signal: controller.signal,
 })
+responseStatus = response.status
 
   clearTimeout(timeoutId)
 
@@ -1450,6 +1454,13 @@ return
 }
 
 console.log('[AI Radar Frontend] parsed data:', data)
+
+if (
+  data?.error === 'AI_RADAR_COOLDOWN' ||
+  (responseStatus === 429 && data?.error === 'AI_RADAR_COOLDOWN')
+) {
+  setErrorType('AI_RADAR_COOLDOWN')
+}
 }
 } catch (error: unknown) {
   if (requestSequenceRef.current !== requestId) {
@@ -1843,8 +1854,12 @@ const handleInputSubmit = useCallback(() => {
   <div className="rounded-[14px] bg-red-50 px-4 py-3 text-[12px] text-red-500">
     <div>
       {safeLocale === 'en'
-        ? 'AI Radar could not complete this search. Please try again.'
-        : 'AI 雷達暫時無法完成這次搜尋，請再試一次。'}
+        ? errorType === 'AI_RADAR_COOLDOWN'
+          ? 'AI Radar has reached the current cold-start usage limit and is cooling down. Please try again later.'
+          : 'AI Radar could not complete this search. Please try again.'
+        : errorType === 'AI_RADAR_COOLDOWN'
+          ? 'AI 雷達目前已達冷啟動期間使用上限，正在冷卻中，請稍後再試。'
+          : 'AI 雷達暫時無法完成這次搜尋，請再試一次。'}
     </div>
 
     <button

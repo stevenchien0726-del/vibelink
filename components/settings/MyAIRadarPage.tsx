@@ -1,61 +1,138 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft } from 'lucide-react'
 import type { Locale } from '@/i18n'
 
+import { getCachedSession } from '@/lib/authSessionCache'
+
 type Props = {
   onClose: () => void
   locale?: Locale
+}
 
-  planName?: string
-  monthlyLimit?: number
-
-  startDate?: string
-  endDate?: string
-
-  remainingCount?: number
+type UsageSummary = {
+  planName: string
+  weeklyLimitLabel: string
+  weekStart: string
+  weekEnd: string
+  weeklyUsedCount: number
+  cooldownUntil: string | null
 }
 
 const myAIRadarText = {
   'zh-TW': {
     title: '我的AI雷達',
-    notice: '會員 AI 雷達限制尚未啟動，此畫面為模擬畫面',
+    notice: 'AI 雷達會員限制尚未啟動，目前先顯示冷啟動期間的真實使用資料。',
 
-    planType: '我的Vibe方案類型',
-    weeklyLimit: '單周AI雷達可使用次數',
+    planType: '我的方案類型',
+    weeklyLimit: '單週AI雷達可使用次數',
     weeklyPeriod: '單周起算與結束日',
-    weeklyRemaining: '單周使用剩餘次數',
+    weeklyUsed: '單週已使用次數',
 
     times: '次',
+    loading: '讀取中...',
+    unavailable: '暫時無法讀取',
+    planInactive: '尚未啟動會員',
+    weeklyLimitInactive: '尚未啟動計算',
   },
 
   en: {
     title: 'My AI Radar',
-    notice: 'AI Radar membership limits are not active yet. This screen is a preview.',
+    notice:
+      'AI Radar membership limits are not active yet. This screen shows real cold-start usage data.',
 
-    planType: 'My Vibe Plan',
-    weeklyLimit: 'Weekly AI Radar Limit',
+    planType: 'My Plan Type',
+    weeklyLimit: 'Weekly AI Radar Uses',
     weeklyPeriod: 'Weekly Start & End Date',
-    weeklyRemaining: 'Weekly Remaining Uses',
+    weeklyUsed: 'Weekly Used Uses',
 
     times: 'uses',
+    loading: 'Loading...',
+    unavailable: 'Temporarily unavailable',
+    planInactive: 'Membership not activated',
+    weeklyLimitInactive: 'Not calculated yet',
   },
 } as const
 
 export default function MyAIRadarPage({
   onClose,
   locale = 'zh-TW',
-
-  planName = 'Vibe Plus',
-  monthlyLimit = 150,
-
-  startDate = '2026/06/01',
-  endDate = '2026/06/08',
-
-  remainingCount = 84,
 }: Props) {
   const text = myAIRadarText[locale] ?? myAIRadarText['zh-TW']
+  const [summary, setSummary] = useState<UsageSummary | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadSummary() {
+      setLoading(true)
+      setErrorMessage('')
+
+      try {
+        const session = await getCachedSession()
+
+        if (!session?.access_token) {
+          throw new Error('MISSING_SESSION')
+        }
+
+        const response = await fetch('/api/ai-radar/usage-summary', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        })
+        const data = await response.json()
+
+        if (!response.ok || !data?.ok) {
+          throw new Error(data?.error ?? 'USAGE_SUMMARY_FAILED')
+        }
+
+        if (!cancelled) {
+          setSummary(data as UsageSummary)
+        }
+      } catch (error) {
+        console.warn('AI Radar usage summary failed:', error)
+
+        if (!cancelled) {
+          setSummary(null)
+          setErrorMessage(text.unavailable)
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void loadSummary()
+
+    return () => {
+      cancelled = true
+    }
+  }, [text.unavailable])
+
+  const fallbackValue = errorMessage || text.loading
+  const planName =
+    locale === 'en'
+      ? text.planInactive
+      : summary?.planName ?? '尚未啟動會員'
+  const weeklyLimitLabel =
+    locale === 'en'
+      ? text.weeklyLimitInactive
+      : summary?.weeklyLimitLabel ?? '尚未啟動計算'
+  const weeklyPeriod =
+    summary?.weekStart && summary?.weekEnd
+      ? `${formatLocalDate(summary.weekStart)}\n${formatLocalDate(
+          summary.weekEnd
+        )}`
+      : fallbackValue
+  const weeklyUsedValue =
+    summary && !loading
+      ? `${summary.weeklyUsedCount} ${text.times}`
+      : fallbackValue
 
   return (
     <motion.div
@@ -117,22 +194,22 @@ export default function MyAIRadarPage({
             {text.notice}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <InfoCard title={text.planType} value={planName} />
 
             <InfoCard
               title={text.weeklyLimit}
-              value={`${monthlyLimit} ${text.times}`}
+              value={weeklyLimitLabel}
             />
 
             <InfoCard
               title={text.weeklyPeriod}
-              value={`${startDate}\n${endDate}`}
+              value={weeklyPeriod}
             />
 
             <InfoCard
-              title={text.weeklyRemaining}
-              value={`${remainingCount} ${text.times}`}
+              title={text.weeklyUsed}
+              value={weeklyUsedValue}
             />
           </div>
         </div>
@@ -184,4 +261,20 @@ function InfoCard({
       </div>
     </div>
   )
+}
+
+function formatLocalDate(value: string) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${year}/${month}/${day} ${hours}:${minutes}`
 }
