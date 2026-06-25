@@ -139,6 +139,15 @@ function getProfileBioText(value: unknown) {
   return bioText
 }
 
+function getSafeFallbackBio(user: any) {
+  return (
+    user?.profileBio ||
+    user?.profile_bio ||
+    user?.profile?.bio ||
+    ''
+  )
+}
+
 export default function OtherUserProfilePage({
   userId,
   user,
@@ -268,6 +277,8 @@ const [commentText, setCommentText] = useState('')
     setIsFollowing(false)
 
 if (user && !shouldLoadRealProfile) {
+  const fallbackBio = getSafeFallbackBio(user)
+
   setProfile({
     id: fallbackId,
     username:
@@ -287,7 +298,7 @@ if (user && !shouldLoadRealProfile) {
       user.avatar_url ||
       '',
 
-    bio: user.bio || '',
+    bio: fallbackBio,
   })
 
   setPosts(
@@ -295,7 +306,7 @@ if (user && !shouldLoadRealProfile) {
       .slice(0, 12)
       .map((image: string, index: number) => ({
         id: `${fallbackId || 'ai-user'}-${index}`,
-        caption: user.bio || '',
+        caption: '',
         user_id: fallbackId,
         post_images: [{ image_url: image }],
       }))
