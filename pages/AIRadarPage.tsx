@@ -260,6 +260,7 @@ const getRandomStarterPrompts = useCallback(() => {
 
   const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false)
 const [voiceTranscript, setVoiceTranscript] = useState('')
+const [voiceErrorMessage, setVoiceErrorMessage] = useState('')
 const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
 const [showAIRadarInfo, setShowAIRadarInfo] = useState(false)
 
@@ -620,6 +621,10 @@ useEffect(() => {
     activeAbortControllerRef.current?.abort()
     activeAbortControllerRef.current = null
     inFlightRef.current = false
+    try {
+      recognitionRef.current?.abort?.()
+    } catch {}
+    recognitionRef.current = null
     clearRequestTimers()
   }
 }, [])
@@ -951,19 +956,35 @@ function handleRetry() {
   void handleSubmit(lastQuery)
 }
 
+function stopVoiceRecognition() {
+  const recognition = recognitionRef.current
+  recognitionRef.current = null
+
+  try {
+    recognition?.abort?.()
+  } catch {}
+
+  setIsListening(false)
+}
+
 function handleVoiceInput() {
+  setVoiceErrorMessage('')
+
   const speechWindow = window as WindowWithSpeechRecognition
   const SpeechRecognition =
     speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition
 
   if (!SpeechRecognition) {
-    alert(text.voiceNotSupported)
+    setVoiceErrorMessage(
+      safeLocale === 'en'
+        ? 'Voice input is not supported on this browser. You can type your search instead.'
+        : '這個瀏覽器暫不支援語音輸入，可以先改用文字搜尋。'
+    )
+    setIsListening(false)
     return
   }
 
-  try {
-    recognitionRef.current?.abort?.()
-  } catch {}
+  stopVoiceRecognition()
 
   const recognition = new SpeechRecognition()
   recognitionRef.current = recognition
@@ -978,6 +999,8 @@ function handleVoiceInput() {
   setIsListening(true)
 
   recognition.onresult = (event) => {
+    if (recognitionRef.current !== recognition) return
+
     let nextTranscript = ''
 
     for (let i = 0; i < event.results.length; i += 1) {
@@ -991,8 +1014,6 @@ function handleVoiceInput() {
 
     nextTranscript = nextTranscript.trim()
 
-    console.log('voice transcript:', nextTranscript)
-
     if (!nextTranscript) return
 
     setVoiceTranscript(nextTranscript)
@@ -1000,11 +1021,20 @@ function handleVoiceInput() {
   }
 
   recognition.onerror = (event) => {
+    if (recognitionRef.current !== recognition) return
+
     console.warn('voice recognition error:', event)
     setIsListening(false)
+    setVoiceErrorMessage(
+      safeLocale === 'en'
+        ? 'Voice recognition failed. Please try again or type your search.'
+        : '語音辨識失敗，請再試一次或改用文字輸入。'
+    )
   }
 
   recognition.onend = () => {
+  if (recognitionRef.current !== recognition) return
+
   setIsListening(false)
 }
 
@@ -1014,7 +1044,11 @@ function handleVoiceInput() {
   } catch (error) {
     console.warn('voice recognition start failed:', error)
     setIsListening(false)
-    alert(text.voiceNotSupported)
+    setVoiceErrorMessage(
+      safeLocale === 'en'
+        ? 'Voice recognition failed. Please try again or type your search.'
+        : '語音辨識失敗，請再試一次或改用文字輸入。'
+    )
   }
 }
 
@@ -1023,6 +1057,7 @@ function handleVoiceSubmit() {
 
   if (!finalVoiceText) return
 
+  stopVoiceRecognition()
   setInputValue(finalVoiceText)
   setIsVoicePanelOpen(false)
   void handleSubmit(finalVoiceText)
@@ -1782,7 +1817,11 @@ const handleInputSubmit = useCallback(() => {
   type="button"
   onClick={() => {
     setVoiceTranscript('')
+    setVoiceErrorMessage('')
     setIsVoicePanelOpen(true)
+    window.setTimeout(() => {
+      handleVoiceInput()
+    }, 120)
   }}
       className={`flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[var(--app-card)]/80 border border-white/10 text-white shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition active:scale-95 ${
   isListening ? 'ring-2 ring-purple-400' : ''
@@ -1873,13 +1912,12 @@ const handleInputSubmit = useCallback(() => {
 
 <AIRadarVoiceInput
   open={isVoicePanelOpen}
+  locale={safeLocale}
   transcript={voiceTranscript}
+  isListening={isListening}
+  errorMessage={voiceErrorMessage}
   onClose={() => {
-    try {
-      recognitionRef.current?.abort?.()
-    } catch {}
-
-    setIsListening(false)
+    stopVoiceRecognition()
     setIsVoicePanelOpen(false)
   }}
   onStart={() => {

@@ -3,10 +3,14 @@
 import { memo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Mic, Send, X } from 'lucide-react'
+import type { Locale } from '@/i18n'
 
 type Props = {
   open: boolean
+  locale: Locale
   transcript: string
+  isListening: boolean
+  errorMessage: string
   onClose: () => void
   onStart: () => void
   onSend: () => void
@@ -14,11 +18,37 @@ type Props = {
 
 function AIRadarVoiceInput({
   open,
+  locale,
   transcript,
+  isListening,
+  errorMessage,
   onClose,
   onStart,
   onSend,
 }: Props) {
+  const text =
+    locale === 'en'
+      ? {
+          titleListening: 'AI Radar is listening',
+          titleIdle: 'Voice Search',
+          startHint: 'Tap the mic and say what kind of vibe you want to find...',
+          listeningHint:
+            'Say what kind of person, vibe, lifestyle, or energy you want to find...',
+          retry: 'Tap the mic to try again',
+          send: 'Send voice search',
+          ready: 'Voice captured. Send it to AI Radar.',
+        }
+      : {
+          titleListening: 'AI 雷達正在聽',
+          titleIdle: '語音搜尋',
+          startHint: '點擊麥克風，說出你想找什麼樣 Vibe 的人...',
+          listeningHint: '說出你想找的人、vibe、生活感或能量...',
+          retry: '點擊麥克風重新辨識',
+          send: '送出語音搜尋',
+          ready: '已辨識到內容，可以送出給 AI 雷達搜尋',
+        }
+  const hasTranscript = transcript.trim().length > 0
+
   return (
     <AnimatePresence>
       {open && (
@@ -45,7 +75,7 @@ function AIRadarVoiceInput({
               </button>
 
               <p className="text-[15px] font-semibold text-[var(--app-text)]">
-                AI 雷達正在聽
+                {isListening ? text.titleListening : text.titleIdle}
               </p>
 
               <div className="h-10 w-10" />
@@ -54,7 +84,11 @@ function AIRadarVoiceInput({
             <button
               type="button"
               onClick={onStart}
-              className="mx-auto mb-6 flex h-[74px] w-[74px] items-center justify-center rounded-full bg-[#9b2cff] text-white shadow-[0_12px_34px_rgba(155,44,255,0.45)] active:scale-95"
+              className={`mx-auto mb-6 flex h-[74px] w-[74px] items-center justify-center rounded-full bg-[#9b2cff] text-white transition active:scale-95 ${
+                isListening
+                  ? 'ring-2 ring-[#c084fc] shadow-[0_0_0_8px_rgba(192,132,252,0.16),0_16px_42px_rgba(155,44,255,0.58)]'
+                  : 'shadow-[0_12px_34px_rgba(155,44,255,0.45)]'
+              }`}
             >
               <Mic size={30} className="text-white" />
             </button>
@@ -64,12 +98,19 @@ function AIRadarVoiceInput({
                 <motion.span
                   key={i}
                   className="w-1.5 rounded-full bg-[#b85cff]"
-                  animate={{
-                    height: [10, 28, 14, 34, 12],
-                    opacity: [0.45, 1, 0.65, 1, 0.45],
-                  }}
+                  animate={
+                    isListening
+                      ? {
+                          height: [10, 28, 14, 34, 12],
+                          opacity: [0.45, 1, 0.65, 1, 0.45],
+                        }
+                      : {
+                          height: [8, 12, 9, 13, 8],
+                          opacity: [0.22, 0.36, 0.28, 0.34, 0.22],
+                        }
+                  }
                   transition={{
-                    duration: 1,
+                    duration: isListening ? 1 : 1.8,
                     repeat: Infinity,
                     delay: i * 0.08,
                     ease: 'easeInOut',
@@ -79,40 +120,61 @@ function AIRadarVoiceInput({
             </div>
 
             <div className="min-h-[58px] rounded-[22px] bg-[var(--app-surface)] px-4 py-4 text-left text-[15px] leading-[1.55] text-[var(--app-text)]">
-              {transcript || (
+              {errorMessage ? (
+                <span className="text-red-400">{errorMessage}</span>
+              ) : transcript ? (
+                transcript
+              ) : (
                 <span className="text-[var(--app-muted)]">
-                  說出你想找什麼樣 Vibe 的人…
+                  {isListening ? text.listeningHint : text.startHint}
                 </span>
               )}
             </div>
 
+            {errorMessage && !isListening && !hasTranscript && (
+              <p className="mt-3 text-[12px] text-[var(--app-muted)]">
+                {text.retry}
+              </p>
+            )}
+
+            {hasTranscript && (
+              <p className="mt-3 text-[12px] text-[var(--app-muted)]">
+                {text.ready}
+              </p>
+            )}
+
             <button
-  type="button"
-  onClick={onSend}
-  disabled={!transcript.trim()}
-  className={`
-    mt-5
-    flex
-    h-[52px]
-    w-full
-    items-center
-    justify-center
-    gap-2
-    rounded-full
-    text-[16px]
-    font-semibold
-    transition
-    active:scale-95
-    ${
-      transcript.trim()
-        ? 'bg-[#9b2cff] text-white shadow-[0_10px_28px_rgba(155,44,255,0.34)]'
-        : 'bg-[var(--app-surface)] text-[var(--app-muted)]'
-    }
-  `}
->
-  <Send size={18} className={transcript.trim() ? 'text-white' : 'text-[var(--app-muted)]'} />
-  送出語音搜尋
-</button>
+              type="button"
+              onClick={onSend}
+              disabled={!hasTranscript}
+              className={`
+                mt-5
+                flex
+                h-[52px]
+                w-full
+                items-center
+                justify-center
+                gap-2
+                rounded-full
+                text-[16px]
+                font-semibold
+                transition
+                active:scale-95
+                ${
+                  hasTranscript
+                    ? 'bg-[#9b2cff] text-white shadow-[0_10px_28px_rgba(155,44,255,0.34)]'
+                    : 'bg-[var(--app-surface)] text-[var(--app-muted)]'
+                }
+              `}
+            >
+              <Send
+                size={18}
+                className={
+                  hasTranscript ? 'text-white' : 'text-[var(--app-muted)]'
+                }
+              />
+              {text.send}
+            </button>
           </motion.div>
         </motion.div>
       )}
