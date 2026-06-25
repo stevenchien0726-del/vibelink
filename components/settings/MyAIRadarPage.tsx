@@ -1,18 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft } from 'lucide-react'
 import type { Locale } from '@/i18n'
 
 import { getCachedSession } from '@/lib/authSessionCache'
 
-type Props = {
-  onClose: () => void
-  locale?: Locale
-}
-
-type UsageSummary = {
+export type AIRadarUsageSummary = {
+  ok: true
   planName: string
   weeklyLimitLabel: string
   weekStart: string
@@ -21,21 +17,66 @@ type UsageSummary = {
   cooldownUntil: string | null
 }
 
+type UsageSummaryError = {
+  ok: false
+  error?: string
+}
+
+type Props = {
+  onClose: () => void
+  locale?: Locale
+  initialSummary?: AIRadarUsageSummary | null
+  onSummaryChange?: (summary: AIRadarUsageSummary) => void
+}
+
+const PULL_REFRESH_THRESHOLD = 70
+const MAX_PULL_DISTANCE = 96
+
+export async function fetchAIRadarUsageSummary() {
+  const session = await getCachedSession()
+
+  if (!session?.access_token) {
+    throw new Error('MISSING_SESSION')
+  }
+
+  const response = await fetch('/api/ai-radar/usage-summary', {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  })
+  const data = (await response.json()) as
+    | AIRadarUsageSummary
+    | UsageSummaryError
+
+  if (!response.ok || !data?.ok) {
+    throw new Error(
+      data && 'error' in data
+        ? data.error ?? 'USAGE_SUMMARY_FAILED'
+        : 'USAGE_SUMMARY_FAILED'
+    )
+  }
+
+  return data
+}
+
 const myAIRadarText = {
   'zh-TW': {
-    title: '我的AI雷達',
-    notice: 'AI 雷達會員限制尚未啟動，目前先顯示冷啟動期間的真實使用資料。',
+    title: '\u6211\u7684AI\u96f7\u9054',
+    notice:
+      'AI \u96f7\u9054\u6703\u54e1\u9650\u5236\u5c1a\u672a\u555f\u52d5\uff0c\u76ee\u524d\u5148\u986f\u793a\u51b7\u555f\u52d5\u671f\u9593\u7684\u771f\u5be6\u4f7f\u7528\u8cc7\u6599\u3002',
 
-    planType: '我的方案類型',
-    weeklyLimit: '單週AI雷達可使用次數',
-    weeklyPeriod: '單周起算與結束日',
-    weeklyUsed: '單週已使用次數',
+    planType: '\u6211\u7684\u65b9\u6848\u985e\u578b',
+    weeklyLimit: '\u55ae\u9031AI\u96f7\u9054\u53ef\u4f7f\u7528\u6b21\u6578',
+    weeklyPeriod: '\u55ae\u5468\u8d77\u7b97\u8207\u7d50\u675f\u65e5',
+    weeklyUsed: '\u55ae\u9031\u5df2\u4f7f\u7528\u6b21\u6578',
 
-    times: '次',
-    loading: '讀取中...',
-    unavailable: '暫時無法讀取',
-    planInactive: '尚未啟動會員',
-    weeklyLimitInactive: '尚未啟動計算',
+    times: '\u6b21',
+    loading: '\u8b80\u53d6\u4e2d...',
+    unavailable: '\u66ab\u6642\u7121\u6cd5\u8b80\u53d6',
+    refreshing: '\u66f4\u65b0\u4e2d...',
+    refreshFailed: '\u66ab\u6642\u7121\u6cd5\u66f4\u65b0',
+    planInactive: '\u5c1a\u672a\u555f\u52d5\u6703\u54e1',
+    weeklyLimitInactive: '\u5c1a\u672a\u555f\u52d5\u8a08\u7b97',
   },
 
   en: {
@@ -51,6 +92,8 @@ const myAIRadarText = {
     times: 'uses',
     loading: 'Loading...',
     unavailable: 'Temporarily unavailable',
+    refreshing: 'Refreshing...',
+    refreshFailed: 'Could not refresh',
     planInactive: 'Membership not activated',
     weeklyLimitInactive: 'Not calculated yet',
   },
@@ -59,70 +102,126 @@ const myAIRadarText = {
 export default function MyAIRadarPage({
   onClose,
   locale = 'zh-TW',
+  initialSummary = null,
+  onSummaryChange,
 }: Props) {
   const text = myAIRadarText[locale] ?? myAIRadarText['zh-TW']
-  const [summary, setSummary] = useState<UsageSummary | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [summary, setSummary] = useState<AIRadarUsageSummary | null>(
+    initialSummary
+  )
+  const [loading, setLoading] = useState(!initialSummary)
+  const [refreshing, setRefreshing] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [pullDistance, setPullDistance] = useState(0)
+  const touchStartYRef = useRef<number | null>(null)
+  const touchStartXRef = useRef<number | null>(null)
+  const isPullingRef = useRef(false)
+  const canPullRefreshRef = useRef(false)
+  const summaryRef = useRef<AIRadarUsageSummary | null>(initialSummary)
 
   useEffect(() => {
-    let cancelled = false
+    summaryRef.current = summary
+  }, [summary])
 
-    async function loadSummary() {
-      setLoading(true)
+  const loadSummary = useCallback(
+    async ({
+      silent = false,
+      refresh = false,
+    }: {
+      silent?: boolean
+      refresh?: boolean
+    } = {}) => {
+      if (!silent && !refresh) {
+        setLoading(true)
+      }
+
+      if (refresh) {
+        setRefreshing(true)
+      }
+
       setErrorMessage('')
 
       try {
-        const session = await getCachedSession()
-
-        if (!session?.access_token) {
-          throw new Error('MISSING_SESSION')
-        }
-
-        const response = await fetch('/api/ai-radar/usage-summary', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        })
-        const data = await response.json()
-
-        if (!response.ok || !data?.ok) {
-          throw new Error(data?.error ?? 'USAGE_SUMMARY_FAILED')
-        }
-
-        if (!cancelled) {
-          setSummary(data as UsageSummary)
-        }
+        const nextSummary = await fetchAIRadarUsageSummary()
+        setSummary(nextSummary)
+        onSummaryChange?.(nextSummary)
       } catch (error) {
         console.warn('AI Radar usage summary failed:', error)
-
-        if (!cancelled) {
-          setSummary(null)
-          setErrorMessage(text.unavailable)
-        }
+        setErrorMessage(
+          summaryRef.current ? text.refreshFailed : text.unavailable
+        )
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
+        setLoading(false)
+        setRefreshing(false)
       }
+    },
+    [onSummaryChange, text.refreshFailed, text.unavailable]
+  )
+
+  useEffect(() => {
+    setSummary(initialSummary)
+
+    void loadSummary({
+      silent: Boolean(initialSummary),
+    })
+  }, [initialSummary, loadSummary])
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const touch = e.touches[0]
+
+    touchStartYRef.current = touch.clientY
+    touchStartXRef.current = touch.clientX
+    isPullingRef.current = false
+    canPullRefreshRef.current = touch.clientY <= 140
+  }
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!canPullRefreshRef.current) {
+      return
     }
 
-    void loadSummary()
-
-    return () => {
-      cancelled = true
+    if (touchStartYRef.current == null || touchStartXRef.current == null) {
+      return
     }
-  }, [text.unavailable])
+
+    const touch = e.touches[0]
+    const deltaY = touch.clientY - touchStartYRef.current
+    const deltaX = touch.clientX - touchStartXRef.current
+
+    if (Math.abs(deltaX) > Math.abs(deltaY) || deltaY <= 0) {
+      return
+    }
+
+    isPullingRef.current = true
+    setPullDistance(Math.min(MAX_PULL_DISTANCE, deltaY * 0.55))
+  }
+
+  const handleTouchEnd = () => {
+    const shouldRefresh =
+      isPullingRef.current &&
+      pullDistance >= PULL_REFRESH_THRESHOLD &&
+      !refreshing
+
+    touchStartYRef.current = null
+    touchStartXRef.current = null
+    isPullingRef.current = false
+    canPullRefreshRef.current = false
+    setPullDistance(0)
+
+    if (shouldRefresh) {
+      void loadSummary({ refresh: true })
+    }
+  }
 
   const fallbackValue = errorMessage || text.loading
   const planName =
     locale === 'en'
       ? text.planInactive
-      : summary?.planName ?? '尚未啟動會員'
+      : summary?.planName ?? text.planInactive
   const weeklyLimitLabel =
     locale === 'en'
       ? text.weeklyLimitInactive
-      : summary?.weeklyLimitLabel ?? '尚未啟動計算'
+      : summary?.weeklyLimitLabel ?? text.weeklyLimitInactive
   const weeklyPeriod =
     summary?.weekStart && summary?.weekEnd
       ? `${formatLocalDate(summary.weekStart)}\n${formatLocalDate(
@@ -146,7 +245,13 @@ export default function MyAIRadarPage({
         damping: 32,
       }}
     >
-      <div className="relative min-h-screen w-full max-w-[430px] bg-[var(--app-bg)] text-[var(--app-text)]">
+      <div
+        className="relative min-h-screen w-full max-w-[430px] touch-pan-y overflow-x-hidden bg-[var(--app-bg)] text-[var(--app-text)]"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+      >
         <div
           className="
             sticky top-0 z-20
@@ -175,44 +280,57 @@ export default function MyAIRadarPage({
           </div>
         </div>
 
-        <div className="px-4 pt-4">
-          <div
-            className="
-              mb-4
-              rounded-[18px]
-              border
-              border-[#8B5CF6]/30
-              bg-[#8B5CF6]/10
-              px-4
-              py-3
-              text-center
-              text-[13px]
-              leading-relaxed
-              text-[#c4b5fd]
-            "
-          >
-            {text.notice}
+        <motion.div
+          style={{
+            y: pullDistance,
+          }}
+          transition={{ duration: 0.18 }}
+        >
+          {(refreshing || errorMessage || pullDistance > 12) && (
+            <div className="-mt-1 px-4 pb-1 text-center text-[12px] font-medium text-[var(--app-muted)]">
+              {refreshing ? text.refreshing : errorMessage || text.refreshing}
+            </div>
+          )}
+
+          <div className="px-4 pt-4">
+            <div
+              className="
+                mb-4
+                rounded-[18px]
+                border
+                border-[#8B5CF6]/30
+                bg-[#8B5CF6]/10
+                px-4
+                py-3
+                text-center
+                text-[13px]
+                leading-relaxed
+                text-[#c4b5fd]
+              "
+            >
+              {text.notice}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <InfoCard title={text.planType} value={planName} />
+
+              <InfoCard
+                title={text.weeklyLimit}
+                value={weeklyLimitLabel}
+              />
+
+              <InfoCard
+                title={text.weeklyPeriod}
+                value={weeklyPeriod}
+              />
+
+              <InfoCard
+                title={text.weeklyUsed}
+                value={weeklyUsedValue}
+              />
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            <InfoCard title={text.planType} value={planName} />
-
-            <InfoCard
-              title={text.weeklyLimit}
-              value={weeklyLimitLabel}
-            />
-
-            <InfoCard
-              title={text.weeklyPeriod}
-              value={weeklyPeriod}
-            />
-
-            <InfoCard
-              title={text.weeklyUsed}
-              value={weeklyUsedValue}
-            />
-          </div>
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   )

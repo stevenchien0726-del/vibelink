@@ -13,7 +13,10 @@ Check,
   Radar
 } from 'lucide-react'
 
-import MyAIRadarPage from '@/components/settings/MyAIRadarPage'
+import MyAIRadarPage, {
+  fetchAIRadarUsageSummary,
+  type AIRadarUsageSummary,
+} from '@/components/settings/MyAIRadarPage'
 
 import type { Locale } from '@/i18n'
 import { supabase } from '@/lib/supabase'
@@ -34,6 +37,20 @@ onChangeLocale: (locale: Locale) => void
   onLanguageClick?: () => void
   onMessagesClick?: () => void
   onMyRadarClick?: () => void
+}
+
+type BlockedProfile = {
+  id: string
+  username: string | null
+  display_name: string | null
+  avatar_url: string | null
+}
+
+type BlockedUserRow = {
+  id: string
+  blocked_user_id: string
+  created_at: string | null
+  profiles?: BlockedProfile | null
 }
 
 const settingsText = {
@@ -103,11 +120,14 @@ export default function SettingsPage({
 
   const [languageOpen, setLanguageOpen] = useState(false)
   const [myRadarOpen, setMyRadarOpen] = useState(false)
+  const [myAIRadarSummary, setMyAIRadarSummary] =
+    useState<AIRadarUsageSummary | null>(null)
 
   const [blockedOpen, setBlockedOpen] = useState(false)
-const [blockedUsers, setBlockedUsers] = useState<any[]>([])
+const [blockedUsers, setBlockedUsers] = useState<BlockedUserRow[]>([])
 const [blockedLoading, setBlockedLoading] = useState(false)
-const [confirmUnblockUser, setConfirmUnblockUser] = useState<any>(null)
+const [confirmUnblockUser, setConfirmUnblockUser] =
+  useState<BlockedUserRow | null>(null)
 
   const [dragX, setDragX] = useState(0)
   const [isDraggingBack, setIsDraggingBack] = useState(false)
@@ -123,6 +143,28 @@ const [confirmUnblockUser, setConfirmUnblockUser] = useState<any>(null)
   useEffect(() => {
     setShowCity(initialShowCity)
   }, [initialShowCity])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function preloadMyAIRadarSummary() {
+      try {
+        const summary = await fetchAIRadarUsageSummary()
+
+        if (!cancelled) {
+          setMyAIRadarSummary(summary)
+        }
+      } catch (error) {
+        console.warn('AI Radar usage summary preload failed:', error)
+      }
+    }
+
+    void preloadMyAIRadarSummary()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleToggleDarkMode = () => {
   const next = !darkMode
@@ -198,7 +240,7 @@ setBlockedUsers(
 setBlockedLoading(false)
 }
 
-async function unblockUser(row: any) {
+async function unblockUser(row: BlockedUserRow) {
   const { error } = await supabase
     .from('blocked_users')
     .delete()
@@ -368,6 +410,7 @@ async function unblockUser(row: any) {
               {user?.avatar_url && (
                 <img
                   src={user.avatar_url}
+                  alt={user.display_name || user.username || 'Blocked user'}
                   className="h-full w-full object-cover"
                 />
               )}
@@ -568,6 +611,8 @@ async function unblockUser(row: any) {
   {myRadarOpen && (
     <MyAIRadarPage
   locale={safeLocale}
+  initialSummary={myAIRadarSummary}
+  onSummaryChange={setMyAIRadarSummary}
   onClose={() => setMyRadarOpen(false)}
 />
   )}
