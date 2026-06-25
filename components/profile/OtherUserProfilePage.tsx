@@ -262,11 +262,12 @@ const [commentText, setCommentText] = useState('')
     async function loadProfile(retry = 0) {
   try {
     const fallbackId = userId ?? user?.id ?? ''
+    const shouldLoadRealProfile = isUuid(fallbackId)
 
     setFollowStateLoaded(false)
     setIsFollowing(false)
 
-if (user) {
+if (user && !shouldLoadRealProfile) {
   setProfile({
     id: fallbackId,
     username:
@@ -348,20 +349,44 @@ if (isUuid(fallbackId)) {
 return
 }
 
+if (user && shouldLoadRealProfile) {
+  setProfile({
+    id: fallbackId,
+    username:
+      user.username ||
+      user.author ||
+      user.displayName ||
+      'user',
+
+    display_name:
+      user.displayName ||
+      user.display_name ||
+      user.author ||
+      'Vibelink User',
+
+    avatar_url:
+      user.avatar ||
+      user.avatar_url ||
+      '',
+
+    bio: '',
+  })
+}
+
     setLoading(true)
     setLoadError('')
 
-      if (!userId) {
+      if (!fallbackId) {
         setLoadError(text.noUserId)
         setLoading(false)
         return
       }
 
-      if (!isUuid(userId)) {
+      if (!shouldLoadRealProfile) {
   setProfile({
-    id: userId,
-    username: userId,
-    display_name: userId,
+    id: fallbackId,
+    username: fallbackId,
+    display_name: fallbackId,
     avatar_url: '',
     bio: '',
   })
@@ -375,7 +400,7 @@ return
   supabase
     .from('profiles')
     .select('id, username, display_name, avatar_url, bio')
-    .eq('id', userId)
+    .eq('id', fallbackId)
     .maybeSingle(),
   10000,
   'other_profile'
@@ -428,7 +453,7 @@ void safeTask(
           image_url
         )
       `)
-      .eq('user_id', resolvedUserId)
+      .eq('user_id', fallbackId)
       .order('created_at', { ascending: false }),
   'other_profile_posts'
 ).then((postsResult) => {
@@ -459,7 +484,7 @@ void safeTask(
       supabase
         .from('follows')
         .select('*', { count: 'exact', head: true })
-        .eq('following_id', resolvedUserId),
+        .eq('following_id', fallbackId),
     'other_profile_followers'
   )
 
@@ -479,7 +504,7 @@ void safeTask(
       .from('follows')
       .select('id')
       .eq('follower_id', authUser.id)
-      .eq('following_id', resolvedUserId)
+      .eq('following_id', fallbackId)
       .maybeSingle(),
   'other_profile_follow_state'
 )
