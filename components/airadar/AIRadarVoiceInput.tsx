@@ -90,11 +90,7 @@ function AIRadarVoiceInput({
             <button
               type="button"
               onClick={onStart}
-              className={`mx-auto mb-6 flex h-[74px] w-[74px] items-center justify-center rounded-full bg-[#9b2cff] text-white transition active:scale-95 ${
-                isListening
-                  ? 'ring-2 ring-[#c084fc] shadow-[0_0_0_8px_rgba(192,132,252,0.16),0_16px_42px_rgba(155,44,255,0.58)]'
-                  : 'shadow-[0_12px_34px_rgba(155,44,255,0.45)]'
-              }`}
+              className="mx-auto mb-6 flex h-[74px] w-[74px] items-center justify-center text-white transition active:scale-95"
             >
               <Mic size={30} className="text-white" />
             </button>
