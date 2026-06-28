@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import ProfileHeader from '@/components/profile/ProfileHeader'
@@ -14,7 +14,9 @@ import EditProfilePage from '@/components/profile/EditProfilePage'
 import ProfilePostDetailModal from '@/components/profile/ProfilePostDetailModal'
 import ProfilePostGridTabs from '@/components/profile/ProfilePostGridTabs'
 import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
-import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
+import PeopleFolderPage, {
+  type FolderUser,
+} from '@/components/home/sections/people/PeopleFolderPage'
 
 import TrafficReportPage, {
   preloadTrafficReportData,
@@ -58,6 +60,17 @@ import { useSavedPosts } from '@/src/hooks/profile/useSavedPosts'
 import { usePullToRefresh } from '@/src/hooks/usePullToRefresh'
 
 const VIBELINK_SHARE_URL = 'https://vibelink-beta-access.vercel.app'
+
+type ProfileFollowerRow = {
+  follower_id: string | null
+}
+
+type ProfileFollowerProfile = {
+  id: string
+  username?: string | null
+  display_name?: string | null
+  avatar_url?: string | null
+}
 
 type ProfilePageProps = {
   onCloseMenu?: () => void
@@ -121,6 +134,9 @@ export default function ProfilePage({
 
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [isFollowersLibraryOpen, setIsFollowersLibraryOpen] = useState(false)
+  const [profileFollowerUsers, setProfileFollowerUsers] = useState<FolderUser[]>(
+    []
+  )
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<
     string | null
   >(null)
@@ -210,6 +226,75 @@ async function copyVibelinkShareUrl() {
     loadMyFollowerCount,
     safeTask,
   })
+
+  useEffect(() => {
+    if (!isFollowersLibraryOpen || !currentUserId) return
+
+    let cancelled = false
+
+    async function loadProfileFollowers() {
+      const { data: followRows, error: followError } = await supabase
+        .from('follows')
+        .select('follower_id, created_at')
+        .eq('following_id', currentUserId)
+        .order('created_at', { ascending: false })
+        .limit(300)
+
+      if (followError) {
+        console.warn('Profile followers load failed:', followError)
+        if (!cancelled) setProfileFollowerUsers([])
+        return
+      }
+
+      const followerIds =
+        (followRows as ProfileFollowerRow[] | null)
+          ?.map((row) => row.follower_id)
+          .filter((id: string | null): id is string => Boolean(id)) ?? []
+
+      if (followerIds.length === 0) {
+        if (!cancelled) setProfileFollowerUsers([])
+        return
+      }
+
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url')
+        .in('id', followerIds)
+
+      if (profileError) {
+        console.warn('Profile follower profiles load failed:', profileError)
+        if (!cancelled) setProfileFollowerUsers([])
+        return
+      }
+
+      const profileMap = new Map(
+        ((profiles ?? []) as ProfileFollowerProfile[]).map((profile) => [
+          profile.id,
+          profile,
+        ])
+      )
+
+      const users = followerIds
+        .map((id) => profileMap.get(id))
+        .filter((profile): profile is ProfileFollowerProfile => Boolean(profile))
+        .map((profile) => ({
+          id: profile.id,
+          name: profile.display_name || profile.username || 'Vibelink User',
+          avatar: profile.avatar_url || '',
+        }))
+
+      if (!cancelled) {
+        setProfileFollowerUsers(users)
+      }
+    }
+
+    setProfileFollowerUsers([])
+    void loadProfileFollowers()
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentUserId, isFollowersLibraryOpen])
 
   const menuPreloadUserIdRef = useRef<string | null>(null)
 
@@ -640,10 +725,10 @@ async function toggleSelectedPostSave() {
 
 <AnimatePresence>
   {isFollowersLibraryOpen && (
-    <PeopleLibraryPage
-      query={safeLocale === 'en' ? 'My Followers' : '我的粉絲'}
-      locale={safeLocale}
-      initialFolder="followers"
+    <PeopleFolderPage
+      title={safeLocale === 'en' ? 'My Followers' : '我的粉絲'}
+      users={profileFollowerUsers}
+      emptyText={safeLocale === 'en' ? 'No followers yet' : '目前還沒有粉絲'}
       onClose={() => setIsFollowersLibraryOpen(false)}
       onOpenProfile={(userId) => {
         setIsFollowersLibraryOpen(false)
