@@ -2,19 +2,43 @@
 
 import { Copy, Pin } from 'lucide-react'
 
+type PostImage = {
+  image_url?: string | null
+}
+
+type ProfileGridPost = {
+  id: string
+  type?: string | null
+  video_url?: string | null
+  post_images?: PostImage[] | null
+  isPinned?: boolean
+}
+
+type ShortVideoItem = {
+  id: string
+  video_url: string
+}
+
+type ProfileGridText = {
+  noVideos: string
+  favorites: string
+  public: string
+  private: string
+}
+
 type Props = {
   activeTab: number
-  text: any
+  text: ProfileGridText
 
-  gridItems: any[]
-  myShortVideos: any[]
-  savedPosts: any[]
-  archivedShortVideos: any[]
+  gridItems: ProfileGridPost[]
+  myShortVideos: ShortVideoItem[]
+  savedPosts: ProfileGridPost[]
+  archivedShortVideos: { id: string }[]
 
   isFavoritesPublic: boolean
   onToggleFavoritesPublic: () => void
 
-  onOpenPost: (post: any) => void
+  onOpenPost: (post: ProfileGridPost) => void
   onOpenShortVideo: (videoId: string) => void
 
   onTouchStart: (e: React.TouchEvent<HTMLDivElement>) => void
@@ -77,11 +101,14 @@ export default function ProfilePostGridTabs({
                   {image && (
                     <img
                       src={image}
+                      alt=""
+                      loading={index < 6 ? 'eager' : 'lazy'}
+                      decoding="async"
                       className="h-full w-full object-cover"
                     />
                   )}
 
-                  {post.post_images?.length > 1 && (
+                  {(post.post_images?.length ?? 0) > 1 && (
                     <div className="absolute right-2 top-2 flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/45 text-white">
                       <Copy size={15} strokeWidth={2.3} />
                     </div>
@@ -121,7 +148,7 @@ export default function ProfilePostGridTabs({
                     key={`video-${video.id}-${index}`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      onOpenShortVideo(video.id)
+                      onOpenShortVideo(String(video.id))
                     }}
                     className="relative h-[190px] overflow-hidden bg-black"
                   >
@@ -129,7 +156,7 @@ export default function ProfilePostGridTabs({
                       src={video.video_url}
                       muted
                       playsInline
-                      preload="auto"
+                      preload="metadata"
                       autoPlay
                       loop
                       className="h-full w-full object-cover bg-black"
@@ -194,7 +221,7 @@ export default function ProfilePostGridTabs({
                     e.stopPropagation()
 
                     if (isVideo) {
-                      onOpenShortVideo(post.id)
+                      onOpenShortVideo(String(post.id))
                       return
                     }
 
@@ -206,10 +233,10 @@ export default function ProfilePostGridTabs({
                 >
                   {isVideo ? (
                     <video
-                      src={post.video_url}
+                      src={post.video_url ?? undefined}
                       muted
                       playsInline
-                      preload="auto"
+                      preload="metadata"
                       autoPlay
                       loop
                       className="h-full w-full object-cover bg-black"
@@ -221,12 +248,15 @@ export default function ProfilePostGridTabs({
                     image && (
                       <img
                         src={image}
+                        alt=""
+                        loading={index < 6 ? 'eager' : 'lazy'}
+                        decoding="async"
                         className="h-full w-full object-cover"
                       />
                     )
                   )}
 
-                  {post.post_images?.length > 1 && (
+                  {(post.post_images?.length ?? 0) > 1 && (
                     <div className="absolute right-2 top-2 flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/45 text-white">
                       <Copy size={15} strokeWidth={2.3} />
                     </div>

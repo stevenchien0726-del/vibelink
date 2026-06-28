@@ -180,8 +180,6 @@ async function copyVibelinkShareUrl() {
   const {
     savedPosts,
     setSavedPosts,
-    profileWarmSavedImages,
-    setProfileWarmSavedImages,
     loadSavedPosts,
     lazyLoadSavedPosts,
   } = useSavedPosts({ safeTask })
@@ -192,18 +190,19 @@ async function copyVibelinkShareUrl() {
     setSelectedShortVideoId,
     isShortVideoPageOpen,
     setIsShortVideoPageOpen,
-    profileWarmVideoUrls,
-    setProfileWarmVideoUrls,
     loadMyShortVideos,
   } = useMyShortVideos()
 
   const {
     myPosts,
     setMyPosts,
+    postCount,
+    setPostCount,
     gridItems,
     isLoadingMorePosts,
     loadMorePostsRef,
     loadMyPosts,
+    loadMyPostCount,
   } = useMyPosts({
     activeTab,
     archivedPosts,
@@ -216,13 +215,8 @@ async function copyVibelinkShareUrl() {
     currentUserId,
   } = useProfileBootstrap({
     ensureMyProfile,
-    loadMyShortVideos,
-    myShortVideos,
-    setProfileWarmVideoUrls,
-    lazyLoadSavedPosts,
-    savedPosts,
-    setProfileWarmSavedImages,
     loadMyPosts,
+    loadMyPostCount,
     loadMyFollowerCount,
     safeTask,
   })
@@ -327,6 +321,7 @@ async function copyVibelinkShareUrl() {
       await Promise.allSettled([
         safeTask(() => ensureMyProfile(), 'profile_manual_ensure_profile'),
         safeTask(() => loadMyPosts(), 'profile_manual_posts'),
+        safeTask(() => loadMyPostCount(), 'profile_manual_post_count'),
         safeTask(() => loadMyFollowerCount(), 'profile_manual_followers'),
         safeTask(() => loadMyShortVideos(), 'profile_manual_short_videos'),
         safeTask(() => loadSavedPosts(), 'profile_manual_saved_posts'),
@@ -390,6 +385,7 @@ async function deleteSelectedPost() {
   }
 
   setMyPosts((prev) => prev.filter((post) => post.id !== selectedPost.id))
+  setPostCount((prev) => Math.max(0, prev - 1))
   setIsPostMenuOpen(false)
   setSelectedPost(null)
 }
@@ -512,28 +508,6 @@ async function toggleSelectedPostSave() {
 
   return (
   <>
-    <div className="hidden">
-      {profileWarmVideoUrls.map((src) => (
-        <video
-          key={`profile-warm-video-${src}`}
-          src={src}
-          muted
-          playsInline
-          preload="metadata"
-        />
-      ))}
-
-      {profileWarmSavedImages.map((src) => (
-        <img
-          key={`profile-warm-saved-${src}`}
-          src={src}
-          alt=""
-          loading="eager"
-          decoding="async"
-        />
-      ))}
-    </div>
-
     <div
       {...profilePullHandlers}
       className="relative min-h-[100dvh] overflow-x-hidden overscroll-contain bg-[var(--app-bg)] pb-[calc(110px+env(safe-area-inset-bottom))] text-[var(--app-text)] touch-pan-y"
@@ -607,7 +581,7 @@ async function toggleSelectedPostSave() {
       bio: '',
     }
   }
-  postCount={gridItems.length}
+  postCount={postCount}
   followerCount={followerCount}
   postsLabel={text.posts}
   followersLabel={text.followers}
@@ -798,6 +772,7 @@ async function toggleSelectedPostSave() {
   ...prev,
 ])
 
+  setPostCount((prev) => prev + 1)
   loadMyPosts()
   
 }}

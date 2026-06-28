@@ -1,16 +1,38 @@
+import type { Dispatch, SetStateAction } from 'react'
 import { supabase } from '@/lib/supabase'
 import { loadComments } from './profileApi'
 
+type PostImage = {
+  image_url?: string | null
+}
+
+type ProfilePost = {
+  id: string
+  post_images?: PostImage[] | null
+  reply_permission?: string | null
+  isLiked?: boolean
+  likes?: number
+  isPinned?: boolean
+  is_pinned?: boolean
+  pinned_at?: string | null
+  [key: string]: unknown
+}
+
+type CommentRecord = {
+  id: string
+  [key: string]: unknown
+}
+
 type OpenPostArgs = {
-  post: any
-  savedPosts: any[]
-  setSelectedPost: (value: any) => void
+  post: ProfilePost
+  savedPosts: ProfilePost[]
+  setSelectedPost: Dispatch<SetStateAction<ProfilePost | null>>
   setSelectedPostImageIndex: (value: number) => void
   setSelectedPostLiked: (value: boolean) => void
   setSelectedPostLikeCount: (value: number) => void
   setSelectedPostSaved: (value: boolean) => void
   setCommentText: (value: string) => void
-  setComments: (value: any[]) => void
+  setComments: Dispatch<SetStateAction<CommentRecord[]>>
 }
 
 export async function openSelectedPostHandler({
@@ -24,12 +46,13 @@ export async function openSelectedPostHandler({
   setCommentText,
   setComments,
 }: OpenPostArgs) {
-  const fullPost = {
+  const basePost = {
     ...post,
     post_images: post.post_images ?? [],
+    reply_permission: post.reply_permission || 'everyone',
   }
 
-  setSelectedPost(fullPost)
+  setSelectedPost(basePost)
   setSelectedPostImageIndex(0)
   setSelectedPostLiked(!!post.isLiked)
   setSelectedPostLikeCount(post.likes ?? 0)
@@ -37,16 +60,83 @@ export async function openSelectedPostHandler({
   setCommentText('')
   setComments([])
 
-  const nextComments = await loadComments(post.id)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const [postResult, likesResult, myLikeResult, commentsResult] =
+    await Promise.allSettled([
+      supabase
+        .from('posts')
+        .select(`
+          id,
+          caption,
+          created_at,
+          user_id,
+          is_pinned,
+          pinned_at,
+          reply_permission,
+          post_images (
+            image_url
+          )
+        `)
+        .eq('id', post.id)
+        .maybeSingle(),
+      supabase
+        .from('likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', post.id),
+      user
+        ? supabase
+            .from('likes')
+            .select('post_id')
+            .eq('post_id', post.id)
+            .eq('user_id', user.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      loadComments(post.id),
+    ])
+
+  const loadedPost =
+    postResult.status === 'fulfilled' && !postResult.value.error
+      ? postResult.value.data
+      : null
+
+  const likeCount =
+    likesResult.status === 'fulfilled' && !likesResult.value.error
+      ? likesResult.value.count ?? 0
+      : post.likes ?? 0
+
+  const isLiked =
+    myLikeResult.status === 'fulfilled' && !myLikeResult.value.error
+      ? Boolean(myLikeResult.value.data)
+      : !!post.isLiked
+
+  const nextComments =
+    commentsResult.status === 'fulfilled' ? commentsResult.value : []
+
+  const fullPost = {
+    ...post,
+    ...(loadedPost ?? {}),
+    post_images: loadedPost?.post_images ?? post.post_images ?? [],
+    isPinned: loadedPost?.is_pinned ?? post.isPinned,
+    pinned_at: loadedPost?.pinned_at ?? post.pinned_at,
+    reply_permission:
+      loadedPost?.reply_permission || post.reply_permission || 'everyone',
+  }
+
+  setSelectedPost(fullPost)
+  setSelectedPostLiked(isLiked)
+  setSelectedPostLikeCount(likeCount)
   setComments(nextComments)
 }
 
 type SubmitArgs = {
-  selectedPost: any
+  selectedPost: ProfilePost | null
   commentText: string
   setCommentLoading: (value: boolean) => void
   setCommentText: (value: string) => void
-  setComments: (value: any[]) => void
+  setComments: Dispatch<SetStateAction<CommentRecord[]>>
 }
 
 export async function submitCommentHandler({
@@ -93,10 +183,10 @@ export async function submitCommentHandler({
 }
 
 type DeleteArgs = {
-  selectedComment: any
-  setComments: (value: any) => void
+  selectedComment: CommentRecord | null
+  setComments: Dispatch<SetStateAction<CommentRecord[]>>
   setIsCommentMenuOpen: (value: boolean) => void
-  setSelectedComment: (value: any) => void
+  setSelectedComment: (value: CommentRecord | null) => void
 }
 
 export async function deleteCommentHandler({
@@ -118,7 +208,7 @@ export async function deleteCommentHandler({
     return
   }
 
-  setComments((prev: any[]) =>
+  setComments((prev) =>
     prev.filter((comment) => comment.id !== selectedComment.id)
   )
 

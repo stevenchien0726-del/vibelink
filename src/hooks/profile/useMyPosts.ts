@@ -22,6 +22,7 @@ export function useMyPosts({
   safeTask,
 }: UseMyPostsParams) {
   const [myPosts, setMyPosts] = useState<any[]>([])
+  const [postCount, setPostCount] = useState(0)
 
   const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false)
   const [hasMorePosts, setHasMorePosts] = useState(true)
@@ -74,12 +75,10 @@ export function useMyPosts({
         .from('posts')
         .select(`
   id,
-  caption,
   created_at,
   user_id,
   is_pinned,
   pinned_at,
-  reply_permission,
   post_images (
     image_url
   )
@@ -96,58 +95,58 @@ export function useMyPosts({
       throw error
     }
 
-    const postIds = (data ?? []).map((post: any) => post.id)
-
-    if (postIds.length === 0) {
-      setMyPosts([])
+    if ((data ?? []).length === 0) {
+      if (!append) setMyPosts([])
       setHasMorePosts(false)
       return
     }
 
-    const { data: likeRows } =
-      postIds.length > 0
-        ? await withTimeout(
-            supabase
-              .from('likes')
-              .select('post_id, user_id')
-              .in('post_id', postIds),
-            SUPABASE_TIMEOUT_MS,
-            'profile_posts_likes'
-          )
-        : { data: [] }
-
-    const likeCountMap = new Map<string, number>()
-    const likedSet = new Set<string>()
-
-    ;(likeRows ?? []).forEach((like: any) => {
-      likeCountMap.set(
-        like.post_id,
-        (likeCountMap.get(like.post_id) ?? 0) + 1
-      )
-
-      if (like.user_id === user.id) {
-        likedSet.add(like.post_id)
-      }
-    })
-
-    const postsWithLikes = (data ?? []).map((post: any) => ({
+    const postsWithGridData = (data ?? []).map((post: any) => ({
       ...post,
-      likes: likeCountMap.get(post.id) ?? 0,
-      isLiked: likedSet.has(post.id),
+      likes: 0,
+      isLiked: false,
       isPinned: post.is_pinned,
       pinned_at: post.pinned_at,
-      reply_permission:
-        post.reply_permission || 'everyone',
+      reply_permission: 'everyone',
     }))
 
     setMyPosts((prev) =>
-      append ? [...prev, ...postsWithLikes] : postsWithLikes
+      append ? [...prev, ...postsWithGridData] : postsWithGridData
     )
 
     setHasMorePosts((data ?? []).length === end - start + 1)
     } finally {
       isLoadingPostsRef.current = false
     }
+  }
+
+  async function loadMyPostCount() {
+    const {
+      data: { user },
+      error: userError,
+    } = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_TIMEOUT_MS,
+      'profile_post_count_auth_user'
+    )
+
+    if (userError || !user) return
+
+    const { count, error } = await withTimeout(
+      supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id),
+      SUPABASE_TIMEOUT_MS,
+      'profile_post_count'
+    )
+
+    if (error) {
+      console.warn('Profile post count failed:', error)
+      return
+    }
+
+    setPostCount(count ?? 0)
   }
 
   async function loadMoreMyPosts() {
@@ -199,6 +198,8 @@ export function useMyPosts({
   return {
     myPosts,
     setMyPosts,
+    postCount,
+    setPostCount,
     gridItems,
     isLoadingMorePosts,
     setIsLoadingMorePosts,
@@ -206,6 +207,7 @@ export function useMyPosts({
     setHasMorePosts,
     loadMorePostsRef,
     loadMyPosts,
+    loadMyPostCount,
     loadMoreMyPosts,
   }
 }

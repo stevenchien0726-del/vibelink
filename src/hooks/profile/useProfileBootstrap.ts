@@ -1,6 +1,6 @@
 'use client'
 
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -12,26 +12,16 @@ import {
 
 type UseProfileBootstrapParams = {
   ensureMyProfile: () => Promise<void>
-  loadMyShortVideos: () => Promise<void>
-  myShortVideos: any[]
-  setProfileWarmVideoUrls: (urls: string[]) => void
-  lazyLoadSavedPosts: () => Promise<void>
-  savedPosts: any[]
-  setProfileWarmSavedImages: (images: string[]) => void
   loadMyPosts: () => Promise<void>
+  loadMyPostCount: () => Promise<void>
   loadMyFollowerCount: () => Promise<void>
   safeTask: <T>(task: () => PromiseLike<T>, label: string) => Promise<T | null>
 }
 
 export function useProfileBootstrap({
   ensureMyProfile,
-  loadMyShortVideos,
-  myShortVideos,
-  setProfileWarmVideoUrls,
-  lazyLoadSavedPosts,
-  savedPosts,
-  setProfileWarmSavedImages,
   loadMyPosts,
+  loadMyPostCount,
   loadMyFollowerCount,
   safeTask,
 }: UseProfileBootstrapParams) {
@@ -86,6 +76,7 @@ export function useProfileBootstrap({
             'auth_ensure_profile'
           ),
           safeTask(() => loadMyPosts(), 'my_posts'),
+          safeTask(() => loadMyPostCount(), 'my_post_count'),
           safeTask(
             () => loadMyFollowerCount(),
             'followers'
@@ -100,39 +91,6 @@ export function useProfileBootstrap({
           setProfileLoading(false)
         }
 
-        window.setTimeout(async () => {
-          try {
-            await loadMyShortVideos()
-
-            const topVideos =
-              (myShortVideos ?? [])
-                .map((video: any) => video.video_url)
-                .filter(Boolean)
-                .slice(0, 4)
-
-            setProfileWarmVideoUrls(topVideos)
-          } catch (err) {
-            console.warn('profile short video warmup failed', err)
-          }
-        }, 1200)
-
-        window.setTimeout(async () => {
-          try {
-            await lazyLoadSavedPosts()
-
-            const images =
-              (savedPosts ?? [])
-                .flatMap((post: any) =>
-                  post.post_images?.map((img: any) => img.image_url) ?? []
-                )
-                .filter(Boolean)
-                .slice(0, 12)
-
-            setProfileWarmSavedImages(images)
-          } catch (err) {
-            console.warn('profile saved warmup failed', err)
-          }
-        }, 2000)
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
         logNativeLifecycle(
@@ -189,6 +147,10 @@ export function useProfileBootstrap({
           safeTask(
             () => loadMyPosts(),
             'auth_my_posts'
+          ),
+          safeTask(
+            () => loadMyPostCount(),
+            'auth_my_post_count'
           ),
           safeTask(
             () => loadMyFollowerCount(),
