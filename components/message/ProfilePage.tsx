@@ -729,6 +729,7 @@ async function toggleSelectedPostSave() {
       title={safeLocale === 'en' ? 'My Followers' : '我的粉絲'}
       users={profileFollowerUsers}
       emptyText={safeLocale === 'en' ? 'No followers yet' : '目前還沒有粉絲'}
+      closeAnimation="profile"
       onClose={() => setIsFollowersLibraryOpen(false)}
       onOpenProfile={(userId) => {
         setIsFollowersLibraryOpen(false)

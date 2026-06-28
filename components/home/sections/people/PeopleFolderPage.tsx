@@ -32,6 +32,7 @@ type PeopleFolderPageProps = {
   title: string
   users: FolderUser[]
   emptyText?: string
+  closeAnimation?: 'profile'
   onClose: () => void
   onPickUser?: (payload: PickUserPayload) => void
   onOpenProfile?: (userId: string) => void
@@ -41,6 +42,7 @@ export default function PeopleFolderPage({
   title,
   users,
   emptyText,
+  closeAnimation,
   onClose,
   onPickUser,
   onOpenProfile,
@@ -48,6 +50,7 @@ export default function PeopleFolderPage({
   const touchStartYRef = useRef<number | null>(null)
   const touchStartXRef = useRef<number | null>(null)
   const [listHeight, setListHeight] = useState(560)
+  const [isClosing, setIsClosing] = useState(false)
 
   const dragY = useMotionValue(0)
   const overlayOpacity = useTransform(dragY, [0, 260], [1, 0.72])
@@ -144,6 +147,16 @@ export default function PeopleFolderPage({
     onOpenProfile?.(user.id)
   }
 
+  function handleClose() {
+    if (closeAnimation !== 'profile') {
+      onClose()
+      return
+    }
+
+    setIsClosing(true)
+    window.setTimeout(onClose, 210)
+  }
+
   function UserRow({ index, style }: ListChildComponentProps) {
     const rowUsers = userRows[index] ?? []
 
@@ -187,11 +200,19 @@ export default function PeopleFolderPage({
       >
         <motion.div
           className="relative min-h-screen w-full bg-[var(--app-bg)]"
-          initial={{ y: 28, opacity: 0, scale: 0.985 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
+          initial={
+            closeAnimation === 'profile'
+              ? { y: 16, opacity: 0, scale: 0.96 }
+              : { y: 28, opacity: 0, scale: 0.985 }
+          }
+          animate={
+            isClosing
+              ? { y: 12, opacity: 0, scale: 0.96 }
+              : { y: 0, opacity: 1, scale: 1 }
+          }
           exit={{ y: 36, opacity: 0, scale: 0.985 }}
           transition={{
-            duration: 0.24,
+            duration: isClosing ? 0.2 : 0.26,
             ease: [0.22, 1, 0.36, 1],
           }}
           style={{
@@ -212,7 +233,7 @@ export default function PeopleFolderPage({
 
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 className="text-[14px] font-medium text-[var(--app-text)] active:scale-95"
               >
                 {uiText('關閉', 'CLOSE')}
