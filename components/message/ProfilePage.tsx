@@ -13,6 +13,8 @@ import ProfileMenuSheet from '@/components/profile/ProfileMenuSheet'
 import EditProfilePage from '@/components/profile/EditProfilePage'
 import ProfilePostDetailModal from '@/components/profile/ProfilePostDetailModal'
 import ProfilePostGridTabs from '@/components/profile/ProfilePostGridTabs'
+import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
+import PeopleLibraryPage from '@/components/home/sections/people/PeopleLibraryPage'
 
 import TrafficReportPage, {
   preloadTrafficReportData,
@@ -118,6 +120,10 @@ export default function ProfilePage({
   })
 
   const [selectedPost, setSelectedPost] = useState<any>(null)
+  const [isFollowersLibraryOpen, setIsFollowersLibraryOpen] = useState(false)
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState<
+    string | null
+  >(null)
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false)
   const [selectedPostImageIndex, setSelectedPostImageIndex] = useState(0)
 
@@ -521,6 +527,7 @@ async function toggleSelectedPostSave() {
   postsLabel={text.posts}
   followersLabel={text.followers}
   onOpenLinkPort={() => setIsLinkPortOpen(true)}
+  onFollowersClick={() => setIsFollowersLibraryOpen(true)}
 />
 
 
@@ -630,6 +637,34 @@ async function toggleSelectedPostSave() {
 )}
 
         </div>
+
+<AnimatePresence>
+  {isFollowersLibraryOpen && (
+    <PeopleLibraryPage
+      query={safeLocale === 'en' ? 'My Followers' : '我的粉絲'}
+      locale={safeLocale}
+      initialFolder="followers"
+      onClose={() => setIsFollowersLibraryOpen(false)}
+      onOpenProfile={(userId) => {
+        setIsFollowersLibraryOpen(false)
+
+        requestAnimationFrame(() => {
+          setSelectedProfileUserId(userId)
+        })
+      }}
+    />
+  )}
+</AnimatePresence>
+
+<AnimatePresence mode="wait">
+  {selectedProfileUserId && (
+    <OtherUserProfilePage
+      userId={selectedProfileUserId}
+      onClose={() => setSelectedProfileUserId(null)}
+      locale={safeLocale}
+    />
+  )}
+</AnimatePresence>
 
 <AnimatePresence>
   <EditProfilePage

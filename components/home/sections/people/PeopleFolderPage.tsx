@@ -31,6 +31,7 @@ type PickUserPayload = {
 type PeopleFolderPageProps = {
   title: string
   users: FolderUser[]
+  emptyText?: string
   onClose: () => void
   onPickUser?: (payload: PickUserPayload) => void
   onOpenProfile?: (userId: string) => void
@@ -39,6 +40,7 @@ type PeopleFolderPageProps = {
 export default function PeopleFolderPage({
   title,
   users,
+  emptyText,
   onClose,
   onPickUser,
   onOpenProfile,
@@ -231,7 +233,7 @@ export default function PeopleFolderPage({
               </FixedSizeList>
             ) : (
               <div className="rounded-[18px] border border-[var(--app-card-border)] bg-[var(--app-card)] px-4 py-5 text-center text-[14px] text-[var(--app-muted)]">
-                {uiText('目前沒有用戶', 'No users yet')}
+                {emptyText ?? uiText('目前沒有用戶', 'No users yet')}
               </div>
             )}
           </div>

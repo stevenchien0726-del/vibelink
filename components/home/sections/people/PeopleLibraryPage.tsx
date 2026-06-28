@@ -38,6 +38,11 @@ type PeopleFollowRow = {
   created_at: string | null
 }
 
+type PeopleFollowerRow = {
+  follower_id: string | null
+  created_at: string | null
+}
+
 type PeopleFavoriteRow = {
   favorite_user_id: string | null
   created_at: string | null
@@ -53,6 +58,7 @@ type PeopleProfileRow = {
 type PeopleLibraryPageProps = {
   query?: string
   locale: Locale
+  initialFolder?: string
   onClose: () => void
   onPickUser?: (payload: PickUserPayload) => void
   onOpenProfile?: (userId: string) => void
@@ -60,6 +66,7 @@ type PeopleLibraryPageProps = {
 
 function getFolders(locale: Locale): FolderItem[] {
   return [
+    { id: 'followers', label: locale === 'en' ? 'My Followers' : '我的粉絲', emoji: '👥' },
     { id: 'recent', label: locale === 'en' ? 'Recently Followed' : '最近追蹤', emoji: '🆕' },
     { id: 'favorite', label: locale === 'en' ? 'My Favorites' : '我的最愛', emoji: '✨' },
     { id: 'more-interaction', label: locale === 'en' ? 'Frequent Interactions' : '較常互動', emoji: '💬' },
@@ -71,6 +78,7 @@ function getFolders(locale: Locale): FolderItem[] {
 
 function getFolderName(id: string, locale: Locale) {
   const map: Record<string, string> = {
+    followers: locale === 'en' ? 'My Followers' : '我的粉絲',
     recent: locale === 'en' ? '🆕 Recently Followed' : '🆕 最近追蹤',
     favorite: locale === 'en' ? '✨ My Favorites' : '✨ 我的最愛',
     'more-interaction': locale === 'en' ? '💬 Frequent Interactions' : '💬 較常互動',
@@ -106,22 +114,38 @@ function withTimeout<T>(
 
 const PEOPLE_LIBRARY_TIMEOUT_MS = 6000
 const PEOPLE_LIBRARY_PROFILE_BATCH_SIZE = 80
+type PeopleLibraryLoadResult = {
+  libraryUsers: PeopleLibraryUser[]
+  followerUsers: PeopleLibraryUser[]
+}
 const peopleLibraryUsersCache = new Map<string, PeopleLibraryUser[]>()
-const peopleLibraryInFlight = new Map<string, Promise<PeopleLibraryUser[]>>()
+const peopleLibraryInFlight = new Map<string, Promise<PeopleLibraryLoadResult>>()
 
 export default function PeopleLibraryPage({
   query,
   locale,
+  initialFolder,
   onClose,
   onPickUser,
   onOpenProfile,
 }: PeopleLibraryPageProps) {
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(
+    initialFolder ?? null
+  )
   const [allPeopleUsers, setAllPeopleUsers] = useState<PeopleLibraryUser[]>([])
+  const [followerPeopleUsers, setFollowerPeopleUsers] = useState<
+    PeopleLibraryUser[]
+  >([])
   const [peopleLoading, setPeopleLoading] = useState(true)
   const [peopleError, setPeopleError] = useState('')
 
   const folders = useMemo(() => getFolders(locale), [locale])
+
+  useEffect(() => {
+    if (initialFolder) {
+      setSelectedFolder(initialFolder)
+    }
+  }, [initialFolder])
 
   const folderUsers = useMemo<FolderUsersMap>(() => {
     const emptyFolders = Object.fromEntries(
@@ -144,8 +168,13 @@ export default function PeopleLibraryPage({
     return {
       ...emptyFolders,
       ...sortedFolders,
+      followers: followerPeopleUsers.map((user) => ({
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar ?? '',
+      })),
     }
-  }, [allPeopleUsers, folders])
+  }, [allPeopleUsers, followerPeopleUsers, folders])
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const canDragCloseRef = useRef(true)
@@ -329,6 +358,7 @@ export default function PeopleLibraryPage({
         if (!user) {
           if (!cancelled) {
             setAllPeopleUsers([])
+            setFollowerPeopleUsers([])
           }
           return
         }
@@ -344,13 +374,15 @@ export default function PeopleLibraryPage({
         } else if (!cancelled) {
           setPeopleLoading(true)
           setAllPeopleUsers([])
+          setFollowerPeopleUsers([])
         }
 
         const existingRequest = peopleLibraryInFlight.get(user.id)
         const freshUsers =
           existingRequest ??
           (async () => {
-            const [followResult, favoriteResult] = await Promise.allSettled([
+            const [followResult, favoriteResult, followerResult] =
+              await Promise.allSettled([
           withTimeout(
             supabase
               .from('follows')
@@ -371,6 +403,16 @@ export default function PeopleLibraryPage({
             PEOPLE_LIBRARY_TIMEOUT_MS,
             'people_library_favorite_users'
           ),
+          withTimeout(
+            supabase
+              .from('follows')
+              .select('follower_id, created_at')
+              .eq('following_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(300),
+            PEOPLE_LIBRARY_TIMEOUT_MS,
+            'people_library_followers'
+          ),
         ])
 
             const followRows =
@@ -387,6 +429,13 @@ export default function PeopleLibraryPage({
             ? ((favoriteResult.value.data ?? []) as PeopleFavoriteRow[])
             : []
 
+            const followerRows =
+          followerResult.status === 'fulfilled' &&
+          followerResult.value &&
+          !followerResult.value.error
+            ? ((followerResult.value.data ?? []) as PeopleFollowerRow[])
+            : []
+
             if (followResult.status === 'rejected') {
           console.warn('People Library follows failed:', followResult.reason)
         } else if (followResult.value?.error) {
@@ -399,6 +448,12 @@ export default function PeopleLibraryPage({
           console.warn('People Library favorites error:', favoriteResult.value.error)
         }
 
+            if (followerResult.status === 'rejected') {
+          console.warn('People Library followers failed:', followerResult.reason)
+        } else if (followerResult.value?.error) {
+          console.warn('People Library followers error:', followerResult.value.error)
+        }
+
             const followingIds = followRows
           .map((row) => row.following_id)
           .filter((id): id is string => Boolean(id))
@@ -407,11 +462,19 @@ export default function PeopleLibraryPage({
           .map((row) => row.favorite_user_id)
           .filter((id): id is string => Boolean(id))
 
-            const mergedIds = Array.from(new Set([...followingIds, ...favoriteIds]))
+            const followerIds = followerRows
+          .map((row) => row.follower_id)
+          .filter((id): id is string => Boolean(id))
 
-            if (mergedIds.length === 0) return []
+            const libraryIds = Array.from(new Set([...followingIds, ...favoriteIds]))
+            const mergedIds = Array.from(new Set([...libraryIds, ...followerIds]))
+
+            if (mergedIds.length === 0) {
+              return { libraryUsers: [], followerUsers: [] }
+            }
 
             const profiles = await fetchProfilesInBatches(mergedIds)
+            const profileMap = new Map(profiles.map((profile) => [profile.id, profile]))
 
             const followMap = new Map(
           followRows.map((row) => [row.following_id, row.created_at])
@@ -424,11 +487,18 @@ export default function PeopleLibraryPage({
           ])
         )
 
-            const mappedUsers: PeopleLibraryUser[] = profiles.map((profile) => ({
+            const followerMap = new Map(
+          followerRows.map((row) => [row.follower_id, row.created_at])
+        )
+
+            const toPeopleLibraryUser = (
+          profile: PeopleProfileRow
+        ): PeopleLibraryUser => ({
           id: profile.id,
           name: profile.display_name || profile.username || 'Vibelink User',
           avatar: profile.avatar_url || '',
           followedAt: followMap.get(profile.id) ?? null,
+          followerAt: followerMap.get(profile.id) ?? null,
           favoritedAt: favoriteMap.get(profile.id) ?? null,
           isFavorite: favoriteMap.has(profile.id),
           accountType: 'normal',
@@ -437,9 +507,19 @@ export default function PeopleLibraryPage({
           commentCount: 0,
           likeCount: 0,
           profileViewCount: 0,
-        }))
+        })
 
-            return mappedUsers
+            const mappedUsers = libraryIds
+          .map((id) => profileMap.get(id))
+          .filter((profile): profile is PeopleProfileRow => Boolean(profile))
+          .map(toPeopleLibraryUser)
+
+            const mappedFollowers = followerIds
+          .map((id) => profileMap.get(id))
+          .filter((profile): profile is PeopleProfileRow => Boolean(profile))
+          .map(toPeopleLibraryUser)
+
+            return { libraryUsers: mappedUsers, followerUsers: mappedFollowers }
           })().finally(() => {
             peopleLibraryInFlight.delete(user.id)
           })
@@ -448,12 +528,13 @@ export default function PeopleLibraryPage({
           peopleLibraryInFlight.set(user.id, freshUsers)
         }
 
-        const mappedUsers = await freshUsers
+        const { libraryUsers, followerUsers } = await freshUsers
 
-        peopleLibraryUsersCache.set(user.id, mappedUsers)
+        peopleLibraryUsersCache.set(user.id, libraryUsers)
 
         if (!cancelled) {
-          setAllPeopleUsers(mappedUsers)
+          setAllPeopleUsers(libraryUsers)
+          setFollowerPeopleUsers(followerUsers)
         }
       } catch (error) {
         console.warn('People Library partial load failed:', error)
@@ -461,6 +542,7 @@ export default function PeopleLibraryPage({
         if (!cancelled) {
           if (!hasCachedUsers) {
             setAllPeopleUsers([])
+            setFollowerPeopleUsers([])
           }
         }
       } finally {
@@ -688,6 +770,13 @@ export default function PeopleLibraryPage({
               <PeopleFolderPage
                 title={getFolderName(selectedFolder, locale)}
                 users={folderUsers[selectedFolder] ?? []}
+                emptyText={
+                  selectedFolder === 'followers'
+                    ? locale === 'en'
+                      ? 'No followers yet'
+                      : '目前還沒有粉絲'
+                    : undefined
+                }
                 onClose={() => setSelectedFolder(null)}
                 onPickUser={onPickUser}
                 onOpenProfile={onOpenProfile}

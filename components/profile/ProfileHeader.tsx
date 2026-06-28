@@ -10,6 +10,7 @@ type ProfileHeaderProps = {
   postsLabel: string
   followersLabel: string
   onOpenLinkPort: () => void
+  onFollowersClick?: () => void
 }
 
 export default function ProfileHeader({
@@ -19,6 +20,7 @@ export default function ProfileHeader({
   postsLabel,
   followersLabel,
   onOpenLinkPort,
+  onFollowersClick,
 }: ProfileHeaderProps) {
   return (
     <>
@@ -54,14 +56,18 @@ export default function ProfileHeader({
             </div>
           </div>
 
-          <div className="flex flex-col items-center">
+          <button
+            type="button"
+            onClick={onFollowersClick}
+            className="flex flex-col items-center bg-transparent p-0 text-center active:scale-95"
+          >
             <div className="text-[18px] text-[var(--app-text)]">
               {followerCount}
             </div>
             <div className="text-[14px] text-[var(--app-muted)]">
               {followersLabel}
             </div>
-          </div>
+          </button>
         </div>
       </div>
 

@@ -3,6 +3,7 @@ export type PeopleLibraryUser = {
   name: string
   avatar?: string
   followedAt?: string | null
+  followerAt?: string | null
   favoritedAt?: string | null
   accountType?: 'normal' | 'creator' | 'official' | 'business'
   isCreator?: boolean
@@ -15,6 +16,7 @@ export type PeopleLibraryUser = {
 }
 
 export type PeopleLibraryFolders = {
+  followers: PeopleLibraryUser[]
   recent: PeopleLibraryUser[]
   favorite: PeopleLibraryUser[]
   'more-interaction': PeopleLibraryUser[]
@@ -35,6 +37,14 @@ function getInteractionScore(user: PeopleLibraryUser) {
 export function sortPeopleLibraryUsers(
   users: PeopleLibraryUser[]
 ): PeopleLibraryFolders {
+  const followers = users
+    .filter((user) => user.followerAt)
+    .sort(
+      (a, b) =>
+        new Date(b.followerAt ?? 0).getTime() -
+        new Date(a.followerAt ?? 0).getTime()
+    )
+
   const favorite = users
     .filter((user) => user.isFavorite)
     .sort(
@@ -95,6 +105,7 @@ export function sortPeopleLibraryUsers(
     .sort((a, b) => getInteractionScore(a) - getInteractionScore(b))
 
   return {
+    followers,
     recent,
     favorite,
     'more-interaction': moreInteraction,
