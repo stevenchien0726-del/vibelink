@@ -16,6 +16,7 @@ import {
 import type { PostItem } from './FeedGrid'
 import WideMenuSheet from '@/components/WideMenuSheet'
 import { supabase } from '@/lib/supabase'
+import { reportContent } from '@/lib/reportContent'
 
 type Props = {
   open: boolean
@@ -549,12 +550,29 @@ onError={() => {
   variant={menuVideo.isMine ? 'mine' : 'other'}
   isReported={reportedVideoIds.includes(menuVideo.id)}
   onClose={() => setMenuVideo(null)}
-  onReport={() => {
-    setReportedVideoIds?.((prev) =>
-      prev.includes(menuVideo.id)
-        ? prev.filter((id) => id !== menuVideo.id)
-        : [...prev, menuVideo.id]
-    )
+  onReport={async () => {
+    const alreadyReported = reportedVideoIds.includes(menuVideo.id)
+
+    if (alreadyReported) {
+      setReportedVideoIds?.((prev) =>
+        prev.filter((id) => id !== menuVideo.id)
+      )
+      setMenuVideo(null)
+      return
+    }
+
+    const result = await reportContent({
+      targetType: 'video',
+      targetPostId: menuVideo.id,
+    })
+
+    alert(result.message ?? '檢舉送出失敗，請稍後再試')
+
+    if (result.ok || result.duplicate) {
+      setReportedVideoIds?.((prev) =>
+        prev.includes(menuVideo.id) ? prev : [...prev, menuVideo.id]
+      )
+    }
 
     setMenuVideo(null)
   }}

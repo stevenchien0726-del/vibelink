@@ -14,6 +14,7 @@ import WideMenuSheet from '@/components/WideMenuSheet'
 import OtherUserProfilePage from '@/components/profile/OtherUserProfilePage'
 import type { PostItem } from '@/components/home/sections/feed/FeedGrid'
 import type { Locale } from '@/i18n'
+import { reportContent } from '@/lib/reportContent'
 
 type Props = {
   selectedPost: PostItem | null
@@ -491,12 +492,30 @@ export default function HomeDetailPostModal({
           variant={selectedPost.isMine ? 'mine' : 'other'}
           isReported={isPostReported(selectedPost.id)}
           onClose={() => setIsDetailMenuOpen(false)}
-          onReport={() => {
-            setReportedPostIds((prev) =>
-              prev.includes(selectedPost.id)
-                ? prev.filter((id) => id !== selectedPost.id)
-                : [...prev, selectedPost.id]
-            )
+          onReport={async () => {
+            const alreadyReported = isPostReported(selectedPost.id)
+
+            if (alreadyReported) {
+              setReportedPostIds((prev) =>
+                prev.filter((id) => id !== selectedPost.id)
+              )
+              return
+            }
+
+            const result = await reportContent({
+              targetType: 'post',
+              targetPostId: selectedPost.id,
+            })
+
+            alert(result.message ?? '檢舉送出失敗，請稍後再試')
+
+            if (result.ok || result.duplicate) {
+              setReportedPostIds((prev) =>
+                prev.includes(selectedPost.id)
+                  ? prev
+                  : [...prev, selectedPost.id]
+              )
+            }
 
             setIsDetailMenuOpen(false)
           }}
