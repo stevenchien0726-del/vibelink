@@ -66,7 +66,10 @@ export async function signOutCurrentUser(): Promise<void> {
       error instanceof Error &&
       error.message.startsWith('auth_sign_out timeout')
     ) {
-      // 逾時視同已登出：本地 session 已清除，不阻擋登出流程
+      // 逾時視同已登出，不阻擋登出流程；但原本的 signOut 可能卡在
+      // 網路端、尚未清掉 SDK 存在 storage 的 session，這裡盡力補清，
+      // 避免之後 getCachedSession 從 storage 讀回舊 session。
+      void supabase.auth.signOut({ scope: 'local' }).catch(() => {})
       return
     }
 
