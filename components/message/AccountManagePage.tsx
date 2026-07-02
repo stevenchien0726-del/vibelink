@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { uiText } from '@/lib/uiText'
+import { signOutCurrentUser } from '@/lib/authSessionCache'
 
 type AccountManagePageProps = {
   onClose: () => void
@@ -62,6 +63,8 @@ export default function AccountManagePage({
   const [creatingAccount, setCreatingAccount] = useState(false)
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -329,12 +332,27 @@ localStorage.setItem(
 }
 
   async function handleLogout() {
+    if (signingOut) return
+
     try {
-      await supabase.auth.signOut()
+      setSigningOut(true)
+      setLogoutError('')
+      await signOutCurrentUser()
       localStorage.removeItem('vibelink-active-profile-id')
-      window.location.reload()
+      setShowLogoutConfirm(false)
+      onClose()
     } catch (error) {
       console.warn('logout failed:', error)
+      setLogoutError(
+        uiText(
+          '登出失敗，請檢查網路後再試一次',
+          'Log out failed. Check your network and try again.'
+        )
+      )
+    } finally {
+      if (mountedRef.current) {
+        setSigningOut(false)
+      }
     }
   }
 
@@ -539,7 +557,10 @@ localStorage.setItem(
 
           <div className="mt-[22px] overflow-hidden rounded-[24px] border border-[var(--app-card-border)] bg-[var(--app-card)] py-[20px]">
             <AccountActionRow
-  onClick={() => setShowLogoutConfirm(true)}
+  onClick={() => {
+    setLogoutError('')
+    setShowLogoutConfirm(true)
+  }}
   icon={<LogOut size={21} style={{ strokeWidth: 2.1 }} />}
   label={uiText('登出', 'Log out')}
 />
@@ -568,7 +589,11 @@ localStorage.setItem(
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={() => setShowLogoutConfirm(false)}
+        onClick={() => {
+          if (!signingOut) {
+            setShowLogoutConfirm(false)
+          }
+        }}
       />
 
       <motion.div
@@ -583,14 +608,28 @@ localStorage.setItem(
         </div>
 
         <div className="mt-2 text-[14px] leading-relaxed text-[var(--app-muted)]">
-          登出後需要重新登入才能使用 Vibelink。
+          {uiText(
+            '登出後你可以再次使用 Email OTP 登入。',
+            'You can sign in again with Email OTP after logging out.'
+          )}
         </div>
+
+        {logoutError && (
+          <div className="mt-3 text-[13px] leading-relaxed text-red-400">
+            {logoutError}
+          </div>
+        )}
 
         <div className="mt-5 flex gap-3">
           <button
             type="button"
-            onClick={() => setShowLogoutConfirm(false)}
-            className="h-[46px] flex-1 rounded-full bg-[var(--app-surface)] text-[15px] font-medium text-[var(--app-text)] active:scale-[0.98]"
+            onClick={() => {
+              if (!signingOut) {
+                setShowLogoutConfirm(false)
+              }
+            }}
+            disabled={signingOut}
+            className="h-[46px] flex-1 rounded-full bg-[var(--app-surface)] text-[15px] font-medium text-[var(--app-text)] active:scale-[0.98] disabled:opacity-60"
           >
             {uiText('取消', 'Cancel')}
           </button>
@@ -598,9 +637,12 @@ localStorage.setItem(
           <button
             type="button"
             onClick={handleLogout}
-            className="h-[46px] flex-1 rounded-full bg-[#c86cff] text-[15px] font-semibold text-white active:scale-[0.98]"
+            disabled={signingOut}
+            className="h-[46px] flex-1 rounded-full bg-[#c86cff] text-[15px] font-semibold text-white active:scale-[0.98] disabled:opacity-60"
           >
-            {uiText('登出', 'Log out')}
+            {signingOut
+              ? uiText('正在登出...', 'Logging out...')
+              : uiText('確認登出', 'Confirm log out')}
           </button>
         </div>
       </motion.div>

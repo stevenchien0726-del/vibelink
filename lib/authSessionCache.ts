@@ -47,3 +47,43 @@ export function clearSessionCache() {
   cachedSession = null
   cachedAt = 0
 }
+
+export async function signOutCurrentUser(): Promise<void> {
+  logNativeLifecycle('auth_sign_out_start')
+
+  let result: Awaited<ReturnType<typeof supabase.auth.signOut>>
+
+  try {
+    result = await withTimeout(
+      supabase.auth.signOut(),
+      AUTH_TIMEOUT_MS,
+      'auth_sign_out'
+    )
+  } catch (error) {
+    clearSessionCache()
+
+    if (
+      error instanceof Error &&
+      error.message.startsWith('auth_sign_out timeout')
+    ) {
+      // 逾時視同已登出：本地 session 已清除，不阻擋登出流程
+      return
+    }
+
+    logNativeLifecycle('auth_sign_out_error', {
+      message: error instanceof Error ? error.message : String(error),
+    })
+    throw error
+  }
+
+  clearSessionCache()
+
+  if (result.error) {
+    logNativeLifecycle('auth_sign_out_error', {
+      message: result.error.message,
+    })
+    throw result.error
+  }
+
+  logNativeLifecycle('auth_sign_out_success')
+}
